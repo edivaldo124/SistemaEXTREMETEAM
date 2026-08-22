@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>{{ turma.nome }} | Centro de Treinamento Extreme Team</title><link rel="stylesheet" href="{{ url_for('static',filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/dt_aluno.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/turmas.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
+</head>
+<body><a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+<header class="detail-header"><a class="site-brand" href="{{ '/admin/turmas' if eh_admin else '/professor' }}"><img src="{{ url_for('static',filename='imagens/logo.png') }}" alt=""><span>Centro de treinamento<br><strong>Extreme Team</strong></span></a><a href="{{ '/admin/turmas' if eh_admin else '/professor' }}">← Voltar</a></header>
+<main id="conteudo"><div class="container-detalhes">
+<div class="detail-intro"><div><p class="eyebrow">Turma</p><h1>{{ turma.nome }}</h1><p>{{ turma.dias_semana }} · {{ turma.horario }} · Prof. {{ turma.professor.nome }}</p></div><span aria-hidden="true">{{ matriculados|length }}/{{ turma.limite_alunos }}</span></div>
+
+{% with mensagens = get_flashed_messages(with_categories=true) %}{% for categoria, mensagem in mensagens %}<div class="msg msg-{{ categoria }}">{{ mensagem }}</div>{% endfor %}{% endwith %}
+
+{% if eh_admin %}<section class="detail-section"><div class="section-title"><span>01</span><div><h2>Matrícula</h2><p>Vincule alunos a essa turma.</p></div></div>
+<form action="/turmas/{{ turma.id }}/matricular" method="POST" class="form-pagamento"><div class="grupo-input"><label>Aluno</label><select name="aluno_id" required><option value="">Selecione</option>{% for a in alunos_disponiveis %}<option value="{{ a.id }}">{{ a.nome }}</option>{% endfor %}</select></div><button type="submit" class="btn-salvar">Matricular</button></form>
+<div class="table-container" style="margin-top:20px"><table><thead><tr><th>Aluno</th><th>Ação</th></tr></thead><tbody>{% for aluno in matriculados %}<tr><td>{{ aluno.nome }}</td><td><form action="/turmas/{{ turma.id }}/desmatricular/{{ aluno.id }}" method="POST"><button type="submit" class="btn btn-remover">Remover</button></form></td></tr>{% else %}<tr><td colspan="2" class="empty-state">Nenhum aluno matriculado.</td></tr>{% endfor %}</tbody></table></div>
+</section>{% endif %}
+
+<section class="secao-pagamentos"><div class="section-title"><span>{{ '02' if eh_admin else '01' }}</span><div><h2>Presença</h2><p>Registre a presença dos alunos na aula do dia.</p></div></div>
+<form method="GET" action="/turmas/{{ turma.id }}" class="form-pagamento"><div class="grupo-input"><label>Data da aula</label><input type="date" name="data" value="{{ data_aula.isoformat() }}" onchange="this.form.requestSubmit()"></div></form>
+{% if not dia_valido %}<p class="msg" role="alert">Essa turma não tem aula neste dia da semana ({{ turma.dias_semana }}).</p>
+{% elif not matriculados %}<p class="empty-state">Nenhum aluno matriculado nesta turma ainda.</p>
+{% else %}<form action="/turmas/{{ turma.id }}/presenca" method="POST"><input type="hidden" name="data_aula" value="{{ data_aula.isoformat() }}">
+<div class="table-container"><table><thead><tr><th>Aluno</th><th>Presente</th></tr></thead><tbody>{% for aluno in matriculados %}<tr><td>{{ aluno.nome }}</td><td><input type="checkbox" name="presente_{{ aluno.id }}" {% if presencas.get(aluno.id) %}checked{% endif %}></td></tr>{% endfor %}</tbody></table></div>
+<button type="submit" class="btn-salvar" style="margin-top:16px">Salvar presença</button></form>{% endif %}
+</section>
+</div></main></body></html>

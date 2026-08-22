@@ -1,0 +1,61 @@
+from flask import *
+from config import db
+import os
+from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from blueprints.usuario_bp import auth_bp
+from blueprints.adm_bp import admin_bp
+from blueprints.turma_bp import turma_bp
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+if not app.secret_key:
+    raise RuntimeError('A variavel de ambiente SECRET_KEY e obrigatoria.')
+
+# Mantem a sessao no cookie, mas limita seu tempo de vida e impede acesso via JS.
+app.config.update(
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=os.environ.get('COOKIE_SECURE', 'false').lower() == 'true',
+    SESSION_REFRESH_EACH_REQUEST=True,
+)
+
+database_url = os.environ.get('DATABASE_URL')
+if not database_url:
+    raise RuntimeError('A variavel de ambiente DATABASE_URL e obrigatoria.')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
+
+app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp)
+app.register_blueprint(turma_bp)
+
+with app.app_context():
+    db.create_all()
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@app.route("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect('/')
+
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000)
