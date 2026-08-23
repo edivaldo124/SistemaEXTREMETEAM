@@ -53,6 +53,10 @@ class AlunoDAO:
         return None
 
     @staticmethod
+    def buscar_por_id(aluno_id):
+        return db.session.get(Aluno, aluno_id)
+
+    @staticmethod
     def buscar_por_usuario(usuario):
         # Busca o perfil pelo nome, email ou cpf que está salvo na sessão
         return Aluno.query.filter(

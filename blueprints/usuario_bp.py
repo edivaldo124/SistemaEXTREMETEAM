@@ -113,6 +113,20 @@ def pagina_cadastro():
             ],
         )
 
+        admin_email = os.environ.get('ADMIN_EMAIL')
+        if admin_email:
+            enviar_email(
+                admin_email, 'Administração', 'Novo cadastro aguardando aprovação — Extreme Team', 'Novo cadastro pendente',
+                [
+                    f'O aluno {nome} acabou de se cadastrar e está aguardando aprovação.',
+                    f'E-mail: {email}',
+                    f'Telefone: {telefone}',
+                    'Acesse o painel administrativo para aprovar ou recusar o cadastro.',
+                ],
+                link_url=url_for('admin_blueprint.painel_adm', _external=True),
+                link_texto='Abrir painel administrativo',
+            )
+
         return render_template('login.html', msg='Cadastro enviado! Assim que for aprovado pela administração você poderá entrar.')
 
     return render_template("cadastro.html")

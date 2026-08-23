@@ -15,7 +15,6 @@ app.secret_key = os.environ.get('SECRET_KEY')
 if not app.secret_key:
     raise RuntimeError('A variavel de ambiente SECRET_KEY e obrigatoria.')
 
-# Mantem a sessao no cookie, mas limita seu tempo de vida e impede acesso via JS.
 app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
     SESSION_COOKIE_HTTPONLY=True,

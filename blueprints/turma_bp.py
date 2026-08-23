@@ -126,7 +126,7 @@ def detalhe_turma(turma_id):
 
     eh_admin = session.get('tipo_usuario') == 'admin'
     ids_matriculados = {a.id for a in matriculados}
-    alunos_disponiveis = [a for a in AlunoDAO.listar_todos() if a.id not in ids_matriculados] if eh_admin else []
+    alunos_disponiveis = [a for a in AlunoDAO.listar_todos() if a.id not in ids_matriculados and a.esta_ativo] if eh_admin else []
 
     return render_template(
         'turma.html',
@@ -148,6 +148,11 @@ def matricular_aluno(turma_id):
 
     if not aluno_id:
         flash('Selecione um aluno para matricular.', 'erro')
+        return redirect(f'/turmas/{turma_id}')
+
+    aluno = AlunoDAO.buscar_por_id(int(aluno_id))
+    if not aluno or not aluno.esta_ativo:
+        flash('Este aluno não pode ser matriculado (cadastro pendente, recusado ou desativado).', 'erro')
         return redirect(f'/turmas/{turma_id}')
 
     if MatriculaDAO.contar_por_turma(turma_id) >= turma.limite_alunos:
