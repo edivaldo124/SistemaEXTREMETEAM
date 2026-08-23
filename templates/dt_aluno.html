@@ -87,7 +87,7 @@
         </form></section>
 
         <section class="detail-section"><div class="section-title"><span>02</span><div><h2>Turmas</h2><p>Turmas em que este aluno está matriculado.</p></div></div>
-            <div class="table-container"><table><thead><tr><th>Turma</th><th>Dias</th><th>Horário</th></tr></thead><tbody>{% for m in u.matriculas %}<tr><td>{{ m.turma.nome }}</td><td>{{ m.turma.dias_semana }}</td><td>{{ m.turma.horario }}</td></tr>{% else %}<tr><td colspan="3" class="empty-state">Nenhuma turma vinculada.</td></tr>{% endfor %}</tbody></table></div>
+            <div class="table-container table-stack"><table><thead><tr><th>Turma</th><th>Dias</th><th>Horário</th></tr></thead><tbody>{% for m in u.matriculas %}<tr><td data-label="Turma">{{ m.turma.nome }}</td><td data-label="Dias">{{ m.turma.dias_semana }}</td><td data-label="Horário">{{ m.turma.horario }}</td></tr>{% else %}<tr><td colspan="3" class="empty-state">Nenhuma turma vinculada.</td></tr>{% endfor %}</tbody></table></div>
         </section>
 
         <section class="secao-pagamentos">
@@ -144,7 +144,7 @@
                 <button type="submit" class="btn-salvar">Lançar mensalidade</button>
             </form>
 
-            <div class="tabela-pagamentos">
+            <div class="tabela-pagamentos table-stack">
                 <table>
                     <thead>
                         <tr><th>Plano</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Status</th><th>Forma</th><th>Ação</th></tr>
@@ -152,13 +152,13 @@
                     <tbody>
                     {% for pagamento in pagamentos %}
                         <tr>
-                            <td>{{ pagamento.plano.nome_plano }}</td>
-                            <td>R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}</td>
-                            <td>{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
-                            <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}</td>
-                            <td><span class="status status-{{ pagamento.status }}">{{ pagamento.status }}</span></td>
-                            <td>{{ (pagamento.forma_pagamento or '—')|replace('_', ' ') }}</td>
-                            <td>
+                            <td data-label="Plano">{{ pagamento.plano.nome_plano }}</td>
+                            <td data-label="Valor">R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}</td>
+                            <td data-label="Vencimento">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
+                            <td data-label="Pagamento">{{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}</td>
+                            <td data-label="Status"><span class="status status-{{ pagamento.status }}">{{ pagamento.status }}</span></td>
+                            <td data-label="Forma">{{ (pagamento.forma_pagamento or '—')|replace('_', ' ') }}</td>
+                            <td data-label="Ação">
                                 <form action="/admin/pagamentos/{{ pagamento.id }}/status" method="POST" class="form-status">
                                     <select name="status">
                                         {% for status in ['pendente', 'pago', 'atrasado', 'cancelado'] %}

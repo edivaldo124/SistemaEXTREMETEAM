@@ -32,6 +32,12 @@ class Aluno(db.Model):
     token_recuperacao_hash = db.Column(db.String(64), nullable=True)
     token_recuperacao_expira = db.Column(db.DateTime, nullable=True)
 
+    # RF: troca de e-mail pelo próprio aluno só é aplicada após confirmação por link
+    # enviado ao novo endereço (evita apontar a conta para um e-mail que não é do dono).
+    email_pendente = db.Column(db.String(150), nullable=True)
+    token_email_hash = db.Column(db.String(64), nullable=True)
+    token_email_expira = db.Column(db.DateTime, nullable=True)
+
     # Construtor da classe
     def __init__(self, nome, login, datanascimento, cpf, email, telefone, senha, descricao,
                  mensalidade='pendente', plano_id=None, data_vencimento=None, status_cadastro='pendente', ativo=True):

@@ -4,7 +4,7 @@ import os
 import secrets
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, request, session, redirect, url_for
+from flask import Blueprint, flash, render_template, request, session, redirect, url_for
 from sqlalchemy.exc import IntegrityError
 from config import db
 from modelos.usuario import Aluno
@@ -57,7 +57,7 @@ def pagina_login():
                 return render_template('login.html', msg='Sua conta está desativada. Fale com a administração.')
 
             session.clear()
-            # O ID nao muda se o aluno editar o login, email ou nome.
+            # O ID nao muda se o aluno editar o login ou o nome (o email so muda apos confirmacao).
             session['usuario'] = aluno.login
             session['aluno_id'] = aluno.id
             session['tipo_usuario'] = "aluno"
@@ -148,6 +148,171 @@ def pagina_perfil():
         matriculas=matriculas,
         presencas=presencas,
     )
+
+
+TOKEN_EMAIL_VALIDADE = timedelta(minutes=30)
+
+
+def _aluno_da_sessao():
+    if session.get('tipo_usuario') != 'aluno' or not session.get('aluno_id'):
+        return None
+    return db.session.get(Aluno, session['aluno_id'])
+
+
+@auth_bp.route("/perfil/dados", methods=["POST"])
+def atualizar_dados_perfil():
+    aluno = _aluno_da_sessao()
+    if not aluno:
+        return redirect('/login')
+
+    senha_atual = request.form.get("senha_atual") or ""
+    if not aluno.verificar_senha(senha_atual):
+        flash('Senha atual incorreta. Nenhum dado foi alterado.', 'erro')
+        return redirect('/perfil')
+
+    nome = (request.form.get("nome") or "").strip()
+    login = (request.form.get("login") or "").strip()
+    telefone = formatar_telefone(request.form.get("telefone"))
+    descricao = (request.form.get("descricao") or "").strip()
+
+    if not all([nome, login]):
+        flash('Preencha nome e usuário para salvar as alterações.', 'erro')
+        return redirect('/perfil')
+
+    if Aluno.query.filter(Aluno.login == login, Aluno.id != aluno.id).first():
+        flash('Este nome de usuário já está em uso.', 'erro')
+        return redirect('/perfil')
+
+    aluno.nome = nome
+    aluno.login = login
+    aluno.telefone = telefone
+    aluno.descricao = descricao
+    db.session.commit()
+
+    # Mantem a sessao coerente caso o login exibido tenha mudado.
+    session['usuario'] = aluno.login
+
+    flash('Dados atualizados com sucesso.', 'sucesso')
+    return redirect('/perfil')
+
+
+@auth_bp.route("/perfil/senha", methods=["POST"])
+def alterar_senha_perfil():
+    aluno = _aluno_da_sessao()
+    if not aluno:
+        return redirect('/login')
+
+    senha_atual = request.form.get("senha_atual") or ""
+    nova_senha = request.form.get("nova_senha") or ""
+    confirmar_senha = request.form.get("confirmar_senha") or ""
+
+    if not aluno.verificar_senha(senha_atual):
+        flash('Senha atual incorreta. Nenhuma alteração foi feita.', 'erro')
+        return redirect('/perfil')
+
+    if len(nova_senha) < 6:
+        flash('A nova senha deve ter pelo menos 6 caracteres.', 'erro')
+        return redirect('/perfil')
+
+    if not hmac.compare_digest(nova_senha, confirmar_senha):
+        flash('A confirmação não coincide com a nova senha.', 'erro')
+        return redirect('/perfil')
+
+    aluno.set_senha(nova_senha)
+    db.session.commit()
+
+    enviar_email(
+        aluno.email, aluno.nome, 'Sua senha foi alterada — Extreme Team', 'Senha alterada com sucesso',
+        [
+            f'Olá, {aluno.nome.split()[0]}.',
+            'A senha da sua conta na Extreme Team acabou de ser alterada pelo seu perfil.',
+            'Se não foi você quem fez isso, entre em contato com a nossa administração imediatamente.',
+        ],
+    )
+
+    flash('Senha alterada com sucesso.', 'sucesso')
+    return redirect('/perfil')
+
+
+@auth_bp.route("/perfil/email", methods=["POST"])
+def solicitar_troca_email():
+    aluno = _aluno_da_sessao()
+    if not aluno:
+        return redirect('/login')
+
+    senha_atual = request.form.get("senha_atual") or ""
+    novo_email = (request.form.get("novo_email") or "").strip().lower()
+
+    if not aluno.verificar_senha(senha_atual):
+        flash('Senha atual incorreta. Nenhuma alteração foi feita.', 'erro')
+        return redirect('/perfil')
+
+    if not novo_email:
+        flash('Informe o novo e-mail.', 'erro')
+        return redirect('/perfil')
+
+    if novo_email == aluno.email:
+        flash('Este já é o seu e-mail atual.', 'erro')
+        return redirect('/perfil')
+
+    if Aluno.query.filter(Aluno.email == novo_email, Aluno.id != aluno.id).first():
+        flash('Este e-mail já está em uso por outra conta.', 'erro')
+        return redirect('/perfil')
+
+    token = secrets.token_urlsafe(32)
+    aluno.email_pendente = novo_email
+    aluno.token_email_hash = hashlib.sha256(token.encode()).hexdigest()
+    aluno.token_email_expira = datetime.utcnow() + TOKEN_EMAIL_VALIDADE
+    db.session.commit()
+
+    enviar_email(
+        novo_email, aluno.nome, 'Confirme seu novo e-mail — Extreme Team', 'Confirme seu novo e-mail',
+        [
+            f'Olá, {aluno.nome.split()[0]}.',
+            'Recebemos um pedido para associar este e-mail à sua conta na Extreme Team.',
+            'Se foi você, clique no botão abaixo para confirmar a troca. O link expira em 30 minutos.',
+            'Se não foi você, pode ignorar este e-mail — nada será alterado.',
+        ],
+        link_url=url_for('auth.confirmar_email', token=token, _external=True),
+        link_texto='Confirmar novo e-mail',
+    )
+    enviar_email(
+        aluno.email, aluno.nome, 'Pedido de troca de e-mail — Extreme Team', 'Pedido de troca de e-mail',
+        [
+            f'Olá, {aluno.nome.split()[0]}.',
+            f'Foi solicitada a troca do e-mail da sua conta na Extreme Team para {novo_email}.',
+            'Enviamos um link de confirmação para o novo endereço. Se não foi você quem pediu, fale com a nossa administração.',
+        ],
+    )
+
+    flash(f'Enviamos um link de confirmação para {novo_email}. Seu e-mail só muda depois de confirmado.', 'sucesso')
+    return redirect('/perfil')
+
+
+@auth_bp.route("/perfil/confirmar_email/<token>")
+def confirmar_email(token):
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    aluno = next(
+        (
+            a for a in Aluno.query.filter(Aluno.token_email_hash.isnot(None)).all()
+            if hmac.compare_digest(a.token_email_hash, token_hash)
+        ),
+        None,
+    )
+
+    if not aluno or not aluno.token_email_expira or aluno.token_email_expira < datetime.utcnow() or not aluno.email_pendente:
+        flash('Link de confirmação inválido ou expirado. Solicite a troca de e-mail novamente.', 'erro')
+        return redirect('/perfil' if session.get('tipo_usuario') == 'aluno' else '/login')
+
+    aluno.email = aluno.email_pendente
+    aluno.email_pendente = None
+    aluno.token_email_hash = None
+    aluno.token_email_expira = None
+    db.session.commit()
+
+    flash('E-mail confirmado e atualizado com sucesso.', 'sucesso')
+    return redirect('/perfil' if session.get('tipo_usuario') == 'aluno' else '/login')
+
 
 MSG_RECUPERACAO_ENVIADA = "Se os dados informados estiverem corretos, enviamos um e-mail com instruções para redefinir sua senha."
 TOKEN_RECUPERACAO_VALIDADE = timedelta(minutes=30)
