@@ -23,10 +23,10 @@ class AlunoDAO:
     def definir_status_cadastro(aluno_id, status):
         aluno = db.session.get(Aluno, aluno_id)
         if not aluno:
-            return False
+            return None
         aluno.status_cadastro = status
         db.session.commit()
-        return True
+        return aluno
 
     @staticmethod
     def definir_ativo(aluno_id, ativo):

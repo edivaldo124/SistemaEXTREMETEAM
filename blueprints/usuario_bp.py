@@ -12,6 +12,7 @@ from dao.professorDAO import ProfessorDAO
 from dao.matriculaDAO import MatriculaDAO
 from dao.presencaDAO import PresencaDAO
 from servicos.formatacao import formatar_cpf, formatar_telefone, somente_digitos, variantes_cpf
+from servicos.email import enviar_email
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -100,6 +101,15 @@ def pagina_cadastro():
             db.session.rollback()
             return render_template("cadastro.html", erro="Erro: Não foi possível cadastrar. Verifique se os dados já estão em uso.")
 
+        enviar_email(
+            email, nome, 'Cadastro recebido — Extreme Team', 'Recebemos seu cadastro',
+            [
+                f'Olá, {nome.split()[0]}!',
+                'Seu cadastro na Extreme Team foi recebido e está em análise pela nossa administração.',
+                'Assim que for aprovado, você poderá entrar com seu usuário e senha.',
+            ],
+        )
+
         return render_template('login.html', msg='Cadastro enviado! Assim que for aprovado pela administração você poderá entrar.')
 
     return render_template("cadastro.html")
@@ -150,6 +160,14 @@ def recuperar_senha():
         if aluno:
             aluno.set_senha(nova_senha)
             db.session.commit()
+            enviar_email(
+                aluno.email, aluno.nome, 'Sua senha foi alterada — Extreme Team', 'Senha alterada com sucesso',
+                [
+                    f'Olá, {aluno.nome.split()[0]}.',
+                    'A senha da sua conta na Extreme Team acabou de ser alterada.',
+                    'Se não foi você quem fez isso, entre em contato com a nossa administração imediatamente.',
+                ],
+            )
             return render_template("login.html", msg="Senha alterada com sucesso! Faça login.")
         else:
             return render_template("recuperar.html", erro="CPF ou E-mail incorretos!")

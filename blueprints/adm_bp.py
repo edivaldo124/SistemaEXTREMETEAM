@@ -10,6 +10,7 @@ from dao.planoDAO import PlanoDAO
 from dao.financeiroDAO import PagamentoDAO
 from modelos.pagamento import Pagamento
 from servicos.formatacao import formatar_telefone
+from servicos.email import enviar_email
 
 admin_bp = Blueprint('admin_blueprint', __name__)
 
@@ -46,8 +47,17 @@ def aprovar_aluno(aluno_id):
     if not usuario_e_admin():
         return redirect('/login')
 
-    if AlunoDAO.definir_status_cadastro(aluno_id, 'aprovado'):
+    aluno = AlunoDAO.definir_status_cadastro(aluno_id, 'aprovado')
+    if aluno:
         flash('Cadastro aprovado.', 'sucesso')
+        enviar_email(
+            aluno.email, aluno.nome, 'Cadastro aprovado — Extreme Team', 'Seu cadastro foi aprovado!',
+            [
+                f'Olá, {aluno.nome.split()[0]}!',
+                'Boas notícias: seu cadastro na Extreme Team foi aprovado pela administração.',
+                'Você já pode entrar com seu usuário e senha para escolher um plano e começar a treinar.',
+            ],
+        )
     else:
         flash('Aluno não encontrado.', 'erro')
     return redirect('/admin')
@@ -58,8 +68,17 @@ def recusar_aluno(aluno_id):
     if not usuario_e_admin():
         return redirect('/login')
 
-    if AlunoDAO.definir_status_cadastro(aluno_id, 'recusado'):
+    aluno = AlunoDAO.definir_status_cadastro(aluno_id, 'recusado')
+    if aluno:
         flash('Cadastro recusado.', 'sucesso')
+        enviar_email(
+            aluno.email, aluno.nome, 'Sobre seu cadastro — Extreme Team', 'Seu cadastro não foi aprovado',
+            [
+                f'Olá, {aluno.nome.split()[0]}.',
+                'Analisamos seu cadastro na Extreme Team e, no momento, não foi possível aprová-lo.',
+                'Se quiser entender o motivo ou tentar novamente, fale com a nossa administração.',
+            ],
+        )
     else:
         flash('Aluno não encontrado.', 'erro')
     return redirect('/admin')
