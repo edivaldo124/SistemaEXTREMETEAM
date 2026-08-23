@@ -28,6 +28,10 @@ class Aluno(db.Model):
     plano = db.relationship('Plano', backref='alunos', lazy=True)
     data_vencimento = db.Column(db.String(10), nullable=True)
 
+    # RF: recuperação de senha por token de uso único (nunca a senha é trocada só com CPF+e-mail).
+    token_recuperacao_hash = db.Column(db.String(64), nullable=True)
+    token_recuperacao_expira = db.Column(db.DateTime, nullable=True)
+
     # Construtor da classe
     def __init__(self, nome, login, datanascimento, cpf, email, telefone, senha, descricao,
                  mensalidade='pendente', plano_id=None, data_vencimento=None, status_cadastro='pendente', ativo=True):

@@ -16,14 +16,14 @@ body::before{content:"";position:fixed;z-index:80;inset:0;pointer-events:none;bo
 /* Cabeçalhos viram uma barra de arena */
 .home-header,.app-header,.admin-header,.detail-header,.account-header{border-bottom:1px solid #333532;background:var(--ink)}
 .app-header,.admin-header,.detail-header,.account-header{position:relative}
-.app-header::after,.admin-header::after,.detail-header::after,.account-header::after{content:"CT EXTREME TEAM • RECIFE / PE";position:absolute;right:clamp(22px,5vw,72px);bottom:-20px;padding:5px 10px;color:var(--ink);background:var(--yellow);font:600 8px var(--mono);letter-spacing:.09em}
+.app-header::after,.admin-header::after,.detail-header::after,.account-header::after{content:"CT EXTREME TEAM • SÃO JOSÉ DA LAGOA TAPADA / PB";position:absolute;right:clamp(22px,5vw,72px);bottom:-20px;padding:5px 10px;color:var(--ink);background:var(--yellow);font:600 8px var(--mono);letter-spacing:.09em}
 
 /* HOME — pôster assimétrico, headline atravessando a composição */
 .home-header{position:absolute;z-index:100;top:0;left:0;display:flex;width:100%;padding:22px clamp(22px,4vw,62px)}
 .home-header nav{gap:8px}.home-header nav a{padding:11px 14px;border-left:1px solid #383a37;font:600 9px var(--mono);letter-spacing:.06em;text-transform:uppercase}
 .nav-login{min-height:44px;padding:0 20px;border:0;color:var(--ink);background:var(--yellow);clip-path:var(--cut);font:700 9px var(--mono);letter-spacing:.08em;text-transform:uppercase}
 .hero{position:relative;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);min-height:100svh;background:var(--ink)}
-.hero::after{content:"EST. 2026   /   CT EXTREME TEAM   /   08°03'S 34°52'W";position:absolute;z-index:3;left:clamp(22px,5vw,72px);bottom:18px;color:#72756f;font:500 8px var(--mono);letter-spacing:.12em}
+.hero::after{content:"EST. 2026   /   CT EXTREME TEAM   /   SÃO JOSÉ DA LAGOA TAPADA · PB";position:absolute;z-index:3;left:clamp(22px,5vw,72px);bottom:18px;color:#72756f;font:500 8px var(--mono);letter-spacing:.12em}
 .hero-copy{position:relative;z-index:2;justify-content:center;padding:150px clamp(28px,5vw,76px) 92px;background:none}
 .hero-copy::before{content:"";position:absolute;z-index:-1;top:21%;left:0;width:11px;height:42%;background:var(--yellow)}
 .hero-copy .eyebrow{color:#d4d6cf}.hero h1{position:relative;z-index:4;width:120%;font-size:clamp(72px,8.8vw,150px);line-height:.75;letter-spacing:-.065em}.hero h1 em{display:inline-block;color:var(--yellow);font-style:italic;transform:translateX(clamp(0px,5vw,72px))}

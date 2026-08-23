@@ -93,6 +93,12 @@
         <section class="secao-pagamentos">
             <div class="section-title"><span>03</span><div><h2>Controle de mensalidades</h2><p>Lance cobranças e atualize pagamentos do aluno.</p></div></div>
 
+            {% if u.mensalidade|lower != 'em dia' %}
+            <form action="/admin/usuario/{{ u.cpf }}/cobrar" method="POST" class="form-inline">
+                <button type="submit" class="btn btn-status">Enviar cobrança por e-mail</button>
+            </form>
+            {% endif %}
+
             <form action="/admin/usuario/{{ u.cpf }}/pagamentos" method="POST" class="form-pagamento">
                 <div class="grupo-input">
                     <label>Plano:</label>

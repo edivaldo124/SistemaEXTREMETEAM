@@ -1,7 +1,10 @@
+import hashlib
 import hmac
 import os
+import secrets
+from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, request, session, redirect
+from flask import Blueprint, render_template, request, session, redirect, url_for
 from sqlalchemy.exc import IntegrityError
 from config import db
 from modelos.usuario import Aluno
@@ -146,30 +149,75 @@ def pagina_perfil():
         presencas=presencas,
     )
 
+MSG_RECUPERACAO_ENVIADA = "Se os dados informados estiverem corretos, enviamos um e-mail com instruções para redefinir sua senha."
+TOKEN_RECUPERACAO_VALIDADE = timedelta(minutes=30)
+
+
 @auth_bp.route("/recuperar_senha", methods=["GET", "POST"])
 def recuperar_senha():
     if request.method == "POST":
         cpf = formatar_cpf(request.form.get("cpf"))
         email = (request.form.get("email") or "").strip().lower()
-        nova_senha = request.form.get("nova_senha")
 
-        from modelos.usuario import Aluno
-        from config import db
         aluno = Aluno.query.filter(Aluno.cpf.in_(variantes_cpf(cpf)), Aluno.email == email).first()
 
+        # Resposta identica para CPF/e-mail validos ou invalidos: evita que alguem use este
+        # formulario para descobrir quais pares de CPF+e-mail existem na base.
         if aluno:
-            aluno.set_senha(nova_senha)
+            token = secrets.token_urlsafe(32)
+            aluno.token_recuperacao_hash = hashlib.sha256(token.encode()).hexdigest()
+            aluno.token_recuperacao_expira = datetime.utcnow() + TOKEN_RECUPERACAO_VALIDADE
             db.session.commit()
+
             enviar_email(
-                aluno.email, aluno.nome, 'Sua senha foi alterada — Extreme Team', 'Senha alterada com sucesso',
+                aluno.email, aluno.nome, 'Redefinir sua senha — Extreme Team', 'Redefinir sua senha',
                 [
                     f'Olá, {aluno.nome.split()[0]}.',
-                    'A senha da sua conta na Extreme Team acabou de ser alterada.',
-                    'Se não foi você quem fez isso, entre em contato com a nossa administração imediatamente.',
+                    'Recebemos um pedido para redefinir a senha da sua conta na Extreme Team.',
+                    'Se foi você, clique no botão abaixo para escolher uma nova senha. O link expira em 30 minutos.',
+                    'Se não foi você, pode ignorar este e-mail — sua senha continua a mesma.',
                 ],
+                link_url=url_for('auth.redefinir_senha', token=token, _external=True),
+                link_texto='Redefinir minha senha',
             )
-            return render_template("login.html", msg="Senha alterada com sucesso! Faça login.")
-        else:
-            return render_template("recuperar.html", erro="CPF ou E-mail incorretos!")
+
+        return render_template("login.html", msg=MSG_RECUPERACAO_ENVIADA)
 
     return render_template("recuperar.html")
+
+
+@auth_bp.route("/recuperar_senha/<token>", methods=["GET", "POST"])
+def redefinir_senha(token):
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    aluno = next(
+        (
+            a for a in Aluno.query.filter(Aluno.token_recuperacao_hash.isnot(None)).all()
+            if hmac.compare_digest(a.token_recuperacao_hash, token_hash)
+        ),
+        None,
+    )
+
+    if not aluno or not aluno.token_recuperacao_expira or aluno.token_recuperacao_expira < datetime.utcnow():
+        return render_template("recuperar.html", erro="Link inválido ou expirado. Solicite uma nova recuperação de senha.")
+
+    if request.method == "POST":
+        nova_senha = request.form.get("nova_senha") or ""
+        if len(nova_senha) < 6:
+            return render_template("redefinir_senha.html", token=token, erro="A senha deve ter pelo menos 6 caracteres.")
+
+        aluno.set_senha(nova_senha)
+        aluno.token_recuperacao_hash = None
+        aluno.token_recuperacao_expira = None
+        db.session.commit()
+
+        enviar_email(
+            aluno.email, aluno.nome, 'Sua senha foi alterada — Extreme Team', 'Senha alterada com sucesso',
+            [
+                f'Olá, {aluno.nome.split()[0]}.',
+                'A senha da sua conta na Extreme Team acabou de ser alterada.',
+                'Se não foi você quem fez isso, entre em contato com a nossa administração imediatamente.',
+            ],
+        )
+        return render_template("login.html", msg="Senha alterada com sucesso! Faça login.")
+
+    return render_template("redefinir_senha.html", token=token)

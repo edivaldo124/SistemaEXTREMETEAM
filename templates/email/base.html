@@ -12,6 +12,8 @@
 <tr><td style="padding:32px;">
 <h1 style="margin:0 0 18px;font-size:23px;line-height:1.25;color:#080908;">{{ titulo }}</h1>
 {% for paragrafo in paragrafos %}<p style="margin:0 0 14px;font-size:14px;line-height:1.65;color:#3a3d3f;">{{ paragrafo }}</p>{% endfor %}
+{% if link_url %}<p style="margin:22px 0 4px;"><a href="{{ link_url }}" style="display:inline-block;padding:14px 22px;background:#080908;color:#f6cf19;font-size:13px;font-weight:bold;text-decoration:none;">{{ link_texto or link_url }}</a></p>
+<p style="margin:12px 0 0;font-size:11px;line-height:1.5;color:#8a8d8a;word-break:break-all;">{{ link_url }}</p>{% endif %}
 </td></tr>
 <tr><td style="padding:18px 32px;border-top:1px solid #d4d2ca;">
 <span style="font-size:11px;color:#8a8d8a;">© 2026 Centro de Treinamento Extreme Team</span>

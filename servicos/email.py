@@ -9,12 +9,20 @@ logger = logging.getLogger(__name__)
 BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
 
 
-def enviar_email(destinatario, nome_destinatario, assunto, titulo, paragrafos):
+def enviar_email(destinatario, nome_destinatario, assunto, titulo, paragrafos, link_url=None, link_texto=None):
     """Envia um e-mail transacional via Brevo. Retorna True/False; nunca lança."""
     api_key = os.environ.get('BREVO_API_KEY')
     remetente_email = os.environ.get('BREVO_SENDER_EMAIL')
     if not api_key or not remetente_email:
         logger.warning('Brevo nao configurado; e-mail "%s" para %s nao enviado.', assunto, destinatario)
+        return False
+
+    try:
+        corpo_html = render_template(
+            'email/base.html', titulo=titulo, paragrafos=paragrafos, link_url=link_url, link_texto=link_texto,
+        )
+    except Exception:
+        logger.exception('Falha ao montar o corpo do e-mail "%s" para %s.', assunto, destinatario)
         return False
 
     payload = {
@@ -24,7 +32,7 @@ def enviar_email(destinatario, nome_destinatario, assunto, titulo, paragrafos):
         },
         'to': [{'email': destinatario, 'name': nome_destinatario}],
         'subject': assunto,
-        'htmlContent': render_template('email/base.html', titulo=titulo, paragrafos=paragrafos),
+        'htmlContent': corpo_html,
     }
 
     try:

@@ -256,3 +256,93 @@ def atualizar_status_pagamento(pagamento_id):
     db.session.commit()
 
     return redirect(f'/admin/usuario/{pagamento.aluno.cpf}')
+
+
+def _esta_inadimplente(aluno):
+    return (aluno.mensalidade or '').strip().lower() not in ('em dia', '')
+
+
+def _paragrafos_cobranca(aluno):
+    paragrafos = [
+        f'Olá, {aluno.nome.split()[0]}.',
+        'Identificamos uma pendência na sua mensalidade na Extreme Team.',
+    ]
+    if aluno.plano:
+        preco = f"{aluno.plano.preco_plano:.2f}".replace('.', ',')
+        paragrafos.append(f'Plano: {aluno.plano.nome_plano} — R$ {preco}')
+    if aluno.data_vencimento:
+        paragrafos.append(f'Vencimento: {aluno.data_vencimento}')
+    paragrafos.append('Regularize o quanto antes para continuar treinando sem interrupções. Qualquer dúvida, fale com a nossa administração.')
+    return paragrafos
+
+
+@admin_bp.route("/admin/avisos", methods=["GET", "POST"])
+def enviar_aviso():
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    if request.method == "POST":
+        assunto = (request.form.get('assunto') or '').strip()
+        mensagem = (request.form.get('mensagem') or '').strip()
+        destinatarios = request.form.get('destinatarios', 'todos')
+
+        if not assunto or not mensagem:
+            flash('Preencha o assunto e a mensagem do aviso.', 'erro')
+            return redirect('/admin/avisos')
+
+        alunos = [a for a in AlunoDAO.listar_todos() if a.esta_ativo]
+        if destinatarios == 'inadimplentes':
+            alunos = [a for a in alunos if _esta_inadimplente(a)]
+
+        paragrafos = [linha.strip() for linha in mensagem.splitlines() if linha.strip()]
+        enviados = sum(1 for aluno in alunos if enviar_email(aluno.email, aluno.nome, assunto, assunto, paragrafos))
+
+        flash(f'Aviso enviado para {enviados} de {len(alunos)} aluno(s).', 'sucesso')
+        return redirect('/admin/avisos')
+
+    alunos_ativos = [a for a in AlunoDAO.listar_todos() if a.esta_ativo]
+    total_inadimplentes = sum(1 for a in alunos_ativos if _esta_inadimplente(a))
+    return render_template(
+        "admin_avisos.html",
+        total_ativos=len(alunos_ativos),
+        total_inadimplentes=total_inadimplentes,
+    )
+
+
+@admin_bp.route("/admin/avisos/cobranca", methods=["POST"])
+def cobrar_inadimplentes():
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    alunos = [a for a in AlunoDAO.listar_todos() if a.esta_ativo and _esta_inadimplente(a)]
+    enviados = sum(
+        1 for aluno in alunos
+        if enviar_email(
+            aluno.email, aluno.nome, 'Mensalidade pendente — Extreme Team', 'Sua mensalidade está pendente',
+            _paragrafos_cobranca(aluno),
+        )
+    )
+
+    flash(f'Cobrança de mensalidade enviada para {enviados} de {len(alunos)} aluno(s) inadimplente(s).', 'sucesso')
+    return redirect('/admin/avisos')
+
+
+@admin_bp.route("/admin/usuario/<cpf>/cobrar", methods=["POST"])
+def cobrar_mensalidade(cpf):
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    aluno = AlunoDAO.buscar_por_usuario(cpf)
+    if not aluno:
+        flash('Aluno não encontrado.', 'erro')
+        return redirect('/admin')
+
+    if enviar_email(
+        aluno.email, aluno.nome, 'Mensalidade pendente — Extreme Team', 'Sua mensalidade está pendente',
+        _paragrafos_cobranca(aluno),
+    ):
+        flash('Cobrança enviada por e-mail.', 'sucesso')
+    else:
+        flash('Não foi possível enviar o e-mail de cobrança.', 'erro')
+
+    return redirect(f'/admin/usuario/{cpf}')
