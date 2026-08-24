@@ -1,0 +1,15 @@
+# Sem domínio ainda: usa a CA interna do Caddy para emitir um certificado local
+# para localhost/127.0.0.1. O navegador vai acusar "conexão não segura" até você
+# confiar na CA do Caddy (extraia com `docker compose exec https cat
+# /data/caddy/pki/authorities/local/root.crt` e importe no sistema/navegador).
+#
+# Quando tiver um domínio real, troque a linha abaixo por ele e remova
+# "tls internal" - o Caddy passa a emitir certificado Let's Encrypt sozinho.
+localhost, 127.0.0.1 {
+	tls internal
+	reverse_proxy app:5000
+}
+
+:80 {
+	redir https://{host}{uri} permanent
+}
