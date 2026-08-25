@@ -1,5 +1,5 @@
 from flask import *
-from config import db
+from config import db, migrate
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -9,6 +9,7 @@ load_dotenv()
 from blueprints.usuario_bp import auth_bp
 from blueprints.adm_bp import admin_bp
 from blueprints.turma_bp import turma_bp
+from blueprints.pix_bp import pix_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
@@ -31,10 +32,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
+migrate.init_app(app, db)
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(turma_bp)
+app.register_blueprint(pix_bp)
 
 with app.app_context():
     db.create_all()
@@ -57,4 +60,4 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=4000)

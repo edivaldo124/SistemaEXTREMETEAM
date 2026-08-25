@@ -5,6 +5,7 @@ from datetime import date
 from flask import Blueprint, abort, flash, redirect, render_template, request, session
 from config import db
 from modelos.plano import Plano
+from modelos.usuario import Aluno
 from dao.usuarioDAO import AlunoDAO
 from dao.planoDAO import PlanoDAO
 from dao.financeiroDAO import PagamentoDAO
@@ -185,11 +186,21 @@ def detalhes_usuario(cpf):
         return redirect('/admin')
 
     if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+
+        if not email:
+            flash('Informe um e-mail para o aluno.', 'erro')
+            return redirect(f'/admin/usuario/{cpf}')
+
+        if Aluno.query.filter(Aluno.email == email, Aluno.id != aluno.id).first():
+            flash('Este e-mail já está em uso por outro aluno.', 'erro')
+            return redirect(f'/admin/usuario/{cpf}')
+
         dados_atualizados = {
             'nome': request.form.get("nome"),
             'login': request.form.get("login"),
             'datanascimento': request.form.get("datanascimento"),
-            'email': request.form.get("email"),
+            'email': email,
             'telefone': formatar_telefone(request.form.get("telefone")),
             'mensalidade': request.form.get("mensalidade"),
             'plano_id': request.form.get("plano_id"),
@@ -276,12 +287,29 @@ def _paragrafos_cobranca(aluno):
     return paragrafos
 
 
+def _token_aviso():
+    token = session.get('token_aviso')
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session['token_aviso'] = token
+    return token
+
+
+def _token_aviso_valido():
+    token_formulario = request.form.get('token_aviso', '')
+    token_sessao = session.get('token_aviso', '')
+    return bool(token_sessao) and hmac.compare_digest(token_formulario, token_sessao)
+
+
 @admin_bp.route("/admin/avisos", methods=["GET", "POST"])
 def enviar_aviso():
     if not usuario_e_admin():
         return redirect('/login')
 
     if request.method == "POST":
+        if not _token_aviso_valido():
+            abort(400)
+
         assunto = (request.form.get('assunto') or '').strip()
         mensagem = (request.form.get('mensagem') or '').strip()
         destinatarios = request.form.get('destinatarios', 'todos')
@@ -306,6 +334,7 @@ def enviar_aviso():
         "admin_avisos.html",
         total_ativos=len(alunos_ativos),
         total_inadimplentes=total_inadimplentes,
+        token_aviso=_token_aviso(),
     )
 
 
@@ -313,6 +342,9 @@ def enviar_aviso():
 def cobrar_inadimplentes():
     if not usuario_e_admin():
         return redirect('/login')
+
+    if not _token_aviso_valido():
+        abort(400)
 
     alunos = [a for a in AlunoDAO.listar_todos() if a.esta_ativo and _esta_inadimplente(a)]
     enviados = sum(

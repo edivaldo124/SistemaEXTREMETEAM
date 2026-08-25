@@ -7,6 +7,7 @@
 <section class="secao"><div class="section-heading"><div><p class="eyebrow">Aviso geral</p><h2>Enviar comunicado</h2></div><p>O texto é enviado como e-mail para os alunos escolhidos. Cada linha vira um parágrafo.</p></div>
 <div class="atalhos-aviso"><span>Atalho:</span><button type="button" class="btn btn-status" id="atalho-sem-treino">Não vai ter treino</button></div>
 <form action="/admin/avisos" method="POST" class="form-plano" id="form-aviso">
+    <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
     <div class="field"><label for="assunto">Assunto</label><input id="assunto" type="text" name="assunto" placeholder="Ex.: Aula cancelada nesta sexta" required></div>
     <div class="field"><label for="destinatarios">Destinatários</label><select id="destinatarios" name="destinatarios"><option value="todos">Todos os alunos ativos</option><option value="inadimplentes">Somente com mensalidade pendente</option></select></div>
     <div class="field field-full"><label for="mensagem">Mensagem</label><textarea id="mensagem" name="mensagem" rows="5" placeholder="Escreva o aviso para os alunos…" required></textarea></div>
@@ -23,6 +24,7 @@ document.getElementById('atalho-sem-treino').addEventListener('click', function 
 
 <section class="secao"><div class="section-heading"><div><p class="eyebrow">Financeiro</p><h2>Cobrança de mensalidades</h2></div><p>Envia por e-mail um lembrete de mensalidade pendente para todos os alunos ativos que não estão "Em Dia".</p></div>
 <form action="/admin/avisos/cobranca" method="POST" class="form-inline" data-confirm-modal data-modal-eyebrow="Cobrança em massa" data-modal-title="Enviar cobrança para todos os inadimplentes?" data-modal-message="Um e-mail de cobrança será enviado para os {{ total_inadimplentes }} aluno(s) com mensalidade pendente." data-modal-confirm="Enviar cobranças">
+    <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
     <button type="submit" class="btn btn-status">Cobrar {{ total_inadimplentes }} aluno(s) inadimplente(s)</button>
 </form>
 </section>

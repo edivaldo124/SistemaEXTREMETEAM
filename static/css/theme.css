@@ -55,7 +55,7 @@ img { max-width:100%; }
 .alert,.msg { padding:13px 15px; border-left:3px solid var(--red); color:#7e2e24; background:#f7e3df; font-size:13px; line-height:1.45; }
 .msg-sucesso { border-color:var(--green); color:#18523a; background:#e2f0e9; }
 .status { display:inline-flex; padding:5px 9px; border-radius:2px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
-.status-pago { color:#18523a; background:#dceee5; } .status-pendente { color:#6b4e00; background:#fff0bc; } .status-atrasado { color:#842029; background:#f7dedb; } .status-cancelado { color:#51575b; background:#e4e5e5; }
+.status-pago { color:#18523a; background:#dceee5; } .status-pendente { color:#6b4e00; background:#fff0bc; } .status-atrasado { color:#842029; background:#f7dedb; } .status-cancelado { color:#51575b; background:#e4e5e5; } .status-reembolsado { color:#1c3f6e; background:#dce6f7; }
 
 .table-wrap,.table-container,.tabela-pagamentos { width:100%; overflow-x:auto; border:1px solid var(--line); -webkit-overflow-scrolling:touch; }
 table { width:100%; border-collapse:collapse; background:var(--surface); }

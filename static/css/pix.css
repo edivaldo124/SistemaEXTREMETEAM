@@ -1,0 +1,37 @@
+.btn-pagar-pix{min-height:34px;padding:0 14px;font-size:11px}
+
+.pix-dialog{position:fixed;width:min(440px,calc(100% - 32px));padding:38px;border:0;border-radius:0;color:var(--ink);background:var(--paper);box-shadow:0 28px 90px rgba(0,0,0,.3);overflow:visible}
+.pix-dialog[open]{animation:dialog-in .28s var(--ease)}
+.pix-dialog::backdrop{background:rgba(10,12,13,.78);backdrop-filter:blur(4px);animation:backdrop-in .2s ease}
+.pix-accent{position:absolute;top:0;left:0;width:100%;height:5px;background:var(--yellow)}
+.pix-fechar{position:absolute;top:14px;right:14px;width:32px;height:32px;border:0;border-radius:50%;color:var(--ink);background:transparent;font-size:22px;line-height:1;cursor:pointer}
+.pix-fechar:hover{background:#e9e6df}
+.pix-dialog .eyebrow{margin-bottom:10px}
+.pix-dialog h2{margin:0 0 22px;font:700 34px/.95 var(--display);letter-spacing:-.02em}
+
+.pix-carregando{color:var(--muted);font-size:13px}
+
+.pix-resumo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.pix-resumo span{display:block;margin-bottom:6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.pix-resumo strong{font:700 20px var(--display)}
+
+.pix-qr-area{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;margin-bottom:20px;padding:16px;border:1px solid var(--line);background:var(--surface)}
+.pix-qr-area img{width:100%;max-width:220px;height:auto}
+.pix-sem-qr{margin:0;color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
+
+.pix-dialog label{display:block;margin-bottom:8px;color:var(--ink);font-size:12px;font-weight:700}
+.pix-copia-linha{display:flex;gap:8px}
+.pix-copia-linha input{flex:1;min-width:0;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:3px;color:var(--ink);font-size:12px;background:rgba(255,254,253,.9)}
+.pix-copia-linha button{flex:0 0 auto;min-height:44px;padding:0 16px;font-size:11px}
+
+.pix-status{margin:18px 0 0;padding:10px 12px;color:var(--muted);background:#eeece5;font-size:12px;font-weight:600;text-align:center}
+.pix-status-aprovado{color:#18523a;background:#dceee5}
+
+@media(max-width:480px){
+  .pix-dialog{padding:28px 20px}
+  .pix-dialog h2{font-size:28px}
+  .pix-copia-linha{flex-direction:column}
+}
+@media(prefers-reduced-motion:reduce){
+  .pix-dialog[open],.pix-dialog::backdrop{animation:none}
+}

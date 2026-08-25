@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pix.css') }}">
 </head>
 <body>
     <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -28,44 +29,44 @@
         <section class="detail-section"><div class="section-title"><span>01</span><div><h2>Dados do perfil</h2><p>Informações cadastrais e vínculo com a academia.</p></div></div><form action="/admin/usuario/{{ u.cpf }}" method="POST" class="form-detalhes">
 
             <div class="grupo-input">
-                <label>Nome Completo:</label>
-                <input type="text" name="nome" value="{{ u.nome }}" required>
+                <label for="dt-nome">Nome Completo:</label>
+                <input id="dt-nome" type="text" name="nome" value="{{ u.nome }}" required>
             </div>
 
             <div class="grupo-input">
-                <label>Utilizador (Login):</label>
-                <input type="text" name="login" value="{{ u.login }}" required>
+                <label for="dt-login">Utilizador (Login):</label>
+                <input id="dt-login" type="text" name="login" value="{{ u.login }}" required>
             </div>
 
             <div class="grupo-input">
-                <label>Data de Nascimento:</label>
-                <input type="text" name="datanascimento" value="{{ u.datanascimento }}" required>
+                <label for="dt-nascimento">Data de Nascimento:</label>
+                <input id="dt-nascimento" type="text" name="datanascimento" value="{{ u.datanascimento }}" required>
             </div>
 
             <div class="grupo-input">
-                <label>CPF (Não editável):</label>
-                <input type="text" name="cpf" value="{{ u.cpf }}" maxlength="14" data-mask="cpf" readonly class="input-bloqueado">
+                <label for="dt-cpf">CPF (Não editável):</label>
+                <input id="dt-cpf" type="text" name="cpf" value="{{ u.cpf }}" maxlength="14" data-mask="cpf" readonly class="input-bloqueado">
             </div>
 
             <div class="grupo-input">
-                <label>E-mail:</label>
-                <input type="text" name="email" value="{{ u.email }}" required>
+                <label for="dt-email">E-mail:</label>
+                <input id="dt-email" type="text" name="email" value="{{ u.email }}" required>
             </div>
 
             <div class="grupo-input">
-                <label>Telefone:</label>
-                <input type="tel" name="telefone" value="{{ u.telefone }}" maxlength="15" inputmode="tel" placeholder="(00) 00000-0000" data-mask="phone" required>
+                <label for="dt-telefone">Telefone:</label>
+                <input id="dt-telefone" type="tel" name="telefone" value="{{ u.telefone }}" maxlength="15" inputmode="tel" placeholder="(00) 00000-0000" data-mask="phone" required>
             </div>
 
             <div class="grupo-input">
-                <label>Descrição:</label>
-                <input type="text" name="descricao" value="{{ u.descricao }}" required>
+                <label for="dt-descricao">Descrição:</label>
+                <input id="dt-descricao" type="text" name="descricao" value="{{ u.descricao }}" required>
             </div>
 
 
             <div class="grupo-input">
-                <label>Situação Financeira:</label>
-                <select name="mensalidade">
+                <label for="dt-mensalidade">Situação Financeira:</label>
+                <select id="dt-mensalidade" name="mensalidade">
                     <option value="Pendente" {% if u.mensalidade == 'Pendente' %}selected{% endif %}>Pendente</option>
                     <option value="Em Dia" {% if u.mensalidade == 'Em Dia' %}selected{% endif %}>Em Dia</option>
                     <option value="Inativo" {% if u.mensalidade == 'Inativo' %}selected{% endif %}>Inativo</option>
@@ -73,8 +74,8 @@
             </div>
 
             <div class="grupo-input">
-                <label>Plano da Academia:</label>
-                <select name="plano_id">
+                <label for="dt-plano">Plano da Academia:</label>
+                <select id="dt-plano" name="plano_id">
                     <option value="Nenhum">Sem Plano</option>
                     {% for p in planos %}
                         <option value="{{ p.id }}" {% if u.plano_id == p.id %}selected{% endif %}>{{ p.nome_plano }}</option>
@@ -101,7 +102,7 @@
 
             <form action="/admin/usuario/{{ u.cpf }}/pagamentos" method="POST" class="form-pagamento">
                 <div class="grupo-input">
-                    <label>Plano:</label>
+                    <label for="plano-pagamento">Plano:</label>
                     <select name="plano_id" id="plano-pagamento" required>
                         <option value="">Selecione</option>
                         {% for p in planos %}
@@ -110,15 +111,15 @@
                     </select>
                 </div>
                 <div class="grupo-input">
-                    <label>Valor:</label>
+                    <label for="valor-pagamento">Valor:</label>
                     <input type="number" name="valor" id="valor-pagamento" min="0.01" step="0.01" required>
                 </div>
                 <div class="grupo-input">
-                    <label>Vencimento:</label>
-                    <input type="date" name="vencimento" required>
+                    <label for="dt-vencimento">Vencimento:</label>
+                    <input id="dt-vencimento" type="date" name="vencimento" required>
                 </div>
                 <div class="grupo-input">
-                    <label>Status:</label>
+                    <label for="status-pagamento">Status:</label>
                     <select name="status" id="status-pagamento">
                         <option value="pendente">Pendente</option>
                         <option value="pago">Pago</option>
@@ -127,12 +128,12 @@
                     </select>
                 </div>
                 <div class="grupo-input">
-                    <label>Data do pagamento:</label>
-                    <input type="date" name="data_pagamento">
+                    <label for="dt-data-pagamento">Data do pagamento:</label>
+                    <input id="dt-data-pagamento" type="date" name="data_pagamento">
                 </div>
                 <div class="grupo-input">
-                    <label>Forma de pagamento:</label>
-                    <select name="forma_pagamento">
+                    <label for="dt-forma-pagamento">Forma de pagamento:</label>
+                    <select id="dt-forma-pagamento" name="forma_pagamento">
                         <option value="">Não informada</option>
                         <option value="pix">PIX</option>
                         <option value="dinheiro">Dinheiro</option>
@@ -147,7 +148,7 @@
             <div class="tabela-pagamentos table-stack">
                 <table>
                     <thead>
-                        <tr><th>Plano</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Status</th><th>Forma</th><th>Ação</th></tr>
+                        <tr><th>Plano</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Status</th><th>Forma</th><th>Origem</th><th>Ação</th></tr>
                     </thead>
                     <tbody>
                     {% for pagamento in pagamentos %}
@@ -158,10 +159,14 @@
                             <td data-label="Pagamento">{{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}</td>
                             <td data-label="Status"><span class="status status-{{ pagamento.status }}">{{ pagamento.status }}</span></td>
                             <td data-label="Forma">{{ (pagamento.forma_pagamento or '—')|replace('_', ' ') }}</td>
+                            <td data-label="Origem">{% if pagamento.provider == 'mercado_pago' %}<span class="status status-pago" title="ID Mercado Pago: {{ pagamento.provider_payment_id }}">Pix</span>{% else %}<span class="status status-cancelado">Manual</span>{% endif %}</td>
                             <td data-label="Ação">
+                                {% if pagamento.status in ('pendente', 'atrasado') %}
+                                <button type="button" class="button-primary btn-pagar-pix" data-pix-pagar data-pagamento-id="{{ pagamento.id }}">Pagar com Pix</button>
+                                {% endif %}
                                 <form action="/admin/pagamentos/{{ pagamento.id }}/status" method="POST" class="form-status">
                                     <select name="status">
-                                        {% for status in ['pendente', 'pago', 'atrasado', 'cancelado'] %}
+                                        {% for status in ['pendente', 'pago', 'atrasado', 'cancelado', 'reembolsado'] %}
                                             <option value="{{ status }}" {% if pagamento.status == status %}selected{% endif %}>{{ status|capitalize }}</option>
                                         {% endfor %}
                                     </select>
@@ -176,7 +181,7 @@
                             </td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="7">Nenhuma mensalidade lançada.</td></tr>
+                        <tr><td colspan="8" class="empty-state">Nenhuma mensalidade lançada.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -197,5 +202,7 @@
         preencherValor();
     </script>
 
+    {% include 'components/pix_dialog.html' %}
+    <script src="{{ url_for('static', filename='js/pix.js') }}" defer></script>
 </body>
 </html>

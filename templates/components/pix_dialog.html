@@ -1,0 +1,35 @@
+<dialog class="pix-dialog" id="pix-dialog" aria-labelledby="pix-dialog-title">
+    <div class="pix-accent" aria-hidden="true"></div>
+    <button type="button" class="pix-fechar" data-pix-fechar aria-label="Fechar">&times;</button>
+    <p class="eyebrow">Pagamento via Pix</p>
+    <h2 id="pix-dialog-title">Pagar mensalidade</h2>
+
+    <div class="pix-corpo" data-pix-estado="carregando">
+        <p class="pix-carregando" role="status" aria-live="polite">Gerando cobrança Pix...</p>
+    </div>
+
+    <div class="pix-corpo" data-pix-estado="erro" hidden>
+        <p class="alert" data-pix-erro-msg role="alert">Não foi possível gerar o Pix. Tente novamente.</p>
+        <button type="button" class="button-secondary" data-pix-tentar-novamente>Tentar novamente</button>
+    </div>
+
+    <div class="pix-corpo" data-pix-estado="pronto" hidden>
+        <div class="pix-resumo">
+            <div><span>Valor</span><strong data-pix-valor>—</strong></div>
+            <div><span>Vencimento</span><strong data-pix-vencimento>—</strong></div>
+        </div>
+
+        <div class="pix-qr-area">
+            <img data-pix-qr alt="QR Code para pagamento via Pix" hidden>
+            <p class="pix-sem-qr" data-pix-sem-qr hidden>QR Code indisponível no momento — use o código copia e cola abaixo.</p>
+        </div>
+
+        <label for="pix-copia-cola">Pix copia e cola</label>
+        <div class="pix-copia-linha">
+            <input id="pix-copia-cola" type="text" readonly data-pix-copia-cola aria-label="Código Pix copia e cola">
+            <button type="button" class="button-secondary" data-pix-copiar>Copiar código</button>
+        </div>
+
+        <p class="pix-status" data-pix-status role="status" aria-live="polite">Aguardando pagamento…</p>
+    </div>
+</dialog>
