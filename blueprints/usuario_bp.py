@@ -155,15 +155,43 @@ def pagina_perfil():
 
     if request.method == "POST":
         plano_id_escolhido = request.form.get("plano")
-        if plano_id_escolhido and plano_id_escolhido != "Nenhum":
-            aluno_dados.plano_id = int(plano_id_escolhido)
-            db.session.commit()
+        try:
+            plano_id = int(plano_id_escolhido) if plano_id_escolhido and plano_id_escolhido != "Nenhum" else None
+        except (TypeError, ValueError):
+            plano_id = None
+
+        plano = PlanoDAO.buscar_por_id(plano_id) if plano_id else None
+        if not plano:
+            flash('Plano inválido ou indisponível.', 'erro')
+            return redirect(url_for('auth.pagina_perfil', _anchor='planos'))
+
+        try:
+            pagamento, criado = PagamentoDAO.criar_ou_obter_mensalidade_plano(
+                aluno=aluno_dados, plano=plano,
+            )
+        except Exception:
+            db.session.rollback()
+            flash('Não foi possível contratar o plano. Tente novamente.', 'erro')
+            return redirect(url_for('auth.pagina_perfil', _anchor='planos'))
+
+        flash(
+            'Plano escolhido. Conclua o pagamento via Pix.' if criado
+            else 'Esta mensalidade já estava aberta. Continue o pagamento via Pix.',
+            'sucesso',
+        )
+        return redirect(url_for('auth.pagina_perfil', pix=pagamento.id, _anchor='mensalidades'))
 
     lista_planos = PlanoDAO.listar_todos()
     pagamentos = PagamentoDAO.listar_por_aluno(aluno_dados.id)
     matriculas = MatriculaDAO.listar_por_aluno(aluno_dados.id)
     presencas = PresencaDAO.listar_por_aluno(aluno_dados.id)
     total_presencas = sum(1 for p in presencas if p.presente)
+
+    abrir_pix_id = request.args.get('pix', type=int)
+    if abrir_pix_id:
+        pagamento_pix = PagamentoDAO.buscar_por_id(abrir_pix_id)
+        if not pagamento_pix or pagamento_pix.aluno_id != aluno_dados.id or pagamento_pix.status not in ('pendente', 'atrasado', 'recusado'):
+            abrir_pix_id = None
 
     return render_template(
         "pgUsuario.html",
@@ -176,6 +204,7 @@ def pagina_perfil():
         total_presencas=total_presencas,
         rotulo_status=rotulo_status,
         formatar_competencia=formatar_competencia,
+        abrir_pix_id=abrir_pix_id,
     )
 
 

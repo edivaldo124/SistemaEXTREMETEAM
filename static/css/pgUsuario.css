@@ -30,6 +30,11 @@
 .btn-ver-historico-presencas{margin-top:14px}
 
 .bottom-nav a.is-active,.bottom-nav a[aria-current="page"]{color:var(--yellow)}
+.menu-screen[hidden]{display:none!important}
+.menu-screen:focus{outline:none}
+.menu-screen-overview{animation:screen-enter .22s var(--ease)}
+.content-section.menu-screen{margin-top:0;animation:screen-enter .22s var(--ease)}
+@keyframes screen-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* ---------- Foto de perfil dentro de "Meus dados" ---------- */
 .form-foto-perfil{gap:14px}
@@ -55,3 +60,4 @@ dialog.presenca-dialog{width:min(640px,calc(100% - 32px))}
 
 @media(max-width:720px){.app-header nav a:not(#link-sair):not(.nav-avatar-link){display:none}.app-header .site-brand span{display:none}.profile-page{padding-top:45px}.profile-mark{width:65px;height:65px;font-size:40px}.summary-grid{grid-template-columns:1fr}.summary-grid article{border-right:0;border-bottom:1px solid var(--line)}.profile-note{grid-template-columns:1fr;gap:8px}.section-heading{align-items:flex-start;flex-direction:column;gap:10px}.form-detalhes-grid{grid-template-columns:1fr}.mensalidade-card{padding:20px}.mensalidade-card-dados{grid-template-columns:1fr 1fr}.foto-perfil-area{flex-direction:column;align-items:flex-start}.content-section{scroll-margin-top:16px}}
 @media(max-width:1020px) and (min-width:721px){.form-detalhes-grid{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){.menu-screen-overview,.content-section.menu-screen{animation:none}}

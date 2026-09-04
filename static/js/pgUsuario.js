@@ -20,64 +20,48 @@ if (gradePlanos) {
         if (planoAtual && card.dataset.planoId === planoAtual) {
             const botao = card.querySelector('.btn-escolher');
             card.classList.add('plano-atual');
-            botao.disabled = true;
-            botao.textContent = 'Plano atual';
+            // O aluno pode estar associado ao plano sem possuir uma mensalidade
+            // aberta (cadastros antigos, por exemplo). Manter a ação disponível
+            // permite criar ou reutilizar a cobrança com segurança no backend.
+            botao.textContent = 'Pagar plano atual';
         }
     });
 }
 
-// ---------- Marca a seção visível no momento como ativa no menu (cabeçalho e navegação inferior) ----------
+// ---------- Navegação da área do aluno: uma tela por item do menu ----------
 (() => {
-    const idsSecoes = ['turmas', 'mensalidades', 'planos', 'meus-dados'];
-    const secoes = idsSecoes.map((id) => document.getElementById(id)).filter(Boolean);
-    if (!secoes.length) return;
+    const idsTelas = ['visao-geral', 'turmas', 'mensalidades', 'planos', 'meus-dados'];
+    const telas = idsTelas.map((id) => document.getElementById(id)).filter(Boolean);
+    const links = Array.from(document.querySelectorAll('[data-menu-screen]'));
+    if (!telas.length || !links.length) return;
 
-    const links = Array.from(document.querySelectorAll(
-        '.app-header nav a[href^="#"]:not(.nav-avatar-link), .bottom-nav a[href^="#"]'
-    ));
-    if (!links.length) return;
-
-    let idAtivo = null;
-
-    function marcarAtivo(id) {
-        if (id === idAtivo) return;
-        idAtivo = id;
-        links.forEach((link) => {
-            const ativo = link.getAttribute('href') === `#${id}`;
-            link.classList.toggle('is-active', ativo);
-            if (ativo) {
-                link.setAttribute('aria-current', 'page');
-            } else {
-                link.removeAttribute('aria-current');
-            }
+    function mostrarTela(id, moverFoco = false) {
+        if (!idsTelas.includes(id)) id = 'visao-geral';
+        telas.forEach((tela) => {
+            const ativa = tela.id === id;
+            tela.hidden = !ativa;
+            tela.setAttribute('aria-hidden', String(!ativa));
         });
-    }
-
-    if ('IntersectionObserver' in window) {
-        const observer = new IntersectionObserver((entradas) => {
-            const visiveis = entradas.filter((entrada) => entrada.isIntersecting);
-            if (!visiveis.length) return;
-            visiveis.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-            marcarAtivo(visiveis[0].target.id);
-        }, { rootMargin: '-35% 0px -55% 0px', threshold: 0 });
-
-        secoes.forEach((secao) => observer.observe(secao));
-    } else {
-        const aoRolar = () => {
-            const referencia = window.scrollY + window.innerHeight * 0.3;
-            let atual = secoes[0].id;
-            secoes.forEach((secao) => {
-                if (secao.offsetTop <= referencia) atual = secao.id;
-            });
-            marcarAtivo(atual);
-        };
-        window.addEventListener('scroll', aoRolar, { passive: true });
-        aoRolar();
+        links.forEach((link) => {
+            const ativo = link.dataset.menuScreen === id;
+            link.classList.toggle('is-active', ativo);
+            if (ativo) link.setAttribute('aria-current', 'page');
+            else link.removeAttribute('aria-current');
+        });
+        if (moverFoco) document.getElementById(id)?.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: 'auto' });
     }
 
     links.forEach((link) => {
-        link.addEventListener('click', () => {
-            marcarAtivo(link.getAttribute('href').slice(1));
+        link.addEventListener('click', (evento) => {
+            evento.preventDefault();
+            const id = link.dataset.menuScreen;
+            history.pushState(null, '', `#${id}`);
+            mostrarTela(id, true);
         });
     });
+
+    window.addEventListener('popstate', () => mostrarTela(location.hash.slice(1)));
+    window.addEventListener('hashchange', () => mostrarTela(location.hash.slice(1)));
+    mostrarTela(location.hash.slice(1) || 'visao-geral');
 })();

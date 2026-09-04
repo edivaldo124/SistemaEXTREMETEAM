@@ -65,6 +65,49 @@ def mensalidade_destaque(pagamentos):
 
 class PagamentoDAO:
     @staticmethod
+    def criar_ou_obter_mensalidade_plano(*, aluno, plano, hoje=None):
+        """Cria a cobrança da contratação ou reutiliza a equivalente em aberto.
+
+        O preço sempre vem do plano persistido. A competência torna o POST
+        idempotente em reenvios e evita duas cobranças abertas do mesmo plano no mês.
+        """
+        hoje = hoje or date.today()
+        competencia = hoje.strftime('%Y-%m')
+        existente = Pagamento.query.filter(
+            Pagamento.aluno_id == aluno.id,
+            Pagamento.plano_id == plano.id,
+            Pagamento.competencia == competencia,
+            Pagamento.status.in_(STATUS_ABERTOS),
+        ).order_by(Pagamento.id.desc()).first()
+
+        if existente:
+            if aluno.plano_id != plano.id:
+                aluno.plano_id = plano.id
+                db.session.commit()
+            return existente, False
+
+        pagamento = Pagamento(
+            aluno_id=aluno.id,
+            plano_id=plano.id,
+            valor=Decimal(str(plano.preco_plano)),
+            vencimento=hoje,
+            status='pendente',
+            competencia=competencia,
+        )
+        aluno.plano_id = plano.id
+        aluno.mensalidade = 'Pendente'
+        db.session.add(pagamento)
+        db.session.flush()
+        db.session.add(PagamentoEvento(
+            pagamento_id=pagamento.id,
+            tipo='plano_contratado',
+            detalhe=f'Cobrança criada para contratação do plano {plano.nome_plano}.',
+            ator=aluno.login,
+        ))
+        db.session.commit()
+        return pagamento, True
+
+    @staticmethod
     def salvar(pagamento):
         db.session.add(pagamento)
         db.session.commit()

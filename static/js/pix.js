@@ -203,6 +203,18 @@
         abrirPix(pagamentoId);
     });
 
+    const autoPixId = document.getElementById('conteudo')?.dataset.autoPixId;
+    if (autoPixId) {
+        const botaoAutomatico = document.querySelector(
+            `[data-pix-pagar][data-pagamento-id="${CSS.escape(autoPixId)}"]`
+        );
+        if (botaoAutomatico) {
+            botaoQueAbriu = botaoAutomatico;
+            botaoAutomatico.disabled = true;
+            abrirPix(autoPixId);
+        }
+    }
+
     btnTentarNovamente?.addEventListener('click', () => {
         if (pagamentoIdAtual) abrirPix(pagamentoIdAtual);
     });
