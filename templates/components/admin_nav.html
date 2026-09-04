@@ -1,0 +1,10 @@
+{% set secao_ativa = secao_ativa|default('') %}
+<header class="admin-header">
+<a class="site-brand" href="/"><img src="{{ url_for('static',filename='imagens/logo-icon.png') }}" alt=""><span>Centro de treinamento<br><strong>Extreme Team</strong></span></a>
+<nav class="admin-nav" aria-label="Seções da administração">
+<div class="admin-nav-scroll">
+{% for chave, href, rotulo in [('painel','/admin','Painel'),('turmas','/admin/turmas','Turmas'),('financeiro','/admin/financeiro','Financeiro'),('avisos','/admin/avisos','Avisos')] %}<a href="{{ href }}" class="link-turmas{{ ' is-active' if secao_ativa == chave else '' }}"{% if secao_ativa == chave %} aria-current="page"{% endif %}>{{ rotulo }}</a>{% endfor %}
+</div>
+<a href="/logout" class="link-logout" data-confirm-modal data-modal-eyebrow="Encerrar sessão" data-modal-title="Sair do painel?" data-modal-message="Você precisará entrar novamente para acessar a administração." data-modal-confirm="Sim, sair">Sair</a>
+</nav>
+</header>

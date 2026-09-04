@@ -1,11 +1,8 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Financeiro | Administração</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/financeiro.css') }}">
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Financeiro | Administração</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/financeiro.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/pix.css') }}">
 </head>
 <body>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-<header class="detail-header">
-    <a class="site-brand" href="/admin"><img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt=""><span>Centro de treinamento<br><strong>Extreme Team</strong></span></a>
-    <a href="/admin">← Voltar ao painel</a>
-</header>
+{% set secao_ativa = 'financeiro' %}{% include 'components/admin_nav.html' %}
 <main id="conteudo">
 <div class="container-detalhes">
     <div class="detail-intro"><div><p class="eyebrow">Administração</p><h1>Financeiro</h1><p>Totais calculados a partir dos pagamentos registrados no banco.</p></div></div>
@@ -84,6 +81,17 @@
                                 <button type="submit" class="btn btn-status">Sincronizar</button>
                             </form>
                             {% endif %}
+                            {% if pagamento.status == 'em_analise' %}
+                            <button type="button" class="btn btn-status" data-abrir-comprovante
+                                data-pagamento-id="{{ pagamento.id }}"
+                                data-aluno-nome="{{ pagamento.aluno.nome }}"
+                                data-valor="{{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}"
+                                data-competencia="{{ formatar_competencia(pagamento.competencia) }}"
+                                data-enviado-em="{{ pagamento.comprovante_manual_enviado_em.strftime('%d/%m/%Y %H:%M') if pagamento.comprovante_manual_enviado_em else '—' }}"
+                                data-arquivo-url="{{ url_for('auth.ver_comprovante_manual', pagamento_id=pagamento.id) }}"
+                                data-aprovar-action="{{ url_for('admin_blueprint.aprovar_comprovante_manual', pagamento_id=pagamento.id) }}"
+                                data-rejeitar-action="{{ url_for('admin_blueprint.rejeitar_comprovante_manual', pagamento_id=pagamento.id) }}">Revisar comprovante</button>
+                            {% endif %}
                         </td>
                     </tr>
                 {% else %}
@@ -95,5 +103,7 @@
     </section>
 </div>
 </main>
+{% include 'components/confirm_modal.html' %}<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}"><script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+{% include 'components/comprovante_modal.html' %}<script src="{{ url_for('static', filename='js/comprovante_modal.js') }}" defer></script>
 </body>
 </html>

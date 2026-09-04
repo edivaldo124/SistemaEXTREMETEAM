@@ -12,7 +12,8 @@
 .pagamento-carregando{margin:0;color:var(--muted);font-size:13px;text-align:center}
 
 .pagamento-selo-seguranca{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-.selo-mercadopago,.selo-pix{display:inline-flex;align-items:center;padding:6px 12px;border:1px solid var(--ink);border-radius:2px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.selo{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--ink);border-radius:2px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.selo-icone{width:14px;height:14px;flex:0 0 auto}
 .selo-mercadopago{color:#fff;background:#009ee3;border-color:#009ee3}
 .selo-pix{color:#fff;background:#32bcad;border-color:#32bcad}
 .pagamento-seguranca-texto{margin:0 0 20px;color:var(--muted);font-size:12px;line-height:1.6}

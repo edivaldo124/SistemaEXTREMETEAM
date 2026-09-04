@@ -1,10 +1,7 @@
 <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Comprovante | Centro de Treinamento Extreme Team</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/comprovante.css') }}">
 </head>
 <body>
-<header class="detail-header no-print">
-    <a class="site-brand" href="/perfil"><img src="{{ url_for('static',filename='imagens/logo-icon.png') }}" alt=""><span>Centro de treinamento<br><strong>Extreme Team</strong></span></a>
-    <a href="/perfil">← Voltar</a>
-</header>
+{% include 'components/detail_back_header.html' %}
 <main class="comprovante-page">
 <div class="comprovante-folha">
     <div class="comprovante-cabecalho">

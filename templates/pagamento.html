@@ -2,10 +2,7 @@
 </head>
 <body>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-<header class="detail-header">
-    <a class="site-brand" href="/perfil"><img src="{{ url_for('static',filename='imagens/logo-icon.png') }}" alt=""><span>Centro de treinamento<br><strong>Extreme Team</strong></span></a>
-    <a href="/perfil">← Voltar</a>
-</header>
+{% include 'components/detail_back_header.html' %}
 <main id="conteudo" class="pagamento-page">
 {% with mensagens = get_flashed_messages(with_categories=true) %}
 {% for categoria, mensagem in mensagens %}<div class="msg msg-{{ categoria }}">{{ mensagem }}</div>{% endfor %}
@@ -36,8 +33,8 @@
 
     <section class="pagamento-metodo" data-estado="pix" hidden>
         <div class="pagamento-selo-seguranca">
-            <span class="selo-mercadopago">Processado pelo Mercado Pago</span>
-            <span class="selo-pix">Pix</span>
+            <span class="selo selo-mercadopago"><svg class="selo-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>Mercado Pago</span>
+            <span class="selo selo-pix"><svg class="selo-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12c0-2.2 1.8-4 4-4 1.7 0 2.7 1.1 3 2.2.3-1.1 1.3-2.2 3-2.2 2.2 0 4 1.8 4 4s-1.8 4-4 4c-1.7 0-2.7-1.1-3-2.2-.3 1.1-1.3 2.2-3 2.2-2.2 0-4-1.8-4-4z"/></svg>Pix</span>
         </div>
         <p class="pagamento-seguranca-texto">Pagamento processado com criptografia pelo Mercado Pago. A Extreme Team nunca vê nem armazena os dados da sua conta bancária.</p>
 

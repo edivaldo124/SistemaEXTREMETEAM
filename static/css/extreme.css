@@ -15,6 +15,7 @@ body { background-color:var(--paper); }
 .home-header nav a:hover { color:var(--yellow); }
 .app-header #link-sair,.link-logout { border-color:#3a3a3a; }
 .link-turmas { color:var(--yellow); }
+.admin-header a.is-active,.admin-header a[aria-current="page"] { color:var(--yellow); font-weight:700; }
 .nav-login { color:var(--ink); background:var(--yellow); border-color:var(--yellow); }
 .nav-login:hover { background:var(--gold); border-color:var(--gold); }
 

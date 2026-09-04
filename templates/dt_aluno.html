@@ -9,13 +9,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pix.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
 </head>
 <body>
     <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-    <header class="detail-header">
-        <a class="site-brand" href="/admin"><img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt=""><span>Centro de treinamento<br><strong>Extreme Team</strong></span></a>
-        <a href="/admin">← Voltar ao painel</a>
-    </header>
+    {% set secao_ativa = 'painel' %}{% include 'components/admin_nav.html' %}
     <main id="conteudo">
     <div class="container-detalhes">
         <div class="detail-intro"><div><p class="eyebrow">Cadastro do aluno</p><h1>{{ u.nome }}</h1><p>Atualize dados pessoais, plano e situação financeira.</p></div><span aria-hidden="true">{% if u.foto_arquivo %}<img class="avatar-img" src="{{ url_for('auth.foto_perfil', aluno_id=u.id) }}" alt="">{% else %}{{ u.iniciais }}{% endif %}</span></div>
@@ -262,5 +260,6 @@
 
     {% include 'components/pix_dialog.html' %}
     <script src="{{ url_for('static', filename='js/pix.js') }}" defer></script>
+    {% include 'components/confirm_modal.html' %}<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}"><script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 </body>
 </html>
