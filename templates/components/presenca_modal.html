@@ -1,0 +1,31 @@
+<dialog class="modal-dialog presenca-dialog" id="presenca-dialog" aria-labelledby="presenca-dialog-title">
+    <div class="modal-accent" aria-hidden="true"></div>
+    <button type="button" class="modal-fechar" data-presenca-fechar aria-label="Fechar">&times;</button>
+    <p class="eyebrow">Frequência</p>
+    <h2 id="presenca-dialog-title">Histórico de presença</h2>
+
+    <div class="presenca-resumo">
+        <span>Presença geral</span>
+        <strong>{{ total_presencas }}/{{ presencas|length }}{% if presencas %} · {{ ((total_presencas / presencas|length * 100)|round|int) }}%{% endif %}</strong>
+    </div>
+
+    <div class="filtros-mensalidades">
+        <label class="sr-only" for="filtro-turma-presenca">Filtrar por turma</label>
+        <select id="filtro-turma-presenca">
+            <option value="">Todas as turmas</option>
+            {% for turma in matriculas|map(attribute='turma')|unique(attribute='id') %}<option value="{{ turma.id }}">{{ turma.nome }}</option>{% endfor %}
+        </select>
+        <label class="sr-only" for="filtro-status-presenca">Filtrar por situação</label>
+        <select id="filtro-status-presenca">
+            <option value="">Todas as situações</option>
+            <option value="presente">Presente</option>
+            <option value="faltou">Faltou</option>
+        </select>
+        <button type="button" id="limpar-filtros-presenca" class="button-secondary">Limpar filtros</button>
+    </div>
+
+    <div class="table-container table-stack presenca-tabela-scroll"><table><thead><tr><th>Data</th><th>Turma</th><th>Presença</th></tr></thead><tbody id="corpo-historico-presenca">
+    {% for p in presencas %}<tr class="linha-presenca" data-turma="{{ p.turma_id }}" data-presente="{{ 'presente' if p.presente else 'faltou' }}"><td data-label="Data">{{ p.data_aula.strftime('%d/%m/%Y') }}</td><td data-label="Turma">{{ p.turma.nome }}</td><td data-label="Presença"><span class="status {{ 'status-pago' if p.presente else 'status-atrasado' }}">{{ 'Presente' if p.presente else 'Faltou' }}</span></td></tr>{% endfor %}
+    <tr id="sem-resultados-presenca" hidden><td colspan="3" class="empty-state">Nenhum registro encontrado com esses filtros.</td></tr>
+    </tbody></table></div>
+</dialog>

@@ -21,13 +21,37 @@
     const formatadorPreco = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatadorData = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' });
 
+    const MENSAGEM_ERRO_PADRAO = 'Não foi possível gerar o Pix. Tente novamente.';
+    const MENSAGENS_HTTP = {
+        401: 'Sua sessão expirou. Atualize a página e faça login novamente.',
+        403: 'Você não tem permissão para pagar esta mensalidade.',
+        404: 'Mensalidade não encontrada.',
+        409: 'Esta mensalidade não está mais disponível para pagamento via Pix.',
+        422: 'Não foi possível gerar o Pix: verifique se o seu cadastro tem um e-mail válido.',
+        502: 'O Mercado Pago recusou a geração da cobrança. Tente novamente.',
+        503: 'O Mercado Pago está indisponível no momento. Tente novamente em instantes.',
+    };
+
     let pagamentoIdAtual = null;
+    let botaoQueAbriu = null;
     let intervaloPolling = null;
 
     function mostrarEstado(nome) {
         Object.entries(estados).forEach(([chave, el]) => {
             if (el) el.hidden = chave !== nome;
         });
+    }
+
+    async function lerJson(resposta) {
+        try {
+            return await resposta.json();
+        } catch (erro) {
+            return null;
+        }
+    }
+
+    function mensagemDeErro(resposta, dados) {
+        return (dados && dados.erro) || MENSAGENS_HTTP[resposta.status] || MENSAGEM_ERRO_PADRAO;
     }
 
     function pararPolling() {
@@ -37,10 +61,27 @@
         }
     }
 
+    function limparConteudoAnterior() {
+        elValor.textContent = '—';
+        elVencimento.textContent = '—';
+        elQr.removeAttribute('src');
+        elQr.hidden = true;
+        elSemQr.hidden = true;
+        elCopiaCola.value = '';
+        elStatus.textContent = 'Aguardando pagamento…';
+        elStatus.classList.remove('pix-status-aprovado');
+        elErroMsg.textContent = MENSAGEM_ERRO_PADRAO;
+    }
+
     function fecharDialog() {
         pararPolling();
         pagamentoIdAtual = null;
         if (dialog.open) dialog.close();
+        if (botaoQueAbriu) {
+            botaoQueAbriu.disabled = false;
+            botaoQueAbriu.focus();
+        }
+        botaoQueAbriu = null;
     }
 
     function preencherDados(dados) {
@@ -71,6 +112,12 @@
         }
     }
 
+    function mostrarExpirado() {
+        pararPolling();
+        elErroMsg.textContent = 'O código Pix expirou. Gere um novo código para continuar.';
+        mostrarEstado('erro');
+    }
+
     function iniciarPolling(pagamentoId) {
         pararPolling();
         intervaloPolling = setInterval(async () => {
@@ -79,7 +126,14 @@
                     headers: { Accept: 'application/json' },
                 });
                 if (!resposta.ok) return;
-                const dados = await resposta.json();
+                const dados = await lerJson(resposta);
+                if (!dados) return;
+
+                if (dados.pix_expirado) {
+                    mostrarExpirado();
+                    return;
+                }
+
                 atualizarStatusTexto(dados.status);
 
                 if (dados.status === 'pago') {
@@ -95,25 +149,38 @@
 
     async function abrirPix(pagamentoId) {
         pagamentoIdAtual = pagamentoId;
+        limparConteudoAnterior();
         mostrarEstado('carregando');
-        dialog.showModal();
+        if (!dialog.open) dialog.showModal();
 
         try {
             const resposta = await fetch(`/api/mensalidades/${pagamentoId}/pix`, {
                 method: 'POST',
                 headers: { Accept: 'application/json' },
             });
-            const dados = await resposta.json();
+            const dados = await lerJson(resposta);
 
             if (!resposta.ok) {
-                elErroMsg.textContent = dados.erro || 'Não foi possível gerar o Pix. Tente novamente.';
+                elErroMsg.textContent = mensagemDeErro(resposta, dados);
                 mostrarEstado('erro');
+                return;
+            }
+
+            if (!dados) {
+                elErroMsg.textContent = 'Resposta inesperada do servidor. Tente novamente.';
+                mostrarEstado('erro');
+                return;
+            }
+
+            if (dados.pix_expirado) {
+                mostrarExpirado();
                 return;
             }
 
             preencherDados(dados);
 
             if (dados.status === 'pago') {
+                pararPolling();
                 setTimeout(() => window.location.reload(), 1500);
             } else {
                 iniciarPolling(pagamentoId);
@@ -127,8 +194,13 @@
     document.addEventListener('click', (event) => {
         const botao = event.target.closest('[data-pix-pagar]');
         if (!botao) return;
+        if (dialog.open) return; // ja existe um Pix aberto - ignora clique duplicado
         const pagamentoId = botao.dataset.pagamentoId;
-        if (pagamentoId) abrirPix(pagamentoId);
+        if (!pagamentoId) return;
+
+        botaoQueAbriu = botao;
+        botao.disabled = true;
+        abrirPix(pagamentoId);
     });
 
     btnTentarNovamente?.addEventListener('click', () => {
@@ -160,4 +232,6 @@
         btnCopiar.textContent = copiado ? 'Copiado!' : 'Não foi possível copiar';
         setTimeout(() => { btnCopiar.textContent = textoOriginal; }, 2000);
     });
+
+    window.addEventListener('pagehide', pararPolling);
 })();

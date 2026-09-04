@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Minha área | Centro de Treinamento Extreme Team</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/pgUsuario.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/planos.css') }}"><script src="{{ url_for('static',filename='js/pgUsuario.js') }}" defer></script><script src="{{ url_for('static', filename='js/masks.js') }}" defer></script><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
+{% import 'components/mensalidade_acao.html' as mensalidade_acao %}<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Minha área | Centro de Treinamento Extreme Team</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/pgUsuario.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/planos.css') }}"><script src="{{ url_for('static',filename='js/pgUsuario.js') }}" defer></script><script src="{{ url_for('static', filename='js/masks.js') }}" defer></script><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
 </head>
 <body class="has-bottom-nav"><a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 <header class="app-header"><a class="site-brand" href="/"><img src="{{ url_for('static',filename='imagens/logo-icon.png') }}" alt=""><span>Centro de treinamento<br><strong>Extreme Team</strong></span></a><nav><a href="#meus-dados" class="nav-avatar-link" aria-label="Meus dados"><span class="student-avatar">{% if usuario.foto_arquivo %}<img class="avatar-img" src="{{ url_for('auth.foto_perfil', aluno_id=usuario.id) }}" alt="">{% else %}{{ usuario.iniciais }}{% endif %}</span></a><a href="#turmas">Turmas</a><a href="#mensalidades">Mensalidades</a><a href="#planos">Planos</a><a href="#meus-dados">Meus dados</a><a href="/logout" id="link-sair" data-confirm-modal data-modal-eyebrow="Encerrar sessão" data-modal-title="Deseja sair?" data-modal-message="Sua sessão será encerrada e você voltará para a página inicial." data-modal-confirm="Sim, sair">Sair</a></nav></header>
@@ -19,7 +19,7 @@
 <article><span>Contato</span><strong>{{ usuario.email }}{% if usuario.telefone %}<br>{{ usuario.telefone }}{% endif %}</strong></article>
 {% if usuario.graduacao %}<article><span>Graduação</span><strong>{{ usuario.graduacao }}</strong></article>{% endif %}
 {% if usuario.data_vencimento %}<article><span>Próximo vencimento</span><strong>{{ usuario.data_vencimento }}</strong></article>{% endif %}
-<article><span>Presenças registradas</span><strong>{{ total_presencas }}</strong></article>
+<article><span>Presenças registradas</span><strong><span class="stat-presencas">{{ total_presencas }}{% if presencas %}<span class="stat-total">/{{ presencas|length }}</span>{% endif %}</span></strong></article>
 </section>
 {% if usuario.descricao %}<section class="profile-note"><span>Observações</span><p>{{ usuario.descricao }}</p></section>{% endif %}
 
@@ -35,15 +35,22 @@
         <div><span>Vencimento</span><strong>{{ mensalidade_atual.vencimento.strftime('%d/%m/%Y') }}</strong></div>
         <div><span>Competência</span><strong>{{ formatar_competencia(mensalidade_atual.competencia) }}</strong></div>
     </div>
-    <a class="button-primary mensalidade-card-botao" href="{{ url_for('auth.comprovante_mensalidade', pagamento_id=mensalidade_atual.id) if mensalidade_atual.status == 'pago' else url_for('auth.pagina_pagamento', pagamento_id=mensalidade_atual.id) }}">{{ rotulo_acao(mensalidade_atual.status) }}</a>
+    {{ mensalidade_acao.acao(mensalidade_atual, rotulo_status, 'button-primary mensalidade-card-botao') }}
 </article>
 {% else %}
 <article class="mensalidade-card mensalidade-card-vazio"><p class="empty-state">Nenhuma mensalidade lançada ainda. Fale com a administração para contratar um plano.</p></article>
 {% endif %}
 </section>
 <section class="content-section" id="turmas"><div class="section-heading"><div><p class="eyebrow">RF08 · RF10</p><h2>Minhas turmas</h2></div><p>Dias, horários e frequência nas suas aulas.</p></div>
-<div class="table-container table-stack"><table><thead><tr><th>Turma</th><th>Dias</th><th>Horário</th></tr></thead><tbody>{% for m in matriculas %}<tr><td data-label="Turma"><strong>{{ m.turma.nome }}</strong></td><td data-label="Dias">{{ m.turma.dias_semana }}</td><td data-label="Horário">{{ m.turma.horario }}</td></tr>{% else %}<tr><td colspan="3" class="empty-state">Você ainda não está matriculado em nenhuma turma.</td></tr>{% endfor %}</tbody></table></div>
-{% if presencas %}<div class="table-container table-stack" style="margin-top:16px"><table><thead><tr><th>Data</th><th>Turma</th><th>Presença</th></tr></thead><tbody>{% for p in presencas[:15] %}<tr><td data-label="Data">{{ p.data_aula.strftime('%d/%m/%Y') }}</td><td data-label="Turma">{{ p.turma.nome }}</td><td data-label="Presença"><span class="status {{ 'status-pago' if p.presente else 'status-atrasado' }}">{{ 'Presente' if p.presente else 'Faltou' }}</span></td></tr>{% endfor %}</tbody></table></div>{% endif %}
+<div class="table-container table-stack"><table><thead><tr><th>Turma</th><th>Professor</th><th>Dias</th><th>Horário</th><th>Ação</th></tr></thead><tbody>{% for m in matriculas %}<tr><td data-label="Turma"><strong>{{ m.turma.nome }}</strong></td><td data-label="Professor">{{ m.turma.professor.nome }}</td><td data-label="Dias">{{ m.turma.dias_semana }}</td><td data-label="Horário">{{ m.turma.horario }}</td><td data-label="Ação"><button type="button" class="button-secondary" data-abrir-turma
+    data-turma-nome="{{ m.turma.nome }}"
+    data-turma-professor="{{ m.turma.professor.nome }}"
+    data-turma-dias="{{ m.turma.dias_semana }}"
+    data-turma-horario="{{ m.turma.horario }}">Detalhes</button></td></tr>{% else %}<tr><td colspan="5" class="empty-state">Você ainda não está matriculado em nenhuma turma.</td></tr>{% endfor %}</tbody></table></div>
+{% if presencas %}
+<div class="table-container table-stack tabela-presencas-recente"><table><thead><tr><th>Data</th><th>Turma</th><th>Presença</th></tr></thead><tbody>{% for p in presencas[:15] %}<tr><td data-label="Data">{{ p.data_aula.strftime('%d/%m/%Y') }}</td><td data-label="Turma">{{ p.turma.nome }}</td><td data-label="Presença"><span class="status {{ 'status-pago' if p.presente else 'status-atrasado' }}">{{ 'Presente' if p.presente else 'Faltou' }}</span></td></tr>{% endfor %}</tbody></table></div>
+{% if presencas|length > 15 %}<button type="button" class="button-secondary btn-ver-historico-presencas" data-abrir-presencas>Ver histórico completo ({{ presencas|length }} aulas)</button>{% endif %}
+{% endif %}
 </section>
 <section class="content-section" id="mensalidades"><div class="section-heading"><div><p class="eyebrow">Financeiro</p><h2>Histórico de mensalidades</h2></div><p>Consulte seus pagamentos e vencimentos.</p></div>
 <div class="filtros-mensalidades">
@@ -64,7 +71,7 @@
     <button type="button" id="limpar-filtros-mensalidade" class="button-secondary">Limpar filtros</button>
 </div>
 <div class="tabela-pagamentos table-stack"><table><thead><tr><th>Plano</th><th>Competência</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Status</th><th>Forma</th><th>Ação</th></tr></thead><tbody id="corpo-historico-mensalidades">
-{% for pagamento in pagamentos %}<tr class="linha-mensalidade" data-status="{{ pagamento.status }}" data-competencia="{{ pagamento.competencia or '' }}"><td data-label="Plano"><strong>{{ pagamento.plano.nome_plano }}</strong></td><td data-label="Competência">{{ formatar_competencia(pagamento.competencia) }}</td><td data-label="Valor">R$ {{ '%.2f'|format(pagamento.valor)|replace('.',',') }}</td><td data-label="Vencimento">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td><td data-label="Pagamento">{{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}</td><td data-label="Status"><span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span></td><td data-label="Forma">{{ (pagamento.forma_pagamento or '—')|replace('_',' ')|title }}</td><td data-label="Ação"><a class="button-secondary btn-acao-mensalidade" href="{{ url_for('auth.comprovante_mensalidade', pagamento_id=pagamento.id) if pagamento.status == 'pago' else url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">{{ rotulo_acao(pagamento.status) }}</a></td></tr>{% else %}<tr><td colspan="8" class="empty-state">Nenhuma mensalidade registrada.</td></tr>{% endfor %}
+{% for pagamento in pagamentos %}<tr class="linha-mensalidade" data-status="{{ pagamento.status }}" data-competencia="{{ pagamento.competencia or '' }}"><td data-label="Plano"><strong>{{ pagamento.plano.nome_plano }}</strong></td><td data-label="Competência">{{ formatar_competencia(pagamento.competencia) }}</td><td data-label="Valor">R$ {{ '%.2f'|format(pagamento.valor)|replace('.',',') }}</td><td data-label="Vencimento">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td><td data-label="Pagamento">{{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}</td><td data-label="Status"><span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span></td><td data-label="Forma">{{ (pagamento.forma_pagamento or '—')|replace('_',' ')|title }}</td><td data-label="Ação">{{ mensalidade_acao.acao(pagamento, rotulo_status, 'button-secondary btn-acao-mensalidade') }}</td></tr>{% else %}<tr><td colspan="8" class="empty-state">Nenhuma mensalidade registrada.</td></tr>{% endfor %}
 <tr id="sem-resultados-mensalidade" hidden><td colspan="8" class="empty-state">Nenhuma mensalidade encontrada com esses filtros.</td></tr>
 </tbody></table></div></section>
 <section class="content-section secao-planos" id="planos"><div class="section-heading"><div><p class="eyebrow">Escolha seu ritmo</p><h2>Planos disponíveis</h2></div><p>Você pode alterar seu plano quando precisar.</p></div>
@@ -115,4 +122,9 @@
 </form>
 
 </div></section>
-</main><footer class="app-footer"><span>© 2026 Centro de Treinamento Extreme Team</span><a href="/">Voltar ao início</a></footer>{% include 'components/confirm_modal.html' %}<link rel="stylesheet" href="{{ url_for('static',filename='css/modal.css') }}"><script src="{{ url_for('static',filename='js/modal.js') }}"></script><script src="{{ url_for('static',filename='js/mensalidades_filtro.js') }}" defer></script></body></html>
+</main><footer class="app-footer"><span>© 2026 Centro de Treinamento Extreme Team</span><a href="/">Voltar ao início</a></footer>{% include 'components/confirm_modal.html' %}<link rel="stylesheet" href="{{ url_for('static',filename='css/modal.css') }}"><script src="{{ url_for('static',filename='js/modal.js') }}"></script><script src="{{ url_for('static',filename='js/mensalidades_filtro.js') }}" defer></script>
+<link rel="stylesheet" href="{{ url_for('static',filename='css/pix.css') }}">
+{% include 'components/pix_dialog.html' %}<script src="{{ url_for('static',filename='js/pix.js') }}" defer></script>
+{% include 'components/turma_detalhe_modal.html' %}<script src="{{ url_for('static',filename='js/turma_detalhe_modal.js') }}" defer></script>
+{% include 'components/presenca_modal.html' %}<script src="{{ url_for('static',filename='js/presenca_historico.js') }}" defer></script>
+</body></html>

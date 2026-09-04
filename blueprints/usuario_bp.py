@@ -13,7 +13,7 @@ from modelos.matricula import Matricula
 from modelos.turma import Turma
 from dao.usuarioDAO import AlunoDAO
 from dao.planoDAO import PlanoDAO
-from dao.financeiroDAO import PagamentoDAO, mensalidade_destaque, rotulo_acao, rotulo_status
+from dao.financeiroDAO import PagamentoDAO, mensalidade_destaque, rotulo_status
 from dao.professorDAO import ProfessorDAO
 from dao.matriculaDAO import MatriculaDAO
 from dao.presencaDAO import PresencaDAO
@@ -175,7 +175,6 @@ def pagina_perfil():
         presencas=presencas,
         total_presencas=total_presencas,
         rotulo_status=rotulo_status,
-        rotulo_acao=rotulo_acao,
         formatar_competencia=formatar_competencia,
     )
 
