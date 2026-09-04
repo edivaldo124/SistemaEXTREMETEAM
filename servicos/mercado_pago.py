@@ -75,6 +75,9 @@ def criar_pagamento_pix(*, valor, descricao, email_pagador, external_reference, 
         'external_reference': external_reference,
         'date_of_expiration': data_expiracao.isoformat(timespec='milliseconds'),
     }
+    app_base_url = (os.environ.get('APP_BASE_URL') or '').strip().rstrip('/')
+    if app_base_url:
+        payload['notification_url'] = f'{app_base_url}/api/webhooks/mercado-pago'
     request_options = _request_options({'x-idempotency-key': idempotency_key})
 
     try:

@@ -2,7 +2,7 @@
 # Sistema-academia
 # SistemaEXTREMETEAM
 
-Sistema de gestão para academia (Extreme Team): cadastro e aprovação de alunos, planos, turmas, presença, mensalidades e pagamento de mensalidade via Pix (Mercado Pago).
+Sistema de gestão para academia (Extreme Team): cadastro e aprovação de alunos, planos, turmas, presença, mensalidades, pagamento de mensalidade via Pix (Mercado Pago), foto de perfil, comprovante manual e painel financeiro do admin.
 
 ## Instalação local
 
@@ -101,3 +101,24 @@ Por exemplo, `https://academiaextremeteam.com.br/api/webhooks/mercado-pago`. Ess
 ### Trocando de credenciais de teste para produção
 
 Basta substituir `MERCADO_PAGO_ACCESS_TOKEN` e `MERCADO_PAGO_WEBHOOK_SECRET` no `.env` de produção pelos valores de produção, e recadastrar a URL do webhook (se o domínio mudou). **A conta e as credenciais de produção do Mercado Pago devem pertencer ao dono da academia** — nunca use uma conta de terceiros para receber os pagamentos reais dos alunos.
+
+### Pagamento por cartão (Payment Brick) - ainda não implementado
+
+Hoje o sistema só processa Pix. Se decidir adicionar cartão depois, use o [Payment Brick](https://www.mercadopago.com.br/developers/pt/docs/checkout-bricks/payment-brick/default-rendering) oficial: ele exige uma `MERCADO_PAGO_PUBLIC_KEY` (pode ficar no front-end) além do `MERCADO_PAGO_ACCESS_TOKEN` (só no backend), e um novo endpoint de criação de pagamento por token de cartão. Nunca implemente um formulário de cartão próprio - o Brick já cuida da tokenização sem os dados do cartão passarem pelo seu servidor (escopo PCI mínimo).
+
+## Foto de perfil e comprovante manual (armazenamento de arquivos)
+
+Fotos de perfil e comprovantes manuais (`servicos/armazenamento.py`) ficam fora de `static/` e só são servidos por rotas autenticadas (`/perfil/foto/<id>`, `/perfil/mensalidade/<id>/comprovante-manual/arquivo`) que conferem permissão a cada request - não há URL pública direta para esses arquivos.
+
+- **Local (dev)**: gravado em `UPLOAD_DIR` (padrão `uploads/`, relativo à raiz do projeto). Já está no `.gitignore`.
+- **Docker/produção**: o filesystem do container `app` é descartado a cada rebuild/deploy. Por isso o `compose.yaml` monta um volume nomeado (`uploads_data:/app/uploads`) e fixa `UPLOAD_DIR=/app/uploads` - **isso é obrigatório**: sem esse volume, toda foto e comprovante enviado se perde no próximo `docker compose up --build`. Se um dia migrar para object storage (S3, R2, etc.), troque a implementação de `servicos/armazenamento.py` sem precisar mexer nas rotas que a usam.
+
+Upload de foto: valida o tipo real do arquivo decodificando com Pillow (nunca confia na extensão/Content-Type enviados pelo navegador), recorta em quadrado, remove EXIF e regrava do zero como JPEG antes de salvar com nome aleatório (UUID). Comprovante manual aceita JPEG/PNG/PDF; PDFs não são reprocessados (não são executados nem renderizados pelo servidor), só têm a assinatura binária conferida.
+
+## Painel financeiro do admin
+
+`/admin/financeiro` (link no cabeçalho do painel admin) mostra total recebido/pendente/vencido/em análise e alunos inadimplentes - todos calculados no backend (`PagamentoDAO.totais_periodo`), nunca somados em JavaScript. Filtros por período, turma, plano, forma de pagamento, situação e nome do aluno.
+
+## Comprovante manual (dinheiro/transferência)
+
+O aluno pode enviar um comprovante (JPEG/PNG/PDF) numa mensalidade pendente/vencida/recusada pela tela de pagamento (`/perfil/pagamento/<id>`). O envio sozinho **nunca** marca como pago - a mensalidade fica "Em análise" até um admin aprovar ou rejeitar em `/admin/usuario/<cpf>` (aprovar marca como paga; rejeitar devolve para pendente/vencida). Toda decisão fica registrada em `pagamentos_eventos` com quem decidiu, quando e a observação.

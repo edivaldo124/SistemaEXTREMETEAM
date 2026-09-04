@@ -18,7 +18,7 @@
     </header>
     <main id="conteudo">
     <div class="container-detalhes">
-        <div class="detail-intro"><div><p class="eyebrow">Cadastro do aluno</p><h1>{{ u.nome }}</h1><p>Atualize dados pessoais, plano e situação financeira.</p></div><span aria-hidden="true">{{ u.nome[0]|upper }}</span></div>
+        <div class="detail-intro"><div><p class="eyebrow">Cadastro do aluno</p><h1>{{ u.nome }}</h1><p>Atualize dados pessoais, plano e situação financeira.</p></div><span aria-hidden="true">{% if u.foto_arquivo %}<img class="avatar-img" src="{{ url_for('auth.foto_perfil', aluno_id=u.id) }}" alt="">{% else %}{{ u.iniciais }}{% endif %}</span></div>
 
         {% with mensagens = get_flashed_messages(with_categories=true) %}
             {% for categoria, mensagem in mensagens %}
@@ -26,7 +26,24 @@
             {% endfor %}
         {% endwith %}
 
-        <section class="detail-section"><div class="section-title"><span>01</span><div><h2>Dados do perfil</h2><p>Informações cadastrais e vínculo com a academia.</p></div></div><form action="/admin/usuario/{{ u.cpf }}" method="POST" class="form-detalhes">
+        <section class="detail-section"><div class="section-title"><span>01</span><div><h2>Foto do aluno</h2><p>JPEG, PNG ou WebP, até 5 MB. A imagem é recortada em formato quadrado.</p></div></div>
+            <div class="foto-perfil-area">
+                <span class="student-avatar student-avatar-grande">{% if u.foto_arquivo %}<img class="avatar-img" src="{{ url_for('auth.foto_perfil', aluno_id=u.id) }}" alt="">{% else %}{{ u.iniciais }}{% endif %}</span>
+                <div class="foto-perfil-acoes">
+                    <form action="{{ url_for('admin_blueprint.enviar_foto_aluno', cpf=u.cpf) }}" method="POST" enctype="multipart/form-data" class="form-foto">
+                        <input type="file" name="foto" accept="image/jpeg,image/png,image/webp" required>
+                        <button type="submit" class="button-secondary">{{ 'Substituir foto' if u.foto_arquivo else 'Enviar foto' }}</button>
+                    </form>
+                    {% if u.foto_arquivo %}
+                    <form action="{{ url_for('admin_blueprint.remover_foto_aluno', cpf=u.cpf) }}" method="POST" data-confirm-modal data-modal-variant="danger" data-modal-eyebrow="Remover foto" data-modal-title="Remover a foto de {{ u.nome }}?" data-modal-message="O perfil voltará a mostrar as iniciais do aluno." data-modal-confirm="Remover foto">
+                        <button type="submit" class="button-secondary">Remover foto</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="detail-section"><div class="section-title"><span>02</span><div><h2>Dados do perfil</h2><p>Informações cadastrais e vínculo com a academia.</p></div></div><form action="/admin/usuario/{{ u.cpf }}" method="POST" class="form-detalhes">
 
             <div class="grupo-input">
                 <label for="dt-nome">Nome Completo:</label>
@@ -63,6 +80,10 @@
                 <input id="dt-descricao" type="text" name="descricao" value="{{ u.descricao }}" required>
             </div>
 
+            <div class="grupo-input">
+                <label for="dt-graduacao">Graduação / nível:</label>
+                <input id="dt-graduacao" type="text" name="graduacao" value="{{ u.graduacao or '' }}" maxlength="80" placeholder="Ex.: Kruang branco">
+            </div>
 
             <div class="grupo-input">
                 <label for="dt-mensalidade">Situação Financeira:</label>
@@ -87,12 +108,12 @@
             <a href="/admin" class="btn-voltar">Voltar ao Painel</a>
         </form></section>
 
-        <section class="detail-section"><div class="section-title"><span>02</span><div><h2>Turmas</h2><p>Turmas em que este aluno está matriculado.</p></div></div>
+        <section class="detail-section"><div class="section-title"><span>03</span><div><h2>Turmas</h2><p>Turmas em que este aluno está matriculado.</p></div></div>
             <div class="table-container table-stack"><table><thead><tr><th>Turma</th><th>Dias</th><th>Horário</th></tr></thead><tbody>{% for m in u.matriculas %}<tr><td data-label="Turma">{{ m.turma.nome }}</td><td data-label="Dias">{{ m.turma.dias_semana }}</td><td data-label="Horário">{{ m.turma.horario }}</td></tr>{% else %}<tr><td colspan="3" class="empty-state">Nenhuma turma vinculada.</td></tr>{% endfor %}</tbody></table></div>
         </section>
 
         <section class="secao-pagamentos">
-            <div class="section-title"><span>03</span><div><h2>Controle de mensalidades</h2><p>Lance cobranças e atualize pagamentos do aluno.</p></div></div>
+            <div class="section-title"><span>04</span><div><h2>Controle de mensalidades</h2><p>Lance cobranças e atualize pagamentos do aluno.</p></div></div>
 
             {% if u.mensalidade|lower != 'em dia' %}
             <form action="/admin/usuario/{{ u.cpf }}/cobrar" method="POST" class="form-inline">
@@ -119,6 +140,10 @@
                     <input id="dt-vencimento" type="date" name="vencimento" required>
                 </div>
                 <div class="grupo-input">
+                    <label for="dt-competencia">Competência:</label>
+                    <input id="dt-competencia" type="month" name="competencia" placeholder="AAAA-MM">
+                </div>
+                <div class="grupo-input">
                     <label for="status-pagamento">Status:</label>
                     <select name="status" id="status-pagamento">
                         <option value="pendente">Pendente</option>
@@ -142,37 +167,47 @@
                         <option value="boleto">Boleto</option>
                     </select>
                 </div>
+                <div class="grupo-input campo-largo">
+                    <label for="dt-observacao">Observação (opcional):</label>
+                    <input id="dt-observacao" type="text" name="observacao" maxlength="255" placeholder="Ex.: recebido em espécie na recepção">
+                </div>
                 <button type="submit" class="btn-salvar">Lançar mensalidade</button>
             </form>
 
             <div class="tabela-pagamentos table-stack">
                 <table>
                     <thead>
-                        <tr><th>Plano</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Status</th><th>Forma</th><th>Origem</th><th>Ação</th></tr>
+                        <tr><th>Plano</th><th>Competência</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Status</th><th>Forma</th><th>Origem</th><th>Ação</th></tr>
                     </thead>
                     <tbody>
                     {% for pagamento in pagamentos %}
                         <tr>
                             <td data-label="Plano">{{ pagamento.plano.nome_plano }}</td>
+                            <td data-label="Competência">{{ formatar_competencia(pagamento.competencia) }}</td>
                             <td data-label="Valor">R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}</td>
                             <td data-label="Vencimento">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
                             <td data-label="Pagamento">{{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}</td>
-                            <td data-label="Status"><span class="status status-{{ pagamento.status }}">{{ pagamento.status }}</span></td>
+                            <td data-label="Status"><span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span></td>
                             <td data-label="Forma">{{ (pagamento.forma_pagamento or '—')|replace('_', ' ') }}</td>
                             <td data-label="Origem">{% if pagamento.provider == 'mercado_pago' %}<span class="status status-pago" title="ID Mercado Pago: {{ pagamento.provider_payment_id }}">Pix</span>{% else %}<span class="status status-cancelado">Manual</span>{% endif %}</td>
-                            <td data-label="Ação">
+                            <td data-label="Ação" class="acao-cell">
                                 {% if pagamento.status in ('pendente', 'atrasado') %}
                                 <button type="button" class="button-primary btn-pagar-pix" data-pix-pagar data-pagamento-id="{{ pagamento.id }}">Pagar com Pix</button>
                                 {% endif %}
+                                {% if pagamento.provider_payment_id %}
+                                <form action="{{ url_for('pix.sincronizar_pagamento', pagamento_id=pagamento.id) }}" method="POST" class="form-inline">
+                                    <button type="submit" class="btn btn-status">Sincronizar</button>
+                                </form>
+                                {% endif %}
                                 <form action="/admin/pagamentos/{{ pagamento.id }}/status" method="POST" class="form-status">
                                     <select name="status">
-                                        {% for status in ['pendente', 'pago', 'atrasado', 'cancelado', 'reembolsado'] %}
-                                            <option value="{{ status }}" {% if pagamento.status == status %}selected{% endif %}>{{ status|capitalize }}</option>
+                                        {% for status in ['pendente', 'pago', 'atrasado', 'em_processamento', 'em_analise', 'recusado', 'cancelado', 'reembolsado'] %}
+                                            <option value="{{ status }}" {% if pagamento.status == status %}selected{% endif %}>{{ rotulo_status(status) }}</option>
                                         {% endfor %}
                                     </select>
                                     <select name="forma_pagamento">
                                         <option value="">Forma</option>
-                                        {% for forma, rotulo in [('pix', 'PIX'), ('dinheiro', 'Dinheiro'), ('cartao_credito', 'Crédito'), ('cartao_debito', 'Débito'), ('boleto', 'Boleto')] %}
+                                        {% for forma, rotulo in [('pix', 'PIX'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Crédito'), ('cartao_debito', 'Débito'), ('boleto', 'Boleto')] %}
                                             <option value="{{ forma }}" {% if pagamento.forma_pagamento == forma %}selected{% endif %}>{{ rotulo }}</option>
                                         {% endfor %}
                                     </select>
@@ -180,8 +215,31 @@
                                 </form>
                             </td>
                         </tr>
+                        {% if pagamento.status == 'em_analise' %}
+                        <tr class="linha-comprovante-manual">
+                            <td colspan="9">
+                                <div class="revisao-comprovante">
+                                    <p><strong>Comprovante manual enviado</strong> em {{ pagamento.comprovante_manual_enviado_em.strftime('%d/%m/%Y %H:%M') if pagamento.comprovante_manual_enviado_em else '—' }}.
+                                        <a href="{{ url_for('auth.ver_comprovante_manual', pagamento_id=pagamento.id) }}" target="_blank" rel="noopener">Ver arquivo enviado</a></p>
+                                    <form action="{{ url_for('admin_blueprint.aprovar_comprovante_manual', pagamento_id=pagamento.id) }}" method="POST" class="form-revisao">
+                                        <input type="date" name="data_pagamento" aria-label="Data do pagamento">
+                                        <select name="forma_pagamento" aria-label="Forma de pagamento">
+                                            <option value="transferencia">Transferência</option>
+                                            <option value="dinheiro">Dinheiro</option>
+                                        </select>
+                                        <input type="text" name="observacao" maxlength="255" placeholder="Observação (opcional)">
+                                        <button type="submit" class="btn btn-status">Aprovar</button>
+                                    </form>
+                                    <form action="{{ url_for('admin_blueprint.rejeitar_comprovante_manual', pagamento_id=pagamento.id) }}" method="POST" class="form-revisao">
+                                        <input type="text" name="observacao" maxlength="255" placeholder="Motivo da rejeição">
+                                        <button type="submit" class="btn btn-remover">Rejeitar</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
                     {% else %}
-                        <tr><td colspan="8" class="empty-state">Nenhuma mensalidade lançada.</td></tr>
+                        <tr><td colspan="9" class="empty-state">Nenhuma mensalidade lançada.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>

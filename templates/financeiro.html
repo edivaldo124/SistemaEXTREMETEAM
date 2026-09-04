@@ -1,0 +1,99 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Financeiro | Administração</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/financeiro.css') }}">
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+<header class="detail-header">
+    <a class="site-brand" href="/admin"><img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt=""><span>Centro de treinamento<br><strong>Extreme Team</strong></span></a>
+    <a href="/admin">← Voltar ao painel</a>
+</header>
+<main id="conteudo">
+<div class="container-detalhes">
+    <div class="detail-intro"><div><p class="eyebrow">Administração</p><h1>Financeiro</h1><p>Totais calculados a partir dos pagamentos registrados no banco.</p></div></div>
+
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+    {% for categoria, mensagem in mensagens %}<div class="msg msg-{{ categoria }}">{{ mensagem }}</div>{% endfor %}
+    {% endwith %}
+
+    <section class="financeiro-totais">
+        <article class="total-card total-recebido"><span>Recebido no período</span><strong>R$ {{ '%.2f'|format(totais.total_recebido)|replace('.', ',') }}</strong><small>{{ totais.qtd_pago }} pagamento(s)</small></article>
+        <article class="total-card total-pendente"><span>Pendente</span><strong>R$ {{ '%.2f'|format(totais.total_pendente)|replace('.', ',') }}</strong><small>{{ totais.qtd_pendente }} mensalidade(s)</small></article>
+        <article class="total-card total-vencido"><span>Vencido</span><strong>R$ {{ '%.2f'|format(totais.total_vencido)|replace('.', ',') }}</strong><small>{{ totais.qtd_vencido }} mensalidade(s)</small></article>
+        <article class="total-card total-analise"><span>Em análise</span><strong>R$ {{ '%.2f'|format(totais.total_em_analise)|replace('.', ',') }}</strong><small>{{ totais.qtd_em_analise }} comprovante(s)</small></article>
+        <article class="total-card total-inadimplentes"><span>Alunos inadimplentes</span><strong>{{ totais.alunos_inadimplentes }}</strong><small>com mensalidade vencida</small></article>
+    </section>
+
+    <section class="detail-section">
+        <div class="section-title"><span>01</span><div><h2>Filtros</h2><p>Refine por período, turma, plano, método, situação ou nome do aluno.</p></div></div>
+        <form method="GET" action="/admin/financeiro" class="form-filtros-financeiro">
+            <div class="grupo-input"><label for="f-inicio">De</label><input id="f-inicio" type="date" name="inicio" value="{{ filtros.get('inicio', '') }}"></div>
+            <div class="grupo-input"><label for="f-fim">Até</label><input id="f-fim" type="date" name="fim" value="{{ filtros.get('fim', '') }}"></div>
+            <div class="grupo-input"><label for="f-turma">Turma</label>
+                <select id="f-turma" name="turma_id">
+                    <option value="">Todas</option>
+                    {% for t in turmas %}<option value="{{ t.id }}" {% if filtros.get('turma_id') == t.id|string %}selected{% endif %}>{{ t.nome }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="grupo-input"><label for="f-plano">Plano</label>
+                <select id="f-plano" name="plano_id">
+                    <option value="">Todos</option>
+                    {% for p in planos %}<option value="{{ p.id }}" {% if filtros.get('plano_id') == p.id|string %}selected{% endif %}>{{ p.nome_plano }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="grupo-input"><label for="f-forma">Método</label>
+                <select id="f-forma" name="forma_pagamento">
+                    <option value="">Todos</option>
+                    {% for forma, rotulo in [('pix', 'Pix'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Cartão de crédito'), ('cartao_debito', 'Cartão de débito'), ('boleto', 'Boleto')] %}
+                        <option value="{{ forma }}" {% if filtros.get('forma_pagamento') == forma %}selected{% endif %}>{{ rotulo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="grupo-input"><label for="f-status">Situação</label>
+                <select id="f-status" name="status">
+                    <option value="">Todas</option>
+                    {% for status in ['pendente', 'atrasado', 'em_processamento', 'em_analise', 'pago', 'recusado', 'reembolsado', 'cancelado'] %}
+                        <option value="{{ status }}" {% if filtros.get('status') == status %}selected{% endif %}>{{ rotulo_status(status) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="grupo-input campo-largo"><label for="f-busca">Aluno</label><input id="f-busca" type="search" name="busca_aluno" value="{{ filtros.get('busca_aluno', '') }}" placeholder="Buscar por nome…"></div>
+            <button type="submit" class="btn-salvar">Filtrar</button>
+            <a href="/admin/financeiro" class="btn-voltar">Limpar filtros</a>
+        </form>
+    </section>
+
+    <section class="secao-pagamentos">
+        <div class="section-title"><span>02</span><div><h2>Mensalidades</h2><p>{{ pagamentos|length }} resultado(s) com os filtros atuais.</p></div></div>
+        <div class="tabela-pagamentos table-stack">
+            <table>
+                <thead><tr><th>Aluno</th><th>Plano</th><th>Competência</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>Forma</th><th>Origem</th><th>Ação</th></tr></thead>
+                <tbody>
+                {% for pagamento in pagamentos %}
+                    <tr>
+                        <td data-label="Aluno"><span class="student-avatar">{% if pagamento.aluno.foto_arquivo %}<img class="avatar-img" src="{{ url_for('auth.foto_perfil', aluno_id=pagamento.aluno.id) }}" alt="">{% else %}{{ pagamento.aluno.iniciais }}{% endif %}</span>{{ pagamento.aluno.nome }}</td>
+                        <td data-label="Plano">{{ pagamento.plano.nome_plano if pagamento.plano else '—' }}</td>
+                        <td data-label="Competência">{{ formatar_competencia(pagamento.competencia) }}</td>
+                        <td data-label="Valor">R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}</td>
+                        <td data-label="Vencimento">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
+                        <td data-label="Status"><span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span></td>
+                        <td data-label="Forma">{{ (pagamento.forma_pagamento or '—')|replace('_', ' ')|title }}</td>
+                        <td data-label="Origem">{% if pagamento.provider == 'mercado_pago' %}Pix{% elif pagamento.provider == 'manual' %}Manual{% else %}—{% endif %}</td>
+                        <td data-label="Ação" class="acao-cell">
+                            <a href="{{ url_for('admin_blueprint.detalhes_usuario', cpf=pagamento.aluno.cpf) }}" class="btn btn-status">Ver aluno</a>
+                            {% if pagamento.provider_payment_id %}
+                            <form action="{{ url_for('pix.sincronizar_pagamento', pagamento_id=pagamento.id) }}" method="POST" class="form-inline">
+                                <button type="submit" class="btn btn-status">Sincronizar</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="9" class="empty-state">Nenhuma mensalidade encontrada com esses filtros.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+</main>
+</body>
+</html>

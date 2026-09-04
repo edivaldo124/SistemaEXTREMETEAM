@@ -26,3 +26,26 @@ def formatar_telefone(valor):
     if len(digitos) == 10:
         return f'({digitos[:2]}) {digitos[2:6]}-{digitos[6:]}'
     return (valor or '').strip()
+
+
+MESES_PT = {
+    1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho',
+    7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro',
+}
+
+
+def formatar_competencia(competencia):
+    """Converte 'AAAA-MM' em algo como 'Setembro de 2026'. Devolve o valor original
+    se não estiver no formato esperado (evita quebrar a tela por um dado antigo/ausente)."""
+    if not competencia or '-' not in competencia:
+        return competencia or '—'
+    ano_str, mes_str = competencia.split('-', 1)
+    try:
+        mes = int(mes_str)
+        ano = int(ano_str)
+    except ValueError:
+        return competencia
+    nome_mes = MESES_PT.get(mes)
+    if not nome_mes:
+        return competencia
+    return f'{nome_mes} de {ano}'

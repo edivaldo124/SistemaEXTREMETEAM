@@ -1,3 +1,35 @@
 .app-header{display:flex;align-items:center;justify-content:space-between;padding:22px clamp(22px,6vw,90px);color:white;background:var(--ink)}.app-header nav{display:flex;align-items:center;gap:26px}.app-header nav a{color:#c4c8c9;font-size:11px;font-weight:600;text-decoration:none}.app-header nav a:hover{color:var(--yellow)}.app-header #link-sair{padding:10px 15px;border:1px solid #5a6063;color:white}.profile-page{max-width:1300px;margin:auto;padding:70px clamp(20px,5vw,70px) 100px}.profile-hero{display:flex;align-items:center;justify-content:space-between;padding-bottom:45px;border-bottom:1px solid var(--ink)}.profile-hero h1{margin:0;font:800 clamp(56px,7vw,96px)/.9 var(--display);text-transform:uppercase}.profile-hero>div>p:last-child{color:var(--muted);font-size:14px}.profile-mark{display:grid;place-items:center;width:100px;height:100px;color:var(--ink);background:var(--yellow);font:800 60px var(--display);transform:rotate(3deg)}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)}.summary-grid article{min-width:0;padding:28px 24px;border-right:1px solid var(--line)}.summary-grid article:last-child{border:0}.summary-grid span{display:block;margin-bottom:10px;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.summary-grid strong{display:block;overflow:hidden;font:700 21px var(--display);text-overflow:ellipsis}.financial-status{color:var(--orange-dark)}.profile-note{display:grid;grid-template-columns:140px 1fr;margin-top:35px;padding:20px 24px;border-left:4px solid var(--orange);background:#ebe8df}.profile-note span{font-size:10px;font-weight:700;text-transform:uppercase}.profile-note p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.content-section{margin-top:85px}.section-heading{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:28px}.section-heading h2{margin:0;font:700 clamp(34px,4vw,48px)/1 var(--display)}.section-heading>p{max-width:300px;margin:0;color:var(--muted);font-size:12px;line-height:1.6}.empty-state{padding:35px!important;color:var(--muted);text-align:center!important}.app-footer{display:flex;justify-content:space-between;padding:26px clamp(22px,6vw,90px);color:#92989b;background:var(--ink);font-size:9px;letter-spacing:.1em;text-transform:uppercase}.app-footer a{color:var(--yellow);font-weight:700;text-decoration:none}.form-detalhes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}.form-detalhes{display:flex;flex-direction:column;gap:16px;padding:26px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}.form-detalhes .grupo-input label small{margin-left:6px;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0}.input-bloqueado{color:var(--muted);background:#eeece5!important;cursor:not-allowed}.form-detalhes .btn-salvar{margin-top:4px}
-@media(max-width:720px){.app-header nav a:not(#link-sair){display:none}.app-header .site-brand span{display:none}.profile-page{padding-top:45px}.profile-mark{width:65px;height:65px;font-size:40px}.summary-grid{grid-template-columns:1fr}.summary-grid article{border-right:0;border-bottom:1px solid var(--line)}.profile-note{grid-template-columns:1fr;gap:8px}.section-heading{align-items:flex-start;flex-direction:column;gap:10px}.form-detalhes-grid{grid-template-columns:1fr}}
+
+/* ---------- Cartão "Minha mensalidade" - a cor lateral reforça a situação, o texto do badge nunca depende só dela ---------- */
+.mensalidade-destaque{margin-top:30px}
+.mensalidade-card{display:flex;flex-direction:column;gap:20px;padding:26px 28px;border:1px solid var(--line);border-left:5px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+.mensalidade-card[data-status="pago"]{border-left-color:var(--green)}
+.mensalidade-card[data-status="pendente"]{border-left-color:var(--gold)}
+.mensalidade-card[data-status="em_processamento"],.mensalidade-card[data-status="reembolsado"]{border-left-color:#1c3f6e}
+.mensalidade-card[data-status="em_analise"]{border-left-color:#8a6d00}
+.mensalidade-card[data-status="atrasado"],.mensalidade-card[data-status="recusado"]{border-left-color:var(--red)}
+.mensalidade-card[data-status="cancelado"]{border-left-color:var(--muted)}
+.mensalidade-card-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.mensalidade-card-topo h2{margin:0;font:700 clamp(24px,3vw,32px)/1 var(--display);text-transform:uppercase}
+.mensalidade-card-dados{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.mensalidade-card-dados span{display:block;margin-bottom:6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.mensalidade-card-dados strong{font:700 20px var(--display)}
+.mensalidade-card-botao{align-self:flex-start}
+.mensalidade-card-vazio{border-left-color:var(--line)}
+
+.filtros-mensalidades{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.filtros-mensalidades select,.filtros-mensalidades input{min-height:44px;padding:0 12px;border:1px solid var(--line);background:var(--surface);font-size:13px}
+.btn-acao-mensalidade{min-height:36px;padding:0 14px;font-size:11px}
+
+/* ---------- Foto de perfil dentro de "Meus dados" ---------- */
+.form-foto-perfil{gap:14px}
+.foto-perfil-area{display:flex;align-items:center;gap:18px}
+.student-avatar-grande{width:84px;height:84px;margin-right:0;font-size:34px}
+.foto-perfil-acoes{display:flex;flex-direction:column;gap:8px}
+.form-foto{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.form-foto input[type=file]{max-width:100%;font-size:11px}
+.dica-foto{margin:0;color:var(--muted);font-size:11px}
+.nav-avatar-link{display:inline-flex!important;padding:0!important}
+
+@media(max-width:720px){.app-header nav a:not(#link-sair):not(.nav-avatar-link){display:none}.app-header .site-brand span{display:none}.profile-page{padding-top:45px}.profile-mark{width:65px;height:65px;font-size:40px}.summary-grid{grid-template-columns:1fr}.summary-grid article{border-right:0;border-bottom:1px solid var(--line)}.profile-note{grid-template-columns:1fr;gap:8px}.section-heading{align-items:flex-start;flex-direction:column;gap:10px}.form-detalhes-grid{grid-template-columns:1fr}.mensalidade-card{padding:20px}.mensalidade-card-dados{grid-template-columns:1fr 1fr}.foto-perfil-area{flex-direction:column;align-items:flex-start}}
 @media(max-width:1020px) and (min-width:721px){.form-detalhes-grid{grid-template-columns:1fr 1fr}}

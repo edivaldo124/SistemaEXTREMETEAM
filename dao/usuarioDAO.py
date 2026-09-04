@@ -87,6 +87,15 @@ class AlunoDAO:
             return False
 
     @staticmethod
+    def definir_foto(aluno_id, nome_arquivo):
+        aluno = db.session.get(Aluno, aluno_id)
+        if not aluno:
+            return None
+        aluno.foto_arquivo = nome_arquivo
+        db.session.commit()
+        return aluno
+
+    @staticmethod
     def atualizar_dados_completos(cpf, dados):
         aluno = Aluno.query.filter_by(cpf=cpf).first()
         if aluno:
@@ -99,6 +108,8 @@ class AlunoDAO:
             aluno.telefone = dados.get('telefone', '')
             aluno.mensalidade = dados.get('mensalidade', 'Pendente')
             aluno.descricao = dados.get('descricao', '')
+            if 'graduacao' in dados:
+                aluno.graduacao = (dados.get('graduacao') or '').strip() or None
 
             plano_escolhido = dados.get('plano_id')
 

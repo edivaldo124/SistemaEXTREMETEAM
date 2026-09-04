@@ -39,6 +39,12 @@ services:
       MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN:-}
       MERCADO_PAGO_WEBHOOK_SECRET: ${MERCADO_PAGO_WEBHOOK_SECRET:-}
       APP_BASE_URL: ${APP_BASE_URL:-}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      # Fotos de perfil e comprovantes manuais - o filesystem do container é
+      # descartado a cada rebuild/deploy, então isso PRECISA ficar num volume
+      # nomeado (persistente) e nunca só no disco do container.
+      - uploads_data:/app/uploads
     expose:
       - "5000"
     mem_limit: 192m
@@ -69,3 +75,4 @@ volumes:
   postgres_data:
   caddy_data:
   caddy_config:
+  uploads_data:

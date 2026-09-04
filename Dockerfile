@@ -24,6 +24,11 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 COPY --chown=academia:academia . .
+# Fica vazio na imagem - o conteudo real mora no volume "uploads_data" montado
+# aqui pelo compose.yaml. Precisa existir com este dono antes do volume ser
+# montado, senao o Docker inicializa o volume como root e o processo (que roda
+# como "academia") nao consegue escrever fotos/comprovantes.
+RUN mkdir -p /app/uploads && chown academia:academia /app/uploads
 
 USER academia
 EXPOSE 5000

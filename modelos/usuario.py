@@ -38,9 +38,16 @@ class Aluno(db.Model):
     token_email_hash = db.Column(db.String(64), nullable=True)
     token_email_expira = db.Column(db.DateTime, nullable=True)
 
+    # RF: foto de perfil - guarda só o nome gerado (UUID + extensão) do arquivo já
+    # reprocessado pelo servico de armazenamento; nunca o nome original nem base64.
+    foto_arquivo = db.Column(db.String(64), nullable=True)
+    # Graduação/nível do aluno (ex.: "Kruang branco") - texto livre definido pelo admin.
+    graduacao = db.Column(db.String(80), nullable=True)
+
     # Construtor da classe
     def __init__(self, nome, login, datanascimento, cpf, email, telefone, senha, descricao,
-                 mensalidade='pendente', plano_id=None, data_vencimento=None, status_cadastro='pendente', ativo=True):
+                 mensalidade='pendente', plano_id=None, data_vencimento=None, status_cadastro='pendente', ativo=True,
+                 graduacao=None):
         self.nome = nome
         self.login = login
         self.datanascimento = datanascimento
@@ -54,6 +61,16 @@ class Aluno(db.Model):
         self.data_vencimento = data_vencimento
         self.status_cadastro = status_cadastro
         self.ativo = ativo
+        self.graduacao = graduacao
+
+    @property
+    def iniciais(self):
+        partes = [p for p in (self.nome or '').split() if p]
+        if not partes:
+            return '?'
+        if len(partes) == 1:
+            return partes[0][0].upper()
+        return (partes[0][0] + partes[-1][0]).upper()
 
     def set_senha(self, senha_texto_puro):
         self.senha_hash = generate_password_hash(senha_texto_puro)

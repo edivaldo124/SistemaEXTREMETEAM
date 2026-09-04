@@ -1,0 +1,17 @@
+.financeiro-totais{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:40px 0}
+.total-card{padding:20px;border:1px solid var(--line);border-left:4px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+.total-card span{display:block;margin-bottom:8px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.total-card strong{display:block;font:700 22px var(--display)}
+.total-card small{display:block;margin-top:6px;color:var(--muted);font-size:11px}
+.total-recebido{border-left-color:var(--green)}
+.total-pendente{border-left-color:var(--gold)}
+.total-vencido{border-left-color:var(--red)}
+.total-analise{border-left-color:#8a6d00}
+.total-inadimplentes{border-left-color:#1c3f6e}
+
+.form-filtros-financeiro{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:end;padding:24px;background:#eeece5}
+.form-filtros-financeiro .campo-largo{grid-column:1/-1}
+.form-filtros-financeiro .btn-salvar,.form-filtros-financeiro .btn-voltar{min-height:44px}
+
+@media(max-width:900px){.financeiro-totais{grid-template-columns:repeat(2,1fr)}.form-filtros-financeiro{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.financeiro-totais{grid-template-columns:1fr}.form-filtros-financeiro{grid-template-columns:1fr}}

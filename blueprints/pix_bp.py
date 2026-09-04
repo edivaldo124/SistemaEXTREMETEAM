@@ -4,9 +4,10 @@ import secrets
 from datetime import date, datetime
 from decimal import Decimal
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, flash, jsonify, redirect, request, session
 
-from dao.financeiroDAO import STATUS_FECHADOS, PagamentoDAO
+from dao.financeiroDAO import STATUS_FECHADOS, PagamentoDAO, rotulo_acao, rotulo_status
+from servicos.formatacao import formatar_competencia
 from servicos.mercado_pago import (
     MercadoPagoIndisponivel,
     buscar_pagamento,
@@ -18,7 +19,10 @@ from servicos.mercado_pago import (
 pix_bp = Blueprint('pix', __name__)
 logger = logging.getLogger(__name__)
 
-STATUS_PAGAVEIS = ('pendente', 'atrasado')
+# 'recusado' entra aqui para permitir "Tentar novamente" - uma nova cobrança Pix
+# substitui a recusada. 'em_processamento' e 'em_analise' ficam de fora de propósito:
+# já existe uma decisão em andamento, não deixamos gerar uma segunda cobrança em cima.
+STATUS_PAGAVEIS = ('pendente', 'atrasado', 'recusado')
 TOLERANCIA_VALOR = Decimal('0.01')
 
 
@@ -32,17 +36,33 @@ def _acesso_permitido(pagamento):
     return session.get('tipo_usuario') == 'aluno' and session.get('aluno_id') == pagamento.aluno_id
 
 
+def _pix_expirado(pagamento):
+    if pagamento.status in STATUS_FECHADOS:
+        return False
+    if not pagamento.data_expiracao:
+        return False
+    return pagamento.data_expiracao <= datetime.utcnow()
+
+
 def _serializar_pagamento(pagamento, *, qr_code_base64=None):
     return {
         'pagamento_id': pagamento.id,
         'status': pagamento.status,
-        'valor': pagamento.valor,
+        'status_rotulo': rotulo_status(pagamento.status),
+        'acao_rotulo': rotulo_acao(pagamento.status),
+        'valor': float(pagamento.valor),
         'vencimento': pagamento.vencimento.isoformat() if pagamento.vencimento else None,
+        'competencia': pagamento.competencia,
+        'competencia_formatada': formatar_competencia(pagamento.competencia),
+        'plano_nome': pagamento.plano.nome_plano if pagamento.plano else None,
         'data_pagamento': pagamento.data_pagamento.isoformat() if pagamento.data_pagamento else None,
+        'forma_pagamento': pagamento.forma_pagamento,
         'pix_copia_cola': pagamento.pix_copia_cola,
         'qr_code_base64': qr_code_base64,
         'ticket_url': pagamento.ticket_url,
         'data_expiracao': pagamento.data_expiracao.isoformat() if pagamento.data_expiracao else None,
+        'pix_expirado': _pix_expirado(pagamento),
+        'provider_status_detail': pagamento.provider_status_detail,
     }
 
 
@@ -151,6 +171,42 @@ def status_pix_mensalidade(pagamento_id):
     return jsonify(_serializar_pagamento(pagamento)), 200
 
 
+@pix_bp.route('/admin/pagamentos/<int:pagamento_id>/sincronizar', methods=['POST'])
+def sincronizar_pagamento(pagamento_id):
+    """Reconsulta manualmente o status no Mercado Pago - protegido por permissão de admin,
+    útil quando o webhook atrasa ou falhou e o admin quer conferir agora."""
+    if session.get('tipo_usuario') != 'admin':
+        return redirect('/login')
+
+    pagamento = _pagamento_ou_none(pagamento_id)
+    if not pagamento:
+        flash('Mensalidade não encontrada.', 'erro')
+        return redirect('/admin/financeiro')
+
+    if not pagamento.provider_payment_id:
+        flash('Esta mensalidade não tem cobrança do Mercado Pago para sincronizar.', 'erro')
+        return redirect(request.referrer or '/admin/financeiro')
+
+    try:
+        resultado_mp = buscar_pagamento(pagamento.provider_payment_id)
+    except MercadoPagoIndisponivel:
+        flash('Mercado Pago indisponível no momento. Tente novamente em instantes.', 'erro')
+        return redirect(request.referrer or '/admin/financeiro')
+
+    if not resultado_mp['sucesso']:
+        flash('Não foi possível consultar esta cobrança no Mercado Pago.', 'erro')
+        return redirect(request.referrer or '/admin/financeiro')
+
+    status_antes = pagamento.status
+    _processar_status_mp(pagamento, resultado_mp)
+    if pagamento.status != status_antes:
+        flash(f'Situação atualizada: {rotulo_status(status_antes)} → {rotulo_status(pagamento.status)}.', 'sucesso')
+    else:
+        flash('Situação confirmada junto ao Mercado Pago - nenhuma mudança.', 'sucesso')
+
+    return redirect(request.referrer or '/admin/financeiro')
+
+
 @pix_bp.route('/api/webhooks/mercado-pago', methods=['POST'])
 def webhook_mercado_pago():
     x_signature = request.headers.get('x-signature', '')
@@ -203,7 +259,8 @@ def webhook_mercado_pago():
 
 
 def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
-    """Fonte unica de aprovacao, usada pelo webhook e pelo polling de status.
+    """Fonte unica de aprovacao, usada pelo webhook, pelo polling de status e pela
+    sincronizacao manual do admin.
 
     So aprova quando o status consultado na API for 'approved' E a referencia/valor
     baterem com o que esta salvo localmente - nunca com base no corpo do webhook.
@@ -243,4 +300,9 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
     elif status_mp in ('refunded', 'charged_back'):
         if pagamento.status != 'reembolsado':
             PagamentoDAO.marcar_reembolsado_via_webhook(pagamento)
-    # pending / in_process / rejected / cancelled: nao mexe no status local.
+    elif status_mp == 'in_process':
+        PagamentoDAO.marcar_em_processamento_via_webhook(pagamento)
+    elif status_mp == 'rejected':
+        PagamentoDAO.marcar_recusado_via_webhook(pagamento, status_detail=resultado_mp.get('status_detail'))
+    # pending / cancelled: nao mexe no status local (cancelled costuma ser uma
+    # tentativa antiga substituida por uma nova cobranca, nao a mensalidade toda).

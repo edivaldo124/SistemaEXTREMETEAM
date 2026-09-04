@@ -22,6 +22,7 @@ a { color:inherit; }
 img { max-width:100%; }
 .skip-link { position:fixed; z-index:100; top:12px; left:12px; padding:10px 14px; color:var(--ink); background:var(--yellow); font-weight:700; transform:translateY(-160%); transition:transform .2s; }
 .skip-link:focus { transform:none; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
 /* Marca: usada em cabeçalhos, login e menus — sempre o mesmo tratamento discreto. */
 .site-brand { display:inline-flex; align-items:center; gap:12px; color:inherit; text-decoration:none; text-transform:uppercase; font:600 17px/.9 var(--display); letter-spacing:.08em; }
@@ -54,8 +55,26 @@ img { max-width:100%; }
 
 .alert,.msg { padding:13px 15px; border-left:3px solid var(--red); color:#7e2e24; background:#f7e3df; font-size:13px; line-height:1.45; }
 .msg-sucesso { border-color:var(--green); color:#18523a; background:#e2f0e9; }
-.status { display:inline-flex; padding:5px 9px; border-radius:2px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+.status { display:inline-flex; align-items:center; gap:5px; padding:5px 9px; border-radius:2px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+.status::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; flex:0 0 auto; }
+/* Cada status carrega cor + texto (nunca só a cor) - verde=pago/regular, amarelo=pendente,
+   azul=processando/reembolso, vermelho=vencido/recusado/erro. */
 .status-pago { color:#18523a; background:#dceee5; } .status-pendente { color:#6b4e00; background:#fff0bc; } .status-atrasado { color:#842029; background:#f7dedb; } .status-cancelado { color:#51575b; background:#e4e5e5; } .status-reembolsado { color:#1c3f6e; background:#dce6f7; }
+.status-em_processamento { color:#1c3f6e; background:#dce6f7; } .status-em_analise { color:#5a4a12; background:#f2e7c9; } .status-recusado { color:#842029; background:#f7dedb; }
+
+/* ---------- Avatar do aluno: uma foto ou as iniciais, mesmo componente em toda a tela ---------- */
+.student-avatar { display:inline-grid; place-items:center; flex:0 0 auto; width:34px; height:34px; margin-right:12px; overflow:hidden; color:var(--yellow); background:var(--ink); font:700 17px var(--display); text-transform:uppercase; }
+.avatar-img { display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+
+/* ---------- Botao de acao compacto (telas administrativas: listas, tabelas) ---------- */
+.btn { display:inline-flex; align-items:center; justify-content:center; min-height:34px; padding:0 12px; border:1px solid currentColor; border-radius:2px; font-size:11px; font-weight:700; text-decoration:none; cursor:pointer; }
+.btn-status { margin-right:7px; color:var(--ink); background:#edeae1; }
+.btn-status:hover { color:#fff; background:var(--ink); }
+.btn-remover { align-self:flex-start; color:var(--red); background:transparent; }
+.btn-remover:hover { color:#fff; background:var(--red); }
+.form-remover { display:inline; }
+.form-remover button { font-family:inherit; }
+.form-remover button:disabled { opacity:.55; }
 
 .table-wrap,.table-container,.tabela-pagamentos { width:100%; overflow-x:auto; border:1px solid var(--line); -webkit-overflow-scrolling:touch; }
 table { width:100%; border-collapse:collapse; background:var(--surface); }
@@ -71,6 +90,7 @@ tbody tr:hover td { background:#fdf7de; }
 /* Tabelas viram listas organizadas no celular — ativado com a classe .table-stack no wrapper. */
 @media (max-width:640px) {
   .table-stack table,.table-stack thead,.table-stack tbody,.table-stack th,.table-stack td,.table-stack tr { display:block; }
+  .table-stack tr[hidden] { display:none; }
   .table-stack thead { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   .table-stack tr { padding:14px 16px; border-bottom:1px solid #e6e3dc; }
   .table-stack tbody tr:last-child { border-bottom:0; }
@@ -78,6 +98,10 @@ tbody tr:hover td { background:#fdf7de; }
   .table-stack td[data-label]::before { content:attr(data-label); flex:0 0 auto; margin-right:auto; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; text-align:left; }
   .table-stack td.sem-rotulo::before,.table-stack td:empty::before { content:none; }
   .table-stack { overflow-x:hidden; border:1px solid var(--line); }
+  /* Celulas de acao com varios botoes/formularios (status, sincronizar, revisar...)
+     nao cabem numa unica linha flex a direita - empilha em vez de espremer. */
+  .table-stack td.acao-cell { flex-direction:column; align-items:stretch; gap:8px; text-align:left; }
+  .table-stack td.acao-cell::before { margin-bottom:2px; }
 }
 
 /* Navegação inferior — só aparece no celular, no máximo 5 destinos por página. */

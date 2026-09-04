@@ -8,9 +8,11 @@ from modelos.plano import Plano
 from modelos.usuario import Aluno
 from dao.usuarioDAO import AlunoDAO
 from dao.planoDAO import PlanoDAO
-from dao.financeiroDAO import PagamentoDAO
+from dao.turmaDAO import TurmaDAO
+from dao.financeiroDAO import PagamentoDAO, rotulo_status
 from modelos.pagamento import Pagamento
-from servicos.formatacao import formatar_telefone
+from servicos.armazenamento import ArquivoInvalido, remover_arquivo, salvar_foto_perfil
+from servicos.formatacao import formatar_competencia, formatar_telefone
 from servicos.email import enviar_email
 
 admin_bp = Blueprint('admin_blueprint', __name__)
@@ -204,17 +206,68 @@ def detalhes_usuario(cpf):
             'telefone': formatar_telefone(request.form.get("telefone")),
             'mensalidade': request.form.get("mensalidade"),
             'plano_id': request.form.get("plano_id"),
-            'descricao': request.form.get('descricao')
+            'descricao': request.form.get('descricao'),
+            'graduacao': request.form.get('graduacao'),
         }
 
         AlunoDAO.atualizar_dados_completos(cpf, dados_atualizados)
 
         return redirect('/admin')
 
-
     planos = PlanoDAO.listar_todos()
     pagamentos = PagamentoDAO.listar_por_aluno(aluno.id)
-    return render_template("dt_aluno.html", u=aluno, planos=planos, pagamentos=pagamentos)
+    return render_template(
+        "dt_aluno.html", u=aluno, planos=planos, pagamentos=pagamentos,
+        rotulo_status=rotulo_status, formatar_competencia=formatar_competencia,
+    )
+
+
+@admin_bp.route("/admin/usuario/<cpf>/foto", methods=["POST"])
+def enviar_foto_aluno(cpf):
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    aluno = AlunoDAO.buscar_por_usuario(cpf)
+    if not aluno:
+        flash('Aluno não encontrado.', 'erro')
+        return redirect('/admin')
+
+    arquivo = request.files.get('foto')
+    if not arquivo or not arquivo.filename:
+        flash('Selecione uma imagem para enviar.', 'erro')
+        return redirect(f'/admin/usuario/{cpf}')
+
+    try:
+        nome_arquivo = salvar_foto_perfil(arquivo.read())
+    except ArquivoInvalido as erro:
+        flash(str(erro), 'erro')
+        return redirect(f'/admin/usuario/{cpf}')
+
+    foto_antiga = aluno.foto_arquivo
+    AlunoDAO.definir_foto(aluno.id, nome_arquivo)
+    if foto_antiga:
+        remover_arquivo(foto_antiga, subpasta='fotos')
+
+    flash('Foto do aluno atualizada com sucesso.', 'sucesso')
+    return redirect(f'/admin/usuario/{cpf}')
+
+
+@admin_bp.route("/admin/usuario/<cpf>/foto/remover", methods=["POST"])
+def remover_foto_aluno(cpf):
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    aluno = AlunoDAO.buscar_por_usuario(cpf)
+    if not aluno:
+        flash('Aluno não encontrado.', 'erro')
+        return redirect('/admin')
+
+    if aluno.foto_arquivo:
+        remover_arquivo(aluno.foto_arquivo, subpasta='fotos')
+        AlunoDAO.definir_foto(aluno.id, None)
+        flash('Foto do aluno removida.', 'sucesso')
+
+    return redirect(f'/admin/usuario/{cpf}')
 
 
 @admin_bp.route("/admin/usuario/<cpf>/pagamentos", methods=["POST"])
@@ -230,6 +283,8 @@ def cadastrar_pagamento(cpf):
     status = request.form.get('status')
     forma_pagamento = request.form.get('forma_pagamento')
     data_pagamento = request.form.get('data_pagamento')
+    competencia = (request.form.get('competencia') or '').strip() or None
+    observacao = (request.form.get('observacao') or '').strip() or None
 
     if aluno and plano and valor and vencimento:
         novo_pagamento = Pagamento(
@@ -239,10 +294,20 @@ def cadastrar_pagamento(cpf):
             vencimento=date.fromisoformat(vencimento),
             status=status,
             forma_pagamento=forma_pagamento if forma_pagamento else None,
-            data_pagamento=date.fromisoformat(data_pagamento) if data_pagamento else None
+            data_pagamento=date.fromisoformat(data_pagamento) if data_pagamento else None,
+            competencia=competencia,
         )
+        if status != 'pendente':
+            # Lançamento já nasce decidido pelo admin (dinheiro/transferência/ajuste) -
+            # separa claramente de uma cobrança Pix, que é sempre provider='mercado_pago'.
+            novo_pagamento.provider = 'manual'
 
         PagamentoDAO.salvar(novo_pagamento)
+        PagamentoDAO.registrar_evento(
+            novo_pagamento.id, 'manual_registrado',
+            detalhe=observacao or f'Mensalidade lançada manualmente pelo admin ({forma_pagamento or "sem forma informada"}).',
+            ator=session.get('usuario'),
+        )
         aluno.mensalidade = 'Em Dia' if status == 'pago' else status.capitalize()
         db.session.commit()
 
@@ -261,12 +326,102 @@ def atualizar_status_pagamento(pagamento_id):
 
     status = request.form.get('status')
     forma_pagamento = request.form.get('forma_pagamento')
+    status_antes = pagamento.status
 
     PagamentoDAO.atualizar_status(pagamento_id, status, forma_pagamento)
     pagamento.aluno.mensalidade = 'Em Dia' if status == 'pago' else status.capitalize()
     db.session.commit()
+    if status != status_antes:
+        PagamentoDAO.registrar_evento(
+            pagamento.id, 'status_alterado_admin',
+            detalhe=f'Status alterado manualmente: {rotulo_status(status_antes)} → {rotulo_status(status)}.',
+            ator=session.get('usuario'),
+        )
 
     return redirect(f'/admin/usuario/{pagamento.aluno.cpf}')
+
+
+@admin_bp.route("/admin/pagamentos/<int:pagamento_id>/comprovante-manual/aprovar", methods=["POST"])
+def aprovar_comprovante_manual(pagamento_id):
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    pagamento = PagamentoDAO.buscar_por_id(pagamento_id)
+    if not pagamento:
+        flash('Mensalidade não encontrada.', 'erro')
+        return redirect('/admin/financeiro')
+
+    if pagamento.status != 'em_analise':
+        flash('Esta mensalidade não está com um comprovante em análise.', 'erro')
+        return redirect(request.referrer or '/admin/financeiro')
+
+    observacao = (request.form.get('observacao') or '').strip() or None
+    data_pagamento = _data_do_form(request.form.get('data_pagamento'))
+    forma_pagamento = request.form.get('forma_pagamento') or 'transferencia'
+
+    PagamentoDAO.aprovar_comprovante_manual(
+        pagamento, admin_login=session.get('usuario'), observacao=observacao,
+        data_pagamento=data_pagamento, forma_pagamento=forma_pagamento,
+    )
+    flash('Comprovante aprovado - mensalidade marcada como paga.', 'sucesso')
+    return redirect(request.referrer or '/admin/financeiro')
+
+
+@admin_bp.route("/admin/pagamentos/<int:pagamento_id>/comprovante-manual/rejeitar", methods=["POST"])
+def rejeitar_comprovante_manual(pagamento_id):
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    pagamento = PagamentoDAO.buscar_por_id(pagamento_id)
+    if not pagamento:
+        flash('Mensalidade não encontrada.', 'erro')
+        return redirect('/admin/financeiro')
+
+    if pagamento.status != 'em_analise':
+        flash('Esta mensalidade não está com um comprovante em análise.', 'erro')
+        return redirect(request.referrer or '/admin/financeiro')
+
+    observacao = (request.form.get('observacao') or '').strip() or None
+    PagamentoDAO.rejeitar_comprovante_manual(pagamento, admin_login=session.get('usuario'), observacao=observacao)
+    flash('Comprovante rejeitado. O aluno poderá enviar um novo ou pagar via Pix.', 'sucesso')
+    return redirect(request.referrer or '/admin/financeiro')
+
+
+def _data_do_form(valor):
+    try:
+        return date.fromisoformat(valor) if valor else None
+    except ValueError:
+        return None
+
+
+@admin_bp.route("/admin/financeiro")
+def painel_financeiro():
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    filtros = {
+        'inicio': _data_do_form(request.args.get('inicio')),
+        'fim': _data_do_form(request.args.get('fim')),
+        'turma_id': request.args.get('turma_id', type=int),
+        'plano_id': request.args.get('plano_id', type=int),
+        'forma_pagamento': request.args.get('forma_pagamento') or None,
+        'status': request.args.get('status') or None,
+        'busca_aluno': (request.args.get('busca_aluno') or '').strip() or None,
+    }
+
+    totais = PagamentoDAO.totais_periodo(inicio=filtros['inicio'], fim=filtros['fim'])
+    pagamentos = PagamentoDAO.listar_filtrado(**filtros)
+
+    return render_template(
+        "financeiro.html",
+        totais=totais,
+        pagamentos=pagamentos,
+        turmas=TurmaDAO.listar_todas(),
+        planos=PlanoDAO.listar_todos(),
+        filtros=request.args,
+        rotulo_status=rotulo_status,
+        formatar_competencia=formatar_competencia,
+    )
 
 
 def _esta_inadimplente(aluno):

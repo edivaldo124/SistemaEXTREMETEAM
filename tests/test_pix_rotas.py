@@ -264,6 +264,49 @@ def test_webhook_repetido_e_idempotente(client, criar_pagamento, monkeypatch):
     assert len(chamadas) == 0  # ja estava pago com o mesmo provider_payment_id - nem consulta o MP de novo
 
 
+def test_webhook_processa_em_processamento(client, criar_pagamento, monkeypatch):
+    pagamento = criar_pagamento(provider='mercado_pago', provider_payment_id='mp-1', external_reference='ref-1', valor=150.0)
+    secret = os.environ['MERCADO_PAGO_WEBHOOK_SECRET']
+
+    monkeypatch.setattr(
+        pix_bp, 'buscar_pagamento',
+        lambda payment_id: _resposta_consulta(status='in_process', external_reference='ref-1', transaction_amount=150.0),
+    )
+
+    headers = _assinar('mp-1', secret)
+    resp = client.post('/api/webhooks/mercado-pago?data.id=mp-1', headers=headers,
+                        json={'type': 'payment', 'data': {'id': 'mp-1'}})
+
+    assert resp.status_code == 200
+    atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
+    assert atualizado.status == 'em_processamento'
+
+
+def test_webhook_processa_recusado_e_permite_nova_tentativa(client, criar_pagamento, monkeypatch, logar_como_aluno):
+    pagamento = criar_pagamento(provider='mercado_pago', provider_payment_id='mp-1', external_reference='ref-1', valor=150.0)
+    secret = os.environ['MERCADO_PAGO_WEBHOOK_SECRET']
+
+    monkeypatch.setattr(
+        pix_bp, 'buscar_pagamento',
+        lambda payment_id: _resposta_consulta(status='rejected', external_reference='ref-1', transaction_amount=150.0),
+    )
+
+    headers = _assinar('mp-1', secret)
+    resp = client.post('/api/webhooks/mercado-pago?data.id=mp-1', headers=headers,
+                        json={'type': 'payment', 'data': {'id': 'mp-1'}})
+
+    assert resp.status_code == 200
+    atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
+    assert atualizado.status == 'recusado'
+
+    # 'recusado' entra em STATUS_PAGAVEIS - o aluno consegue gerar uma nova cobranca.
+    logar_como_aluno(atualizado.aluno)
+    monkeypatch.setattr(pix_bp, 'criar_pagamento_pix', lambda **kw: _resposta_criacao(payment_id='mp-2'))
+    monkeypatch.setattr(pix_bp, 'cancelar_pagamento', lambda payment_id: None)
+    resp_retry = client.post(f'/api/mensalidades/{atualizado.id}/pix')
+    assert resp_retry.status_code == 200
+
+
 def test_webhook_falha_indisponibilidade_mp(client, criar_pagamento, monkeypatch):
     pagamento = criar_pagamento(provider='mercado_pago', provider_payment_id='mp-1', external_reference='ref-1')
     secret = os.environ['MERCADO_PAGO_WEBHOOK_SECRET']

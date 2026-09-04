@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Pagar mensalidade | Centro de Treinamento Extreme Team</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/pix.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/pagamento.css') }}"><script src="{{ url_for('static',filename='js/pagamento.js') }}" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+<header class="detail-header">
+    <a class="site-brand" href="/perfil"><img src="{{ url_for('static',filename='imagens/logo-icon.png') }}" alt=""><span>Centro de treinamento<br><strong>Extreme Team</strong></span></a>
+    <a href="/perfil">← Voltar</a>
+</header>
+<main id="conteudo" class="pagamento-page">
+{% with mensagens = get_flashed_messages(with_categories=true) %}
+{% for categoria, mensagem in mensagens %}<div class="msg msg-{{ categoria }}">{{ mensagem }}</div>{% endfor %}
+{% endwith %}
+
+<div id="pagina-pagamento" data-pagamento-id="{{ pagamento.id }}" data-status-inicial="{{ pagamento.status }}" class="pagamento-container">
+
+    <section class="pagamento-resumo">
+        <p class="eyebrow">Resumo da mensalidade</p>
+        <h1>{{ pagamento.plano.nome_plano if pagamento.plano else 'Mensalidade' }}</h1>
+        <div class="pagamento-resumo-grid">
+            <div><span>Aluno</span><strong>{{ pagamento.aluno.nome }}</strong></div>
+            <div><span>Competência</span><strong>{{ formatar_competencia(pagamento.competencia) }}</strong></div>
+            <div><span>Vencimento</span><strong>{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</strong></div>
+            <div><span>Valor total</span><strong class="pagamento-valor">R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}</strong></div>
+        </div>
+        <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
+    </section>
+
+    <section class="pagamento-metodo" data-estado="carregando">
+        <p class="pagamento-carregando" role="status" aria-live="polite">Carregando dados do pagamento…</p>
+    </section>
+
+    <section class="pagamento-metodo" data-estado="erro" hidden>
+        <p class="alert" data-erro-msg role="alert">Não foi possível carregar o pagamento.</p>
+        <button type="button" class="button-secondary" data-tentar-novamente>Tentar novamente</button>
+    </section>
+
+    <section class="pagamento-metodo" data-estado="pix" hidden>
+        <div class="pagamento-selo-seguranca">
+            <span class="selo-mercadopago">Processado pelo Mercado Pago</span>
+            <span class="selo-pix">Pix</span>
+        </div>
+        <p class="pagamento-seguranca-texto">Pagamento processado com criptografia pelo Mercado Pago. A Extreme Team nunca vê nem armazena os dados da sua conta bancária.</p>
+
+        <div class="pix-qr-area">
+            <img data-qr alt="QR Code para pagamento via Pix" hidden>
+            <p class="pix-sem-qr" data-sem-qr hidden>QR Code indisponível no momento — use o código copia e cola abaixo.</p>
+        </div>
+
+        <label for="pagamento-copia-cola">Pix copia e cola</label>
+        <div class="pix-copia-linha">
+            <input id="pagamento-copia-cola" type="text" readonly data-copia-cola aria-label="Código Pix copia e cola">
+            <button type="button" class="button-secondary" data-copiar>Copiar código</button>
+        </div>
+        <p class="pix-falha-copiar" data-falha-copiar hidden role="alert">Não foi possível copiar automaticamente. Selecione o código acima e copie manualmente.</p>
+
+        <p class="pagamento-expiracao">Válido até <strong data-expiracao>—</strong></p>
+        <p class="pix-status" role="status" aria-live="polite">Aguardando pagamento — esta página atualiza sozinha assim que o Pix for confirmado.</p>
+    </section>
+
+    <section class="pagamento-metodo pagamento-estado-info" data-estado="processando" hidden>
+        <p class="pagamento-icone" aria-hidden="true">⏳</p>
+        <h2>Pagamento em processamento</h2>
+        <p>O Mercado Pago está analisando o pagamento. Isso costuma levar só alguns instantes — esta página atualiza sozinha.</p>
+    </section>
+
+    <section class="pagamento-metodo pagamento-estado-info" data-estado="analise" hidden>
+        <p class="pagamento-icone" aria-hidden="true">🕓</p>
+        <h2>Comprovante em análise</h2>
+        <p>Recebemos o comprovante enviado. A administração vai conferir e a situação desta mensalidade será atualizada em breve.</p>
+    </section>
+
+    <section class="pagamento-metodo pagamento-estado-info" data-estado="aprovado" hidden>
+        <p class="pagamento-icone" aria-hidden="true">✅</p>
+        <h2>Pagamento aprovado!</h2>
+        <p>Redirecionando para o seu comprovante…</p>
+    </section>
+
+    <section class="pagamento-metodo pagamento-estado-info" data-estado="expirado" hidden>
+        <p class="pagamento-icone" aria-hidden="true">⌛</p>
+        <h2>QR Code expirado</h2>
+        <p>Esse código Pix não é mais válido. Gere um novo código para continuar.</p>
+        <button type="button" class="button-primary" data-tentar-novamente>Gerar novo código Pix</button>
+    </section>
+
+    <section class="pagamento-metodo pagamento-estado-info" data-estado="recusado" hidden>
+        <p class="pagamento-icone" aria-hidden="true">✖</p>
+        <h2>Pagamento recusado</h2>
+        <p>O Mercado Pago não conseguiu aprovar esse pagamento. Você pode tentar novamente.</p>
+        <button type="button" class="button-primary" data-tentar-novamente>Tentar novamente</button>
+    </section>
+
+    <section class="pagamento-metodo pagamento-estado-info" data-estado="encerrado" hidden>
+        <p class="pagamento-icone" aria-hidden="true">ℹ</p>
+        <h2>{{ rotulo_status(pagamento.status) }}</h2>
+        <p>Esta mensalidade não está mais disponível para pagamento online.</p>
+    </section>
+
+    {% if pode_enviar_comprovante %}
+    <section class="pagamento-comprovante-manual">
+        <details>
+            <summary>Já pagou por outro meio? Envie o comprovante</summary>
+            <p>Aceitamos comprovante em JPEG, PNG ou PDF, até 8 MB. O envio não confirma o pagamento sozinho — a administração vai conferir e atualizar a situação.</p>
+            <form action="{{ url_for('auth.enviar_comprovante_manual_aluno', pagamento_id=pagamento.id) }}" method="POST" enctype="multipart/form-data" class="form-comprovante-manual">
+                <input type="file" name="comprovante" accept="image/jpeg,image/png,application/pdf" required>
+                <button type="submit" class="button-secondary">Enviar comprovante</button>
+            </form>
+        </details>
+    </section>
+    {% endif %}
+
+</div>
+</main>
+</body>
+</html>

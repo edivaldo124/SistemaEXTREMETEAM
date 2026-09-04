@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from config import db
 
 class Plano(db.Model):
@@ -5,11 +7,11 @@ class Plano(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nome_plano = db.Column(db.String(100), nullable=False)
-    preco_plano = db.Column(db.Float, nullable=False)
+    preco_plano = db.Column(db.Numeric(10, 2), nullable=False)
 
     duracao_dias = db.Column(db.Integer, nullable=False, default=30)
 
     def __init__(self, nome_plano, preco_plano, duracao_dias):
         self.nome_plano = nome_plano
-        self.preco_plano = preco_plano
+        self.preco_plano = preco_plano if isinstance(preco_plano, Decimal) else Decimal(str(preco_plano))
         self.duracao_dias = duracao_dias

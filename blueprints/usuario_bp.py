@@ -2,19 +2,29 @@ import hashlib
 import hmac
 import os
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
-from flask import Blueprint, flash, render_template, request, session, redirect, url_for
+from flask import Blueprint, abort, flash, render_template, request, send_file, session, redirect, url_for
 from sqlalchemy.exc import IntegrityError
 from config import db
 from modelos.usuario import Aluno
+from modelos.matricula import Matricula
+from modelos.turma import Turma
 from dao.usuarioDAO import AlunoDAO
 from dao.planoDAO import PlanoDAO
-from dao.financeiroDAO import PagamentoDAO
+from dao.financeiroDAO import PagamentoDAO, mensalidade_destaque, rotulo_acao, rotulo_status
 from dao.professorDAO import ProfessorDAO
 from dao.matriculaDAO import MatriculaDAO
 from dao.presencaDAO import PresencaDAO
-from servicos.formatacao import formatar_cpf, formatar_telefone, somente_digitos, variantes_cpf
+from servicos.armazenamento import (
+    ArquivoInvalido,
+    caminho_arquivo,
+    remover_arquivo,
+    salvar_comprovante_manual,
+    salvar_foto_perfil,
+)
+from servicos.formatacao import formatar_competencia, formatar_cpf, formatar_telefone, somente_digitos, variantes_cpf
 from servicos.email import enviar_email
 
 auth_bp = Blueprint('auth', __name__)
@@ -153,14 +163,20 @@ def pagina_perfil():
     pagamentos = PagamentoDAO.listar_por_aluno(aluno_dados.id)
     matriculas = MatriculaDAO.listar_por_aluno(aluno_dados.id)
     presencas = PresencaDAO.listar_por_aluno(aluno_dados.id)
+    total_presencas = sum(1 for p in presencas if p.presente)
 
     return render_template(
         "pgUsuario.html",
         usuario=aluno_dados,
         planos=lista_planos,
         pagamentos=pagamentos,
+        mensalidade_atual=mensalidade_destaque(pagamentos),
         matriculas=matriculas,
         presencas=presencas,
+        total_presencas=total_presencas,
+        rotulo_status=rotulo_status,
+        rotulo_acao=rotulo_acao,
+        formatar_competencia=formatar_competencia,
     )
 
 
@@ -400,3 +416,212 @@ def redefinir_senha(token):
         return render_template("login.html", msg="Senha alterada com sucesso! Faça login.")
 
     return render_template("redefinir_senha.html", token=token)
+
+
+# ---------------------------------------------------------------------------
+# Foto de perfil
+# ---------------------------------------------------------------------------
+
+def _professor_pode_ver_aluno(aluno_id):
+    professor_id = session.get('professor_id')
+    if not professor_id:
+        return False
+    return (
+        db.session.query(Matricula.id)
+        .join(Turma, Matricula.turma_id == Turma.id)
+        .filter(Matricula.aluno_id == aluno_id, Turma.professor_id == professor_id)
+        .first() is not None
+    )
+
+
+def _pode_ver_foto(aluno_id):
+    tipo = session.get('tipo_usuario')
+    if tipo == 'admin':
+        return True
+    if tipo == 'aluno' and session.get('aluno_id') == aluno_id:
+        return True
+    if tipo == 'professor':
+        return _professor_pode_ver_aluno(aluno_id)
+    return False
+
+
+@auth_bp.route('/perfil/foto/<int:aluno_id>')
+def foto_perfil(aluno_id):
+    # Nunca fica em static/ nem tem URL previsível por enumeração de nada além do
+    # próprio ID do aluno - e mesmo assim exige sessão com permissão sobre esse aluno.
+    if not _pode_ver_foto(aluno_id):
+        abort(403)
+
+    aluno = AlunoDAO.buscar_por_id(aluno_id)
+    if not aluno or not aluno.foto_arquivo:
+        abort(404)
+
+    caminho = caminho_arquivo(aluno.foto_arquivo, subpasta='fotos')
+    if not caminho:
+        abort(404)
+
+    return send_file(caminho, mimetype='image/jpeg', max_age=3600)
+
+
+@auth_bp.route('/perfil/foto', methods=['POST'])
+def enviar_foto_perfil():
+    aluno = _aluno_da_sessao()
+    if not aluno:
+        return redirect('/login')
+
+    arquivo = request.files.get('foto')
+    if not arquivo or not arquivo.filename:
+        flash('Selecione uma imagem para enviar.', 'erro')
+        return redirect('/perfil')
+
+    try:
+        nome_arquivo = salvar_foto_perfil(arquivo.read())
+    except ArquivoInvalido as erro:
+        flash(str(erro), 'erro')
+        return redirect('/perfil')
+
+    foto_antiga = aluno.foto_arquivo
+    aluno.foto_arquivo = nome_arquivo
+    db.session.commit()
+    if foto_antiga:
+        remover_arquivo(foto_antiga, subpasta='fotos')
+
+    flash('Foto atualizada com sucesso.', 'sucesso')
+    return redirect('/perfil')
+
+
+@auth_bp.route('/perfil/foto/remover', methods=['POST'])
+def remover_foto_perfil():
+    aluno = _aluno_da_sessao()
+    if not aluno:
+        return redirect('/login')
+
+    if aluno.foto_arquivo:
+        remover_arquivo(aluno.foto_arquivo, subpasta='fotos')
+        aluno.foto_arquivo = None
+        db.session.commit()
+        flash('Foto removida.', 'sucesso')
+
+    return redirect('/perfil')
+
+
+# ---------------------------------------------------------------------------
+# Tela de pagamento, comprovante e comprovante manual de uma mensalidade
+# ---------------------------------------------------------------------------
+
+STATUS_ACEITA_COMPROVANTE_MANUAL = ('pendente', 'atrasado', 'recusado')
+
+
+def _acesso_permitido_pagamento(pagamento):
+    if session.get('tipo_usuario') == 'admin':
+        return True
+    return session.get('tipo_usuario') == 'aluno' and session.get('aluno_id') == pagamento.aluno_id
+
+
+def _pagamento_com_acesso_ou_404(pagamento_id):
+    if session.get('tipo_usuario') not in ('admin', 'aluno'):
+        return None
+    pagamento = PagamentoDAO.buscar_por_id(pagamento_id)
+    if not pagamento or not _acesso_permitido_pagamento(pagamento):
+        return None
+    return pagamento
+
+
+@auth_bp.route('/perfil/pagamento/<int:pagamento_id>')
+def pagina_pagamento(pagamento_id):
+    if session.get('tipo_usuario') not in ('admin', 'aluno'):
+        return redirect('/login')
+
+    pagamento = _pagamento_com_acesso_ou_404(pagamento_id)
+    if not pagamento:
+        abort(404)
+
+    if pagamento.status == 'pago':
+        return redirect(url_for('auth.comprovante_mensalidade', pagamento_id=pagamento.id))
+
+    return render_template(
+        'pagamento.html',
+        pagamento=pagamento,
+        pode_enviar_comprovante=pagamento.status in STATUS_ACEITA_COMPROVANTE_MANUAL,
+        rotulo_status=rotulo_status,
+        formatar_competencia=formatar_competencia,
+    )
+
+
+@auth_bp.route('/perfil/mensalidade/<int:pagamento_id>/comprovante')
+def comprovante_mensalidade(pagamento_id):
+    if session.get('tipo_usuario') not in ('admin', 'aluno'):
+        return redirect('/login')
+
+    pagamento = _pagamento_com_acesso_ou_404(pagamento_id)
+    if not pagamento:
+        abort(404)
+
+    if pagamento.status != 'pago':
+        flash('O comprovante só fica disponível depois que o pagamento é confirmado.', 'erro')
+        return redirect(url_for('auth.pagina_pagamento', pagamento_id=pagamento.id))
+
+    eventos_confirmacao = ('webhook_aprovado', 'comprovante_aprovado', 'manual_registrado')
+    evento_confirmacao = next((e for e in pagamento.eventos if e.tipo in eventos_confirmacao), None)
+    data_hora_confirmacao = None
+    if evento_confirmacao:
+        # Eventos são salvos em UTC (datetime.utcnow) - converte para o horário de
+        # Brasília só na exibição do comprovante, sem alterar o que fica no banco.
+        data_hora_confirmacao = evento_confirmacao.criado_em.replace(tzinfo=timezone.utc).astimezone(
+            ZoneInfo('America/Sao_Paulo')
+        )
+
+    return render_template(
+        'comprovante.html', pagamento=pagamento, formatar_competencia=formatar_competencia,
+        data_hora_confirmacao=data_hora_confirmacao,
+    )
+
+
+@auth_bp.route('/perfil/mensalidade/<int:pagamento_id>/comprovante-manual', methods=['POST'])
+def enviar_comprovante_manual_aluno(pagamento_id):
+    aluno = _aluno_da_sessao()
+    if not aluno:
+        return redirect('/login')
+
+    pagamento = PagamentoDAO.buscar_por_id(pagamento_id)
+    if not pagamento or pagamento.aluno_id != aluno.id:
+        abort(404)
+
+    if pagamento.status not in STATUS_ACEITA_COMPROVANTE_MANUAL:
+        flash('Esta mensalidade não está disponível para envio de comprovante.', 'erro')
+        return redirect(url_for('auth.pagina_pagamento', pagamento_id=pagamento.id))
+
+    arquivo = request.files.get('comprovante')
+    if not arquivo or not arquivo.filename:
+        flash('Selecione um arquivo para enviar.', 'erro')
+        return redirect(url_for('auth.pagina_pagamento', pagamento_id=pagamento.id))
+
+    try:
+        nome_arquivo = salvar_comprovante_manual(arquivo.read())
+    except ArquivoInvalido as erro:
+        flash(str(erro), 'erro')
+        return redirect(url_for('auth.pagina_pagamento', pagamento_id=pagamento.id))
+
+    arquivo_antigo = pagamento.comprovante_manual_arquivo
+    PagamentoDAO.enviar_comprovante_manual(pagamento, arquivo_nome=nome_arquivo, ator=aluno.login)
+    if arquivo_antigo:
+        remover_arquivo(arquivo_antigo, subpasta='comprovantes')
+
+    flash('Comprovante enviado! Você será avisado quando a administração analisar.', 'sucesso')
+    return redirect(url_for('auth.pagina_pagamento', pagamento_id=pagamento.id))
+
+
+@auth_bp.route('/perfil/mensalidade/<int:pagamento_id>/comprovante-manual/arquivo')
+def ver_comprovante_manual(pagamento_id):
+    if session.get('tipo_usuario') not in ('admin', 'aluno'):
+        return redirect('/login')
+
+    pagamento = _pagamento_com_acesso_ou_404(pagamento_id)
+    if not pagamento or not pagamento.comprovante_manual_arquivo:
+        abort(404)
+
+    caminho = caminho_arquivo(pagamento.comprovante_manual_arquivo, subpasta='comprovantes')
+    if not caminho:
+        abort(404)
+
+    return send_file(caminho, max_age=0, as_attachment=False)
