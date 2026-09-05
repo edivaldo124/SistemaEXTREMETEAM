@@ -1,1 +1,30 @@
-{% macro acao(pagamento, rotulo_status, classe_botao) %}{% set status = pagamento.status %}<div class="mensalidade-acao">{% if status in ('pendente', 'atrasado', 'recusado') %}<button type="button" class="{{ classe_botao }}" data-pix-pagar data-pagamento-id="{{ pagamento.id }}">Pagar com Pix</button><form class="form-outras-formas" method="POST" action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}"><button type="submit" class="mensalidade-acao-extra" data-checkout-abrir>Outras formas de pagamento</button></form><a class="mensalidade-acao-nota" href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">Ver detalhes da cobrança</a>{% elif status == 'pago' %}<a class="{{ classe_botao }}" href="{{ url_for('auth.comprovante_mensalidade', pagamento_id=pagamento.id) }}">Ver comprovante</a>{% elif status == 'em_processamento' %}<a class="mensalidade-acao-nota" href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">Pagamento processando</a>{% elif status == 'em_analise' %}<a class="mensalidade-acao-nota" href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">Comprovante em análise</a>{% else %}<a class="mensalidade-acao-nota" href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">{{ rotulo_status(status) }}</a>{% endif %}</div>{% endmacro %}
+{% macro acao(pagamento, rotulo_status, classe_botao) %}
+    {% set status = pagamento.status %}
+    <div class="mensalidade-acao">
+        {% if status in ('pendente', 'atrasado', 'recusado') %}
+            <button type="button"
+                    class="{{ classe_botao }}"
+                    data-pix-pagar
+                    data-pagamento-id="{{ pagamento.id }}">Pagar com Pix</button>
+            <form class="form-outras-formas"
+                  method="POST"
+                  action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">
+                <button type="submit" class="mensalidade-acao-extra" data-checkout-abrir>Outras formas de pagamento</button>
+            </form>
+            <a class="mensalidade-acao-nota"
+               href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">Ver detalhes da cobrança</a>
+        {% elif status == 'pago' %}
+            <a class="{{ classe_botao }}"
+               href="{{ url_for('auth.comprovante_mensalidade', pagamento_id=pagamento.id) }}">Ver comprovante</a>
+        {% elif status == 'em_processamento' %}
+            <a class="mensalidade-acao-nota"
+               href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">Pagamento processando</a>
+        {% elif status == 'em_analise' %}
+            <a class="mensalidade-acao-nota"
+               href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">Comprovante em análise</a>
+        {% else %}
+            <a class="mensalidade-acao-nota"
+               href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">{{ rotulo_status(status) }}</a>
+        {% endif %}
+    </div>
+{% endmacro %}

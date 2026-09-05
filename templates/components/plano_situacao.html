@@ -1,0 +1,124 @@
+{% macro cartao(situacao, usuario) %}
+    {% set validade = situacao.valido_ate %}
+    {% set solicitacao = situacao.solicitacao_mudanca %}
+    <section class="plano-situacao" aria-label="Situação do meu plano">
+        <article class="plano-situacao-card" data-estado="{{ situacao.estado }}">
+            <div class="plano-situacao-topo">
+                <div>
+                    <p class="eyebrow">Meu plano</p>
+                    <h2>{{ situacao.plano.nome_plano if situacao.plano else 'Nenhum plano contratado' }}</h2>
+                </div>
+                <span class="status status-plano-{{ situacao.estado }}">{{ situacao.rotulo }}</span>
+            </div>
+            <p class="plano-situacao-descricao">{{ situacao.descricao }}</p>
+            {% if validade or situacao.plano %}
+                <div class="plano-situacao-dados">
+                    {% if situacao.plano %}
+                        <div>
+                            <span>Valor do plano</span>
+                            <strong>R$ {{ '%.2f'|format(situacao.plano.preco_plano)|replace('.', ',') }}</strong>
+                        </div>
+                    {% endif %}
+                    {% if validade %}
+                        <div>
+                            <span>Válido até</span>
+                            <strong>
+                                <time datetime="{{ validade.isoformat() }}">
+                                    {{ validade.strftime('%d/%m/%Y') }}
+                                </time>
+                            </strong>
+                        </div>
+                        <div>
+                            <span>Dias restantes</span>
+                            <strong>{{ situacao.dias_restantes }}{{ ' dia' if situacao.dias_restantes == 1 else ' dias' }}</strong>
+                        </div>
+                    {% elif situacao.proximo_periodo_inicio %}
+                        <div>
+                            <span>Próximo período começa em</span>
+                            <strong>
+                                <time datetime="{{ situacao.proximo_periodo_inicio.isoformat() }}">
+                                    {{ situacao.proximo_periodo_inicio.strftime('%d/%m/%Y') }}
+                                </time>
+                            </strong>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if situacao.proximo_periodo_pago %}
+                <p class="plano-aviso plano-aviso-info">
+                    Seu próximo período <strong>já está pago</strong>: a partir de
+                    <time datetime="{{ situacao.proximo_periodo_pago.vigencia_inicio.isoformat() }}">{{ situacao.proximo_periodo_pago.vigencia_inicio.strftime('%d/%m/%Y') }}</time>
+                    você segue no plano {{ situacao.proximo_periodo_pago.plano.nome_plano }}
+                    por R$ {{ '%.2f'|format(situacao.proximo_periodo_pago.valor)|replace('.', ',') }}.
+                </p>
+            {% endif %}
+            {% if situacao.renovacao_antecipada %}
+                <p class="plano-aviso plano-aviso-info">
+                    A cobrança em aberto é da
+                    <strong>renovação antecipada</strong>
+                    : ela paga o período que começa em
+                    <time datetime="{{ situacao.cobranca.vigencia_inicio.isoformat() if situacao.cobranca.vigencia_inicio }}">
+                        {{ situacao.cobranca.vigencia_inicio.strftime('%d/%m/%Y') if situacao.cobranca.vigencia_inicio else '—' }}
+                    </time>
+                    .
+                    Seu acesso já pago continua valendo até {{ validade.strftime('%d/%m/%Y') if validade else '—' }}.
+                </p>
+            {% endif %}
+            {% if situacao.aguardando_decisao %}
+                <p class="plano-aviso plano-aviso-analise">
+                    Seu comprovante está em análise pela administração.
+                    <strong>Não é preciso pagar de novo</strong>
+                    — avisaremos assim que houver uma decisão.
+                </p>
+            {% endif %}
+            {% if solicitacao %}
+                <div class="plano-mudanca"
+                     role="group"
+                     aria-label="Mudança de plano agendada">
+                    <p class="plano-mudanca-titulo">Mudança de plano agendada</p>
+                    <dl class="plano-mudanca-dados">
+                        <div>
+                            <dt>Plano de destino</dt>
+                            <dd>
+                                {{ solicitacao.plano_destino.nome_plano }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Novo valor</dt>
+                            <dd>
+                                R$ {{ '%.2f'|format(solicitacao.valor_destino)|replace('.', ',') }}
+                                {% if solicitacao.valor_origem %}
+                                    <span class="plano-mudanca-antes">(hoje R$ {{ '%.2f'|format(solicitacao.valor_origem)|replace('.', ',') }})</span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Passa a valer em</dt>
+                            <dd>
+                                {% if solicitacao.vigencia_a_partir_de %}
+                                    <time datetime="{{ solicitacao.vigencia_a_partir_de.isoformat() }}">
+                                        {{ solicitacao.vigencia_a_partir_de.strftime('%d/%m/%Y') }}
+                                    </time>
+                                {% else %}
+                                    na próxima renovação
+                                {% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                    <p class="plano-mudanca-nota">
+                        Até lá nada muda: você continua no {{ solicitacao.plano_origem.nome_plano if solicitacao.plano_origem else 'plano atual' }} com todos os benefícios, sem cobrança extra e sem reembolso.
+                    </p>
+                    <form action="{{ url_for('auth.cancelar_mudanca_plano', solicitacao_id=solicitacao.id) }}"
+                          method="POST"
+                          data-confirm-modal
+                          data-modal-eyebrow="Mudança de plano"
+                          data-modal-title="Cancelar a mudança agendada?"
+                          data-modal-message="Sua próxima renovação voltará a ser no plano atual."
+                          data-modal-confirm="Cancelar mudança">
+                        <button type="submit" class="button-secondary">Cancelar mudança</button>
+                    </form>
+                </div>
+            {% endif %}
+        </article>
+    </section>
+{% endmacro %}

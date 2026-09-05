@@ -24,6 +24,14 @@ class Pagamento(db.Model):
     # Competência da mensalidade no formato 'AAAA-MM' (ex.: '2026-09' = Setembro de 2026).
     competencia = db.Column(db.String(7), nullable=True)
 
+    # Período de acesso que ESTA mensalidade cobre, calculado a partir de
+    # Plano.duracao_dias e encadeado ao fim do período já pago (quem renova antes do
+    # vencimento não perde os dias que já comprou). É por este intervalo - nunca pelo
+    # texto livre de Aluno.mensalidade nem pela competência - que o sistema decide se o
+    # aluno tem plano ativo hoje e até quando. Nullable: lançamentos antigos não têm.
+    vigencia_inicio = db.Column(db.Date, nullable=True)
+    vigencia_fim = db.Column(db.Date, nullable=True)
+
     # RF: pagamento via Pix (Mercado Pago). Todos nullable/aditivos - linhas antigas
     # (lançamentos manuais do admin) ficam com provider=None e não são afetadas.
     provider = db.Column(db.String(20), nullable=True)  # None/'manual' (sem integração) | 'mercado_pago'
@@ -70,7 +78,7 @@ class Pagamento(db.Model):
     def __init__(self, aluno_id, plano_id, valor, vencimento, status='pendente', data_pagamento=None,
                  forma_pagamento=None, provider=None, provider_payment_id=None, external_reference=None,
                  idempotency_key=None, pix_copia_cola=None, ticket_url=None, data_criacao_pix=None,
-                 data_expiracao=None, competencia=None):
+                 data_expiracao=None, competencia=None, vigencia_inicio=None, vigencia_fim=None):
         self.aluno_id = aluno_id
         self.plano_id = plano_id
         self.valor = _para_decimal(valor)
@@ -87,3 +95,5 @@ class Pagamento(db.Model):
         self.data_criacao_pix = data_criacao_pix
         self.data_expiracao = data_expiracao
         self.competencia = competencia or (vencimento.strftime('%Y-%m') if vencimento else None)
+        self.vigencia_inicio = vigencia_inicio
+        self.vigencia_fim = vigencia_fim

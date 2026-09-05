@@ -14,18 +14,15 @@ document.querySelectorAll('[data-preco]').forEach(function (preco) {
 });
 
 if (gradePlanos) {
+    // O rótulo e a ação de cada plano vêm prontos do servidor, que é quem conhece a
+    // vigência paga, a cobrança em aberto e a mudança agendada. O JS não reescreve mais
+    // o botão: era ele que oferecia "Pagar plano atual" para quem já tinha pago.
     const planoAtual = gradePlanos.dataset.planoAtual;
 
-    document.querySelectorAll('.card-plano').forEach(function (card) {
-        if (planoAtual && card.dataset.planoId === planoAtual) {
-            const botao = card.querySelector('.btn-escolher');
-            card.classList.add('plano-atual');
-            // O aluno pode estar associado ao plano sem possuir uma mensalidade
-            // aberta (cadastros antigos, por exemplo). Manter a ação disponível
-            // permite criar ou reutilizar a cobrança com segurança no backend.
-            botao.textContent = 'Pagar plano atual';
-        }
-    });
+    if (planoAtual) {
+        const cardAtual = document.querySelector(`.card-plano[data-plano-id="${planoAtual}"]`);
+        if (cardAtual) cardAtual.classList.add('plano-atual');
+    }
 }
 
 // ---------- Navegação da área do aluno: uma tela por item do menu ----------

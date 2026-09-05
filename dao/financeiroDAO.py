@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import func, or_
@@ -7,7 +7,16 @@ from config import db
 from modelos.matricula import Matricula
 from modelos.pagamento import Pagamento
 from modelos.pagamento_evento import PagamentoEvento
+from modelos.solicitacao_plano import (
+    STATUS_CANCELADA,
+    STATUS_EFETIVADA,
+    STATUS_PENDENTE,
+    TIPO_DOWNGRADE,
+    TIPO_UPGRADE,
+    SolicitacaoMudancaPlano,
+)
 from modelos.usuario import Aluno
+from servicos import planos as regras_plano
 
 # Estados "fechados": não geram mais cobrança Pix nova nem esperam decisão de ninguém.
 STATUS_FECHADOS = ('pago', 'cancelado', 'reembolsado')
@@ -63,49 +72,493 @@ def mensalidade_destaque(pagamentos):
     return None
 
 
-class PagamentoDAO:
+# Códigos devolvidos por PagamentoDAO.contratar_plano - a rota traduz cada um numa
+# mensagem para o aluno. Ter um código (em vez de só o pagamento) é o que permite a
+# rota distinguir "já está pago" de "criei a cobrança" sem reinspecionar o banco.
+CONTRATACAO_COBRANCA_CRIADA = 'cobranca_criada'
+CONTRATACAO_COBRANCA_REUTILIZADA = 'cobranca_reutilizada'
+CONTRATACAO_COBRANCA_REPLANEJADA = 'cobranca_replanejada'
+CONTRATACAO_RENOVACAO_CRIADA = 'renovacao_criada'
+CONTRATACAO_JA_ATIVO = 'ja_ativo'
+CONTRATACAO_AGUARDANDO_DECISAO = 'aguardando_decisao'
+CONTRATACAO_COBRANCA_EM_ANDAMENTO = 'cobranca_em_andamento'
+CONTRATACAO_MUDANCA_AGENDADA = 'mudanca_agendada'
+CONTRATACAO_MUDANCA_JA_EXISTE = 'mudanca_ja_existe'
+CONTRATACAO_MUDANCA_CONFLITANTE = 'mudanca_conflitante'
+CONTRATACAO_MUDANCA_SEM_VIGENCIA = 'mudanca_sem_vigencia'
+CONTRATACAO_MESMO_PLANO = 'mesmo_plano'
+
+ACAO_CONTRATAR = 'contratar'
+ACAO_RENOVAR = 'renovar'
+ACAO_AGENDAR_MUDANCA = 'agendar_mudanca'
+ACOES_VALIDAS = (ACAO_CONTRATAR, ACAO_RENOVAR, ACAO_AGENDAR_MUDANCA)
+
+
+class ResultadoContratacao:
+    """O que aconteceu numa tentativa de contratar/renovar/trocar de plano."""
+
+    def __init__(self, codigo, *, pagamento=None, solicitacao=None):
+        self.codigo = codigo
+        self.pagamento = pagamento
+        self.solicitacao = solicitacao
+
+    @property
+    def gerou_cobranca(self):
+        return self.pagamento is not None and self.codigo in (
+            CONTRATACAO_COBRANCA_CRIADA,
+            CONTRATACAO_COBRANCA_REUTILIZADA,
+            CONTRATACAO_COBRANCA_REPLANEJADA,
+            CONTRATACAO_RENOVACAO_CRIADA,
+        )
+
+
+class SolicitacaoPlanoDAO:
+    """Persistência dos pedidos de troca de plano agendados para a próxima renovação."""
+
     @staticmethod
-    def criar_ou_obter_mensalidade_plano(*, aluno, plano, hoje=None):
-        """Cria a cobrança da contratação ou reutiliza a equivalente em aberto.
+    def pendente_do_aluno(aluno_id):
+        return (
+            SolicitacaoMudancaPlano.query
+            .filter_by(aluno_id=aluno_id, status=STATUS_PENDENTE)
+            .order_by(SolicitacaoMudancaPlano.id.desc())
+            .first()
+        )
 
-        O preço sempre vem do plano persistido. A competência torna o POST
-        idempotente em reenvios e evita duas cobranças abertas do mesmo plano no mês.
+    @staticmethod
+    def listar_do_aluno(aluno_id):
+        return (
+            SolicitacaoMudancaPlano.query
+            .filter_by(aluno_id=aluno_id)
+            .order_by(SolicitacaoMudancaPlano.id.desc())
+            .all()
+        )
+
+    @staticmethod
+    def buscar_por_id(solicitacao_id):
+        return SolicitacaoMudancaPlano.query.filter_by(id=solicitacao_id).first()
+
+    @staticmethod
+    def bloquear_pendente_do_aluno(aluno_id):
+        """Mesma trava de linha usada nas mensalidades: dois cliques simultâneos em
+        "Agendar troca" são serializados e o segundo enxerga o pedido do primeiro."""
+        return (
+            SolicitacaoMudancaPlano.query
+            .filter_by(aluno_id=aluno_id, status=STATUS_PENDENTE)
+            .with_for_update()
+            .order_by(SolicitacaoMudancaPlano.id.desc())
+            .first()
+        )
+
+    @staticmethod
+    def cancelar(solicitacao, *, ator, observacao=None):
+        if solicitacao.status != STATUS_PENDENTE:
+            return False
+        solicitacao.status = STATUS_CANCELADA
+        solicitacao.cancelado_em = datetime.utcnow()
+        solicitacao.cancelado_por = ator
+        if observacao:
+            solicitacao.observacao = observacao[:255]
+        db.session.commit()
+        return True
+
+
+class PagamentoDAO:
+    # ---------------- Contratação, renovação e troca de plano ----------------
+
+    @staticmethod
+    def _cobranca_online_ativa(pagamento):
+        """True se já existe um Pix ou um checkout válido emitido para esta cobrança.
+
+        Enquanto existir, o valor da mensalidade não pode mudar: a conciliação compara o
+        valor confirmado pelo provedor com o do banco e recusaria o pagamento por
+        divergência - o aluno pagaria e não receberia a baixa.
         """
-        hoje = hoje or date.today()
-        competencia = hoje.strftime('%Y-%m')
-        existente = Pagamento.query.filter(
-            Pagamento.aluno_id == aluno.id,
-            Pagamento.plano_id == plano.id,
-            Pagamento.competencia == competencia,
-            Pagamento.status.in_(STATUS_ABERTOS),
-        ).order_by(Pagamento.id.desc()).first()
+        return PagamentoDAO.pix_ainda_valido(pagamento) or PagamentoDAO.checkout_ainda_valido(pagamento)
 
-        if existente:
-            if aluno.plano_id != plano.id:
-                aluno.plano_id = plano.id
-                db.session.commit()
-            return existente, False
+    @staticmethod
+    def _pagamentos_do_aluno(aluno_id):
+        return Pagamento.query.filter_by(aluno_id=aluno_id).all()
 
+    @staticmethod
+    def _nova_cobranca(*, aluno, plano, pagamentos, hoje, ator, tipo_evento, detalhe):
+        inicio, fim = regras_plano.periodo_para_nova_cobranca(pagamentos, plano, hoje=hoje)
         pagamento = Pagamento(
             aluno_id=aluno.id,
             plano_id=plano.id,
-            valor=Decimal(str(plano.preco_plano)),
-            vencimento=hoje,
+            # O preço vem sempre do plano persistido - o navegador não envia valor nenhum.
+            valor=regras_plano.preco(plano),
+            # Vence no primeiro dia do período que ela paga: uma renovação antecipada
+            # nasce com vencimento futuro e por isso não entra como "Vencida".
+            vencimento=inicio,
             status='pendente',
-            competencia=competencia,
+            competencia=inicio.strftime('%Y-%m'),
+            vigencia_inicio=inicio,
+            vigencia_fim=fim,
         )
-        aluno.plano_id = plano.id
-        aluno.mensalidade = 'Pendente'
         db.session.add(pagamento)
         db.session.flush()
         db.session.add(PagamentoEvento(
-            pagamento_id=pagamento.id,
-            tipo='plano_contratado',
-            detalhe=f'Cobrança criada para contratação do plano {plano.nome_plano}.',
-            ator=aluno.login,
+            pagamento_id=pagamento.id, tipo=tipo_evento, detalhe=detalhe, ator=ator,
         ))
+        return pagamento
+
+    @staticmethod
+    def _replanejar_cobranca(pagamento, *, plano, pagamentos, hoje, ator):
+        """Troca o plano de uma cobrança ainda não paga em vez de abrir uma segunda.
+
+        O aluno mudou de ideia antes de pagar: reaproveitar a mesma linha evita deixar
+        duas cobranças abertas disputando o mesmo período.
+        """
+        plano_antigo = pagamento.plano.nome_plano if pagamento.plano else '—'
+        demais = [p for p in pagamentos if p.id != pagamento.id]
+        inicio, fim = regras_plano.periodo_para_nova_cobranca(demais, plano, hoje=hoje)
+        pagamento.plano_id = plano.id
+        pagamento.valor = regras_plano.preco(plano)
+        pagamento.vencimento = inicio
+        pagamento.competencia = inicio.strftime('%Y-%m')
+        pagamento.vigencia_inicio = inicio
+        pagamento.vigencia_fim = fim
+        db.session.add(PagamentoEvento(
+            pagamento_id=pagamento.id, tipo='cobranca_replanejada',
+            detalhe=f'Plano da cobrança em aberto alterado de {plano_antigo} para {plano.nome_plano}.',
+            ator=ator,
+        ))
+        return pagamento
+
+    @staticmethod
+    def _efetivar_solicitacao(solicitacao, *, pagamento=None, aluno=None):
+        solicitacao.status = STATUS_EFETIVADA
+        solicitacao.efetivado_em = datetime.utcnow()
+        if pagamento is not None:
+            solicitacao.pagamento_efetivacao_id = pagamento.id
+        if aluno is not None:
+            aluno.plano_id = solicitacao.plano_destino_id
+
+    @staticmethod
+    def efetivar_mudancas_por_prazo(aluno, *, hoje=None):
+        """Aplica um pedido agendado cujo período de origem já terminou sem renovação.
+
+        Trocar o plano do cadastro aqui não libera nada: os benefícios do novo período
+        continuam dependendo de uma mensalidade paga. Sem isto, um aluno que pediu a
+        troca e deixou o plano vencer continuaria aparecendo no plano antigo.
+        """
+        hoje = hoje or date.today()
+        solicitacao = SolicitacaoPlanoDAO.pendente_do_aluno(aluno.id)
+        if not solicitacao or not solicitacao.vigencia_a_partir_de:
+            return None
+        if solicitacao.vigencia_a_partir_de > hoje:
+            return None
+
+        pagamentos = PagamentoDAO._pagamentos_do_aluno(aluno.id)
+        if regras_plano.vigencia_ativa(pagamentos, hoje=hoje):
+            # O aluno pagou outro período depois de pedir a troca: a mudança espera o
+            # fim dessa vigência em vez de valer no meio de um período já pago.
+            return None
+        if regras_plano.cobranca_pendente(pagamentos):
+            # Existe cobrança em aberto/em decisão: quem aplica a troca é ela.
+            return None
+
+        PagamentoDAO._efetivar_solicitacao(solicitacao, aluno=aluno)
         db.session.commit()
-        return pagamento, True
+        return solicitacao
+
+    @staticmethod
+    def contratar_plano(*, aluno, plano, acao=ACAO_CONTRATAR, hoje=None, ator=None):
+        """Único caminho pelo qual o aluno contrata, renova ou agenda a troca de plano.
+
+        Todas as regras são reavaliadas aqui a partir do banco, com trava de linha no
+        aluno: o que o formulário pediu é apenas uma intenção. Um clique repetido, dois
+        envios do mesmo POST ou um `acao` forjado caem exatamente nas mesmas validações
+        e nunca produzem uma segunda cobrança para um período já pago ou já em análise.
+        """
+        hoje = hoje or date.today()
+        ator = ator or aluno.login
+
+        # Serializa requisições concorrentes do mesmo aluno: a segunda espera a primeira
+        # terminar e já enxerga a cobrança/solicitação recém-criada. (No SQLite dos
+        # testes o SQLAlchemy não emite FOR UPDATE - o resultado continua correto.)
+        aluno = Aluno.query.filter_by(id=aluno.id).with_for_update().first() or aluno
+
+        pagamentos = PagamentoDAO._pagamentos_do_aluno(aluno.id)
+        PagamentoDAO._promover_vencidos(pagamentos, hoje=hoje)
+        solicitacao = SolicitacaoPlanoDAO.bloquear_pendente_do_aluno(aluno.id)
+        situacao = regras_plano.situacao_plano(
+            aluno, pagamentos, solicitacao_mudanca=solicitacao, hoje=hoje,
+        )
+
+        # 1. Alguém já está decidindo sobre um pagamento feito: nada de nova cobrança.
+        if situacao.aguardando_decisao:
+            return ResultadoContratacao(
+                CONTRATACAO_AGUARDANDO_DECISAO, pagamento=situacao.cobranca, solicitacao=solicitacao,
+            )
+
+        if acao == ACAO_AGENDAR_MUDANCA:
+            return PagamentoDAO._agendar_mudanca(
+                aluno=aluno, plano=plano, situacao=situacao, solicitacao=solicitacao,
+                pagamentos=pagamentos, hoje=hoje, ator=ator,
+            )
+
+        # 2. Já existe cobrança a pagar. Reaproveita em vez de abrir outra.
+        cobranca = situacao.cobranca
+        if cobranca:
+            plano_alvo, solicitacao_aplicavel = PagamentoDAO._plano_da_proxima_cobranca(
+                plano, solicitacao, cobranca_inicio=regras_plano.intervalo_vigencia(cobranca)[0], hoje=hoje,
+            )
+            if PagamentoDAO._conflita_com_agendamento(plano, solicitacao, situacao, cobranca):
+                return ResultadoContratacao(CONTRATACAO_MUDANCA_CONFLITANTE, solicitacao=solicitacao)
+            if cobranca.plano_id == plano_alvo.id:
+                return ResultadoContratacao(
+                    CONTRATACAO_COBRANCA_REUTILIZADA, pagamento=cobranca, solicitacao=solicitacao,
+                )
+            if PagamentoDAO._cobranca_online_ativa(cobranca):
+                return ResultadoContratacao(
+                    CONTRATACAO_COBRANCA_EM_ANDAMENTO, pagamento=cobranca, solicitacao=solicitacao,
+                )
+            PagamentoDAO._replanejar_cobranca(
+                cobranca, plano=plano_alvo, pagamentos=pagamentos, hoje=hoje, ator=ator,
+            )
+            if solicitacao_aplicavel:
+                PagamentoDAO._efetivar_solicitacao(solicitacao_aplicavel, pagamento=cobranca, aluno=aluno)
+            aluno.plano_id = plano_alvo.id
+            PagamentoDAO._sincronizar_situacao(aluno, hoje=hoje)
+            db.session.commit()
+            return ResultadoContratacao(
+                CONTRATACAO_COBRANCA_REPLANEJADA, pagamento=cobranca, solicitacao=solicitacao,
+            )
+
+        # 3. Período pago e vigente: nada a cobrar agora. Só uma renovação explícita
+        #    (do PRÓXIMO período) pode gerar cobrança - nunca um novo clique em "pagar".
+        if situacao.ativo:
+            if acao != ACAO_RENOVAR:
+                # O período já está pago. Nem o mesmo plano nem outro geram cobrança
+                # aqui: renovar exige a ação explícita, trocar de plano é agendamento.
+                return ResultadoContratacao(CONTRATACAO_JA_ATIVO, solicitacao=solicitacao)
+
+            inicio_renovacao = regras_plano.inicio_proximo_periodo(pagamentos, hoje=hoje)
+            plano_alvo, solicitacao_aplicavel = PagamentoDAO._plano_da_proxima_cobranca(
+                plano, solicitacao, cobranca_inicio=inicio_renovacao, hoje=hoje,
+            )
+            if PagamentoDAO._conflita_com_agendamento(plano, solicitacao, situacao, cobranca=None):
+                return ResultadoContratacao(CONTRATACAO_MUDANCA_CONFLITANTE, solicitacao=solicitacao)
+
+            pagamento = PagamentoDAO._nova_cobranca(
+                aluno=aluno, plano=plano_alvo, pagamentos=pagamentos, hoje=hoje, ator=ator,
+                tipo_evento='renovacao_antecipada',
+                detalhe=(f'Cobrança do próximo período ({plano_alvo.nome_plano}) criada '
+                         f'antes do fim da vigência atual.'),
+            )
+            if solicitacao_aplicavel:
+                PagamentoDAO._efetivar_solicitacao(solicitacao_aplicavel, pagamento=pagamento, aluno=aluno)
+                db.session.add(PagamentoEvento(
+                    pagamento_id=pagamento.id, tipo='mudanca_plano_efetivada',
+                    detalhe=(f'Mudança de plano solicitada em '
+                             f'{solicitacao_aplicavel.criado_em.strftime("%d/%m/%Y")} aplicada a esta cobrança.'),
+                    ator=ator,
+                ))
+            PagamentoDAO._sincronizar_situacao(aluno, hoje=hoje)
+            db.session.commit()
+            return ResultadoContratacao(
+                CONTRATACAO_RENOVACAO_CRIADA, pagamento=pagamento, solicitacao=solicitacao,
+            )
+
+        # 4. Sem vigência e sem cobrança em aberto: contratação/renovação normal.
+        plano_alvo, solicitacao_aplicavel = PagamentoDAO._plano_da_proxima_cobranca(
+            plano, solicitacao, cobranca_inicio=hoje, hoje=hoje,
+        )
+        pagamento = PagamentoDAO._nova_cobranca(
+            aluno=aluno, plano=plano_alvo, pagamentos=pagamentos, hoje=hoje, ator=ator,
+            tipo_evento='plano_contratado',
+            detalhe=f'Cobrança criada para contratação do plano {plano_alvo.nome_plano}.',
+        )
+        if solicitacao_aplicavel:
+            PagamentoDAO._efetivar_solicitacao(solicitacao_aplicavel, pagamento=pagamento, aluno=aluno)
+        aluno.plano_id = plano_alvo.id
+        PagamentoDAO._sincronizar_situacao(aluno, hoje=hoje)
+        db.session.commit()
+        return ResultadoContratacao(
+            CONTRATACAO_COBRANCA_CRIADA, pagamento=pagamento, solicitacao=solicitacao,
+        )
+
+    @staticmethod
+    def _conflita_com_agendamento(plano_pedido, solicitacao, situacao, cobranca):
+        """Com uma troca já agendada, só dois planos fazem sentido num pedido de
+        renovação: o que está valendo (renovar "o meu plano", que a troca redireciona) e
+        o destino agendado. Pedir um terceiro é conflitante - o aluno precisa cancelar a
+        solicitação antes, para não ficar com dois planos futuros disputando o período."""
+        if not solicitacao or not solicitacao.esta_pendente:
+            return False
+        aceitos = {solicitacao.plano_destino_id}
+        if solicitacao.plano_origem_id:
+            aceitos.add(solicitacao.plano_origem_id)
+        if situacao.plano is not None:
+            aceitos.add(situacao.plano.id)
+        if cobranca is not None:
+            aceitos.add(cobranca.plano_id)
+        return plano_pedido.id not in aceitos
+
+    @staticmethod
+    def _plano_da_proxima_cobranca(plano_pedido, solicitacao, *, cobranca_inicio, hoje):
+        """A cobrança do período seguinte tem de nascer no plano que o aluno agendou.
+
+        Devolve `(plano, solicitacao_a_efetivar)`. A solicitação só é aplicada quando a
+        cobrança cobre um período que começa em/depois da data agendada - uma cobrança
+        de um período anterior continua no plano antigo, como contratado.
+        """
+        if not solicitacao or not solicitacao.esta_pendente:
+            return plano_pedido, None
+        a_partir_de = solicitacao.vigencia_a_partir_de
+        if a_partir_de and cobranca_inicio and cobranca_inicio < a_partir_de:
+            return plano_pedido, None
+        destino = solicitacao.plano_destino
+        if not destino:
+            return plano_pedido, None
+        return destino, solicitacao
+
+    @staticmethod
+    def _agendar_mudanca(*, aluno, plano, situacao, solicitacao, pagamentos, hoje, ator):
+        if not situacao.ativo:
+            # Sem período pago em curso não há o que preservar: escolher o plano já vale
+            # como contratação, e agendar só adiaria o acesso sem motivo.
+            return ResultadoContratacao(CONTRATACAO_MUDANCA_SEM_VIGENCIA)
+
+        # Referência da troca é o plano que a PRÓXIMA renovação usaria: se o aluno já
+        # pagou o período seguinte em outro plano, é dele que ele está saindo.
+        plano_vigente = situacao.plano_proxima_renovacao
+        if plano_vigente and plano.id == plano_vigente.id:
+            return ResultadoContratacao(CONTRATACAO_MESMO_PLANO, solicitacao=solicitacao)
+
+        if solicitacao:
+            if solicitacao.plano_destino_id == plano.id:
+                return ResultadoContratacao(CONTRATACAO_MUDANCA_JA_EXISTE, solicitacao=solicitacao)
+            return ResultadoContratacao(CONTRATACAO_MUDANCA_CONFLITANTE, solicitacao=solicitacao)
+
+        valor_origem = regras_plano.preco(plano_vigente) if plano_vigente else None
+        valor_destino = regras_plano.preco(plano)
+        tipo = TIPO_DOWNGRADE if valor_origem is not None and valor_destino < valor_origem else TIPO_UPGRADE
+
+        nova = SolicitacaoMudancaPlano(
+            aluno_id=aluno.id,
+            plano_origem_id=plano_vigente.id if plano_vigente else None,
+            plano_destino_id=plano.id,
+            valor_origem=valor_origem,
+            valor_destino=valor_destino,
+            tipo=tipo,
+            # Vale a partir do primeiro dia livre: tudo que já foi pago (ou está em
+            # análise) continua valendo no plano contratado, sem reembolso nem perda.
+            vigencia_a_partir_de=regras_plano.inicio_proximo_periodo(pagamentos, hoje=hoje),
+            criado_por=ator,
+        )
+        db.session.add(nova)
+        if situacao.mensalidade_vigente is not None:
+            db.session.flush()
+            db.session.add(PagamentoEvento(
+                pagamento_id=situacao.mensalidade_vigente.id, tipo='mudanca_plano_solicitada',
+                detalhe=(f'Aluno agendou mudança para o plano {plano.nome_plano} '
+                         f'a partir de {nova.vigencia_a_partir_de.strftime("%d/%m/%Y")}. '
+                         f'O plano atual segue valendo até o fim do período pago.'),
+                ator=ator,
+            ))
+        db.session.commit()
+        return ResultadoContratacao(CONTRATACAO_MUDANCA_AGENDADA, solicitacao=nova)
+
+    # ---------------- Vigência e situação denormalizada do aluno ----------------
+
+    @staticmethod
+    def _promover_vencidos(pagamentos, hoje=None):
+        """`pendente` vira `atrasado` depois do vencimento. Não altera nada além disso -
+        uma cobrança de período futuro tem vencimento futuro e continua pendente."""
+        hoje = hoje or date.today()
+        mudou = False
+        for pagamento in pagamentos:
+            if pagamento.status == 'pendente' and pagamento.vencimento and pagamento.vencimento < hoje:
+                pagamento.status = 'atrasado'
+                mudou = True
+        return mudou
+
+    @staticmethod
+    def _primeiro_dia_livre(pagamento, referencia):
+        """Primeiro dia não coberto por outra mensalidade do mesmo aluno."""
+        demais = [p for p in PagamentoDAO._pagamentos_do_aluno(pagamento.aluno_id) if p.id != pagamento.id]
+        return regras_plano.inicio_proximo_periodo(demais, hoje=referencia)
+
+    @staticmethod
+    def garantir_vigencia(pagamento, *, referencia=None):
+        """Define o período coberto por uma mensalidade que ainda não tem um (lançamento
+        manual do admin ou linha anterior a este recurso), sem nunca sobrescrever o que
+        já existe.
+
+        Encadeia ao fim do que já está comprometido: registrar em dinheiro o mês seguinte
+        de quem já pagou o atual precisa somar 30 dias, não sobrepor o período em curso.
+        """
+        if pagamento.vigencia_inicio and pagamento.vigencia_fim:
+            return
+        referencia = referencia or pagamento.data_pagamento or pagamento.vencimento or date.today()
+        inicio = PagamentoDAO._primeiro_dia_livre(pagamento, referencia)
+        pagamento.vigencia_inicio = inicio
+        pagamento.vigencia_fim = inicio + timedelta(days=regras_plano.duracao_dias(pagamento.plano) - 1)
+
+    @staticmethod
+    def abrir_vigencia(pagamento, *, referencia=None):
+        """Abre o período de acesso no momento em que o pagamento é confirmado.
+
+        Se a janela planejada já tinha terminado antes da confirmação (cobrança antiga
+        quitada com atraso), o período é reaberto a partir do primeiro dia livre com a
+        mesma duração contratada - senão o aluno pagaria por dias que já passaram e
+        continuaria sem acesso. Uma renovação antecipada (janela ainda futura) não é
+        tocada: ela já nasceu no período certo.
+        """
+        referencia = referencia or pagamento.data_pagamento or date.today()
+        PagamentoDAO.garantir_vigencia(pagamento, referencia=referencia)
+
+        inicio, fim = pagamento.vigencia_inicio, pagamento.vigencia_fim
+        if not inicio or not fim or fim >= referencia:
+            return
+
+        duracao = (fim - inicio).days + 1
+        novo_inicio = PagamentoDAO._primeiro_dia_livre(pagamento, referencia)
+        pagamento.vigencia_inicio = novo_inicio
+        pagamento.vigencia_fim = novo_inicio + timedelta(days=duracao - 1)
+        db.session.add(PagamentoEvento(
+            pagamento_id=pagamento.id, tipo='vigencia_ajustada',
+            detalhe=(f'Pagamento confirmado após o fim da janela original '
+                     f'({inicio.strftime("%d/%m/%Y")} a {fim.strftime("%d/%m/%Y")}); '
+                     f'período de {duracao} dias reaberto a partir de {novo_inicio.strftime("%d/%m/%Y")}.'),
+            ator='sistema',
+        ))
+
+    @staticmethod
+    def _sincronizar_situacao(aluno, *, hoje=None):
+        """Reescreve os campos denormalizados do aluno a partir das mensalidades.
+
+        `Aluno.mensalidade` e `Aluno.data_vencimento` passam a ser sempre derivados: era
+        a divergência entre esses dois campos e o histórico financeiro que fazia a área
+        do aluno pedir pagamento de um plano já pago.
+        """
+        if aluno is None:
+            return
+        hoje = hoje or date.today()
+        pagamentos = PagamentoDAO._pagamentos_do_aluno(aluno.id)
+        situacao = regras_plano.situacao_plano(aluno, pagamentos, hoje=hoje)
+
+        validade = situacao.valido_ate
+        aluno.data_vencimento = validade.strftime('%Y-%m-%d') if validade else None
+
+        if situacao.ativo:
+            aluno.mensalidade = 'Em Dia'
+        elif situacao.aguardando_decisao:
+            aluno.mensalidade = 'Em Análise'
+        else:
+            aluno.mensalidade = 'Pendente'
+
+        # `plano_id` NÃO é reescrito aqui: ele é o plano do cadastro, que o admin edita.
+        # O plano que vale de fato sai sempre de `situacao.plano` (derivado das
+        # mensalidades) - sobrescrever esta coluna desfazia a escolha do admin em
+        # silêncio no formulário de detalhes do aluno.
+
+    @staticmethod
+    def sincronizar_situacao_do_aluno(aluno, *, hoje=None):
+        PagamentoDAO._sincronizar_situacao(aluno, hoje=hoje)
+        db.session.commit()
 
     @staticmethod
     def salvar(pagamento):
@@ -115,17 +568,33 @@ class PagamentoDAO:
     @staticmethod
     def listar_por_aluno(aluno_id):
         pagamentos = Pagamento.query.filter_by(aluno_id=aluno_id).order_by(Pagamento.vencimento.desc()).all()
-
-        for p in pagamentos:
-            if p.status == 'pendente' and p.vencimento < date.today():
-                p.status = 'atrasado'
-
-        db.session.commit()
+        if PagamentoDAO._promover_vencidos(pagamentos):
+            db.session.commit()
         return pagamentos
 
     @staticmethod
     def buscar_por_id(pagamento_id):
         return Pagamento.query.filter_by(id=pagamento_id).first()
+
+    @staticmethod
+    def mapa_por_aluno(aluno_ids=None):
+        """Mensalidades agrupadas por aluno numa consulta só.
+
+        Usado pelas telas que precisam da situação de MUITOS alunos (avisos e cobrança
+        em massa): chamar `listar_por_aluno` num laço fazia um SELECT e um COMMIT por
+        aluno.
+        """
+        consulta = Pagamento.query
+        if aluno_ids is not None:
+            consulta = consulta.filter(Pagamento.aluno_id.in_(list(aluno_ids) or [-1]))
+        pagamentos = consulta.all()
+        if PagamentoDAO._promover_vencidos(pagamentos):
+            db.session.commit()
+
+        mapa = {}
+        for pagamento in pagamentos:
+            mapa.setdefault(pagamento.aluno_id, []).append(pagamento)
+        return mapa
 
     @staticmethod
     def atualizar_status(pagamento_id, status, forma_pagamento):
@@ -137,9 +606,11 @@ class PagamentoDAO:
 
             if status == 'pago':
                 pagamento.data_pagamento = date.today()
+                PagamentoDAO.abrir_vigencia(pagamento, referencia=pagamento.data_pagamento)
             else:
                 pagamento.data_pagamento = None
 
+            PagamentoDAO._sincronizar_situacao(pagamento.aluno)
             db.session.commit()
             return True
 
@@ -286,8 +757,10 @@ class PagamentoDAO:
         pagamento.data_pagamento = data_pagamento
         pagamento.forma_pagamento = (forma_pagamento or 'pix')[:30]
         pagamento.provider_status = 'approved'
-        if pagamento.aluno:
-            pagamento.aluno.mensalidade = 'Em Dia'
+        # O período só passa a valer agora: é a confirmação do pagamento que abre a
+        # vigência, nunca a criação da cobrança.
+        PagamentoDAO.abrir_vigencia(pagamento, referencia=data_pagamento)
+        PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='webhook_aprovado',
             detalhe='Pagamento aprovado e confirmado pelo Mercado Pago.', ator='webhook_mercado_pago',
@@ -298,8 +771,7 @@ class PagamentoDAO:
     def marcar_reembolsado_via_webhook(pagamento):
         pagamento.status = 'reembolsado'
         pagamento.provider_status = 'refunded'
-        if pagamento.aluno:
-            pagamento.aluno.mensalidade = 'Pendente'
+        PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='webhook_reembolso',
             detalhe='Pagamento reembolsado/estornado conforme notificação do Mercado Pago.',
@@ -313,6 +785,7 @@ class PagamentoDAO:
             return
         pagamento.status = 'em_processamento'
         pagamento.provider_status = 'in_process'
+        PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='webhook_em_processamento',
             detalhe='Mercado Pago está analisando o pagamento.', ator='webhook_mercado_pago',
@@ -326,6 +799,7 @@ class PagamentoDAO:
         pagamento.status = 'recusado'
         pagamento.provider_status = 'rejected'
         pagamento.provider_status_detail = (status_detail or '')[:60] or None
+        PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='webhook_recusado',
             detalhe='Pagamento recusado pelo Mercado Pago.', ator='webhook_mercado_pago',
@@ -342,6 +816,7 @@ class PagamentoDAO:
         pagamento.comprovante_manual_analisado_em = None
         pagamento.comprovante_manual_observacao = None
         pagamento.status = 'em_analise'
+        PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='comprovante_enviado',
             detalhe='Aluno enviou comprovante manual para análise.', ator=ator,
@@ -357,8 +832,8 @@ class PagamentoDAO:
         pagamento.comprovante_manual_analisado_por = admin_login
         pagamento.comprovante_manual_analisado_em = datetime.utcnow()
         pagamento.comprovante_manual_observacao = observacao
-        if pagamento.aluno:
-            pagamento.aluno.mensalidade = 'Em Dia'
+        PagamentoDAO.abrir_vigencia(pagamento, referencia=pagamento.data_pagamento)
+        PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='comprovante_aprovado',
             detalhe=observacao or 'Comprovante manual aprovado pela administração.', ator=admin_login,
@@ -371,6 +846,7 @@ class PagamentoDAO:
         pagamento.comprovante_manual_analisado_por = admin_login
         pagamento.comprovante_manual_analisado_em = datetime.utcnow()
         pagamento.comprovante_manual_observacao = observacao
+        PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='comprovante_rejeitado',
             detalhe=observacao or 'Comprovante manual rejeitado pela administração.', ator=admin_login,
@@ -391,6 +867,8 @@ class PagamentoDAO:
         )
         db.session.add(pagamento)
         db.session.flush()
+        PagamentoDAO.garantir_vigencia(pagamento)
+        PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='manual_registrado',
             detalhe=observacao or f'Recebimento manual registrado ({forma_pagamento}).', ator=ator,

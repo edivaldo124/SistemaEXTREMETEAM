@@ -63,3 +63,37 @@ dialog.presenca-dialog{width:min(640px,calc(100% - 32px))}
 @media(max-width:720px){.app-header nav a:not(#link-sair):not(.nav-avatar-link){display:none}.app-header .site-brand span{display:none}.profile-page{padding-top:45px}.profile-mark{width:65px;height:65px;font-size:40px}.summary-grid{grid-template-columns:1fr}.summary-grid article{border-right:0;border-bottom:1px solid var(--line)}.profile-note{grid-template-columns:1fr;gap:8px}.section-heading{align-items:flex-start;flex-direction:column;gap:10px}.form-detalhes-grid{grid-template-columns:1fr}.mensalidade-card{padding:20px}.mensalidade-card-dados{grid-template-columns:1fr 1fr}.foto-perfil-area{flex-direction:column;align-items:flex-start}.content-section{scroll-margin-top:16px}}
 @media(max-width:1020px) and (min-width:721px){.form-detalhes-grid{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){.menu-screen-overview,.content-section.menu-screen{animation:none}}
+
+/* ---------- Cartão "Meu plano": mostra a VIGÊNCIA (período pago), não a cobrança ---------- */
+.plano-situacao{margin-top:30px}
+.plano-situacao-card{display:flex;flex-direction:column;gap:18px;padding:26px 28px;border:1px solid var(--line);border-left:5px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+.plano-situacao-card[data-estado="ativo"]{border-left-color:var(--green)}
+.plano-situacao-card[data-estado="aguardando_analise"]{border-left-color:#8a6d00}
+.plano-situacao-card[data-estado="em_processamento"]{border-left-color:#1c3f6e}
+.plano-situacao-card[data-estado="a_pagar"]{border-left-color:var(--gold)}
+.plano-situacao-card[data-estado="vencido"],.plano-situacao-card[data-estado="recusado"]{border-left-color:var(--red)}
+.plano-situacao-card[data-estado="sem_plano"]{border-left-color:var(--muted)}
+.plano-situacao-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.plano-situacao-topo h2{margin:0;font:700 clamp(24px,3vw,32px)/1 var(--display);text-transform:uppercase}
+.plano-situacao-descricao{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+.plano-situacao-dados{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+.plano-situacao-dados span{display:block;margin-bottom:6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.plano-situacao-dados strong{font:700 20px var(--display)}
+.plano-aviso{margin:0;padding:12px 14px;border-left:3px solid var(--gold);background:#faf4e2;color:#5a4a12;font-size:12.5px;line-height:1.6}
+.plano-aviso-info{border-left-color:#1c3f6e;background:#eef3fb;color:#1c3f6e}
+.plano-aviso-analise{border-left-color:#8a6d00;background:#f7f0dc;color:#5a4a12}
+.mensalidade-card-nota{margin:0;color:var(--muted);font-size:12.5px;line-height:1.6}
+
+/* Mudança de plano agendada: o que muda, quanto e quando - com saída sempre visível. */
+.plano-mudanca{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border:1px dashed var(--gold);background:#fdfaf0}
+.plano-mudanca-titulo{margin:0;color:var(--ink);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.plano-mudanca-dados{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:0}
+.plano-mudanca-dados dt{margin-bottom:5px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.plano-mudanca-dados dd{margin:0;font:700 17px var(--display)}
+.plano-mudanca-antes{color:var(--muted);font:500 12px var(--body);text-decoration:line-through}
+.plano-mudanca-nota{margin:0;color:var(--muted);font-size:12.5px;line-height:1.6}
+.plano-mudanca form{margin:0}
+.financial-status-ativo{color:var(--green)}
+.financial-status-vencido,.financial-status-recusado{color:var(--red)}
+
+@media(max-width:720px){.plano-situacao-card{padding:20px}.plano-situacao-dados{grid-template-columns:1fr 1fr}.plano-mudanca-dados{grid-template-columns:1fr}}

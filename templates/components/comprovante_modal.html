@@ -1,34 +1,66 @@
-<dialog class="pix-dialog comprovante-dialog" id="comprovante-dialog" aria-labelledby="comprovante-dialog-title">
+<dialog class="pix-dialog comprovante-dialog"
+        id="comprovante-dialog"
+        aria-labelledby="comprovante-dialog-title">
     <div class="pix-accent" aria-hidden="true"></div>
-    <button type="button" class="pix-fechar" data-comprovante-fechar aria-label="Fechar">&times;</button>
+    <button type="button"
+            class="pix-fechar"
+            data-comprovante-fechar
+            aria-label="Fechar">&times;</button>
     <p class="eyebrow">Comprovante em análise</p>
     <h2 id="comprovante-dialog-title">Revisar comprovante</h2>
-
     <div class="comprovante-resumo">
-        <div><span>Aluno</span><strong data-comprovante-aluno>—</strong></div>
-        <div><span>Valor</span><strong data-comprovante-valor>—</strong></div>
-        <div><span>Competência</span><strong data-comprovante-competencia>—</strong></div>
-        <div><span>Enviado em</span><strong data-comprovante-enviado>—</strong></div>
+        <div>
+            <span>Aluno</span>
+            <strong data-comprovante-aluno>—</strong>
+        </div>
+        <div>
+            <span>Valor</span>
+            <strong data-comprovante-valor>—</strong>
+        </div>
+        <div>
+            <span>Competência</span>
+            <strong data-comprovante-competencia>—</strong>
+        </div>
+        <div>
+            <span>Enviado em</span>
+            <strong data-comprovante-enviado>—</strong>
+        </div>
     </div>
-
     <div class="comprovante-preview-area">
         <img data-comprovante-img alt="Comprovante enviado pelo aluno" hidden>
-        <p class="comprovante-sem-preview" data-comprovante-sem-preview hidden>Não foi possível exibir uma prévia (pode ser um PDF).</p>
-        <a data-comprovante-abrir href="#" target="_blank" rel="noopener" class="button-secondary">Abrir em nova aba</a>
+        <p class="comprovante-sem-preview" data-comprovante-sem-preview hidden>
+            Não foi possível exibir uma prévia (pode ser um PDF).
+        </p>
+        <a data-comprovante-abrir
+           href="#"
+           target="_blank"
+           rel="noopener"
+           class="button-secondary">Abrir em nova aba</a>
     </div>
-
     <div class="comprovante-acoes">
-        <form data-comprovante-form-aprovar method="POST" action="" class="form-revisao">
+        <form data-comprovante-form-aprovar
+              method="POST"
+              action=""
+              class="form-revisao">
             <input type="date" name="data_pagamento" aria-label="Data do pagamento">
             <select name="forma_pagamento" aria-label="Forma de pagamento">
                 <option value="transferencia">Transferência</option>
                 <option value="dinheiro">Dinheiro</option>
             </select>
-            <input type="text" name="observacao" maxlength="255" placeholder="Observação (opcional)">
+            <input type="text"
+                   name="observacao"
+                   maxlength="255"
+                   placeholder="Observação (opcional)">
             <button type="submit" class="btn btn-status">Aprovar</button>
         </form>
-        <form data-comprovante-form-rejeitar method="POST" action="" class="form-revisao">
-            <input type="text" name="observacao" maxlength="255" placeholder="Motivo da rejeição">
+        <form data-comprovante-form-rejeitar
+              method="POST"
+              action=""
+              class="form-revisao">
+            <input type="text"
+                   name="observacao"
+                   maxlength="255"
+                   placeholder="Motivo da rejeição">
             <button type="submit" class="btn btn-remover">Rejeitar</button>
         </form>
     </div>

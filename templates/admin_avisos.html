@@ -1,31 +1,116 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Avisos e cobranças | Centro de Treinamento Extreme Team</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/pgAdm.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
-</head>
-<body><a class="skip-link" href="#conteudo">Ir para o conteúdo</a>{% set secao_ativa = 'avisos' %}{% include 'components/admin_nav.html' %}
-<main id="conteudo" class="container-admin"><section class="admin-intro"><div><p class="eyebrow">Comunicação</p><h1>Avisos e cobranças por e-mail</h1><p>Envie avisos gerais ou cobre mensalidades pendentes de todos os alunos ativos de uma vez.</p></div><div class="admin-metrics"><article><strong>{{ total_ativos }}</strong><span>Alunos ativos</span></article><article><strong>{{ total_inadimplentes }}</strong><span>Com mensalidade pendente</span></article></div></section>
-{% with mensagens=get_flashed_messages(with_categories=true) %}{% for categoria,mensagem in mensagens %}<div class="msg msg-{{ categoria }}" role="status">{{ mensagem }}</div>{% endfor %}{% endwith %}
-
-<section class="secao"><div class="section-heading"><div><p class="eyebrow">Aviso geral</p><h2>Enviar comunicado</h2></div><p>O texto é enviado como e-mail para os alunos escolhidos. Cada linha vira um parágrafo.</p></div>
-<div class="atalhos-aviso"><span>Atalho:</span><button type="button" class="btn btn-status" id="atalho-sem-treino">Não vai ter treino</button></div>
-<form action="/admin/avisos" method="POST" class="form-plano" id="form-aviso">
-    <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
-    <div class="field"><label for="assunto">Assunto</label><input id="assunto" type="text" name="assunto" placeholder="Ex.: Aula cancelada nesta sexta" required></div>
-    <div class="field"><label for="destinatarios">Destinatários</label><select id="destinatarios" name="destinatarios"><option value="todos">Todos os alunos ativos</option><option value="inadimplentes">Somente com mensalidade pendente</option></select></div>
-    <div class="field field-full"><label for="mensagem">Mensagem</label><textarea id="mensagem" name="mensagem" rows="5" placeholder="Escreva o aviso para os alunos…" required></textarea></div>
-    <button type="submit" class="btn-cadastrar">Enviar aviso →</button>
-</form>
-</section>
-<script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+        <title>Avisos e cobranças | Centro de Treinamento Extreme Team</title>
+        <link rel="icon"
+              type="image/png"
+              href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static',filename='css/theme.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static',filename='css/pgAdm.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/extreme.css') }}">
+    </head>
+    <body>
+        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+        {% set secao_ativa = 'avisos' %}
+        {% include 'components/admin_nav.html' %}
+        <main id="conteudo" class="container-admin">
+            <section class="admin-intro">
+                <div>
+                    <p class="eyebrow">Comunicação</p>
+                    <h1>Avisos e cobranças por e-mail</h1>
+                    <p>Envie avisos gerais ou cobre mensalidades pendentes de todos os alunos ativos de uma vez.</p>
+                </div>
+                <div class="admin-metrics">
+                    <article>
+                        <strong>{{ total_ativos }}</strong>
+                        <span>Alunos ativos</span>
+                    </article>
+                    <article>
+                        <strong>{{ total_inadimplentes }}</strong>
+                        <span>Com mensalidade pendente</span>
+                    </article>
+                </div>
+            </section>
+            {% with mensagens=get_flashed_messages(with_categories=true) %}
+                {% for categoria,mensagem in mensagens %}
+                    <div class="msg msg-{{ categoria }}" role="status">{{ mensagem }}</div>
+                {% endfor %}
+            {% endwith %}
+            <section class="secao">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Aviso geral</p>
+                        <h2>Enviar comunicado</h2>
+                    </div>
+                    <p>O texto é enviado como e-mail para os alunos escolhidos. Cada linha vira um parágrafo.</p>
+                </div>
+                <div class="atalhos-aviso">
+                    <span>Atalho:</span>
+                    <button type="button" class="btn btn-status" id="atalho-sem-treino">Não vai ter treino</button>
+                </div>
+                <form action="/admin/avisos"
+                      method="POST"
+                      class="form-plano"
+                      id="form-aviso">
+                    <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
+                    <div class="field">
+                        <label for="assunto">Assunto</label>
+                        <input id="assunto"
+                               type="text"
+                               name="assunto"
+                               placeholder="Ex.: Aula cancelada nesta sexta"
+                               required>
+                    </div>
+                    <div class="field">
+                        <label for="destinatarios">Destinatários</label>
+                        <select id="destinatarios" name="destinatarios">
+                            <option value="todos">Todos os alunos ativos</option>
+                            <option value="inadimplentes">Somente com mensalidade pendente</option>
+                        </select>
+                    </div>
+                    <div class="field field-full">
+                        <label for="mensagem">Mensagem</label>
+                        <textarea id="mensagem" name="mensagem" rows="5" placeholder="Escreva o aviso para os alunos…" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-cadastrar">Enviar aviso →</button>
+                </form>
+            </section>
+            <script>
 document.getElementById('atalho-sem-treino').addEventListener('click', function () {
     document.getElementById('assunto').value = 'Não vai ter treino — Extreme Team';
     document.getElementById('mensagem').value = 'Informamos que não haverá treino no horário de hoje.\nQualquer dúvida, fale com a nossa administração.';
     document.getElementById('mensagem').focus();
 });
 </script>
-
-<section class="secao"><div class="section-heading"><div><p class="eyebrow">Financeiro</p><h2>Cobrança de mensalidades</h2></div><p>Envia por e-mail um lembrete de mensalidade pendente para todos os alunos ativos que não estão "Em Dia".</p></div>
-<form action="/admin/avisos/cobranca" method="POST" class="form-inline" data-confirm-modal data-modal-eyebrow="Cobrança em massa" data-modal-title="Enviar cobrança para todos os inadimplentes?" data-modal-message="Um e-mail de cobrança será enviado para os {{ total_inadimplentes }} aluno(s) com mensalidade pendente." data-modal-confirm="Enviar cobranças">
-    <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
-    <button type="submit" class="btn btn-status">Cobrar {{ total_inadimplentes }} aluno(s) inadimplente(s)</button>
-</form>
-</section>
-</main>{% include 'components/confirm_modal.html' %}<link rel="stylesheet" href="{{ url_for('static',filename='css/modal.css') }}"><script src="{{ url_for('static',filename='js/modal.js') }}"></script></body></html>
+            <section class="secao">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Financeiro</p>
+                        <h2>Cobrança de mensalidades</h2>
+                    </div>
+                    <p>Envia por e-mail um lembrete de mensalidade pendente para todos os alunos ativos que não estão "Em Dia".</p>
+                </div>
+                <form action="/admin/avisos/cobranca"
+                      method="POST"
+                      class="form-inline"
+                      data-confirm-modal
+                      data-modal-eyebrow="Cobrança em massa"
+                      data-modal-title="Enviar cobrança para todos os inadimplentes?"
+                      data-modal-message="Um e-mail de cobrança será enviado para os {{ total_inadimplentes }} aluno(s) com mensalidade pendente."
+                      data-modal-confirm="Enviar cobranças">
+                    <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
+                    <button type="submit" class="btn btn-status">Cobrar {{ total_inadimplentes }} aluno(s) inadimplente(s)</button>
+                </form>
+            </section>
+        </main>
+        {% include 'components/confirm_modal.html' %}
+        <link rel="stylesheet"
+              href="{{ url_for('static',filename='css/modal.css') }}">
+        <script src="{{ url_for('static',filename='js/modal.js') }}"></script>
+    </body>
+</html>

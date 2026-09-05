@@ -61,6 +61,11 @@ img { max-width:100%; }
    azul=processando/reembolso, vermelho=vencido/recusado/erro. */
 .status-pago { color:#18523a; background:#dceee5; } .status-pendente { color:#6b4e00; background:#fff0bc; } .status-atrasado { color:#842029; background:#f7dedb; } .status-cancelado { color:#51575b; background:#e4e5e5; } .status-reembolsado { color:#1c3f6e; background:#dce6f7; }
 .status-em_processamento { color:#1c3f6e; background:#dce6f7; } .status-em_analise { color:#5a4a12; background:#f2e7c9; } .status-recusado { color:#842029; background:#f7dedb; }
+/* Situação do PLANO (vigência), diferente do status de uma mensalidade: verde=período
+   pago correndo, amarelo=aguardando decisão, vermelho=vencido/recusado. */
+.status-plano-ativo { color:#18523a; background:#dceee5; } .status-plano-aguardando_analise { color:#5a4a12; background:#f2e7c9; }
+.status-plano-em_processamento { color:#1c3f6e; background:#dce6f7; } .status-plano-a_pagar { color:#6b4e00; background:#fff0bc; }
+.status-plano-recusado,.status-plano-vencido { color:#842029; background:#f7dedb; } .status-plano-sem_plano { color:#51575b; background:#e4e5e5; }
 
 /* ---------- Avatar do aluno: uma foto ou as iniciais, mesmo componente em toda a tela ---------- */
 .student-avatar { display:inline-grid; place-items:center; flex:0 0 auto; width:34px; height:34px; margin-right:12px; overflow:hidden; color:var(--yellow); background:var(--ink); font:700 17px var(--display); text-transform:uppercase; }

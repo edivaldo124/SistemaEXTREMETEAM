@@ -9,9 +9,10 @@ from modelos.usuario import Aluno
 from dao.usuarioDAO import AlunoDAO
 from dao.planoDAO import PlanoDAO
 from dao.turmaDAO import TurmaDAO
-from dao.financeiroDAO import PagamentoDAO, rotulo_status
+from dao.financeiroDAO import PagamentoDAO, SolicitacaoPlanoDAO, rotulo_status
 from modelos.pagamento import Pagamento
 from servicos.armazenamento import ArquivoInvalido, remover_arquivo, salvar_foto_perfil
+from servicos import planos as regras_plano
 from servicos.formatacao import formatar_competencia, formatar_telefone
 from servicos.email import enviar_email
 
@@ -152,16 +153,6 @@ def remover_usuario(aluno_id):
 
 
 
-@admin_bp.route("/admin/mensalidade/<cpf>/<status>", methods=["POST"])
-def alterar_mensalidade(cpf, status):
-    if not usuario_e_admin():
-        return redirect('/login')
-
-    AlunoDAO.atualizar_mensalidade(cpf, status)
-
-    return redirect('/admin')
-
-
 @admin_bp.route('/admin/remover_plano/<int:plano_id>', methods=["POST"])
 def remover_plano(plano_id):
     if not usuario_e_admin():
@@ -204,20 +195,25 @@ def detalhes_usuario(cpf):
             'datanascimento': request.form.get("datanascimento"),
             'email': email,
             'telefone': formatar_telefone(request.form.get("telefone")),
-            'mensalidade': request.form.get("mensalidade"),
             'plano_id': request.form.get("plano_id"),
             'descricao': request.form.get('descricao'),
             'graduacao': request.form.get('graduacao'),
         }
 
-        AlunoDAO.atualizar_dados_completos(cpf, dados_atualizados)
+        if not AlunoDAO.atualizar_dados_completos(cpf, dados_atualizados):
+            flash('Não foi possível salvar: verifique o plano selecionado.', 'erro')
+            return redirect(f'/admin/usuario/{cpf}')
 
         return redirect('/admin')
 
+    PagamentoDAO.efetivar_mudancas_por_prazo(aluno)
     planos = PlanoDAO.listar_todos()
     pagamentos = PagamentoDAO.listar_por_aluno(aluno.id)
+    solicitacao = SolicitacaoPlanoDAO.pendente_do_aluno(aluno.id)
     return render_template(
         "dt_aluno.html", u=aluno, planos=planos, pagamentos=pagamentos,
+        situacao=regras_plano.situacao_plano(aluno, pagamentos, solicitacao_mudanca=solicitacao),
+        solicitacoes=SolicitacaoPlanoDAO.listar_do_aluno(aluno.id),
         rotulo_status=rotulo_status, formatar_competencia=formatar_competencia,
     )
 
@@ -303,13 +299,21 @@ def cadastrar_pagamento(cpf):
             novo_pagamento.provider = 'manual'
 
         PagamentoDAO.salvar(novo_pagamento)
+        # Um lançamento já pago abre o período de acesso; qualquer outro status não.
+        # A vigência parte da data informada pelo admin, mas nunca sobrepõe um período
+        # já pago - lançar o mês seguinte em dinheiro soma 30 dias ao que existe.
+        if novo_pagamento.status == 'pago':
+            PagamentoDAO.garantir_vigencia(
+                novo_pagamento, referencia=novo_pagamento.data_pagamento or novo_pagamento.vencimento,
+            )
         PagamentoDAO.registrar_evento(
             novo_pagamento.id, 'manual_registrado',
             detalhe=observacao or f'Mensalidade lançada manualmente pelo admin ({forma_pagamento or "sem forma informada"}).',
             ator=session.get('usuario'),
         )
-        aluno.mensalidade = 'Em Dia' if status == 'pago' else status.capitalize()
-        db.session.commit()
+        # A situação do aluno é sempre recalculada a partir das mensalidades - nunca
+        # escrita a partir do formulário, para não voltar a divergir do histórico.
+        PagamentoDAO.sincronizar_situacao_do_aluno(aluno)
 
     return redirect(f'/admin/usuario/{cpf}')
 
@@ -329,8 +333,6 @@ def atualizar_status_pagamento(pagamento_id):
     status_antes = pagamento.status
 
     PagamentoDAO.atualizar_status(pagamento_id, status, forma_pagamento)
-    pagamento.aluno.mensalidade = 'Em Dia' if status == 'pago' else status.capitalize()
-    db.session.commit()
     if status != status_antes:
         PagamentoDAO.registrar_evento(
             pagamento.id, 'status_alterado_admin',
@@ -387,6 +389,32 @@ def rejeitar_comprovante_manual(pagamento_id):
     return redirect(request.referrer or '/admin/financeiro')
 
 
+@admin_bp.route("/admin/aluno/<int:aluno_id>/mudanca-plano/<int:solicitacao_id>/cancelar", methods=["POST"])
+def cancelar_mudanca_plano_admin(aluno_id, solicitacao_id):
+    """A administração pode cancelar um pedido de troca ainda não aplicado.
+
+    Não existe aprovação manual para agendar a troca: contratar plano neste sistema já é
+    auto-serviço do aluno, e a mudança agendada não gera cobrança nem libera benefício
+    nenhum por si só. O admin entra apenas onde já entrava - revisando as mensalidades.
+    """
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    aluno = AlunoDAO.buscar_por_id(aluno_id)
+    solicitacao = SolicitacaoPlanoDAO.buscar_por_id(solicitacao_id)
+    if not aluno or not solicitacao or solicitacao.aluno_id != aluno.id:
+        flash('Solicitação de mudança não encontrada.', 'erro')
+        return redirect('/admin')
+
+    observacao = (request.form.get('observacao') or '').strip() or None
+    if SolicitacaoPlanoDAO.cancelar(solicitacao, ator=session.get('usuario'), observacao=observacao):
+        flash('Solicitação de mudança de plano cancelada.', 'sucesso')
+    else:
+        flash('Esta solicitação não está mais pendente.', 'erro')
+
+    return redirect(f'/admin/usuario/{aluno.cpf}')
+
+
 def _data_do_form(valor):
     try:
         return date.fromisoformat(valor) if valor else None
@@ -424,20 +452,43 @@ def painel_financeiro():
     )
 
 
-def _esta_inadimplente(aluno):
-    return (aluno.mensalidade or '').strip().lower() not in ('em dia', '')
+def _situacao_do_aluno(aluno, pagamentos=None):
+    if pagamentos is None:
+        pagamentos = PagamentoDAO.listar_por_aluno(aluno.id)
+    return regras_plano.situacao_plano(aluno, pagamentos)
 
 
-def _paragrafos_cobranca(aluno):
+def _situacoes_dos_ativos():
+    """Situação de todos os alunos ativos com UMA consulta de mensalidades."""
+    alunos = [a for a in AlunoDAO.listar_todos() if a.esta_ativo]
+    mapa = PagamentoDAO.mapa_por_aluno([a.id for a in alunos])
+    return [(aluno, _situacao_do_aluno(aluno, mapa.get(aluno.id, []))) for aluno in alunos]
+
+
+def _esta_inadimplente(aluno, situacao=None):
+    """Quem realmente deve receber cobrança: nem quem está com o plano ativo, nem quem
+    já pagou e aguarda uma decisão (comprovante em análise, pagamento processando).
+    Cobrar essas pessoas era pedir um segundo pagamento pelo mesmo período."""
+    return regras_plano.esta_inadimplente(situacao or _situacao_do_aluno(aluno))
+
+
+def _paragrafos_cobranca(aluno, situacao=None):
+    """Texto da cobrança montado a partir da situação real, não de campos guardados:
+    o valor e o período citados são os da mensalidade que está mesmo em aberto."""
+    situacao = situacao or _situacao_do_aluno(aluno)
+    cobranca = situacao.cobranca
     paragrafos = [
         f'Olá, {aluno.nome.split()[0]}.',
         'Identificamos uma pendência na sua mensalidade na Extreme Team.',
     ]
-    if aluno.plano:
-        preco = f"{aluno.plano.preco_plano:.2f}".replace('.', ',')
-        paragrafos.append(f'Plano: {aluno.plano.nome_plano} — R$ {preco}')
-    if aluno.data_vencimento:
-        paragrafos.append(f'Vencimento: {aluno.data_vencimento}')
+    plano = (cobranca.plano if cobranca else None) or situacao.plano
+    if plano:
+        valor = cobranca.valor if cobranca else plano.preco_plano
+        paragrafos.append(f'Plano: {plano.nome_plano} — R$ {f"{valor:.2f}".replace(".", ",")}')
+    if cobranca and cobranca.vencimento:
+        paragrafos.append(f'Vencimento: {cobranca.vencimento.strftime("%d/%m/%Y")}')
+    elif situacao.valido_ate:
+        paragrafos.append(f'Seu acesso foi pago até: {situacao.valido_ate.strftime("%d/%m/%Y")}')
     paragrafos.append('Regularize o quanto antes para continuar treinando sem interrupções. Qualquer dúvida, fale com a nossa administração.')
     return paragrafos
 
@@ -473,9 +524,10 @@ def enviar_aviso():
             flash('Preencha o assunto e a mensagem do aviso.', 'erro')
             return redirect('/admin/avisos')
 
-        alunos = [a for a in AlunoDAO.listar_todos() if a.esta_ativo]
+        ativos = _situacoes_dos_ativos()
         if destinatarios == 'inadimplentes':
-            alunos = [a for a in alunos if _esta_inadimplente(a)]
+            ativos = [(a, s) for a, s in ativos if _esta_inadimplente(a, s)]
+        alunos = [aluno for aluno, _ in ativos]
 
         paragrafos = [linha.strip() for linha in mensagem.splitlines() if linha.strip()]
         enviados = sum(1 for aluno in alunos if enviar_email(aluno.email, aluno.nome, assunto, assunto, paragrafos))
@@ -483,11 +535,11 @@ def enviar_aviso():
         flash(f'Aviso enviado para {enviados} de {len(alunos)} aluno(s).', 'sucesso')
         return redirect('/admin/avisos')
 
-    alunos_ativos = [a for a in AlunoDAO.listar_todos() if a.esta_ativo]
-    total_inadimplentes = sum(1 for a in alunos_ativos if _esta_inadimplente(a))
+    ativos = _situacoes_dos_ativos()
+    total_inadimplentes = sum(1 for aluno, situacao in ativos if _esta_inadimplente(aluno, situacao))
     return render_template(
         "admin_avisos.html",
-        total_ativos=len(alunos_ativos),
+        total_ativos=len(ativos),
         total_inadimplentes=total_inadimplentes,
         token_aviso=_token_aviso(),
     )
@@ -501,16 +553,19 @@ def cobrar_inadimplentes():
     if not _token_aviso_valido():
         abort(400)
 
-    alunos = [a for a in AlunoDAO.listar_todos() if a.esta_ativo and _esta_inadimplente(a)]
+    # A situação de cada aluno é calculada uma única vez e reaproveitada no texto do
+    # e-mail, para o valor citado ser exatamente o da mensalidade que está em aberto.
+    devedores = [(aluno, situacao) for aluno, situacao in _situacoes_dos_ativos()
+                 if _esta_inadimplente(aluno, situacao)]
     enviados = sum(
-        1 for aluno in alunos
+        1 for aluno, situacao in devedores
         if enviar_email(
             aluno.email, aluno.nome, 'Mensalidade pendente — Extreme Team', 'Sua mensalidade está pendente',
-            _paragrafos_cobranca(aluno),
+            _paragrafos_cobranca(aluno, situacao),
         )
     )
 
-    flash(f'Cobrança de mensalidade enviada para {enviados} de {len(alunos)} aluno(s) inadimplente(s).', 'sucesso')
+    flash(f'Cobrança de mensalidade enviada para {enviados} de {len(devedores)} aluno(s) inadimplente(s).', 'sucesso')
     return redirect('/admin/avisos')
 
 
@@ -524,9 +579,16 @@ def cobrar_mensalidade(cpf):
         flash('Aluno não encontrado.', 'erro')
         return redirect('/admin')
 
+    situacao = _situacao_do_aluno(aluno)
+    if not _esta_inadimplente(aluno, situacao):
+        # Cobrar quem está com o plano ativo (ou aguardando análise) é justamente o que
+        # levava o aluno a pagar duas vezes o mesmo período.
+        flash('Este aluno não tem pendência: o plano está ativo ou o pagamento aguarda análise.', 'erro')
+        return redirect(f'/admin/usuario/{cpf}')
+
     if enviar_email(
         aluno.email, aluno.nome, 'Mensalidade pendente — Extreme Team', 'Sua mensalidade está pendente',
-        _paragrafos_cobranca(aluno),
+        _paragrafos_cobranca(aluno, situacao),
     ):
         flash('Cobrança enviada por e-mail.', 'sucesso')
     else:

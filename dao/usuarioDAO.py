@@ -1,7 +1,7 @@
 from config import db
+from dao.financeiroDAO import PagamentoDAO
 from modelos.plano import Plano
 from modelos.usuario import Aluno
-from datetime import date, timedelta
 from sqlalchemy.exc import SQLAlchemyError
 from servicos.formatacao import variantes_cpf
 
@@ -106,34 +106,28 @@ class AlunoDAO:
 
             # Garantir que não enviam None para campos de texto opcionais
             aluno.telefone = dados.get('telefone', '')
-            aluno.mensalidade = dados.get('mensalidade', 'Pendente')
             aluno.descricao = dados.get('descricao', '')
             if 'graduacao' in dados:
                 aluno.graduacao = (dados.get('graduacao') or '').strip() or None
 
+            # Só aceita um plano que exista de verdade: um id inválido no formulário
+            # gravaria uma FK pendurada (ou estouraria um 500 na conversão).
             plano_escolhido = dados.get('plano_id')
-
-            # SE O ADMIN ESCOLHEU UM PLANO NOVO:
+            plano = None
             if plano_escolhido and plano_escolhido != 'Nenhum':
-                plano_id_int = int(plano_escolhido)
+                try:
+                    plano = Plano.query.filter_by(id=int(plano_escolhido)).first()
+                except (TypeError, ValueError):
+                    plano = None
+                if not plano:
+                    return False
+            aluno.plano_id = plano.id if plano else None
 
-                # Só calcula o vencimento novo se o plano for diferente do que ele já tinha
-                if aluno.plano_id != plano_id_int:
-                    aluno.plano_id = plano_id_int
-
-                    # 1. Puxa os dados do plano escolhido
-                    plano_banco = Plano.query.get(plano_id_int)
-
-                    # 2. Pega a data de hoje e soma com a duração do plano
-                    hoje = date.today()
-                    data_vencimento = hoje + timedelta(days=plano_banco.duracao_dias)
-
-                    # 3. Guarda a data final no formato YYYY-MM-DD
-                    aluno.data_vencimento = data_vencimento.strftime('%Y-%m-%d')
-            else:
-                aluno.plano_id = None
-                aluno.data_vencimento = None  # Sem plano, sem vencimento
-
-            db.session.commit()
+            # `mensalidade` e `data_vencimento` são derivados das mensalidades pagas -
+            # trocar o plano no cadastro não paga período nenhum e por isso não pode
+            # inventar uma nova validade. Antes, o admin editar o plano estendia o
+            # vencimento em `duracao_dias` sem nenhum pagamento por trás, e o valor
+            # ficava divergindo do histórico financeiro.
+            PagamentoDAO.sincronizar_situacao_do_aluno(aluno)
             return True
         return False

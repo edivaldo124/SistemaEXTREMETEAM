@@ -13,7 +13,28 @@ from modelos.matricula import Matricula
 from modelos.turma import Turma
 from dao.usuarioDAO import AlunoDAO
 from dao.planoDAO import PlanoDAO
-from dao.financeiroDAO import PagamentoDAO, mensalidade_destaque, rotulo_status
+from dao.financeiroDAO import (
+    ACAO_AGENDAR_MUDANCA,
+    ACAO_CONTRATAR,
+    ACAO_RENOVAR,
+    ACOES_VALIDAS,
+    CONTRATACAO_AGUARDANDO_DECISAO,
+    CONTRATACAO_COBRANCA_CRIADA,
+    CONTRATACAO_COBRANCA_EM_ANDAMENTO,
+    CONTRATACAO_COBRANCA_REPLANEJADA,
+    CONTRATACAO_COBRANCA_REUTILIZADA,
+    CONTRATACAO_JA_ATIVO,
+    CONTRATACAO_MESMO_PLANO,
+    CONTRATACAO_MUDANCA_AGENDADA,
+    CONTRATACAO_MUDANCA_CONFLITANTE,
+    CONTRATACAO_MUDANCA_JA_EXISTE,
+    CONTRATACAO_MUDANCA_SEM_VIGENCIA,
+    CONTRATACAO_RENOVACAO_CRIADA,
+    PagamentoDAO,
+    SolicitacaoPlanoDAO,
+    mensalidade_destaque,
+    rotulo_status,
+)
 from dao.professorDAO import ProfessorDAO
 from dao.matriculaDAO import MatriculaDAO
 from dao.presencaDAO import PresencaDAO
@@ -24,6 +45,7 @@ from servicos.armazenamento import (
     salvar_comprovante_manual,
     salvar_foto_perfil,
 )
+from servicos import planos as regras_plano
 from servicos.formatacao import formatar_competencia, formatar_cpf, formatar_telefone, somente_digitos, variantes_cpf
 from servicos.email import enviar_email
 
@@ -142,6 +164,32 @@ def pagina_cadastro():
     return render_template("cadastro.html")
 
 
+# Cada código devolvido por PagamentoDAO.contratar_plano vira uma frase para o aluno.
+# Nenhuma delas sugere pagar de novo quando já existe pagamento feito ou em decisão.
+MENSAGENS_CONTRATACAO = {
+    CONTRATACAO_COBRANCA_CRIADA: ('Plano escolhido. Conclua o pagamento para ativar.', 'sucesso'),
+    CONTRATACAO_COBRANCA_REUTILIZADA: ('Esta cobrança já estava aberta. Continue o pagamento por aqui.', 'sucesso'),
+    CONTRATACAO_COBRANCA_REPLANEJADA: ('Plano da cobrança em aberto atualizado. Conclua o pagamento para ativar.', 'sucesso'),
+    CONTRATACAO_RENOVACAO_CRIADA: ('Renovação criada. Este pagamento é do próximo período — o atual continua valendo.', 'sucesso'),
+    CONTRATACAO_JA_ATIVO: ('Seu plano já está ativo e pago neste período. Não há nada a pagar agora.', 'sucesso'),
+    CONTRATACAO_AGUARDANDO_DECISAO: ('Você já tem um pagamento aguardando análise. Não é preciso pagar de novo.', 'sucesso'),
+    CONTRATACAO_COBRANCA_EM_ANDAMENTO: ('Existe uma cobrança em andamento para esta mensalidade. Conclua ou aguarde ela expirar antes de trocar de plano.', 'erro'),
+    CONTRATACAO_MUDANCA_AGENDADA: ('Mudança de plano agendada. Seu plano atual e seus benefícios continuam até o fim do período pago.', 'sucesso'),
+    CONTRATACAO_MUDANCA_JA_EXISTE: ('Você já tem uma mudança agendada para este plano.', 'sucesso'),
+    CONTRATACAO_MUDANCA_CONFLITANTE: ('Você já tem uma mudança de plano agendada. Cancele a solicitação atual antes de pedir outra.', 'erro'),
+    CONTRATACAO_MUDANCA_SEM_VIGENCIA: ('Você não tem um período pago em curso, então basta contratar o plano desejado.', 'erro'),
+    CONTRATACAO_MESMO_PLANO: ('Este já é o seu plano atual.', 'erro'),
+}
+
+
+def _plano_do_formulario():
+    try:
+        plano_id = int(request.form.get("plano") or 0)
+    except (TypeError, ValueError):
+        return None
+    return PlanoDAO.buscar_por_id(plano_id) if plano_id else None
+
+
 @auth_bp.route("/perfil", methods=["GET", "POST"])
 def pagina_perfil():
     if session.get('tipo_usuario') != 'aluno' or not session.get('aluno_id'):
@@ -154,35 +202,47 @@ def pagina_perfil():
         return redirect('/logout')
 
     if request.method == "POST":
-        plano_id_escolhido = request.form.get("plano")
-        try:
-            plano_id = int(plano_id_escolhido) if plano_id_escolhido and plano_id_escolhido != "Nenhum" else None
-        except (TypeError, ValueError):
-            plano_id = None
-
-        plano = PlanoDAO.buscar_por_id(plano_id) if plano_id else None
+        plano = _plano_do_formulario()
         if not plano:
             flash('Plano inválido ou indisponível.', 'erro')
             return redirect(url_for('auth.pagina_perfil', _anchor='planos'))
 
+        # A ação declarada pelo formulário é só uma intenção: o DAO revalida tudo contra
+        # o banco, então um `acao` forjado não consegue gerar cobrança onde a regra não
+        # permite (período pago, comprovante em análise, mudança conflitante...).
+        acao = request.form.get("acao") or ACAO_CONTRATAR
+        if acao not in ACOES_VALIDAS:
+            acao = ACAO_CONTRATAR
+
         try:
-            pagamento, criado = PagamentoDAO.criar_ou_obter_mensalidade_plano(
-                aluno=aluno_dados, plano=plano,
+            resultado = PagamentoDAO.contratar_plano(
+                aluno=aluno_dados, plano=plano, acao=acao, ator=aluno_dados.login,
             )
         except Exception:
             db.session.rollback()
-            flash('Não foi possível contratar o plano. Tente novamente.', 'erro')
+            flash('Não foi possível concluir a operação. Tente novamente.', 'erro')
             return redirect(url_for('auth.pagina_perfil', _anchor='planos'))
 
-        flash(
-            'Plano escolhido. Conclua o pagamento via Pix.' if criado
-            else 'Esta mensalidade já estava aberta. Continue o pagamento via Pix.',
-            'sucesso',
+        mensagem, categoria = MENSAGENS_CONTRATACAO.get(
+            resultado.codigo, ('Operação concluída.', 'sucesso'),
         )
-        return redirect(url_for('auth.pagina_perfil', pix=pagamento.id, _anchor='mensalidades'))
+        flash(mensagem, categoria)
+
+        # Só abre o Pix automaticamente quando existe mesmo algo a pagar agora.
+        if resultado.gerou_cobranca and resultado.pagamento.status in regras_plano.STATUS_A_PAGAR:
+            return redirect(url_for('auth.pagina_perfil', pix=resultado.pagamento.id, _anchor='mensalidades'))
+        return redirect(url_for('auth.pagina_perfil', _anchor='planos'))
+
+    # Um pedido de troca cuja data já chegou sem renovação passa a valer agora - isso
+    # muda o plano do cadastro, mas não libera período nenhum sem pagamento.
+    PagamentoDAO.efetivar_mudancas_por_prazo(aluno_dados)
 
     lista_planos = PlanoDAO.listar_todos()
     pagamentos = PagamentoDAO.listar_por_aluno(aluno_dados.id)
+    solicitacao = SolicitacaoPlanoDAO.pendente_do_aluno(aluno_dados.id)
+    situacao = regras_plano.situacao_plano(
+        aluno_dados, pagamentos, solicitacao_mudanca=solicitacao,
+    )
     matriculas = MatriculaDAO.listar_por_aluno(aluno_dados.id)
     presencas = PresencaDAO.listar_por_aluno(aluno_dados.id)
     total_presencas = sum(1 for p in presencas if p.presente)
@@ -198,7 +258,10 @@ def pagina_perfil():
         usuario=aluno_dados,
         planos=lista_planos,
         pagamentos=pagamentos,
-        mensalidade_atual=mensalidade_destaque(pagamentos),
+        situacao=situacao,
+        # O card destaca o que exige atenção; sem nada em aberto, mostra a mensalidade
+        # que sustenta a vigência (em vez de pedir um pagamento que não existe).
+        mensalidade_atual=situacao.cobranca or situacao.mensalidade_vigente or mensalidade_destaque(pagamentos),
         matriculas=matriculas,
         presencas=presencas,
         total_presencas=total_presencas,
@@ -206,6 +269,29 @@ def pagina_perfil():
         formatar_competencia=formatar_competencia,
         abrir_pix_id=abrir_pix_id,
     )
+
+
+@auth_bp.route("/perfil/plano/mudanca/<int:solicitacao_id>/cancelar", methods=["POST"])
+def cancelar_mudanca_plano(solicitacao_id):
+    """Cancela um pedido de troca antes de ele ser aplicado.
+
+    Depois de efetivado não há o que cancelar por aqui: a mudança já virou a cobrança de
+    um período, e desfazer isso é decisão da administração sobre aquela mensalidade.
+    """
+    aluno = _aluno_da_sessao()
+    if not aluno:
+        return redirect('/login')
+
+    solicitacao = SolicitacaoPlanoDAO.buscar_por_id(solicitacao_id)
+    if not solicitacao or solicitacao.aluno_id != aluno.id:
+        abort(404)
+
+    if SolicitacaoPlanoDAO.cancelar(solicitacao, ator=aluno.login):
+        flash('Mudança de plano cancelada. Seu plano atual segue valendo normalmente.', 'sucesso')
+    else:
+        flash('Esta solicitação não está mais pendente e não pode ser cancelada.', 'erro')
+
+    return redirect(url_for('auth.pagina_perfil', _anchor='planos'))
 
 
 TOKEN_EMAIL_VALIDADE = timedelta(minutes=30)
