@@ -76,7 +76,8 @@
   width:20px; height:20px; color:var(--text-3);
   transform:translateY(-50%); pointer-events:none;
 }
-.input-wrap input {
+/* Supera a regra geral de .field em theme.css, inclusive ao exibir a senha. */
+.field .input-wrap input:not([type="checkbox"]):not([type="radio"]) {
   width:100%; min-height:52px; padding:0 52px;
   border:1px solid var(--line-strong); border-radius:var(--radius);
   outline:none; color:var(--text); background:var(--surface); font-size:var(--fs-md);

@@ -149,7 +149,7 @@ A preferência criada é reaproveitada em cliques repetidos enquanto continuar v
 
 ## Foto de perfil e comprovante manual (armazenamento de arquivos)
 
-Fotos de perfil e comprovantes manuais (`servicos/armazenamento.py`) ficam fora de `static/` e só são servidos por rotas autenticadas (`/perfil/foto/<id>`, `/perfil/mensalidade/<id>/comprovante-manual/arquivo`) que conferem permissão a cada request - não há URL pública direta para esses arquivos.
+Fotos de alunos e comprovantes manuais (`servicos/armazenamento.py`) ficam fora de `static/` e só são servidos por rotas autenticadas (`/perfil/foto/<id>`, `/perfil/mensalidade/<id>/comprovante-manual/arquivo`) que conferem permissão a cada request. Fotos profissionais ficam em `UPLOAD_DIR/professores` e são servidas por `/professores/<id>/foto`: o acesso público depende da opção de publicar o perfil; quando privado, só o administrador e o próprio professor podem acessar.
 
 - **Local (dev)**: gravado em `UPLOAD_DIR` (padrão `uploads/`, relativo à raiz do projeto). Já está no `.gitignore`.
 - **Docker/produção**: o filesystem do container `app` é descartado a cada rebuild/deploy. Por isso o `compose.yaml` monta um volume nomeado (`uploads_data:/app/uploads`) e fixa `UPLOAD_DIR=/app/uploads` - **isso é obrigatório**: sem esse volume, toda foto e comprovante enviado se perde no próximo `docker compose up --build`. Se um dia migrar para object storage (S3, R2, etc.), troque a implementação de `servicos/armazenamento.py` sem precisar mexer nas rotas que a usam.
@@ -163,3 +163,13 @@ Upload de foto: valida o tipo real do arquivo decodificando com Pillow (nunca co
 ## Comprovante manual (dinheiro/transferência)
 
 O aluno pode enviar um comprovante (JPEG/PNG/PDF) numa mensalidade pendente/vencida/recusada pela tela de pagamento (`/perfil/pagamento/<id>`). O envio sozinho **nunca** marca como pago - a mensalidade fica "Em análise" até um admin aprovar ou rejeitar em `/admin/usuario/<cpf>` (aprovar marca como paga; rejeitar devolve para pendente/vencida). Toda decisão fica registrada em `pagamentos_eventos` com quem decidiu, quando e a observação.
+
+
+## Contatos da academia e equipe
+
+- **Administração → Academia** (`/admin/academia`): editar Instagram, e-mail de atendimento, WhatsApp, endereço completo, complemento e horários. Ao salvar, os campos preenchidos aparecem na página inicial e os canais ficam acessíveis no rodapé da área do aluno. O botão **Como chegar** abre o endereço no Google Maps. Apagar um campo retira aquela informação do site.
+- **Administração → Turmas → Professores → Editar perfil**: definir nome de apresentação, modalidades, biografia, formação/graduações, foto e contatos profissionais. O nome de apresentação pode ser diferente do nome cadastrado; login e senha permanecem separados.
+- Cada professor começa com **Exibir perfil do professor no site** desativado. Ao publicar, a equipe da página inicial mostra a apresentação; e-mail, Instagram e WhatsApp só aparecem se a opção individual também estiver marcada. Desmarcar a publicação retira o perfil e o acesso público à foto. O aluno encontra o link **Conhecer professor** em suas turmas, junto dos dias e horários existentes.
+- Nesta versão, apenas o administrador edita essas informações. Não há envio de mensagens ao preencher os contatos.
+
+A migração `d9e2f6a14c80` cria a configuração única da academia e acrescenta campos opcionais aos professores existentes, com publicação e contatos ocultos inicialmente. Execute `flask --app servidor db upgrade` antes de iniciar a nova versão fora do Docker; a imagem Docker já executa esse comando no início. Fotos de professores utilizam o mesmo volume persistente das demais imagens.

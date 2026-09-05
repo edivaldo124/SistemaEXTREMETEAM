@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Perfil do professor | Extreme Team</title>
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/professor_editar.css') }}">
+    </head>
+    <body>
+        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+        {% set secao_ativa = 'turmas' %}
+        {% include 'components/admin_nav.html' %}
+        <main id="conteudo" class="container-admin professor-editor">
+            <a class="editor-back" href="{{ url_for('turma_blueprint.gerenciar_turmas') }}">← Voltar para professores e turmas</a>
+            <header class="admin-intro">
+                <div>
+                    <p class="eyebrow">Equipe · {{ professor.nome }}</p>
+                    <h1>Perfil do professor</h1>
+                    <p>Apresente a experiência do professor e escolha quais contatos os alunos poderão ver.</p>
+                </div>
+            </header>
+            {% with mensagens = get_flashed_messages(with_categories=true) %}
+                {% for categoria, mensagem in mensagens %}
+                    <div class="msg msg-{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
+                {% endfor %}
+            {% endwith %}
+            <form method="POST" enctype="multipart/form-data" class="professor-form">
+                {% include 'components/csrf_field.html' %}
+                <section class="editor-section" aria-labelledby="titulo-apresentacao">
+                    <div class="editor-section-intro">
+                        <h2 id="titulo-apresentacao">Apresentação</h2>
+                        <p>Um perfil claro ajuda o aluno a conhecer quem vai conduzir o treino.</p>
+                    </div>
+                    <div class="editor-fields">
+                        <div class="field editor-field-full">
+                            <label for="nome-publico">Nome de apresentação</label>
+                            <input id="nome-publico" type="text" name="nome_publico" maxlength="150" value="{{ valores.nome_publico or '' }}" aria-describedby="nome-ajuda">
+                            <p class="field-help" id="nome-ajuda">Se deixar vazio, será usado {{ professor.nome }}.</p>
+                        </div>
+                        <div class="field editor-field-full">
+                            <label for="modalidades">Modalidades que ensina</label>
+                            <input id="modalidades" type="text" name="modalidades" maxlength="200" value="{{ valores.modalidades or '' }}" placeholder="Ex.: Muay Thai e Boxe">
+                        </div>
+                        <div class="field editor-field-full">
+                            <label for="biografia">Sobre o professor</label>
+                            <textarea id="biografia" name="biografia" maxlength="3000" rows="5" aria-describedby="biografia-ajuda">{{ valores.biografia or '' }}</textarea>
+                            <p class="field-help" id="biografia-ajuda">Experiência, abordagem das aulas e públicos que atende. Até 3.000 caracteres.</p>
+                        </div>
+                        <div class="field editor-field-full">
+                            <label for="formacao">Formação, graduações e certificações</label>
+                            <textarea id="formacao" name="formacao" maxlength="2000" rows="4" aria-describedby="formacao-ajuda">{{ valores.formacao or '' }}</textarea>
+                            <p class="field-help" id="formacao-ajuda">Inclua as qualificações relevantes para as aulas. Até 2.000 caracteres.</p>
+                        </div>
+                    </div>
+                </section>
+                <section class="editor-section" aria-labelledby="titulo-foto">
+                    <div class="editor-section-intro">
+                        <h2 id="titulo-foto">Foto</h2>
+                        <p>Escolha uma foto em que o rosto esteja centralizado.</p>
+                    </div>
+                    <div class="editor-photo">
+                        {% if professor.foto_arquivo %}
+                            <img src="{{ url_for('turma_blueprint.foto_professor', professor_id=professor.id) }}" alt="Foto atual de {{ professor.nome_exibicao }}" width="112" height="112">
+                        {% else %}
+                            <div class="editor-photo-empty" aria-hidden="true">{{ professor.nome_exibicao[:1] }}</div>
+                        {% endif %}
+                        <div class="field">
+                            <label for="foto">{{ 'Substituir foto' if professor.foto_arquivo else 'Enviar foto' }}</label>
+                            <input id="foto" type="file" name="foto" accept="image/jpeg,image/png,image/webp" aria-describedby="foto-ajuda">
+                            <p class="field-help" id="foto-ajuda">JPEG, PNG ou WebP, até 5 MB. A foto será recortada em formato quadrado.</p>
+                            {% if professor.foto_arquivo %}
+                                <label class="editor-check" for="remover-foto">
+                                    <input id="remover-foto" type="checkbox" name="remover_foto">
+                                    <span>Remover foto atual</span>
+                                </label>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+                <section class="editor-section" aria-labelledby="titulo-contatos">
+                    <div class="editor-section-intro">
+                        <h2 id="titulo-contatos">Contatos profissionais</h2>
+                        <p>Preencha apenas os contatos destinados aos alunos. Você escolhe o que exibir no site.</p>
+                    </div>
+                    <div class="editor-fields">
+                        <div class="field editor-field-full">
+                            <label for="instagram">Instagram</label>
+                            <input id="instagram" type="text" name="instagram" maxlength="200" value="{{ valores.instagram or '' }}" placeholder="@usuario ou link do perfil" autocapitalize="none" spellcheck="false">
+                            <label class="editor-check" for="exibir-instagram">
+                                <input id="exibir-instagram" type="checkbox" name="exibir_instagram" {% if valores.exibir_instagram %}checked{% endif %}>
+                                <span>Exibir Instagram no site</span>
+                            </label>
+                        </div>
+                        <div class="field editor-field-full">
+                            <label for="email-publico">E-mail profissional</label>
+                            <input id="email-publico" type="email" name="email_publico" maxlength="150" value="{{ valores.email_publico or '' }}" placeholder="professor@exemplo.com" autocomplete="off" aria-describedby="email-ajuda">
+                            <p class="field-help" id="email-ajuda">Pode ser Gmail ou outro provedor. Este contato é independente do acesso ao sistema.</p>
+                            <label class="editor-check" for="exibir-email">
+                                <input id="exibir-email" type="checkbox" name="exibir_email" {% if valores.exibir_email %}checked{% endif %}>
+                                <span>Exibir e-mail no site</span>
+                            </label>
+                        </div>
+                        <div class="field editor-field-full">
+                            <label for="whatsapp">WhatsApp profissional</label>
+                            <input id="whatsapp" type="tel" name="whatsapp" maxlength="30" value="{{ valores.whatsapp or '' }}" placeholder="+55 (81) 99999-9999" autocomplete="off" aria-describedby="whatsapp-ajuda">
+                            <p class="field-help" id="whatsapp-ajuda">Inclua o código do país e o DDD.</p>
+                            <label class="editor-check" for="exibir-whatsapp">
+                                <input id="exibir-whatsapp" type="checkbox" name="exibir_whatsapp" {% if valores.exibir_whatsapp %}checked{% endif %}>
+                                <span>Exibir WhatsApp no site</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+                <section class="editor-section editor-publication" aria-labelledby="titulo-publicacao">
+                    <div class="editor-section-intro">
+                        <h2 id="titulo-publicacao">Publicação</h2>
+                        <p>As informações ficam salvas para você revisar antes de publicar.</p>
+                    </div>
+                    <div>
+                        <label class="editor-check" for="perfil-publico">
+                            <input id="perfil-publico" type="checkbox" name="perfil_publico" {% if valores.perfil_publico %}checked{% endif %} aria-describedby="publicacao-ajuda">
+                            <span>Exibir perfil do professor no site</span>
+                        </label>
+                        <p class="field-help" id="publicacao-ajuda">Ao ativar, nome, foto, apresentação e formação aparecem na equipe e na área do aluno. Apenas os contatos marcados acima serão exibidos.</p>
+                    </div>
+                </section>
+                <div class="editor-actions">
+                    <a class="button-secondary" href="{{ url_for('turma_blueprint.gerenciar_turmas') }}">Voltar</a>
+                    <button class="button-primary" type="submit">Salvar perfil</button>
+                </div>
+            </form>
+        </main>
+    </body>
+</html>

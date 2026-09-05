@@ -10,7 +10,7 @@
     </a>
     <nav class="admin-nav" aria-label="Seções da administração">
         <div class="admin-nav-scroll">
-            {% for chave, href, rotulo in [('painel','/admin','Painel'),('turmas','/admin/turmas','Turmas'),('financeiro','/admin/financeiro','Financeiro'),('avisos','/admin/avisos','Avisos')] %}
+            {% for chave, href, rotulo in [('painel','/admin','Painel'),('turmas','/admin/turmas','Turmas'),('financeiro','/admin/financeiro','Financeiro'),('avisos','/admin/avisos','Avisos'),('academia','/admin/academia','Academia')] %}
                 <a href="{{ href }}"
                    class="link-turmas{{ ' is-active' if secao_ativa == chave else '' }}"
                    {% if secao_ativa == chave %} aria-current="page"{% endif %}>{{ rotulo }}</a>

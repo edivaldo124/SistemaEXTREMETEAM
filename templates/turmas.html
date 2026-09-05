@@ -43,7 +43,7 @@
                         <p class="eyebrow">Equipe</p>
                         <h2>Professores</h2>
                     </div>
-                    <p>Crie o acesso de cada professor.</p>
+                    <p>Crie o acesso e edite a apresentação pública de cada professor.</p>
                 </div>
                 <form action="/admin/professores" method="POST" class="form-plano">
                     {% include "components/csrf_field.html" %}
@@ -71,21 +71,25 @@
                         <article>
                             <div>
                                 <span>Professor</span>
-                                <strong>{{ p.nome }}</strong>
+                                <strong>{{ p.nome_exibicao }}</strong>
                                 <p>Login {{ p.login }} · {{ p.turmas|length }} turma{{ "" if p.turmas|length == 1 else "s" }}</p>
+                                <p>{{ 'Perfil publicado no site' if p.perfil_publico else 'Perfil ainda não publicado' }}</p>
                             </div>
-                            <form action="{{ url_for('turma_blueprint.remover_professor', professor_id=p.id) }}"
-                                  method="POST"
-                                  class="form-inline"
-                                  data-confirm-modal
-                                  data-modal-variant="danger"
-                                  data-modal-eyebrow="Remover professor"
-                                  data-modal-title="Remover o professor {{ p.nome }}?"
-                                  data-modal-message="O acesso desse professor será removido. Isso só é possível se não houver turmas vinculadas."
-                                  data-modal-confirm="Remover">
-                    {% include "components/csrf_field.html" %}
-                                <button type="submit" class="btn btn-remover">Remover</button>
-                            </form>
+                            <div class="acoes-turma">
+                                <a class="btn btn-status" href="{{ url_for('turma_blueprint.editar_professor', professor_id=p.id) }}">Editar perfil<span class="sr-only"> de {{ p.nome_exibicao }}</span></a>
+                                <form action="{{ url_for('turma_blueprint.remover_professor', professor_id=p.id) }}"
+                                      method="POST"
+                                      class="form-inline"
+                                      data-confirm-modal
+                                      data-modal-variant="danger"
+                                      data-modal-eyebrow="Remover professor"
+                                      data-modal-title="Remover o professor {{ p.nome }}?"
+                                      data-modal-message="O acesso desse professor será removido. Isso só é possível se não houver turmas vinculadas."
+                                      data-modal-confirm="Remover">
+                                    {% include "components/csrf_field.html" %}
+                                    <button type="submit" class="btn btn-remover">Remover</button>
+                                </form>
+                            </div>
                         </article>
                     {% else %}
                         <p class="empty-state">Nenhum professor cadastrado. Use o formulário acima para criar o primeiro acesso.</p>

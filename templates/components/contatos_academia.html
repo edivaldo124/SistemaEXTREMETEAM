@@ -1,0 +1,68 @@
+{% if academia and academia.tem_contato %}
+    {% if contatos_compactos|default(false) %}
+        <div class="academy-footer-contacts">
+            <span class="academy-footer-label">Fale com a academia</span>
+            <nav aria-label="Contato da academia">
+                {% if academia.instagram_url %}
+                    <a href="{{ academia.instagram_url }}" target="_blank" rel="noopener noreferrer">Instagram <span class="sr-only">da academia (abre em nova aba)</span></a>
+                {% endif %}
+                {% if academia.whatsapp_url %}
+                    <a href="{{ academia.whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp <span class="sr-only">da academia (abre em nova aba)</span></a>
+                {% endif %}
+                {% if academia.email %}
+                    <a href="{{ academia.email_url }}">E-mail <span class="sr-only">da academia</span></a>
+                {% endif %}
+                {% if academia.mapa_url %}
+                    <a href="{{ academia.mapa_url }}" target="_blank" rel="noopener noreferrer">Como chegar <span class="sr-only">à academia (abre em nova aba)</span></a>
+                {% endif %}
+                <a href="/#contato">Informações da academia</a>
+            </nav>
+        </div>
+    {% else %}
+        <section class="academy-contact" id="contato" aria-labelledby="contato-titulo">
+            <div class="academy-contact-intro">
+                <p class="eyebrow">Extreme Team</p>
+                <h2 id="contato-titulo">Contato e localização</h2>
+                <p>Encontre a academia e fale com a nossa equipe.</p>
+            </div>
+            <div class="academy-contact-info">
+                {% if academia.endereco %}
+                    <div class="academy-contact-location">
+                        <h3>Onde treinar</h3>
+                        <address>
+                            {{ academia.endereco }}
+                            {% if academia.complemento %}<span>{{ academia.complemento }}</span>{% endif %}
+                        </address>
+                        {% if academia.mapa_url %}
+                            <a class="button-primary" href="{{ academia.mapa_url }}" target="_blank" rel="noopener noreferrer">
+                                Como chegar <span aria-hidden="true">↗</span><span class="sr-only"> (abre em nova aba)</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                {% if academia.horarios %}
+                    <div class="academy-contact-hours">
+                        <h3>Horários de funcionamento</h3>
+                        <p>{{ academia.horarios }}</p>
+                    </div>
+                {% endif %}
+                {% if academia.instagram_url or academia.whatsapp_url or academia.email %}
+                    <div class="academy-contact-channels">
+                        <h3>Fale com a gente</h3>
+                        <ul>
+                            {% if academia.instagram_url %}
+                                <li><a href="{{ academia.instagram_url }}" target="_blank" rel="noopener noreferrer"><span>Instagram</span><strong>@{{ academia.instagram }}</strong><span class="sr-only"> (abre em nova aba)</span></a></li>
+                            {% endif %}
+                            {% if academia.whatsapp_url %}
+                                <li><a href="{{ academia.whatsapp_url }}" target="_blank" rel="noopener noreferrer"><span>WhatsApp</span><strong>Conversar com a equipe <span aria-hidden="true">↗</span></strong><span class="sr-only"> (abre em nova aba)</span></a></li>
+                            {% endif %}
+                            {% if academia.email %}
+                                <li><a href="{{ academia.email_url }}"><span>E-mail</span><strong>{{ academia.email }}</strong></a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
+{% endif %}

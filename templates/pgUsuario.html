@@ -23,6 +23,8 @@
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/modal.css') }}">
         <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/contatos.css') }}">
+        <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
     <body class="has-bottom-nav">
@@ -266,7 +268,12 @@
                                     <td data-label="Turma">
                                         <strong>{{ m.turma.nome }}</strong>
                                     </td>
-                                    <td data-label="Professor">{{ m.turma.professor.nome }}</td>
+                                    <td data-label="Professor">
+                                        {{ m.turma.professor.nome_exibicao }}
+                                        {% if m.turma.professor.perfil_publico %}
+                                            <a class="student-professor-link" href="/#professor-{{ m.turma.professor.id }}">Conhecer professor<span class="sr-only"> {{ m.turma.professor.nome_exibicao }}</span></a>
+                                        {% endif %}
+                                    </td>
                                     <td data-label="Dias">{{ m.turma.dias_semana|replace(',', ', ') }}</td>
                                     <td data-label="Horário">{{ m.turma.horario }}</td>
                                     <td data-label="Ação">
@@ -274,7 +281,7 @@
                                                 class="button-secondary"
                                                 data-abrir-turma
                                                 data-turma-nome="{{ m.turma.nome }}"
-                                                data-turma-professor="{{ m.turma.professor.nome }}"
+                                                data-turma-professor="{{ m.turma.professor.nome_exibicao }}"
                                                 data-turma-dias="{{ m.turma.dias_semana|replace(',', ', ') }}"
                                                 data-turma-horario="{{ m.turma.horario }}">Detalhes</button>
                                     </td>
@@ -764,6 +771,9 @@
             </section>
         </main>
         <footer class="app-footer">
+            {% with contatos_compactos=true %}
+                {% include 'components/contatos_academia.html' %}
+            {% endwith %}
             <span>© 2026 Centro de Treinamento Extreme Team</span>
             <a href="/">Voltar ao início</a>
         </footer>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Informações da academia | Extreme Team</title>
+        <link rel="icon" href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_academia.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
+    </head>
+    <body>
+        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+        {% set secao_ativa = 'academia' %}
+        {% include 'components/admin_nav.html' %}
+        <main id="conteudo" class="container-admin academia-editor">
+            <header class="admin-intro">
+                <div>
+                    <p class="eyebrow">Presença da academia</p>
+                    <h1>Contato e localização</h1>
+                    <p>Estas informações aparecem no site. Deixe em branco os canais que não deseja divulgar.</p>
+                </div>
+                <a href="{{ url_for('home') }}#contato" class="button-secondary">Ver no site</a>
+            </header>
+            {% for categoria, mensagem in get_flashed_messages(with_categories=true) %}
+                <div class="msg msg-{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
+            {% endfor %}
+            <form method="POST" action="{{ url_for('academia.configuracoes') }}">
+                {% include 'components/csrf_field.html' %}
+                <fieldset class="academia-grupo">
+                    <legend>Canais oficiais</legend>
+                    <p class="academia-ajuda">Use os contatos de atendimento da academia.</p>
+                    <div class="academia-campos">
+                        <div class="field">
+                            <label for="instagram">Instagram</label>
+                            <input id="instagram" name="instagram" type="text" maxlength="200" value="{{ dados.instagram or '' if dados else '' }}" placeholder="@usuario" aria-describedby="instagram-ajuda">
+                            <small id="instagram-ajuda">Informe o @ ou o link do perfil.</small>
+                        </div>
+                        <div class="field">
+                            <label for="whatsapp">WhatsApp de atendimento</label>
+                            <input id="whatsapp" name="whatsapp" type="tel" maxlength="30" value="{{ ('+' if dados is not mapping else '') ~ dados.whatsapp if dados and dados.whatsapp else '' }}" placeholder="(81) 99999-9999" aria-describedby="whatsapp-ajuda">
+                            <small id="whatsapp-ajuda">Inclua o DDD. Para outro país, use + e o código do país.</small>
+                        </div>
+                        <div class="field academia-linha">
+                            <label for="email">E-mail de contato</label>
+                            <input id="email" name="email" type="email" maxlength="150" value="{{ dados.email or '' if dados else '' }}" autocomplete="email">
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset class="academia-grupo">
+                    <legend>Onde e quando treinar</legend>
+                    <div class="academia-campos">
+                        <div class="field academia-linha">
+                            <label for="endereco">Endereço completo</label>
+                            <input id="endereco" name="endereco" type="text" maxlength="300" value="{{ dados.endereco or '' if dados else '' }}" aria-describedby="endereco-ajuda">
+                            <small id="endereco-ajuda">Rua, número, bairro, cidade, estado e CEP. O botão “Como chegar” abre este endereço no mapa.</small>
+                        </div>
+                        <div class="field academia-linha">
+                            <label for="complemento">Complemento ou ponto de referência</label>
+                            <input id="complemento" name="complemento" type="text" maxlength="150" value="{{ dados.complemento or '' if dados else '' }}">
+                        </div>
+                        <div class="field academia-linha">
+                            <label for="horarios">Horários de funcionamento</label>
+                            <textarea id="horarios" name="horarios" rows="4" maxlength="1000" aria-describedby="horarios-ajuda">{{ dados.horarios or '' if dados else '' }}</textarea>
+                            <small id="horarios-ajuda">Você pode usar uma linha para cada dia ou intervalo de dias.</small>
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="academia-acoes">
+                    <button type="submit" class="button-primary">Salvar informações</button>
+                    <span>As alterações ficam visíveis no site após salvar.</span>
+                </div>
+            </form>
+        </main>
+    </body>
+</html>

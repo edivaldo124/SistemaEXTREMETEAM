@@ -14,6 +14,9 @@ from blueprints.adm_bp import admin_bp
 from blueprints.turma_bp import turma_bp
 from blueprints.pix_bp import pix_bp
 from blueprints.checkout_bp import checkout_bp
+from blueprints.academia_bp import academia_bp
+from modelos.academia import Academia
+from modelos.professor import Professor
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
@@ -84,6 +87,12 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(turma_bp)
 app.register_blueprint(pix_bp)
 app.register_blueprint(checkout_bp)
+app.register_blueprint(academia_bp)
+
+
+@app.context_processor
+def contatos_da_academia():
+    return {'academia': db.session.get(Academia, 1)}
 
 
 @app.after_request
@@ -135,7 +144,8 @@ with app.app_context():
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    professores = Professor.query.filter_by(perfil_publico=True).order_by(Professor.nome).all()
+    return render_template("index.html", professores_publicos=professores)
 
 
 @app.route("/health")

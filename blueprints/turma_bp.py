@@ -1,7 +1,10 @@
 from datetime import date
+from pathlib import Path
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, session
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_file, session, url_for
+from sqlalchemy.exc import SQLAlchemyError
 
+from config import db
 from dao.matriculaDAO import MatriculaDAO
 from dao.presencaDAO import PresencaDAO
 from dao.professorDAO import ProfessorDAO
@@ -10,6 +13,10 @@ from dao.usuarioDAO import AlunoDAO
 from modelos.professor import Professor
 from modelos.turma import Turma
 from servicos.autorizacao import admin_requerido, professor_ou_admin_requerido
+from servicos.armazenamento import (
+    ArquivoInvalido, TAMANHO_MAX_FOTO, caminho_arquivo, remover_arquivo, salvar_foto_perfil,
+)
+from servicos.contatos import validar_email, validar_instagram, validar_whatsapp
 from servicos.senhas import erro_validacao_senha
 
 turma_bp = Blueprint('turma_blueprint', __name__)
@@ -52,11 +59,100 @@ def cadastrar_professor():
     return redirect('/admin/turmas')
 
 
+_CAMPOS_PERFIL = {
+    'nome_publico': ('Nome de apresentação', 150),
+    'modalidades': ('Modalidades', 200),
+    'biografia': ('Apresentação', 3000),
+    'formacao': ('Formação e graduações', 2000),
+}
+_VISIBILIDADE_PERFIL = ('perfil_publico', 'exibir_instagram', 'exibir_email', 'exibir_whatsapp')
+
+
+@turma_bp.route('/admin/professores/<int:professor_id>/editar', methods=['GET', 'POST'])
+@admin_requerido
+def editar_professor(professor_id):
+    professor = ProfessorDAO.buscar_por_id(professor_id)
+    if not professor:
+        abort(404)
+
+    campos = (*_CAMPOS_PERFIL, 'instagram', 'email_publico', 'whatsapp', *_VISIBILIDADE_PERFIL)
+    valores = {campo: getattr(professor, campo) for campo in campos}
+    if professor.whatsapp:
+        valores['whatsapp'] = '+' + professor.whatsapp
+    if request.method == 'POST':
+        valores = {campo: (request.form.get(campo) or '').strip() for campo in _CAMPOS_PERFIL}
+        valores.update({campo: (request.form.get(campo) or '').strip()
+                        for campo in ('instagram', 'email_publico', 'whatsapp')})
+        valores.update({campo: request.form.get(campo) == 'on' for campo in _VISIBILIDADE_PERFIL})
+        foto_nova = None
+        try:
+            for campo, (rotulo, limite) in _CAMPOS_PERFIL.items():
+                if len(valores[campo]) > limite:
+                    raise ValueError(f'{rotulo}: use no máximo {limite} caracteres.')
+            dados = {campo: valores[campo] or None for campo in _CAMPOS_PERFIL}
+            dados.update({
+                'instagram': validar_instagram(valores['instagram']),
+                'email_publico': validar_email(valores['email_publico']),
+                'whatsapp': validar_whatsapp(valores['whatsapp']),
+            })
+            dados.update({campo: valores[campo] for campo in _VISIBILIDADE_PERFIL})
+            arquivo = request.files.get('foto')
+            remover_foto = request.form.get('remover_foto') == 'on'
+            if arquivo and arquivo.filename and remover_foto:
+                raise ValueError('Escolha uma nova foto ou marque remover foto, uma opção de cada vez.')
+            if arquivo and arquivo.filename:
+                foto_nova = salvar_foto_perfil(arquivo.read(TAMANHO_MAX_FOTO + 1), subpasta='professores')
+            foto_anterior = professor.foto_arquivo
+            for campo, valor in dados.items():
+                setattr(professor, campo, valor)
+            if foto_nova or remover_foto:
+                professor.foto_arquivo = foto_nova
+            db.session.commit()
+        except (ValueError, ArquivoInvalido) as exc:
+            flash(str(exc), 'erro')
+            return render_template('professor_editar.html', professor=professor, valores=valores), 400
+        except (SQLAlchemyError, OSError):
+            db.session.rollback()
+            if foto_nova:
+                remover_arquivo(foto_nova, subpasta='professores')
+            current_app.logger.exception('Falha ao salvar perfil do professor %s', professor_id)
+            flash('Não foi possível salvar o perfil. Tente novamente.', 'erro')
+            return render_template('professor_editar.html', professor=professor, valores=valores), 500
+        if (foto_nova or remover_foto) and foto_anterior:
+            remover_arquivo(foto_anterior, subpasta='professores')
+        flash('Perfil do professor atualizado.', 'sucesso')
+        return redirect(url_for('turma_blueprint.editar_professor', professor_id=professor.id))
+
+    return render_template('professor_editar.html', professor=professor, valores=valores)
+
+
+@turma_bp.route('/professores/<int:professor_id>/foto')
+def foto_professor(professor_id):
+    professor = ProfessorDAO.buscar_por_id(professor_id)
+    if not professor:
+        abort(404)
+    proprio_professor = (session.get('tipo_usuario') == 'professor'
+                        and session.get('professor_id') == professor.id)
+    if not professor.perfil_publico and session.get('tipo_usuario') != 'admin' and not proprio_professor:
+        abort(404)
+    caminho = caminho_arquivo(professor.foto_arquivo, subpasta='professores')
+    if not caminho:
+        abort(404)
+    resposta = send_file(Path(caminho).resolve(), mimetype='image/jpeg', conditional=False)
+    resposta.headers['Cache-Control'] = 'private, no-store'
+    resposta.headers['X-Content-Type-Options'] = 'nosniff'
+    return resposta
+
+
 @turma_bp.route('/admin/professores/<int:professor_id>/remover', methods=['POST'])
 @admin_requerido
 def remover_professor(professor_id):
+    professor = ProfessorDAO.buscar_por_id(professor_id)
+    foto_anterior = professor.foto_arquivo if professor else None
     resultado = ProfessorDAO.remover(professor_id)
     if resultado is True:
+        if foto_anterior:
+            remover_arquivo(foto_anterior, subpasta='professores')
         flash('Professor removido com sucesso.', 'sucesso')
     elif resultado is None:
         flash('Professor não encontrado.', 'erro')

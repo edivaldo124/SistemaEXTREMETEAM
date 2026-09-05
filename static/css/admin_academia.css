@@ -1,0 +1,20 @@
+/* Formulário editorial, com os mesmos tokens do painel administrativo. */
+.academia-editor { max-width:1000px; }
+.academia-editor .admin-intro > div { max-width:65ch; }
+.academia-editor .admin-intro h1 {
+  font:700 clamp(26px,3vw,34px)/1.2 var(--body);
+  letter-spacing:-.035em; text-transform:none;
+}
+.academia-grupo { min-width:0; margin:0 0 var(--sp-7); padding:var(--sp-5) 0 0; border:0; border-top:1px solid var(--line); }
+.academia-grupo legend { padding:0 var(--sp-4) 0 0; font:700 var(--fs-lg)/1.4 var(--body); }
+.academia-ajuda { margin:0 0 var(--sp-5); color:var(--text-2); }
+.academia-campos { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-5); }
+.academia-linha { grid-column:1/-1; }
+.academia-campos .field { min-width:0; }
+.academia-campos small { display:block; margin-top:var(--sp-2); color:var(--text-2); font-size:var(--fs-xs); line-height:1.5; }
+.academia-acoes { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-4); padding-bottom:var(--sp-6); }
+.academia-acoes span { color:var(--text-2); font-size:var(--fs-sm); }
+@media (max-width:600px) {
+  .academia-campos { grid-template-columns:1fr; }
+  .academia-acoes .button-primary { width:100%; }
+}
