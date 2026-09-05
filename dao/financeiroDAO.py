@@ -897,7 +897,8 @@ class PagamentoDAO:
         if status:
             consulta = consulta.filter(Pagamento.status == status)
         if busca_aluno:
-            consulta = consulta.filter(Aluno.nome.ilike(f'%{busca_aluno}%'))
+            termo = busca_aluno.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+            consulta = consulta.filter(Aluno.nome.ilike(f'%{termo}%', escape='\\'))
 
         return consulta
 

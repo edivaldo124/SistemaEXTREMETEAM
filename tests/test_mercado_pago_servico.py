@@ -171,7 +171,22 @@ def test_validar_assinatura_webhook_aceita_assinatura_correta():
 
     assert mercado_pago.validar_assinatura_webhook(
         x_signature=f'ts={ts},v1={v1}', x_request_id=request_id, data_id=data_id, secret=secret,
+        agora=float(ts),
     ) is True
+
+
+def test_validar_assinatura_webhook_rejeita_timestamp_antigo():
+    secret = 'segredo-teste'
+    data_id = '123456'
+    request_id = 'req-abc'
+    ts = '1700000000'
+    manifest = f'id:{data_id};request-id:{request_id};ts:{ts};'
+    v1 = hmac.new(secret.encode(), manifest.encode(), hashlib.sha256).hexdigest()
+
+    assert mercado_pago.validar_assinatura_webhook(
+        x_signature=f'ts={ts},v1={v1}', x_request_id=request_id, data_id=data_id, secret=secret,
+        agora=float(ts) + 301,
+    ) is False
 
 
 def test_validar_assinatura_webhook_rejeita_assinatura_incorreta():

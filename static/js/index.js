@@ -28,3 +28,11 @@ function mostrarSenha(){
 document.addEventListener('keydown', function (evento) {
     if (evento.key === 'Escape' && !modal.hidden) fechar();
 });
+
+document.querySelectorAll('[data-abrir-login]').forEach((botao) => {
+    botao.addEventListener('click', abrirmodal);
+});
+document.querySelectorAll('[data-fechar-login]').forEach((botao) => {
+    botao.addEventListener('click', fechar);
+});
+icone_senha.addEventListener('click', mostrarSenha);

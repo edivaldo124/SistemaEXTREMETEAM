@@ -7,14 +7,18 @@ from datetime import date, timedelta
 # executado uma unica vez por processo de teste. NUNCA rode pytest num shell/container
 # onde o DATABASE_URL real (Postgres) ja esteja exportado - setdefault perde para ele.
 _DIR_TESTE = tempfile.mkdtemp(prefix='extremeteam-testes-')
-os.environ.setdefault('SECRET_KEY', 'chave-de-teste-nao-usar-em-producao')
-os.environ.setdefault('DATABASE_URL', f'sqlite:///{_DIR_TESTE}/teste.db')
-os.environ.setdefault('MERCADO_PAGO_ACCESS_TOKEN', 'token-fake-de-teste')
-os.environ.setdefault('MERCADO_PAGO_WEBHOOK_SECRET', 'segredo-fake-de-teste')
+os.environ['SECRET_KEY'] = 'chave-de-teste-nao-usar-em-producao'
+os.environ['DATABASE_URL'] = f'sqlite:///{_DIR_TESTE}/teste.db'
+os.environ['MERCADO_PAGO_ACCESS_TOKEN'] = 'token-fake-de-teste'
+os.environ['MERCADO_PAGO_WEBHOOK_SECRET'] = 'segredo-fake-de-teste'
+os.environ['APP_BASE_URL'] = 'https://academia.example.test'
+os.environ['TRUSTED_HOSTS'] = 'localhost,academia.example.test'
+os.environ['TRUST_PROXY_COUNT'] = '0'
+os.environ['RATELIMIT_STORAGE_URI'] = 'memory://'
 
 import pytest
 
-from config import db
+from config import db, limiter
 from dao.planoDAO import PlanoDAO
 from dao.usuarioDAO import AlunoDAO
 from dao.financeiroDAO import PagamentoDAO
@@ -26,7 +30,7 @@ from servidor import app as flask_app
 
 @pytest.fixture
 def app():
-    flask_app.config.update(TESTING=True)
+    flask_app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
     yield flask_app
 
 
@@ -37,6 +41,7 @@ def client(app):
 
 @pytest.fixture(autouse=True)
 def limpar_banco(app):
+    limiter.reset()
     yield
     with app.app_context():
         db.session.rollback()

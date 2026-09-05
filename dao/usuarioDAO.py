@@ -4,6 +4,10 @@ from modelos.plano import Plano
 from modelos.usuario import Aluno
 from sqlalchemy.exc import SQLAlchemyError
 from servicos.formatacao import variantes_cpf
+from werkzeug.security import check_password_hash, generate_password_hash
+
+
+_HASH_DESCARTAVEL = generate_password_hash('senha-descartavel-para-equalizar-tempo')
 
 class AlunoDAO:
     @staticmethod
@@ -39,16 +43,18 @@ class AlunoDAO:
 
     @staticmethod
     def autenticar(usuario, senha):
-        # Busca por usuário/email/login/cpf e só então confere o hash da senha em Python.
+        # Nome não é identificador: não é único e pode ser editado pelo próprio aluno.
         cpfs_possiveis = variantes_cpf(usuario)
         aluno = Aluno.query.filter(
-            (Aluno.nome == usuario) |
             (Aluno.login == usuario) |
             (Aluno.email == usuario) |
             (Aluno.cpf.in_(cpfs_possiveis))
         ).first()
 
-        if aluno and aluno.verificar_senha(senha):
+        # Mantém uma verificação de hash mesmo quando a conta não existe, reduzindo a
+        # diferença de tempo usada para enumerar logins válidos.
+        senha_valida = aluno.verificar_senha(senha) if aluno else check_password_hash(_HASH_DESCARTAVEL, senha)
+        if aluno and senha_valida:
             return aluno
         return None
 
@@ -57,15 +63,14 @@ class AlunoDAO:
         return db.session.get(Aluno, aluno_id)
 
     @staticmethod
-    def buscar_por_usuario(usuario):
-        # Busca o perfil pelo nome, email ou cpf que está salvo na sessão
-        return Aluno.query.filter(
-            (Aluno.nome == usuario) |(Aluno.login == usuario)| (Aluno.email == usuario) | (Aluno.descricao == usuario)| (Aluno.cpf == usuario)
-        ).first()
+    def buscar_por_cpf(cpf):
+        # Rotas administrativas recebem CPF. Comparar esse valor com campos editáveis
+        # permitia selecionar e alterar o registro de outro aluno.
+        return Aluno.query.filter(Aluno.cpf.in_(variantes_cpf(cpf))).first()
 
     @staticmethod
     def atualizar_mensalidade(cpf, nova_situacao):
-        aluno = Aluno.query.filter_by(cpf=cpf).first()
+        aluno = AlunoDAO.buscar_por_cpf(cpf)
         if aluno:
             aluno.mensalidade = nova_situacao
             db.session.commit()
@@ -97,7 +102,7 @@ class AlunoDAO:
 
     @staticmethod
     def atualizar_dados_completos(cpf, dados):
-        aluno = Aluno.query.filter_by(cpf=cpf).first()
+        aluno = AlunoDAO.buscar_por_cpf(cpf)
         if aluno:
             aluno.nome = dados.get('nome')
             aluno.login = dados.get('login')

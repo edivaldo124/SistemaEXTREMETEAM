@@ -19,7 +19,8 @@
         elementoAnterior = document.activeElement;
 
         elAluno.textContent = botao.dataset.alunoNome || '—';
-        elValor.textContent = 'R$ ' + (botao.dataset.valor || '—');
+        // Já chega formatado do servidor (filtro `moeda`), com o R$ incluído.
+        elValor.textContent = botao.dataset.valor || '—';
         elCompetencia.textContent = botao.dataset.competencia || '—';
         elEnviado.textContent = botao.dataset.enviadoEm || '—';
 

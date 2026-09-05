@@ -2,13 +2,14 @@ import hashlib
 import hmac
 import logging
 import os
+import time
 from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
-from urllib.parse import urlparse
 
 import mercadopago
 import requests
 from mercadopago.config import RequestOptions
+from servicos.urls import URLPublicaInvalida, base_url_publica as _base_url_configurada
 
 logger = logging.getLogger(__name__)
 
@@ -92,32 +93,23 @@ def ambiente_mercado_pago():
 
 def _base_url_opcional():
     """URL publica normalizada, ou None quando nao houver uma valida configurada."""
-    bruta = (os.environ.get('APP_BASE_URL') or '').strip().rstrip('/')
-    if not bruta:
+    try:
+        return base_url_publica()
+    except ConfiguracaoInvalida:
         return None
-    partes = urlparse(bruta)
-    if partes.scheme not in ('http', 'https') or not partes.netloc:
-        return None
-    return bruta
 
 
 def base_url_publica():
-    """Mesma URL, porem obrigatoria - levanta ConfiguracaoInvalida se faltar/for invalida.
-
-    O Checkout Pro depende dela para montar back_urls e notification_url: sem uma URL
-    publica valida o aluno sairia do sistema sem caminho de volta, entao falhamos antes
-    de criar qualquer cobranca.
-    """
-    base = _base_url_opcional()
-    if not base:
-        raise ConfiguracaoInvalida(
-            'APP_BASE_URL ausente ou invalida - defina a URL publica (http/https) da aplicacao.'
-        )
-    return base
+    """Mantém a exceção pública usada pelo serviço do Mercado Pago."""
+    try:
+        return _base_url_configurada()
+    except URLPublicaInvalida as exc:
+        raise ConfiguracaoInvalida(str(exc)) from exc
 
 
 def url_webhook(base_url=None):
-    return f'{base_url or base_url_publica()}{CAMINHO_WEBHOOK}'
+    base = base_url or base_url_publica()
+    return f'{base}{CAMINHO_WEBHOOK}'
 
 
 def _extrair_dados_pix(resposta_pagamento):
@@ -378,7 +370,8 @@ def cancelar_pagamento(provider_payment_id):
         logger.warning('Nao foi possivel cancelar a cobranca Pix %s no Mercado Pago.', provider_payment_id, exc_info=True)
 
 
-def validar_assinatura_webhook(*, x_signature, x_request_id, data_id, secret):
+def validar_assinatura_webhook(*, x_signature, x_request_id, data_id, secret, agora=None,
+                               tolerancia_segundos=300):
     """Valida a assinatura HMAC-SHA256 do webhook do Mercado Pago.
 
     Nunca lanca - retorna False para qualquer formato de header inesperado.
@@ -398,6 +391,15 @@ def validar_assinatura_webhook(*, x_signature, x_request_id, data_id, secret):
             v1 = valor
 
     if not ts or not v1:
+        return False
+
+    try:
+        instante_assinatura = float(ts)
+    except (TypeError, ValueError):
+        return False
+    if instante_assinatura > 10_000_000_000:
+        instante_assinatura /= 1000
+    if abs((time.time() if agora is None else agora) - instante_assinatura) > tolerancia_segundos:
         return False
 
     manifest = f'id:{str(data_id).lower()};request-id:{x_request_id};ts:{ts};'

@@ -2,8 +2,9 @@
 <html lang="pt-BR">
     <head>
         <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="theme-color" content="#151a1e">
+        <meta name="theme-color" content="#000000">
         <link rel="icon"
               type="image/png"
               href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
@@ -21,7 +22,7 @@
             <section class="brand-panel" aria-labelledby="brand-title">
                 <a class="brand"
                    href="/"
-                   aria-label="Centro de Treinamento Extreme Team — página inicial">
+                   aria-label="Centro de Treinamento Extreme Team, página inicial">
                     <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
                          alt=""
                          width="64"
@@ -46,7 +47,6 @@
                     <p>Acompanhe seu plano, mantenha a rotina e evolua um treino de cada vez.</p>
                 </div>
                 <div class="training-note" aria-hidden="true">
-                    <span>01</span>
                     <p>
                         Força
                         <br>
@@ -80,6 +80,7 @@
                         </div>
                     {% endif %}
                     <form id="login-form" action="/login" method="post">
+                    {% include "components/csrf_field.html" %}
                         <div class="field">
                             <label for="loginusuario">Usuário</label>
                             <div class="input-wrap">
@@ -124,12 +125,7 @@
                                 </button>
                             </div>
                         </div>
-                        <button class="submit-button" type="submit">
-                            <span>Entrar na minha conta</span>
-                            <svg aria-hidden="true" viewBox="0 0 24 24">
-                                <path d="M5 12h14m-5-5 5 5-5 5" />
-                            </svg>
-                        </button>
+                        <button class="submit-button" type="submit">Entrar na minha conta</button>
                     </form>
                     <p class="signup">
                         Ainda não faz parte?
@@ -142,7 +138,7 @@
                 </footer>
             </section>
         </main>
-        <script>
+        <script nonce="{{ csp_nonce() }}">
         const toggle = document.querySelector('.password-toggle');
         const password = document.querySelector('#senhausuario');
         toggle.addEventListener('click', () => {

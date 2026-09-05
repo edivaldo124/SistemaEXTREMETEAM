@@ -1,27 +1,94 @@
-.financeiro-totais{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:40px 0}
-.total-card{padding:20px;border:1px solid var(--line);border-left:4px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
-.total-card span{display:block;margin-bottom:8px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.total-card strong{display:block;font:700 22px var(--display)}
-.total-card small{display:block;margin-top:6px;color:var(--muted);font-size:11px}
-.total-recebido{border-left-color:var(--green)}
-.total-pendente{border-left-color:var(--gold)}
-.total-vencido{border-left-color:var(--red)}
-.total-analise{border-left-color:#8a6d00}
-.total-inadimplentes{border-left-color:#1c3f6e}
+/* =========================================================================
+   Financeiro (administração): totais do período, filtros e mensalidades.
+   ========================================================================= */
 
-.form-filtros-financeiro{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:end;padding:24px;background:#eeece5}
-.form-filtros-financeiro .campo-largo{grid-column:1/-1}
-.form-filtros-financeiro .btn-salvar,.form-filtros-financeiro .btn-voltar{min-height:44px}
+/* ------------------------------------------------- totais do período ---- */
+/* Cinco números que resumem a tela. O filete lateral repete a cor da situação
+   correspondente na tabela abaixo. */
 
-@media(max-width:900px){.financeiro-totais{grid-template-columns:repeat(2,1fr)}.form-filtros-financeiro{grid-template-columns:1fr 1fr}}
-@media(max-width:540px){.financeiro-totais{grid-template-columns:1fr}.form-filtros-financeiro{grid-template-columns:1fr}}
+.financeiro-totais {
+  display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:var(--sp-3); margin:var(--sp-7) 0;
+}
+.total-card {
+  padding:var(--sp-5);
+  border:1px solid var(--line); border-left:4px solid var(--line-strong);
+  border-radius:var(--radius); background:var(--surface);
+}
+.total-card span {
+  display:block; margin-bottom:var(--sp-2);
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.total-card strong {
+  display:block; color:var(--text);
+  font:700 24px/1.1 var(--display); font-variant-numeric:tabular-nums;
+}
+.total-card small {
+  display:block; margin-top:var(--sp-1);
+  color:var(--text-2); font-size:var(--fs-xs); font-variant-numeric:tabular-nums;
+}
 
-.comprovante-dialog{width:min(560px,calc(100% - 32px))}
-.comprovante-resumo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
-.comprovante-resumo span{display:block;margin-bottom:6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-.comprovante-resumo strong{font:700 18px var(--display)}
-.comprovante-preview-area{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:160px;margin-bottom:20px;padding:16px;border:1px solid var(--line);background:var(--surface)}
-.comprovante-preview-area img{max-width:100%;max-height:320px;object-fit:contain}
-.comprovante-sem-preview{margin:0;color:var(--muted);font-size:12px;text-align:center}
-.comprovante-acoes{display:flex;flex-direction:column;gap:14px}
-@media(max-width:480px){.comprovante-resumo{grid-template-columns:1fr}}
+.total-recebido      { border-left-color:var(--green); }
+.total-pendente      { border-left-color:var(--gold); }
+.total-vencido       { border-left-color:var(--red); }
+.total-analise       { border-left-color:var(--amber); }
+.total-inadimplentes { border-left-color:var(--blue); }
+
+/* ------------------------------------------------------------ filtros --- */
+
+.form-filtros-financeiro {
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:var(--sp-4); align-items:end;
+  padding:var(--sp-5);
+}
+.form-filtros-financeiro .campo-largo { grid-column:1/-1; }
+.form-filtros-financeiro .form-actions { grid-column:1/-1; margin-top:0; }
+
+/* ------------------------------------------- revisão de comprovante ----- */
+
+.comprovante-dialog { width:min(600px,calc(100% - 32px)); }
+.comprovante-resumo {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-4);
+  margin-bottom:var(--sp-5); padding-bottom:var(--sp-5);
+  border-bottom:1px solid var(--line);
+}
+.comprovante-resumo span {
+  display:block; margin-bottom:var(--sp-1);
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase;
+}
+.comprovante-resumo strong { color:var(--text); font:600 var(--fs-lg)/1.3 var(--body); }
+
+.comprovante-preview-area {
+  display:flex; flex-direction:column; align-items:center; gap:var(--sp-3);
+  min-height:170px; margin-bottom:var(--sp-5); padding:var(--sp-4);
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--surface);
+}
+.comprovante-preview-area img { max-width:100%; max-height:320px; object-fit:contain; }
+.comprovante-sem-preview { margin:0; color:var(--text-2); font-size:var(--fs-xs); text-align:center; }
+
+.comprovante-acoes { display:flex; flex-direction:column; gap:var(--sp-4); }
+.comprovante-acoes .form-revisao {
+  padding:var(--sp-4);
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--surface-2);
+}
+
+/* --------------------------------------------------------- responsivo --- */
+
+@media (max-width:1100px) {
+  .financeiro-totais { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media (max-width:900px) {
+  .form-filtros-financeiro { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:640px) {
+  .financeiro-totais { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:480px) {
+  .financeiro-totais { grid-template-columns:1fr; }
+  .form-filtros-financeiro { grid-template-columns:1fr; }
+  .comprovante-resumo { grid-template-columns:1fr; }
+}

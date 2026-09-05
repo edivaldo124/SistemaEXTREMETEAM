@@ -5,6 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from flask import Blueprint, flash, jsonify, redirect, request, session
+from config import csrf
 
 from dao.financeiroDAO import STATUS_FECHADOS, PagamentoDAO, rotulo_acao, rotulo_status
 from servicos.formatacao import formatar_competencia
@@ -154,17 +155,17 @@ def sincronizar_por_referencia_checkout(pagamento, *, timeout=None, retries=None
 @pix_bp.route('/api/mensalidades/<int:pagamento_id>/pix', methods=['POST'])
 def criar_pix_mensalidade(pagamento_id):
     if session.get('tipo_usuario') not in ('admin', 'aluno'):
-        return jsonify({'erro': 'Autenticacao necessaria.'}), 401
+        return jsonify({'erro': 'Faça login para continuar.'}), 401
 
     pagamento = _pagamento_ou_none(pagamento_id)
     if not pagamento:
-        return jsonify({'erro': 'Mensalidade nao encontrada.'}), 404
+        return jsonify({'erro': 'Mensalidade não encontrada.'}), 404
 
     if not _acesso_permitido(pagamento):
-        return jsonify({'erro': 'Sem permissao para esta mensalidade.'}), 403
+        return jsonify({'erro': 'Você não tem acesso a esta mensalidade.'}), 403
 
     if pagamento.status not in STATUS_PAGAVEIS:
-        return jsonify({'erro': 'Esta mensalidade nao esta pendente.'}), 409
+        return jsonify({'erro': 'Esta mensalidade não está em aberto.'}), 409
 
     if PagamentoDAO.pix_ainda_valido(pagamento):
         try:
@@ -191,7 +192,7 @@ def criar_pix_mensalidade(pagamento_id):
 
     aluno = pagamento.aluno
     if not aluno or not aluno.email:
-        return jsonify({'erro': 'Aluno sem e-mail cadastrado; nao e possivel gerar o Pix.'}), 422
+        return jsonify({'erro': 'Cadastre um e-mail no seu perfil para gerar o Pix.'}), 422
 
     if pagamento.provider_payment_id:
         cancelar_pagamento(pagamento.provider_payment_id)
@@ -210,11 +211,11 @@ def criar_pix_mensalidade(pagamento_id):
         )
     except MercadoPagoIndisponivel:
         logger.error('Mercado Pago indisponivel ao criar Pix para o pagamento %s.', pagamento.id, exc_info=True)
-        return jsonify({'erro': 'Mercado Pago indisponivel no momento. Tente novamente em instantes.'}), 503
+        return jsonify({'erro': 'O Mercado Pago está indisponível no momento. Tente novamente em instantes.'}), 503
 
     if not resultado['sucesso']:
         logger.error('Mercado Pago recusou a criacao do Pix para o pagamento %s: %s', pagamento.id, resultado['erro'])
-        return jsonify({'erro': 'Nao foi possivel gerar a cobranca Pix. Tente novamente.'}), 502
+        return jsonify({'erro': 'Não foi possível gerar a cobrança Pix. Tente novamente ou use outra forma de pagamento.'}), 502
 
     PagamentoDAO.salvar_dados_pix(
         pagamento,
@@ -232,14 +233,14 @@ def criar_pix_mensalidade(pagamento_id):
 @pix_bp.route('/api/mensalidades/<int:pagamento_id>/status', methods=['GET'])
 def status_pix_mensalidade(pagamento_id):
     if session.get('tipo_usuario') not in ('admin', 'aluno'):
-        return jsonify({'erro': 'Autenticacao necessaria.'}), 401
+        return jsonify({'erro': 'Faça login para continuar.'}), 401
 
     pagamento = _pagamento_ou_none(pagamento_id)
     if not pagamento:
-        return jsonify({'erro': 'Mensalidade nao encontrada.'}), 404
+        return jsonify({'erro': 'Mensalidade não encontrada.'}), 404
 
     if not _acesso_permitido(pagamento):
-        return jsonify({'erro': 'Sem permissao para esta mensalidade.'}), 403
+        return jsonify({'erro': 'Você não tem acesso a esta mensalidade.'}), 403
 
     if pagamento.status in STATUS_FECHADOS:
         return jsonify(_serializar_pagamento(pagamento)), 200
@@ -275,17 +276,17 @@ def sincronizar_pagamento(pagamento_id):
 
     if not pagamento.provider_payment_id:
         flash('Esta mensalidade não tem cobrança do Mercado Pago para sincronizar.', 'erro')
-        return redirect(request.referrer or '/admin/financeiro')
+        return redirect('/admin/financeiro')
 
     try:
         resultado_mp = buscar_pagamento(pagamento.provider_payment_id)
     except MercadoPagoIndisponivel:
         flash('Mercado Pago indisponível no momento. Tente novamente em instantes.', 'erro')
-        return redirect(request.referrer or '/admin/financeiro')
+        return redirect('/admin/financeiro')
 
     if not resultado_mp['sucesso']:
         flash('Não foi possível consultar esta cobrança no Mercado Pago.', 'erro')
-        return redirect(request.referrer or '/admin/financeiro')
+        return redirect('/admin/financeiro')
 
     status_antes = pagamento.status
     _processar_status_mp(pagamento, resultado_mp)
@@ -294,10 +295,11 @@ def sincronizar_pagamento(pagamento_id):
     else:
         flash('Situação confirmada junto ao Mercado Pago - nenhuma mudança.', 'sucesso')
 
-    return redirect(request.referrer or '/admin/financeiro')
+    return redirect('/admin/financeiro')
 
 
 @pix_bp.route('/api/webhooks/mercado-pago', methods=['POST'])
+@csrf.exempt
 def webhook_mercado_pago():
     x_signature = request.headers.get('x-signature', '')
     x_request_id = request.headers.get('x-request-id', '')

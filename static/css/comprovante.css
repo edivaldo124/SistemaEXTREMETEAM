@@ -1,24 +1,69 @@
-.comprovante-page{max-width:640px;margin:0 auto;padding:40px 20px 80px}
-.comprovante-folha{padding:36px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
-.comprovante-cabecalho{display:flex;align-items:center;gap:14px;padding-bottom:22px;margin-bottom:22px;border-bottom:2px solid var(--ink)}
-.comprovante-logo{width:44px;height:44px;object-fit:contain}
-.comprovante-cabecalho strong{display:block;font:700 18px var(--display);text-transform:uppercase}
-.comprovante-cabecalho span{color:var(--muted);font-size:11px}
-.comprovante-folha h1{margin:0 0 12px;font:700 clamp(24px,4vw,30px)/1 var(--display);text-transform:uppercase}
-.comprovante-situacao{margin:0 0 22px}
-.comprovante-dados{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;margin:0 0 22px;padding:22px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.comprovante-dados div{min-width:0}
-.comprovante-dados dt{margin:0 0 4px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.comprovante-dados dd{margin:0;overflow-wrap:anywhere;font:700 16px var(--display)}
-.comprovante-valor{color:var(--orange-dark)}
-.comprovante-confirmacao{margin:0 0 10px;font-size:13px;font-weight:600}
-.comprovante-aviso{margin:0 0 26px;color:var(--muted);font-size:11px}
+/* =========================================================================
+   Comprovante de pagamento. Feito para ser lido na tela e impresso em papel.
+   ========================================================================= */
 
-@media(max-width:480px){.comprovante-page{padding:24px 14px 60px}.comprovante-folha{padding:22px}.comprovante-dados{grid-template-columns:1fr}}
+.comprovante-page { max-width:660px; margin:0 auto; padding:var(--sp-8) var(--sp-5) var(--sp-11); }
 
-@media print{
-  .no-print{display:none!important}
-  body{background:#fff}
-  .comprovante-page{max-width:none;padding:0}
-  .comprovante-folha{border:0;box-shadow:none;padding:0}
+.comprovante-folha {
+  padding:var(--sp-8);
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--surface);
+}
+
+.comprovante-cabecalho {
+  display:flex; align-items:center; gap:var(--sp-3);
+  margin-bottom:var(--sp-6); padding-bottom:var(--sp-5);
+  border-bottom:2px solid var(--ink);
+}
+/* A arte da marca tem fundo preto: sobre a folha branca ela vira uma placa
+   escura deliberada em vez de um retângulo acidental. */
+.comprovante-logo {
+  flex:0 0 auto; width:40px; height:40px;
+  border-radius:var(--radius); background:var(--ink); object-fit:contain;
+}
+.comprovante-cabecalho strong { display:block; font:700 18px/1.1 var(--display); text-transform:uppercase; }
+.comprovante-cabecalho span { color:var(--text-2); font-size:var(--fs-xs); }
+
+.comprovante-folha h1 {
+  margin:0 0 var(--sp-3);
+  font:700 var(--h2)/1.1 var(--display); text-transform:uppercase;
+}
+.comprovante-situacao { margin:0 0 var(--sp-6); }
+
+.comprovante-dados {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-5) var(--sp-6);
+  margin:0 0 var(--sp-6); padding:var(--sp-6) 0;
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+}
+.comprovante-dados div { min-width:0; }
+.comprovante-dados dt {
+  margin:0 0 var(--sp-1);
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.comprovante-dados dd {
+  margin:0; overflow-wrap:anywhere;
+  color:var(--text); font:600 var(--fs-md)/1.4 var(--body); font-variant-numeric:tabular-nums;
+}
+.comprovante-valor { font-size:var(--fs-lg) !important; font-weight:700 !important; }
+
+.comprovante-confirmacao { max-width:62ch; margin:0 0 var(--sp-2); font-size:var(--fs-sm); }
+.comprovante-aviso { margin:0 0 var(--sp-6); color:var(--text-2); font-size:var(--fs-xs); }
+
+@media (max-width:520px) {
+  .comprovante-page { padding:var(--sp-6) var(--sp-4) var(--sp-10); }
+  .comprovante-folha { padding:var(--sp-5); }
+  .comprovante-dados { grid-template-columns:1fr; gap:var(--sp-4); }
+}
+
+@media print {
+  .no-print { display:none !important; }
+  body { background:#FFFFFF; }
+  /* Na folha impressa o comprovante mantém uma medida de leitura confortável
+     e uma margem própria, sem depender só das margens do navegador. */
+  .comprovante-page { max-width:170mm; padding:8mm 0; }
+  .comprovante-folha { padding:0; border:0; }
+  .comprovante-dados { gap:var(--sp-5) var(--sp-8); }
+  /* Fundos claros nem sempre saem na impressão: a borda garante o selo legível. */
+  .status { border:1px solid currentColor; }
 }

@@ -2,15 +2,18 @@
 <html lang="pt-BR">
     <head>
         <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <title>Avisos e cobranças | Centro de Treinamento Extreme Team</title>
         <link rel="icon"
               type="image/png"
               href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
         <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/theme.css') }}">
+              href="{{ url_for('static', filename='css/theme.css') }}">
         <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/pgAdm.css') }}">
+              href="{{ url_for('static', filename='css/pgAdm.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/modal.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
@@ -38,7 +41,8 @@
             </section>
             {% with mensagens=get_flashed_messages(with_categories=true) %}
                 {% for categoria,mensagem in mensagens %}
-                    <div class="msg msg-{{ categoria }}" role="status">{{ mensagem }}</div>
+                    <div class="msg msg-{{ categoria }}"
+                             role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
                 {% endfor %}
             {% endwith %}
             <section class="secao">
@@ -50,13 +54,14 @@
                     <p>O texto é enviado como e-mail para os alunos escolhidos. Cada linha vira um parágrafo.</p>
                 </div>
                 <div class="atalhos-aviso">
-                    <span>Atalho:</span>
+                    <span>Preencher com um modelo</span>
                     <button type="button" class="btn btn-status" id="atalho-sem-treino">Não vai ter treino</button>
                 </div>
                 <form action="/admin/avisos"
                       method="POST"
                       class="form-plano"
                       id="form-aviso">
+                    {% include "components/csrf_field.html" %}
                     <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
                     <div class="field">
                         <label for="assunto">Assunto</label>
@@ -77,23 +82,18 @@
                         <label for="mensagem">Mensagem</label>
                         <textarea id="mensagem" name="mensagem" rows="5" placeholder="Escreva o aviso para os alunos…" required></textarea>
                     </div>
-                    <button type="submit" class="btn-cadastrar">Enviar aviso →</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-cadastrar">Enviar aviso</button>
+                    </div>
                 </form>
             </section>
-            <script>
-document.getElementById('atalho-sem-treino').addEventListener('click', function () {
-    document.getElementById('assunto').value = 'Não vai ter treino — Extreme Team';
-    document.getElementById('mensagem').value = 'Informamos que não haverá treino no horário de hoje.\nQualquer dúvida, fale com a nossa administração.';
-    document.getElementById('mensagem').focus();
-});
-</script>
             <section class="secao">
                 <div class="section-heading">
                     <div>
                         <p class="eyebrow">Financeiro</p>
                         <h2>Cobrança de mensalidades</h2>
                     </div>
-                    <p>Envia por e-mail um lembrete de mensalidade pendente para todos os alunos ativos que não estão "Em Dia".</p>
+                    <p>Envia um lembrete por e-mail para todos os alunos ativos com mensalidade em aberto.</p>
                 </div>
                 <form action="/admin/avisos/cobranca"
                       method="POST"
@@ -101,16 +101,22 @@ document.getElementById('atalho-sem-treino').addEventListener('click', function 
                       data-confirm-modal
                       data-modal-eyebrow="Cobrança em massa"
                       data-modal-title="Enviar cobrança para todos os inadimplentes?"
-                      data-modal-message="Um e-mail de cobrança será enviado para os {{ total_inadimplentes }} aluno(s) com mensalidade pendente."
+                      data-modal-message="Um e-mail de cobrança será enviado para {{ total_inadimplentes }} aluno{{ '' if total_inadimplentes == 1 else 's' }} com mensalidade pendente."
                       data-modal-confirm="Enviar cobranças">
+                    {% include "components/csrf_field.html" %}
                     <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
-                    <button type="submit" class="btn btn-status">Cobrar {{ total_inadimplentes }} aluno(s) inadimplente(s)</button>
+                    <button type="submit" class="btn btn-status">Enviar cobrança para {{ total_inadimplentes }} aluno{{ "" if total_inadimplentes == 1 else "s" }}</button>
                 </form>
             </section>
         </main>
+        <script nonce="{{ csp_nonce() }}">
+            document.getElementById('atalho-sem-treino').addEventListener('click', function () {
+                document.getElementById('assunto').value = 'Não vai ter treino hoje';
+                document.getElementById('mensagem').value = 'Informamos que não haverá treino no horário de hoje.\nQualquer dúvida, fale com a nossa administração.';
+                document.getElementById('mensagem').focus();
+            });
+        </script>
         {% include 'components/confirm_modal.html' %}
-        <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/modal.css') }}">
         <script src="{{ url_for('static',filename='js/modal.js') }}"></script>
     </body>
 </html>

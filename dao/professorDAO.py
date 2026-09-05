@@ -2,6 +2,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from config import db
 from modelos.professor import Professor
+from werkzeug.security import check_password_hash, generate_password_hash
+
+
+_HASH_DESCARTAVEL = generate_password_hash('senha-descartavel-para-equalizar-tempo')
 
 
 class ProfessorDAO:
@@ -21,7 +25,8 @@ class ProfessorDAO:
     @staticmethod
     def autenticar(login, senha):
         professor = Professor.query.filter_by(login=login).first()
-        if professor and professor.verificar_senha(senha):
+        senha_valida = professor.verificar_senha(senha) if professor else check_password_hash(_HASH_DESCARTAVEL, senha)
+        if professor and senha_valida:
             return professor
         return None
 

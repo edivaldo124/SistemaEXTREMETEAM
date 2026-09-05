@@ -48,3 +48,17 @@ def test_painel_financeiro_busca_por_nome_do_aluno(client, logar_como_admin, cri
     assert resp.status_code == 200
     assert b'Joana Muay Thai' in resp.data
     assert b'Carlos Boxe' not in resp.data
+
+
+def test_busca_financeira_trata_curingas_como_texto(client, logar_como_admin, criar_aluno, criar_pagamento):
+    nome_com_percentual = criar_aluno(nome='Equipe 100%')
+    outro = criar_aluno(nome='Equipe comum')
+    criar_pagamento(aluno=nome_com_percentual)
+    criar_pagamento(aluno=outro)
+    logar_como_admin()
+
+    resp = client.get('/admin/financeiro?busca_aluno=%25')
+
+    assert resp.status_code == 200
+    assert b'Equipe 100%' in resp.data
+    assert b'Equipe comum' not in resp.data

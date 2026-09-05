@@ -2,24 +2,25 @@
 <html lang="pt-BR">
     <head>
         <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="theme-color" content="#171b1e">
+        <meta name="theme-color" content="#000000">
         <link rel="icon"
               type="image/png"
               href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
         <title>Extreme Team | Centro de Treinamento</title>
+        <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/theme.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/index.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
-        <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
     </head>
     <body>
         <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
         <header class="home-header">
-            <a class="site-brand" href="/" aria-label="Extreme Team — início">
+            <a class="site-brand" href="/" aria-label="Extreme Team, página inicial">
                 <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
                      alt="">
                 <span>
@@ -31,7 +32,7 @@
             <nav aria-label="Navegação principal">
                 <a href="#estrutura">A academia</a>
                 <a href="#metodo">Nosso método</a>
-                <button type="button" class="nav-login" onclick="abrirmodal()">Área do aluno</button>
+                <button type="button" class="nav-login" data-abrir-login>Área do aluno</button>
             </nav>
         </header>
         <main id="conteudo">
@@ -46,24 +47,18 @@
                         <em>Vá ao extremo.</em>
                     </h1>
                     <p class="hero-text">
-                        Estrutura, acompanhamento e consistência para transformar esforço em resultado — no seu ritmo, sem atalhos.
+                        Estrutura, acompanhamento e consistência para transformar esforço em resultado, no seu ritmo e sem atalhos.
                     </p>
                     <div class="hero-actions">
-                        <a class="button-primary" href="/cadastrar">
-                            Começar agora
-                            <span>→</span>
-                        </a>
-                        <button class="text-button" type="button" onclick="abrirmodal()">Já sou aluno</button>
+                        <a class="button-primary" href="/cadastrar">Criar minha conta</a>
+                        <button class="text-button" type="button" data-abrir-login>Já sou aluno</button>
                     </div>
                 </div>
                 <div class="hero-visual">
                     <div class="extreme-lockup">
                         <img src="{{ url_for('static', filename='imagens/logo-header-480.png') }}"
                              alt="Centro de Treinamento Extreme Team">
-                        <small>Força · disciplina · evolução</small>
-                    </div>
-                    <div class="hero-stamp" aria-hidden="true">
-                        <strong>+FORÇA</strong>
+                        <small>Força, disciplina e evolução</small>
                     </div>
                 </div>
             </section>
@@ -114,7 +109,7 @@
         </main>
         <footer class="home-footer">
             <span>© 2026 Centro de Treinamento Extreme Team</span>
-            <a href="/cadastrar">Faça parte →</a>
+            <a href="/cadastrar">Criar conta</a>
         </footer>
         <div id="meuModal"
              class="modal"
@@ -122,16 +117,17 @@
              aria-modal="true"
              aria-labelledby="modal-title"
              hidden>
-            <div class="modal-backdrop" onclick="fechar()"></div>
+            <div class="modal-backdrop" data-fechar-login></div>
             <div class="modal-conteudo">
                 <button type="button"
                         class="fechar-modal"
-                        onclick="fechar()"
+                        data-fechar-login
                         aria-label="Fechar login">×</button>
                 <p class="eyebrow">Área do aluno</p>
                 <h2 id="modal-title">Acesse sua conta</h2>
                 <p class="modal-intro">Continue sua evolução.</p>
                 <form action="/login" method="post">
+                    {% include "components/csrf_field.html" %}
                     <div class="field">
                         <label for="inputnome">Usuário</label>
                         <input type="text"
@@ -154,7 +150,7 @@
                             <button type="button"
                                     id="iconeSenha"
                                     class="icone-senha"
-                                    onclick="mostrarSenha()"
+                                    data-alternar-senha
                                     aria-label="Mostrar senha">Ver</button>
                         </div>
                     </div>

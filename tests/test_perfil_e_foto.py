@@ -108,7 +108,7 @@ def test_admin_acessa_foto_de_qualquer_aluno(client, criar_aluno, logar_como_alu
     logar_como_aluno(aluno)
     client.post('/perfil/foto', data={'foto': (_imagem_jpeg_valida(), 'foto.jpg', 'image/jpeg')},
                 content_type='multipart/form-data')
-    client.get('/logout')
+    client.post('/logout')
 
     logar_como_admin()
     resp = client.get(f'/perfil/foto/{aluno.id}')
@@ -129,7 +129,7 @@ def test_professor_ve_foto_de_aluno_da_propria_turma(client, criar_aluno, contex
         sess['tipo_usuario'] = 'aluno'
     client.post('/perfil/foto', data={'foto': (_imagem_jpeg_valida(), 'foto.jpg', 'image/jpeg')},
                 content_type='multipart/form-data')
-    client.get('/logout')
+    client.post('/logout')
 
     with client.session_transaction() as sess:
         sess['usuario'] = professor.login

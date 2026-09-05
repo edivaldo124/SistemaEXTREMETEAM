@@ -173,7 +173,7 @@ def detalhes_usuario(cpf):
     if not usuario_e_admin():
         return redirect('/login')
 
-    aluno = AlunoDAO.buscar_por_usuario(cpf)
+    aluno = AlunoDAO.buscar_por_cpf(cpf)
 
     if not aluno:
         return redirect('/admin')
@@ -223,7 +223,7 @@ def enviar_foto_aluno(cpf):
     if not usuario_e_admin():
         return redirect('/login')
 
-    aluno = AlunoDAO.buscar_por_usuario(cpf)
+    aluno = AlunoDAO.buscar_por_cpf(cpf)
     if not aluno:
         flash('Aluno não encontrado.', 'erro')
         return redirect('/admin')
@@ -253,7 +253,7 @@ def remover_foto_aluno(cpf):
     if not usuario_e_admin():
         return redirect('/login')
 
-    aluno = AlunoDAO.buscar_por_usuario(cpf)
+    aluno = AlunoDAO.buscar_por_cpf(cpf)
     if not aluno:
         flash('Aluno não encontrado.', 'erro')
         return redirect('/admin')
@@ -271,7 +271,7 @@ def cadastrar_pagamento(cpf):
     if not usuario_e_admin():
         return redirect('/login')
 
-    aluno = AlunoDAO.buscar_por_usuario(cpf)
+    aluno = AlunoDAO.buscar_por_cpf(cpf)
     plano = PlanoDAO.buscar_por_id(request.form.get('plano_id'))
 
     valor = request.form.get('valor')
@@ -355,7 +355,7 @@ def aprovar_comprovante_manual(pagamento_id):
 
     if pagamento.status != 'em_analise':
         flash('Esta mensalidade não está com um comprovante em análise.', 'erro')
-        return redirect(request.referrer or '/admin/financeiro')
+        return redirect('/admin/financeiro')
 
     observacao = (request.form.get('observacao') or '').strip() or None
     data_pagamento = _data_do_form(request.form.get('data_pagamento'))
@@ -366,7 +366,7 @@ def aprovar_comprovante_manual(pagamento_id):
         data_pagamento=data_pagamento, forma_pagamento=forma_pagamento,
     )
     flash('Comprovante aprovado - mensalidade marcada como paga.', 'sucesso')
-    return redirect(request.referrer or '/admin/financeiro')
+    return redirect('/admin/financeiro')
 
 
 @admin_bp.route("/admin/pagamentos/<int:pagamento_id>/comprovante-manual/rejeitar", methods=["POST"])
@@ -381,12 +381,12 @@ def rejeitar_comprovante_manual(pagamento_id):
 
     if pagamento.status != 'em_analise':
         flash('Esta mensalidade não está com um comprovante em análise.', 'erro')
-        return redirect(request.referrer or '/admin/financeiro')
+        return redirect('/admin/financeiro')
 
     observacao = (request.form.get('observacao') or '').strip() or None
     PagamentoDAO.rejeitar_comprovante_manual(pagamento, admin_login=session.get('usuario'), observacao=observacao)
     flash('Comprovante rejeitado. O aluno poderá enviar um novo ou pagar via Pix.', 'sucesso')
-    return redirect(request.referrer or '/admin/financeiro')
+    return redirect('/admin/financeiro')
 
 
 @admin_bp.route("/admin/aluno/<int:aluno_id>/mudanca-plano/<int:solicitacao_id>/cancelar", methods=["POST"])
@@ -574,7 +574,7 @@ def cobrar_mensalidade(cpf):
     if not usuario_e_admin():
         return redirect('/login')
 
-    aluno = AlunoDAO.buscar_por_usuario(cpf)
+    aluno = AlunoDAO.buscar_por_cpf(cpf)
     if not aluno:
         flash('Aluno não encontrado.', 'erro')
         return redirect('/admin')

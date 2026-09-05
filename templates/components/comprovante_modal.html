@@ -42,6 +42,7 @@
               method="POST"
               action=""
               class="form-revisao">
+                    {% include "components/csrf_field.html" %}
             <input type="date" name="data_pagamento" aria-label="Data do pagamento">
             <select name="forma_pagamento" aria-label="Forma de pagamento">
                 <option value="transferencia">Transferência</option>
@@ -50,16 +51,19 @@
             <input type="text"
                    name="observacao"
                    maxlength="255"
+                   aria-label="Observação sobre a aprovação"
                    placeholder="Observação (opcional)">
-            <button type="submit" class="btn btn-status">Aprovar</button>
+            <button type="submit" class="btn btn-principal">Aprovar</button>
         </form>
         <form data-comprovante-form-rejeitar
               method="POST"
               action=""
               class="form-revisao">
+                    {% include "components/csrf_field.html" %}
             <input type="text"
                    name="observacao"
                    maxlength="255"
+                   aria-label="Motivo da rejeição"
                    placeholder="Motivo da rejeição">
             <button type="submit" class="btn btn-remover">Rejeitar</button>
         </form>

@@ -9,6 +9,7 @@
             <form class="form-outras-formas"
                   method="POST"
                   action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">
+                    {% include "components/csrf_field.html" %}
                 <button type="submit" class="mensalidade-acao-extra" data-checkout-abrir>Outras formas de pagamento</button>
             </form>
             <a class="mensalidade-acao-nota"

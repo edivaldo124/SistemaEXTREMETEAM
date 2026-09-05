@@ -1,1 +1,65 @@
-.account-header{display:flex;align-items:center;justify-content:space-between;padding:24px clamp(22px,5vw,72px);color:white;background:var(--ink)}.account-header>a:last-child{color:var(--yellow);font-size:11px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:.08em}.register-shell{display:grid;grid-template-columns:minmax(320px,.68fr) minmax(560px,1.32fr);min-height:calc(100vh - 94px)}.register-shell aside{position:relative;display:flex;flex-direction:column;justify-content:center;padding:60px clamp(28px,5vw,80px);overflow:hidden;color:white;background:var(--orange)}.register-shell aside::after{content:"03";position:absolute;right:-10px;bottom:-50px;color:rgba(23,27,30,.12);font:800 260px/1 var(--display)}.register-shell aside .eyebrow{color:var(--ink)}.register-shell aside h1{position:relative;z-index:1;margin:0;font:800 clamp(52px,5.5vw,88px)/.83 var(--display);text-transform:uppercase}.register-shell aside h1 em{color:var(--yellow);font-style:normal}.register-shell aside>p:not(.eyebrow){max-width:420px;margin:28px 0;color:#442514;font-size:14px;line-height:1.7}.register-shell ol{position:relative;z-index:1;margin:20px 0 0;padding:0;list-style:none}.register-shell li{display:flex;gap:14px;padding:12px 0;border-top:1px solid rgba(23,27,30,.2);font-size:12px;font-weight:700;text-transform:uppercase}.register-shell li span{font-family:var(--display)}.register-panel{padding:clamp(45px,6vw,90px) clamp(25px,8vw,120px);background:var(--paper)}.register-panel .form-heading{max-width:680px;margin-bottom:34px}.register-panel .msg{margin-bottom:24px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.field-wide{grid-column:1/-1}.field small{float:right;color:var(--muted);font-weight:500}.register-panel .button-primary{width:100%;margin-top:28px}.register-panel .button-primary span{margin-left:auto;font-size:18px}@media(max-width:850px){.register-shell{grid-template-columns:1fr}.register-shell aside{padding-block:60px}.register-shell aside ol{display:none}.register-panel{padding-inline:clamp(22px,7vw,70px)}}@media(max-width:560px){.account-header .site-brand span{display:none}.form-grid{grid-template-columns:1fr}.field-wide{grid-column:auto}.register-shell aside h1{font-size:52px}.register-panel{padding-block:50px}}
+/* =========================================================================
+   Criação de conta. Painel de marca à esquerda, formulário à direita.
+   ========================================================================= */
+
+.register-shell {
+  display:grid; grid-template-columns:minmax(300px,.62fr) minmax(540px,1.38fr);
+  min-height:calc(100vh - 70px);
+}
+
+/* ---------------------------------------------------- painel de marca --- */
+
+.register-shell aside {
+  position:relative; display:flex; flex-direction:column; justify-content:center;
+  gap:var(--sp-6); padding:var(--sp-10) clamp(var(--sp-7),5vw,var(--sp-11));
+  overflow:hidden; color:var(--text-on-ink); background:var(--ink);
+}
+.register-shell aside h1 {
+  margin:0;
+  font:700 clamp(40px,4.4vw,64px)/.95 var(--display);
+  letter-spacing:-.02em; text-transform:uppercase;
+}
+.register-shell aside > p:not(.eyebrow) {
+  max-width:44ch; margin:0;
+  color:var(--text-on-ink-2); font-size:var(--fs-md); line-height:1.7;
+}
+
+/* Três etapas reais do cadastro: a numeração aqui informa a ordem. */
+.register-shell ol { margin:0; padding:0; list-style:none; }
+.register-shell li {
+  display:flex; align-items:center; gap:var(--sp-4);
+  padding:var(--sp-3) 0; border-top:1px solid var(--ink-3);
+  color:var(--text-on-ink); font-size:var(--fs-sm); font-weight:600;
+}
+.register-shell li span {
+  flex:0 0 auto; color:var(--yellow);
+  font:700 var(--fs-sm) var(--body); font-variant-numeric:tabular-nums;
+}
+
+/* ------------------------------------------------------- formulário ----- */
+
+.register-panel {
+  padding:clamp(var(--sp-8),6vw,var(--sp-11)) clamp(var(--sp-5),7vw,var(--sp-11));
+  background:var(--paper);
+}
+.register-panel .form-heading { max-width:60ch; margin-bottom:var(--sp-7); }
+.register-panel .form-heading h2 { margin:0; }
+.register-panel .page-subtitle { margin:var(--sp-3) 0 0; color:var(--text-2); font-size:var(--fs-md); }
+.register-panel .msg { margin-bottom:var(--sp-6); }
+
+.form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-5); }
+.field-wide { grid-column:1/-1; }
+
+.register-panel .button-primary { width:100%; margin-top:var(--sp-7); }
+
+@media (max-width:900px) {
+  .register-shell { grid-template-columns:1fr; }
+  .register-shell aside { padding-block:var(--sp-9); }
+  .register-shell aside ol { display:none; }
+}
+@media (max-width:560px) {
+  .form-grid { grid-template-columns:1fr; }
+  .field-wide { grid-column:auto; }
+  .register-shell aside h1 { font-size:38px; }
+  .register-panel { padding-block:var(--sp-8); }
+}

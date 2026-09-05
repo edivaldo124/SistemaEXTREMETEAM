@@ -21,6 +21,11 @@ def test_envio_de_comprovante_manual_fica_em_analise(client, criar_pagamento, lo
     assert atualizado.comprovante_manual_arquivo is not None
     assert atualizado.comprovante_manual_arquivo.endswith('.pdf')
 
+    arquivo = client.get(f'/perfil/mensalidade/{pagamento.id}/comprovante-manual/arquivo')
+    assert arquivo.status_code == 200
+    assert arquivo.headers['Content-Type'].startswith('application/pdf')
+    assert arquivo.headers['Content-Disposition'].startswith('attachment;')
+
 
 def test_envio_sozinho_nunca_marca_como_pago(client, criar_pagamento, logar_como_aluno):
     pagamento = criar_pagamento(status='pendente')
@@ -73,7 +78,7 @@ def test_admin_aprova_comprovante_manual(client, criar_pagamento, logar_como_alu
         data={'comprovante': (io.BytesIO(PDF_VALIDO), 'comprovante.pdf', 'application/pdf')},
         content_type='multipart/form-data',
     )
-    client.get('/logout')
+    client.post('/logout')
 
     logar_como_admin()
     resp = client.post(
@@ -97,7 +102,7 @@ def test_admin_rejeita_comprovante_manual_volta_para_pendente(client, criar_paga
         data={'comprovante': (io.BytesIO(PDF_VALIDO), 'comprovante.pdf', 'application/pdf')},
         content_type='multipart/form-data',
     )
-    client.get('/logout')
+    client.post('/logout')
 
     logar_como_admin()
     resp = client.post(
@@ -119,7 +124,7 @@ def test_aluno_nao_acessa_arquivo_de_comprovante_de_outro(client, criar_pagament
         data={'comprovante': (io.BytesIO(PDF_VALIDO), 'comprovante.pdf', 'application/pdf')},
         content_type='multipart/form-data',
     )
-    client.get('/logout')
+    client.post('/logout')
 
     outro = criar_aluno()
     logar_como_aluno(outro)

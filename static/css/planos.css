@@ -1,14 +1,68 @@
-.grid-planos{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.card-plano{position:relative;display:flex;flex-direction:column;min-height:315px;padding:28px;border:1px solid var(--line);background:var(--surface);transition:transform .2s,border-color .2s}.card-plano:hover{border-color:var(--orange);transform:translateY(-4px)}.card-plano.plano-atual{border:2px solid var(--green)}.plan-index{color:var(--orange);font:700 11px var(--display)}.card-plano h3{margin:28px 0 8px;font:700 27px var(--display);text-transform:uppercase}.card-plano .preco{margin:0;color:var(--ink);font:800 36px var(--display)}.card-plano .duracao{margin:7px 0 28px;color:var(--muted);font-size:12px}.card-plano form{margin-top:auto}.btn-escolher{width:100%;box-shadow:none}.btn-escolher:disabled{border-color:#c6c8c5;color:#687078;background:#deded8;box-shadow:none;cursor:not-allowed;transform:none}
+/* =========================================================================
+   Escolha de plano (área do aluno).
+   Cada card diz o que aquele plano significa AGORA para este aluno: o que está
+   ativo, o que foi agendado e o que não pode ser escolhido. Nunca só pela cor.
+   ========================================================================= */
 
-/* Cada card diz o que aquele plano significa AGORA para este aluno: o que está ativo,
-   o que foi agendado e o que não pode ser escolhido - sem depender só da cor. */
-.planos-aviso{margin:0 0 20px;padding:13px 15px;border-left:3px solid var(--green);background:#eaf3ee;color:#18523a;font-size:13px;line-height:1.6}
-.card-plano.plano-destino{border:2px dashed var(--gold)}
-.plano-selo{align-self:flex-start;margin-top:10px;padding:4px 9px;border-radius:2px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.plano-selo-atual{color:#18523a;background:#dceee5}
-.plano-selo-destino{color:#5a4a12;background:#f7f0dc}
-.plano-nota{margin:0 0 16px;color:var(--muted);font-size:12px;line-height:1.6}
-.card-plano .plano-nota+form,.card-plano .plano-nota+button{margin-top:auto}
-.card-plano h3{margin-top:16px}
-.plano-acoes{display:flex;flex-direction:column;gap:8px;margin-top:auto}
-.plano-acoes form{margin:0}
+.grid-planos {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:var(--sp-4);
+}
+.grid-planos .empty-state { grid-column:1/-1; }
+
+.card-plano {
+  position:relative; display:flex; flex-direction:column;
+  padding:var(--sp-6);
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--surface);
+  transition:border-color .16s ease;
+}
+.card-plano:hover { border-color:var(--text); }
+
+/* Plano em vigência e plano de destino: borda mais forte, com selo em texto. */
+.card-plano.plano-atual   { border-color:var(--green); border-width:2px; padding:calc(var(--sp-6) - 1px); }
+.card-plano.plano-destino { border-color:var(--gold);  border-width:2px; padding:calc(var(--sp-6) - 1px); }
+
+.card-plano h3 {
+  margin:0 0 var(--sp-2); overflow-wrap:anywhere;
+  font:700 22px/1.15 var(--display); text-transform:uppercase;
+}
+.card-plano .preco {
+  margin:0; color:var(--text);
+  font:700 32px/1 var(--display); font-variant-numeric:tabular-nums;
+}
+.card-plano .duracao {
+  margin:var(--sp-2) 0 var(--sp-5);
+  color:var(--text-2); font-size:var(--fs-sm);
+}
+
+/* Selo de contexto acima do nome do plano. */
+.plano-selo {
+  align-self:flex-start; order:-1;
+  margin-bottom:var(--sp-3); padding:4px var(--sp-2);
+  border-radius:var(--radius-sm);
+  font-size:var(--fs-micro); font-weight:700;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.plano-selo-atual   { color:var(--green-ink); background:var(--green-bg); }
+.plano-selo-destino { color:var(--amber-ink); background:var(--amber-bg); }
+
+.plano-nota {
+  margin:0 0 var(--sp-4); padding-top:var(--sp-4);
+  border-top:1px solid var(--line);
+  color:var(--text-2); font-size:var(--fs-xs); line-height:1.6;
+}
+
+/* A ação fica sempre colada no rodapé do card, alinhada entre colunas. */
+.card-plano form,
+.card-plano > .btn-escolher,
+.plano-acoes { margin-top:auto; }
+.plano-acoes { display:flex; flex-direction:column; gap:var(--sp-2); }
+.plano-acoes form { margin:0; }
+
+.btn-escolher { width:100%; box-shadow:none; }
+
+@media (max-width:720px) {
+  .card-plano { padding:var(--sp-5); }
+  .card-plano.plano-atual,.card-plano.plano-destino { padding:calc(var(--sp-5) - 1px); }
+}

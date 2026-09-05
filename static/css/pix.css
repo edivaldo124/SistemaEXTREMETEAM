@@ -1,37 +1,97 @@
-.btn-pagar-pix{min-height:34px;padding:0 14px;font-size:11px}
+/* =========================================================================
+   Diálogos de conteúdo: Pix, detalhe de turma, histórico de presença.
+   Mesmo invólucro do diálogo de confirmação, com corpo maior.
+   ========================================================================= */
 
-.pix-dialog,.modal-dialog{position:fixed;width:min(440px,calc(100% - 32px));padding:38px;border:0;border-radius:0;color:var(--ink);background:var(--paper);box-shadow:0 28px 90px rgba(0,0,0,.3);overflow:visible}
-.pix-dialog[open],.modal-dialog[open]{animation:dialog-in .28s var(--ease)}
-.pix-dialog::backdrop,.modal-dialog::backdrop{background:rgba(10,12,13,.78);backdrop-filter:blur(4px);animation:backdrop-in .2s ease}
-.pix-accent,.modal-accent{position:absolute;top:0;left:0;width:100%;height:5px;background:var(--yellow)}
-.pix-fechar,.modal-fechar{position:absolute;top:14px;right:14px;width:32px;height:32px;border:0;border-radius:50%;color:var(--ink);background:transparent;font-size:22px;line-height:1;cursor:pointer}
-.pix-fechar:hover,.modal-fechar:hover{background:#e9e6df}
-.pix-dialog .eyebrow,.modal-dialog .eyebrow{margin-bottom:10px}
-.pix-dialog h2,.modal-dialog h2{margin:0 0 22px;font:700 34px/.95 var(--display);letter-spacing:-.02em}
+.btn-pagar-pix { min-height:var(--control-h-sm); padding:0 var(--sp-4); font-size:var(--fs-xs); }
 
-.pix-carregando{color:var(--muted);font-size:13px}
-
-.pix-resumo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
-.pix-resumo span{display:block;margin-bottom:6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-.pix-resumo strong{font:700 20px var(--display)}
-
-.pix-qr-area{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;margin-bottom:20px;padding:16px;border:1px solid var(--line);background:var(--surface)}
-.pix-qr-area img{width:100%;max-width:220px;height:auto}
-.pix-sem-qr{margin:0;color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
-
-.pix-dialog label{display:block;margin-bottom:8px;color:var(--ink);font-size:12px;font-weight:700}
-.pix-copia-linha{display:flex;gap:8px}
-.pix-copia-linha input{flex:1;min-width:0;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:3px;color:var(--ink);font-size:12px;background:rgba(255,254,253,.9)}
-.pix-copia-linha button{flex:0 0 auto;min-height:44px;padding:0 16px;font-size:11px}
-
-.pix-status{margin:18px 0 0;padding:10px 12px;color:var(--muted);background:#eeece5;font-size:12px;font-weight:600;text-align:center}
-.pix-status-aprovado{color:#18523a;background:#dceee5}
-
-@media(max-width:480px){
-  .pix-dialog,.modal-dialog{padding:28px 20px}
-  .pix-dialog h2,.modal-dialog h2{font-size:28px}
-  .pix-copia-linha{flex-direction:column}
+.pix-dialog,.modal-dialog {
+  position:fixed; width:min(460px,calc(100% - 32px));
+  padding:var(--sp-7);
+  border:0; border-radius:var(--radius);
+  color:var(--text); background:var(--surface);
+  box-shadow:var(--shadow-dialogo); overflow:visible;
 }
-@media(prefers-reduced-motion:reduce){
-  .pix-dialog[open],.pix-dialog::backdrop,.modal-dialog[open],.modal-dialog::backdrop{animation:none}
+.pix-dialog[open],.modal-dialog[open] { animation:dialog-in .24s var(--ease); }
+.pix-dialog::backdrop,.modal-dialog::backdrop {
+  background:rgba(0,0,0,.72); backdrop-filter:blur(3px);
+  animation:backdrop-in .18s ease;
+}
+.pix-accent,.modal-accent { display:none; }
+
+.pix-fechar,.modal-fechar {
+  position:absolute; top:var(--sp-3); right:var(--sp-3);
+  display:grid; place-items:center;
+  width:36px; height:36px;
+  border:0; border-radius:var(--radius);
+  color:var(--text-2); background:transparent;
+  font-size:22px; line-height:1; cursor:pointer;
+  transition:color .16s ease, background .16s ease;
+}
+.pix-fechar:hover,.modal-fechar:hover { color:var(--text); background:var(--surface-2); }
+
+.pix-dialog .eyebrow,.modal-dialog .eyebrow { margin-bottom:var(--sp-2); }
+.pix-dialog h2,.modal-dialog h2 {
+  margin:0 0 var(--sp-5);
+  font:700 var(--h2)/1.1 var(--display);
+  letter-spacing:-.015em; text-transform:uppercase;
+}
+
+/* ------------------------------------------------------------- estados -- */
+
+.pix-carregando { margin:0; padding:var(--sp-7) 0; color:var(--text-2); font-size:var(--fs-sm); text-align:center; }
+.pix-corpo[hidden] { display:none; }
+.pix-corpo .alert { margin-bottom:var(--sp-4); }
+
+/* ---------------------------------------------------------- conteúdo ---- */
+
+.pix-resumo {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-4);
+  margin-bottom:var(--sp-5); padding-bottom:var(--sp-5);
+  border-bottom:1px solid var(--line);
+}
+.pix-resumo span {
+  display:block; margin-bottom:var(--sp-1);
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase;
+}
+.pix-resumo strong { color:var(--text); font:600 var(--fs-lg)/1.3 var(--body); font-variant-numeric:tabular-nums; }
+
+.pix-qr-area {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:210px; margin-bottom:var(--sp-5); padding:var(--sp-4);
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--surface);
+}
+.pix-qr-area img { width:100%; max-width:220px; height:auto; }
+.pix-sem-qr { margin:0; max-width:34ch; color:var(--text-2); font-size:var(--fs-xs); line-height:1.6; text-align:center; }
+
+.pix-dialog label,.modal-dialog label {
+  display:block; margin-bottom:var(--sp-2);
+  color:var(--text); font-size:var(--fs-sm); font-weight:600;
+}
+.pix-copia-linha { display:flex; gap:var(--sp-2); }
+.pix-copia-linha input {
+  flex:1; min-width:0; min-height:var(--control-h); padding:0 var(--sp-3);
+  border:1px solid var(--line-strong); border-radius:var(--radius);
+  color:var(--text); background:var(--surface); font-size:var(--fs-xs);
+}
+.pix-copia-linha button { flex:0 0 auto; min-height:var(--control-h); padding:0 var(--sp-4); }
+
+.pix-status {
+  margin:var(--sp-4) 0 0; padding:var(--sp-3) var(--sp-4);
+  border:1px solid var(--line); border-radius:var(--radius);
+  color:var(--text-2); background:var(--surface-2);
+  font-size:var(--fs-xs); font-weight:600; text-align:center;
+}
+.pix-status-aprovado { border-color:var(--green); color:var(--green-ink); background:var(--green-bg); }
+
+@media (max-width:480px) {
+  .pix-dialog,.modal-dialog { padding:var(--sp-6) var(--sp-5); }
+  .pix-copia-linha { flex-direction:column; }
+  .pix-copia-linha button { width:100%; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .pix-dialog[open],.pix-dialog::backdrop,
+  .modal-dialog[open],.modal-dialog::backdrop { animation:none; }
 }

@@ -1,10 +1,181 @@
-.admin-header{display:flex;align-items:center;justify-content:space-between;padding:20px clamp(22px,5vw,72px);color:white;background:var(--ink)}.admin-header>div{display:flex;align-items:center;gap:22px}.admin-header>div>span{color:#92989b;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}.link-logout{padding:9px 14px;border:1px solid #5b6063;color:white;font-size:11px;font-weight:700;text-decoration:none}.container-admin{max-width:1250px;margin:auto;padding:65px clamp(20px,5vw,70px) 100px}.admin-intro{display:flex;align-items:end;justify-content:space-between;padding-bottom:45px;border-bottom:1px solid var(--ink)}.admin-intro h1{margin:0;font:800 clamp(52px,7vw,86px)/.9 var(--display);text-transform:uppercase}.admin-intro>div>p:last-child{margin:14px 0 0;color:var(--muted);font-size:13px}.admin-metrics{display:flex}.admin-metrics article{min-width:120px;padding:8px 20px;border-left:1px solid var(--line)}.admin-metrics strong{display:block;font:800 38px var(--display)}.admin-metrics span{color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase}.container-admin>.msg{margin-top:25px}.secao{margin-top:70px;padding:36px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}.section-heading{display:flex;align-items:end;justify-content:space-between;gap:25px;margin-bottom:28px}.section-heading h2{margin:0;font:700 38px/1 var(--display)}.section-heading>p{max-width:330px;margin:0;color:var(--muted);font-size:12px;line-height:1.6}.section-heading>#contador-alunos{color:var(--orange-dark);font:700 12px var(--body)}.form-plano{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end;padding:24px;background:#eeece5}.form-plano .btn-cadastrar{min-height:50px;box-shadow:none}.plan-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:22px}.plan-list article{display:flex;justify-content:space-between;gap:14px;padding:20px;border:1px solid var(--line)}.plan-list article span{display:block;color:var(--orange);font:700 9px var(--body);text-transform:uppercase}.plan-list article strong{display:block;margin:8px 0 5px;font:700 22px var(--display);text-transform:uppercase}.plan-list article p{margin:0;color:var(--muted);font-size:11px}.ferramentas-alunos{margin-bottom:16px}.ferramentas-alunos input{width:min(100%,420px);height:48px;padding:0 14px;border:1px solid var(--line);outline:none;background:var(--paper)}.ferramentas-alunos input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(239,108,35,.12)}.empty-state{color:var(--muted);text-align:center}.form-plano .field-full{grid-column:1/-1}.atalhos-aviso{display:flex;align-items:center;gap:10px;margin-bottom:16px}.atalhos-aviso span{color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase}@media(max-width:820px){.form-plano{grid-template-columns:1fr 1fr}.form-plano .field:first-child{grid-column:1/-1}.admin-intro{align-items:flex-start;flex-direction:column;gap:30px}.secao{padding:24px}.section-heading{align-items:flex-start;flex-direction:column}}@media(max-width:540px){.admin-header .site-brand span,.admin-header>div>span{display:none}.container-admin{padding-top:45px}.form-plano{grid-template-columns:1fr}.form-plano .field:first-child{grid-column:auto}.form-plano button{width:100%}.admin-metrics article{min-width:100px;padding-left:14px}.secao{margin-top:45px;padding:18px}.section-heading h2{font-size:33px}}
-.admin-header nav.admin-nav{display:flex;align-items:center;gap:22px;min-width:0}
-.admin-nav-scroll{display:flex;align-items:center;gap:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.admin-nav-scroll::-webkit-scrollbar{display:none}
-@media(max-width:540px){
-  .admin-header{flex-wrap:wrap;row-gap:12px}
-  .admin-header nav.admin-nav{flex-basis:100%;justify-content:space-between}
-  .admin-nav-scroll{flex-wrap:wrap;overflow-x:visible;gap:10px 16px}
+/* =========================================================================
+   Área administrativa: painel, turmas, avisos e área do professor.
+   Escala de trabalho: título contido, densidade alta, decisão em primeiro plano.
+   ========================================================================= */
+
+/* ------------------------------------------------- navegação da área ---- */
+
+.admin-header nav.admin-nav { display:flex; align-items:center; gap:var(--sp-6); min-width:0; }
+
+.admin-nav-scroll {
+  display:flex; align-items:center; gap:var(--sp-6);
+  overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
-.form-inline{display:inline}.form-inline button{font-family:inherit}.link-turmas{color:var(--yellow);font-size:11px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:.06em}
+.admin-nav-scroll::-webkit-scrollbar { display:none; }
+
+/* ------------------------------------------------------------ layout ---- */
+
+.container-admin {
+  max-width:1240px; margin:auto;
+  padding:var(--sp-8) clamp(var(--sp-5),5vw,var(--sp-10)) var(--sp-11);
+}
+
+/* Cabeçalho da página: o que é esta tela, e os números que a resumem. */
+.admin-intro {
+  display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+  gap:var(--sp-6);
+}
+.admin-intro h1 {
+  margin:0; font:700 var(--h1)/1.05 var(--display);
+  letter-spacing:-.015em; text-transform:uppercase;
+}
+.admin-intro > div > p:last-child {
+  max-width:60ch; margin:var(--sp-2) 0 0;
+  color:var(--text-2); font-size:var(--fs-sm);
+}
+
+/* Métricas da tela: número grande, rótulo pequeno, separadas por filete. */
+.admin-metrics { display:flex; flex-wrap:wrap; }
+.admin-metrics article {
+  min-width:118px; padding:var(--sp-1) var(--sp-5);
+  border-left:1px solid var(--line-strong);
+}
+.admin-metrics article:first-child { padding-left:0; border-left:0; }
+.admin-metrics strong {
+  display:block; color:var(--text);
+  font:700 30px/1 var(--display); font-variant-numeric:tabular-nums;
+}
+.admin-metrics span {
+  display:block; margin-top:var(--sp-1);
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+
+.container-admin > .msg { margin-top:var(--sp-6); }
+
+/* ------------------------------------------------- painéis de conteúdo -- */
+
+.secao {
+  margin-top:var(--sp-9); padding:var(--sp-7);
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--surface);
+}
+
+.section-heading {
+  display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+  gap:var(--sp-5); margin-bottom:var(--sp-6);
+  padding-bottom:var(--sp-4); border-bottom:1px solid var(--line);
+}
+.section-heading h2 { margin:0; font:700 var(--h2)/1.1 var(--display); text-transform:uppercase; }
+.section-heading > p {
+  max-width:46ch; margin:0;
+  color:var(--text-2); font-size:var(--fs-xs); line-height:1.6;
+}
+.section-heading > #contador-alunos {
+  color:var(--text-2); font:600 var(--fs-sm) var(--body);
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+
+/* -------------------------------------------- formulário de cadastro ---- */
+/* Faixa acima da lista que ele alimenta: preencher e cadastrar na mesma linha. */
+
+.form-plano {
+  display:grid; grid-template-columns:2fr 1fr 1fr auto;
+  gap:var(--sp-4); align-items:end;
+  padding:var(--sp-5);
+}
+.form-plano .field-full,.form-plano .field-wide { grid-column:1/-1; }
+.form-plano .btn-cadastrar { box-shadow:none; }
+
+/* --------------------------------------------------- listas de fichas --- */
+
+.plan-list {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:var(--sp-3); margin-top:var(--sp-5);
+}
+/* Texto em cima ocupando a largura toda, ações embaixo: lado a lado o nome
+   ficava espremido e quebrava no meio da palavra. */
+.plan-list article {
+  display:flex; flex-direction:column; gap:var(--sp-4);
+  padding:var(--sp-5);
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--surface);
+}
+.plan-list article > div { min-width:0; }
+.plan-list article > form,
+.plan-list article > a,
+.plan-list article > .acoes-turma { margin-top:auto; }
+.plan-list article span {
+  display:block; color:var(--text-2);
+  font:600 var(--fs-micro) var(--body);
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.plan-list article strong {
+  display:block; margin:var(--sp-2) 0 var(--sp-1);
+  overflow-wrap:break-word;
+  font:700 20px/1.15 var(--display); text-transform:uppercase;
+}
+.plan-list article p {
+  margin:0; color:var(--text-2);
+  font-size:var(--fs-xs); font-variant-numeric:tabular-nums;
+}
+.plan-list .empty-state { grid-column:1/-1; }
+
+.acoes-turma { display:flex; flex-wrap:wrap; gap:var(--sp-2); }
+
+/* ---------------------------------------------------- barra de filtro --- */
+
+.ferramentas-alunos { margin-bottom:var(--sp-4); }
+.ferramentas-alunos input {
+  width:min(100%,400px); min-height:var(--control-h); padding:0 var(--sp-3);
+  border:1px solid var(--line-strong); border-radius:var(--radius);
+  outline:none; background:var(--surface); font-size:var(--fs-md);
+  transition:border-color .16s ease, box-shadow .16s ease;
+}
+.ferramentas-alunos input::placeholder { color:var(--text-3); }
+.ferramentas-alunos input:focus { border-color:var(--text); box-shadow:0 0 0 3px rgba(253,207,23,.45); }
+
+/* Atalho que preenche o formulário de aviso. */
+.atalhos-aviso { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-4); }
+.atalhos-aviso span { color:var(--text-2); font-size:var(--fs-xs); font-weight:600; }
+
+/* ------------------------------------------------------------ auxiliares */
+
+.link-turmas { font-size:var(--fs-sm); font-weight:500; text-decoration:none; }
+
+/* --------------------------------------------------------- responsivo --- */
+
+@media (max-width:900px) {
+  .form-plano { grid-template-columns:1fr 1fr; }
+  .form-plano .field:first-child { grid-column:1/-1; }
+  .secao { padding:var(--sp-5); }
+}
+@media (max-width:720px) {
+  .admin-intro { flex-direction:column; align-items:flex-start; gap:var(--sp-5); }
+  .admin-metrics article:first-child { padding-left:0; }
+  .section-heading { flex-direction:column; align-items:flex-start; gap:var(--sp-2); }
+}
+@media (max-width:540px) {
+  .admin-header { flex-wrap:wrap; row-gap:var(--sp-3); }
+  .admin-header nav.admin-nav { flex-basis:100%; justify-content:space-between; gap:var(--sp-4); }
+  .admin-nav-scroll { flex-wrap:wrap; gap:var(--sp-2) var(--sp-4); overflow-x:visible; }
+  .admin-header > div > span { display:none; }
+  .container-admin { padding-top:var(--sp-6); }
+  .form-plano { grid-template-columns:1fr; }
+  .form-plano .field:first-child { grid-column:auto; }
+  .form-plano button { width:100%; }
+  .admin-metrics article { min-width:92px; padding-inline:var(--sp-4); }
+  .secao { margin-top:var(--sp-7); padding:var(--sp-4); }
+}
+
+/* Ação de um formulário que ocupa a largura toda do painel. */
+.form-plano .form-actions,.form-turma .form-actions { grid-column:1/-1; margin-top:0; }
+
+/* Navegação da administração no celular: cada destino precisa de área de toque. */
+@media (max-width:720px) {
+  .admin-nav-scroll a,.link-logout {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:44px; min-height:44px; padding-block:0;
+  }
+  .link-logout { padding-inline:var(--sp-4); }
+}

@@ -49,3 +49,42 @@ def formatar_competencia(competencia):
     if not nome_mes:
         return competencia
     return f'{nome_mes} de {ano}'
+
+
+def formatar_moeda(valor):
+    """Formata um valor em reais no padrão brasileiro: R$ 1.080,00.
+
+    Usado como filtro Jinja (`{{ valor|moeda }}`) no lugar de
+    `'%.2f'|format(v)|replace('.', ',')`, que não separava o milhar."""
+    if valor is None:
+        return '—'
+    try:
+        numero = float(valor)
+    except (TypeError, ValueError):
+        return str(valor)
+    inteiro, centavos = f'{abs(numero):.2f}'.split('.')
+    grupos = []
+    while len(inteiro) > 3:
+        grupos.insert(0, inteiro[-3:])
+        inteiro = inteiro[:-3]
+    grupos.insert(0, inteiro)
+    sinal = '-' if numero < 0 else ''
+    return f'R$ {sinal}{".".join(grupos)},{centavos}'
+
+
+ROTULOS_FORMA_PAGAMENTO = {
+    'pix': 'Pix',
+    'dinheiro': 'Dinheiro',
+    'transferencia': 'Transferência',
+    'cartao_credito': 'Cartão de crédito',
+    'cartao_debito': 'Cartão de débito',
+    'boleto': 'Boleto',
+}
+
+
+def rotulo_forma_pagamento(forma):
+    """Nome legível da forma de pagamento. Antes as telas usavam
+    `|replace('_',' ')|title`, que devolvia "Cartao Credito", sem acento."""
+    if not forma:
+        return '—'
+    return ROTULOS_FORMA_PAGAMENTO.get(forma, forma.replace('_', ' ').capitalize())

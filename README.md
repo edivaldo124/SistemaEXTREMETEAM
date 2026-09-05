@@ -41,7 +41,15 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Os testes usam um banco SQLite temporário isolado (configurado em `tests/conftest.py`) e nunca chamam a API real do Mercado Pago — o SDK é mockado. **Nunca rode `pytest` num shell/container onde o `DATABASE_URL` real (Postgres de produção) já esteja exportado como variável de ambiente.**
+Os testes forçam um banco SQLite temporário isolado (configurado em `tests/conftest.py`) e nunca chamam a API real do Mercado Pago: o SDK é mockado. A configuração de teste substitui qualquer `DATABASE_URL` presente no shell para impedir acesso acidental ao banco real.
+
+## Configuração de segurança
+
+- `APP_BASE_URL` define a origem usada em links de recuperação, confirmação de e-mail e retornos de pagamento. Ela não é derivada do cabeçalho `Host`.
+- `TRUSTED_HOSTS` contém os hosts aceitos, separados por vírgula. Em produção, informe o domínio público real.
+- `TRUST_PROXY_COUNT` informa quantos proxies confiáveis existem à frente do Flask. O `compose.yaml` usa `1` por causa do Caddy; uma execução local direta usa `0`.
+- `RATELIMIT_STORAGE_URI` deve apontar para Redis em produção para compartilhar os limites de autenticação entre processos. O Docker Compose já inclui esse serviço.
+- Requisições acima de 10 MB são recusadas pelo Flask e pelo Caddy. PDFs enviados como comprovante são entregues como download.
 
 ## Pagamento de mensalidade via Pix (Mercado Pago)
 

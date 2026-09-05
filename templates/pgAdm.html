@@ -2,16 +2,19 @@
 <html lang="pt-BR">
     <head>
         <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <title>Administração | Centro de Treinamento Extreme Team</title>
         <link rel="icon"
               type="image/png"
               href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/theme.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/pgAdm.css') }}">
         <script src="{{ url_for('static',filename='js/pgAdm.js') }}" defer></script>
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/pgAdm.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/modal.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
@@ -43,14 +46,15 @@
             </section>
             {% with mensagens=get_flashed_messages(with_categories=true) %}
                 {% for categoria,mensagem in mensagens %}
-                    <div class="msg msg-{{ categoria }}" role="status">{{ mensagem }}</div>
+                    <div class="msg msg-{{ categoria }}"
+                             role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
                 {% endfor %}
             {% endwith %}
             {% if pendentes %}
                 <section class="secao">
                     <div class="section-heading">
                         <div>
-                            <p class="eyebrow">RF03</p>
+                            <p class="eyebrow">Entradas</p>
                             <h2>Cadastros pendentes</h2>
                         </div>
                         <p>Aprove ou recuse novos cadastros de alunos.</p>
@@ -59,25 +63,27 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Aluno</th>
-                                    <th>Contato</th>
-                                    <th>Ações</th>
+                                    <th scope="col" class="coluna-pessoa">Aluno</th>
+                                    <th scope="col">Contato</th>
+                                    <th scope="col">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for u in pendentes %}
                                     <tr>
-                                        <td data-label="Aluno">
-                                            <span class="student-avatar">
+                                        <td data-label="Aluno" class="celula-pessoa">
+                                            <span class="pessoa">
+                                                <span class="student-avatar">
                                                 {% if u.foto_arquivo %}
-                                                    <img class="avatar-img"
-                                                         src="{{ url_for('auth.foto_perfil', aluno_id=u.id) }}"
-                                                         alt="">
+                                                <img class="avatar-img"
+                                                src="{{ url_for('auth.foto_perfil', aluno_id=u.id) }}"
+                                                alt="">
                                                 {% else %}
-                                                    {{ u.iniciais }}
+                                                {{ u.iniciais }}
                                                 {% endif %}
+                                                </span>
+                                                <strong>{{ u.nome }}</strong>
                                             </span>
-                                            <strong>{{ u.nome }}</strong>
                                         </td>
                                         <td data-label="Contato">
                                             {{ u.email }}
@@ -88,11 +94,19 @@
                                             <form action="{{ url_for('admin_blueprint.aprovar_aluno', aluno_id=u.id) }}"
                                                   method="POST"
                                                   class="form-inline">
-                                                <button type="submit" class="btn btn-status">Aprovar</button>
+                    {% include "components/csrf_field.html" %}
+                                                <button type="submit" class="btn btn-principal">Aprovar</button>
                                             </form>
                                             <form action="{{ url_for('admin_blueprint.recusar_aluno', aluno_id=u.id) }}"
                                                   method="POST"
-                                                  class="form-inline">
+                                                  class="form-inline"
+                                                  data-confirm-modal
+                                                  data-modal-variant="danger"
+                                                  data-modal-eyebrow="Cadastro pendente"
+                                                  data-modal-title="Recusar o cadastro de {{ u.nome }}?"
+                                                  data-modal-message="O aluno não poderá entrar no sistema. Você pode aprovar o cadastro depois, se mudar de ideia."
+                                                  data-modal-confirm="Recusar cadastro">
+                    {% include "components/csrf_field.html" %}
                                                 <button type="submit" class="btn btn-remover">Recusar</button>
                                             </form>
                                         </td>
@@ -115,6 +129,7 @@
                       method="POST"
                       class="form-plano"
                       id="form-plano">
+                    {% include "components/csrf_field.html" %}
                     <div class="field">
                         <label for="nome-plano">Nome do plano</label>
                         <input id="nome-plano"
@@ -147,13 +162,10 @@
                     {% for plano in planos %}
                         <article>
                             <div>
-                                <span>Plano 0{{ loop.index }}</span>
+                                <span>{{ plano.duracao_dias }} dias de acesso</span>
                                 <strong>{{ plano.nome_plano }}</strong>
                                 <p>
-                                    <b class="preco-plano" data-preco="{{ plano.preco_plano }}">
-                                        R$ {{ plano.preco_plano }}
-                                    </b>
-                                    · {{ plano.duracao_dias }} dias
+                                    <b class="preco-plano" data-preco="{{ plano.preco_plano }}">{{ plano.preco_plano|moeda }}</b>
                                 </p>
                             </div>
                             <form action="/admin/remover_plano/{{ plano.id }}"
@@ -162,14 +174,15 @@
                                   data-confirm-modal
                                   data-modal-variant="danger"
                                   data-modal-eyebrow="Excluir plano"
-                                  data-modal-title="Remover {{ plano.nome_plano }}?"
+                                  data-modal-title="Excluir o plano {{ plano.nome_plano }}?"
                                   data-modal-message="O plano deixará de estar disponível para novas contratações. Confirme antes de continuar."
                                   data-modal-confirm="Excluir plano">
+                    {% include "components/csrf_field.html" %}
                                 <button type="submit" class="btn btn-remover">Excluir</button>
                             </form>
                         </article>
                     {% else %}
-                        <p class="empty-state">Nenhum plano cadastrado.</p>
+                        <p class="empty-state">Nenhum plano cadastrado. Use o formulário acima para criar o primeiro.</p>
                     {% endfor %}
                 </div>
             </section>
@@ -179,7 +192,7 @@
                         <p class="eyebrow">Cadastros</p>
                         <h2>Alunos</h2>
                     </div>
-                    <span id="contador-alunos">{{ usuarios|length }} aluno(s)</span>
+                    <span id="contador-alunos">{{ usuarios|length }} aluno{{ "" if usuarios|length == 1 else "s" }}</span>
                 </div>
                 <div class="ferramentas-alunos">
                     <label class="sr-only" for="busca-aluno">Buscar aluno</label>
@@ -192,25 +205,27 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Aluno</th>
-                                <th>Situação</th>
-                                <th>Ações</th>
+                                <th scope="col" class="coluna-pessoa">Aluno</th>
+                                <th scope="col">Situação</th>
+                                <th scope="col">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="lista-alunos">
                             {% for u in usuarios %}
                                 <tr class="aluno-item" data-nome="{{ u.nome }}">
-                                    <td data-label="Aluno">
-                                        <span class="student-avatar">
+                                    <td data-label="Aluno" class="celula-pessoa">
+                                        <span class="pessoa">
+                                            <span class="student-avatar">
                                             {% if u.foto_arquivo %}
-                                                <img class="avatar-img"
-                                                     src="{{ url_for('auth.foto_perfil', aluno_id=u.id) }}"
-                                                     alt="">
+                                            <img class="avatar-img"
+                                            src="{{ url_for('auth.foto_perfil', aluno_id=u.id) }}"
+                                            alt="">
                                             {% else %}
-                                                {{ u.iniciais }}
+                                            {{ u.iniciais }}
                                             {% endif %}
+                                            </span>
+                                            <strong>{{ u.nome }}</strong>
                                         </span>
-                                        <strong>{{ u.nome }}</strong>
                                     </td>
                                     <td data-label="Situação">
                                         <span class="status {{ 'status-pago' if u.ativo else 'status-cancelado' }}">
@@ -223,12 +238,14 @@
                                             <form action="{{ url_for('admin_blueprint.desativar_aluno', aluno_id=u.id) }}"
                                                   method="POST"
                                                   class="form-inline">
+                    {% include "components/csrf_field.html" %}
                                                 <button type="submit" class="btn btn-status">Desativar</button>
                                             </form>
                                         {% else %}
                                             <form action="{{ url_for('admin_blueprint.ativar_aluno', aluno_id=u.id) }}"
                                                   method="POST"
                                                   class="form-inline">
+                    {% include "components/csrf_field.html" %}
                                                 <button type="submit" class="btn btn-status">Ativar</button>
                                             </form>
                                         {% endif %}
@@ -238,10 +255,11 @@
                                               data-confirm-modal
                                               data-modal-variant="danger"
                                               data-modal-eyebrow="Excluir cadastro"
-                                              data-modal-title="Excluir {{ u.nome }}?"
+                                              data-modal-title="Excluir o cadastro de {{ u.nome }}?"
                                               data-modal-message="O cadastro e o acesso deste aluno serão removidos. Esta ação não pode ser desfeita."
                                               data-modal-confirm="Excluir aluno"
                                               data-loading-text="Excluindo…">
+                    {% include "components/csrf_field.html" %}
                                             <input type="hidden" name="token_exclusao" value="{{ token_exclusao }}">
                                             <button type="submit" class="btn btn-remover">Excluir</button>
                                         </form>
@@ -249,7 +267,7 @@
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="3" class="empty-state">Nenhum aluno cadastrado.</td>
+                                    <td colspan="3" class="empty-state">Nenhum aluno cadastrado ainda.</td>
                                 </tr>
                             {% endfor %}
                             <tr id="sem-resultados" hidden>
@@ -261,8 +279,6 @@
             </section>
         </main>
         {% include 'components/confirm_modal.html' %}
-        <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/modal.css') }}">
         <script src="{{ url_for('static',filename='js/modal.js') }}"></script>
     </body>
 </html>

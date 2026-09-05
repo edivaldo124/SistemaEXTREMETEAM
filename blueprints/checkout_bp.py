@@ -20,6 +20,7 @@ from servicos.mercado_pago import (
     ambiente_mercado_pago,
     criar_preferencia_checkout,
 )
+from servicos.urls import URLPublicaInvalida, url_publica
 
 from blueprints.pix_bp import STATUS_PAGAVEIS, sincronizar_por_referencia_checkout
 
@@ -45,7 +46,10 @@ def _urls_retorno(pagamento):
     Os três destinos são a mesma rota: o resultado real é reconsultado na API, então
     não há como um deles "declarar" aprovação por conta própria.
     """
-    retorno = url_for('checkout.retorno_checkout', pagamento_id=pagamento.id, _external=True)
+    try:
+        retorno = url_publica('checkout.retorno_checkout', pagamento_id=pagamento.id)
+    except URLPublicaInvalida as exc:
+        raise ConfiguracaoInvalida(str(exc)) from exc
     return {'url_sucesso': retorno, 'url_pendente': retorno, 'url_falha': retorno}
 
 

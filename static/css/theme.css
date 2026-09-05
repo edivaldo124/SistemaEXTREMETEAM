@@ -1,120 +1,512 @@
+/* =========================================================================
+   Extreme Team - fundação do sistema visual
+   Ordem de carregamento em todo template: theme.css → folhas de tela → extreme.css
+   theme.css define tokens e primitivas. extreme.css aplica a identidade por cima.
+   ========================================================================= */
+
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --ink:#020101; --ink-2:#151515; --ink-3:#232323;
-  --paper:#F2F1F2; --surface:#fffefd;
-  --muted:#5a595b; --line:#dcdadb;
-  --yellow:#FDCF17; --gold:#D6A210; --bronze:#986A0E;
-  --orange:#FDCF17; --orange-dark:#885f0c;
-  --green:#256b45; --red:#a43b2c;
-  --shadow:0 18px 50px rgba(2,1,1,.12);
-  --display:"Barlow Condensed",Impact,sans-serif; --body:"Inter","Segoe UI",sans-serif;
+  /* ---- Superfícies escuras (barra de marca, rodapé, hero) ----
+     Preto puro porque a arte da marca tem fundo preto: qualquer preto
+     "quase" desenha um retângulo visível em volta do logo. */
+  --ink:#000000;
+  --ink-2:#141517;
+  --ink-3:#2C2E31;
+
+  /* ---- Superfícies claras ---- */
+  --paper:#F3F3F2;
+  --surface:#FFFFFF;
+  --surface-2:#EDECE8;   /* faixas de formulário, cabeçalho de tabela */
+  --line:#D9D8D4;
+  --line-strong:#BFBEB9;
+
+  /* ---- Texto: três níveis, todos acima de 4.5:1 sobre --paper ---- */
+  --text:#16181A;
+  --text-2:#4E5257;
+  --text-3:#666B70;
+  --text-on-ink:#F3F3F2;
+  --text-on-ink-2:#A9ADB1;
+
+  /* ---- Marca: amarelo reservado para ação e estado ativo ---- */
+  --yellow:#FDCF17;
+  --gold:#D6A210;
+
+  /* ---- Semânticas de situação ---- */
+  --green:#1D6244;      --green-bg:#E1EFE8;   --green-ink:#14503A;
+  --red:#A03325;        --red-bg:#F7E2DE;     --red-ink:#7C2C22;
+  --amber:#8A6B00;      --amber-bg:#FBF0C8;   --amber-ink:#5F4A00;
+  --blue:#1C4478;       --blue-bg:#DEE7F6;    --blue-ink:#1A3E6C;
+  --slate:#4E5257;      --slate-bg:#E5E5E4;   --slate-ink:#43474B;
+
+  /* ---- Espaçamento: escala de 4 ---- */
+  --sp-1:4px;  --sp-2:8px;  --sp-3:12px; --sp-4:16px; --sp-5:20px;
+  --sp-6:24px; --sp-7:32px; --sp-8:40px; --sp-9:48px; --sp-10:64px; --sp-11:80px;
+
+  /* ---- Raio: baixo, coerente com a dureza da marca ---- */
+  --radius-sm:2px; --radius:4px;
+
+  /* ---- Elevação: bloco de conteúdo usa borda; sombra só para o que flutua ---- */
+  --shadow-dialogo:0 24px 64px rgba(0,0,0,.30);
+
+  /* ---- Tipografia ---- */
+  --display:"Barlow Condensed",Impact,sans-serif;
+  --body:"Inter","Segoe UI",system-ui,sans-serif;
+
+  --fs-micro:11px; --fs-xs:12px; --fs-sm:13px; --fs-md:14px;
+  --fs-base:16px;  --fs-lg:18px;
+
+  --h1:clamp(30px,3.4vw,40px);
+  --h2:clamp(22px,2.4vw,27px);
+  --h3:19px;
+
+  /* ---- Altura de controles: 44px é o alvo mínimo de toque ---- */
+  --control-h:46px;
+  --control-h-sm:38px;
+
+  /* ---- Foco: anel de dois tons, legível em fundo claro e escuro ---- */
+  --focus-ink:#000000;
+  --focus-halo:rgba(253,207,23,.7);
+
   --ease:cubic-bezier(.22,1,.36,1);
-  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
   --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
 }
-* { box-sizing:border-box; }
-html { min-width:320px; scroll-behavior:smooth; }
-html,body { max-width:100%; overflow-x:hidden; }
-body { margin:0; min-height:100vh; min-height:100dvh; color:var(--ink); background:var(--paper); font-family:var(--body); font-size:16px; -webkit-font-smoothing:antialiased; }
-button,input,select,textarea { font:inherit; }
-a { color:inherit; }
-img { max-width:100%; }
-.skip-link { position:fixed; z-index:100; top:12px; left:12px; padding:10px 14px; color:var(--ink); background:var(--yellow); font-weight:700; transform:translateY(-160%); transition:transform .2s; }
-.skip-link:focus { transform:none; }
-.sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
-/* Marca: usada em cabeçalhos, login e menus — sempre o mesmo tratamento discreto. */
-.site-brand { display:inline-flex; align-items:center; gap:12px; color:inherit; text-decoration:none; text-transform:uppercase; font:600 17px/.9 var(--display); letter-spacing:.08em; }
-.site-brand img { width:40px; height:40px; object-fit:contain; flex:0 0 auto; }
-.site-brand strong { color:var(--yellow); font-size:20px; }
-
-.eyebrow { display:flex; align-items:center; gap:10px; margin:0 0 10px; color:var(--ink); font-size:11px; font-weight:700; letter-spacing:.17em; text-transform:uppercase; }
-.eyebrow::before { content:""; width:18px; height:2px; background:var(--yellow); }
-.page-title { margin:0; font:700 clamp(38px,5vw,64px)/.94 var(--display); letter-spacing:-.025em; text-transform:uppercase; }
-
-/* Divisor "corda de ringue": duas linhas finas, usado no lugar de um filete só. */
-.rope-divider { height:6px; border:0; margin:0; background:repeating-linear-gradient(90deg,var(--line) 0 10px,transparent 10px 14px); background-position:0 1px,0 5px; background-size:100% 1px; background-repeat:repeat-x; }
-.rope-divider::before { content:none; }
-
-/* Selo circular numerado — só para sequências reais (etapas, rounds de treino). */
-.round-badge { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; flex:0 0 auto; border:2px solid var(--gold); border-radius:50%; color:var(--ink); font:700 15px/1 var(--display); }
-
-.field label,.grupo-input label { display:block; margin-bottom:8px; color:var(--ink); font-size:12px; font-weight:700; }
-.field input,.field select,.field textarea,.grupo-input input,.grupo-input select { width:100%; min-height:48px; padding:0 14px; border:1px solid var(--line); border-radius:3px; outline:none; color:var(--ink); font-size:16px; background:rgba(255,254,253,.9); transition:border-color .18s,box-shadow .18s,background .18s; }
-.field textarea { min-height:100px; padding-block:13px; resize:vertical; }
-.field input:focus,.field select:focus,.field textarea:focus,.grupo-input input:focus,.grupo-input select:focus { border-color:var(--gold); background:var(--surface); box-shadow:0 0 0 3px rgba(214,162,16,.18); }
-.field input::placeholder { color:#9a9d9c; }
-
-.button-primary,.btn-salvar,.btn-cadastrar,.btn-escolher { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:48px; padding:0 20px; border:1px solid var(--yellow); border-radius:3px; color:var(--ink); background:var(--yellow); font-size:13px; font-weight:700; text-decoration:none; cursor:pointer; transition:transform .18s,box-shadow .18s,background .18s; }
-.button-primary:hover,.btn-salvar:hover,.btn-cadastrar:hover,.btn-escolher:hover { background:var(--gold); border-color:var(--gold); }
-.button-primary:active,.btn-salvar:active,.btn-cadastrar:active,.btn-escolher:active { transform:scale(.98); }
-.button-secondary { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 20px; border:1px solid var(--ink); border-radius:3px; color:var(--ink); background:transparent; font-size:13px; font-weight:700; text-decoration:none; transition:color .18s,background .18s; }
-.button-secondary:hover { color:var(--yellow); background:var(--ink); }
-.btn:disabled,.button-primary:disabled,.btn-salvar:disabled,.btn-cadastrar:disabled { opacity:.55; cursor:not-allowed; transform:none; }
-
-.alert,.msg { padding:13px 15px; border-left:3px solid var(--red); color:#7e2e24; background:#f7e3df; font-size:13px; line-height:1.45; }
-.msg-sucesso { border-color:var(--green); color:#18523a; background:#e2f0e9; }
-.status { display:inline-flex; align-items:center; gap:5px; padding:5px 9px; border-radius:2px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
-.status::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; flex:0 0 auto; }
-/* Cada status carrega cor + texto (nunca só a cor) - verde=pago/regular, amarelo=pendente,
-   azul=processando/reembolso, vermelho=vencido/recusado/erro. */
-.status-pago { color:#18523a; background:#dceee5; } .status-pendente { color:#6b4e00; background:#fff0bc; } .status-atrasado { color:#842029; background:#f7dedb; } .status-cancelado { color:#51575b; background:#e4e5e5; } .status-reembolsado { color:#1c3f6e; background:#dce6f7; }
-.status-em_processamento { color:#1c3f6e; background:#dce6f7; } .status-em_analise { color:#5a4a12; background:#f2e7c9; } .status-recusado { color:#842029; background:#f7dedb; }
-/* Situação do PLANO (vigência), diferente do status de uma mensalidade: verde=período
-   pago correndo, amarelo=aguardando decisão, vermelho=vencido/recusado. */
-.status-plano-ativo { color:#18523a; background:#dceee5; } .status-plano-aguardando_analise { color:#5a4a12; background:#f2e7c9; }
-.status-plano-em_processamento { color:#1c3f6e; background:#dce6f7; } .status-plano-a_pagar { color:#6b4e00; background:#fff0bc; }
-.status-plano-recusado,.status-plano-vencido { color:#842029; background:#f7dedb; } .status-plano-sem_plano { color:#51575b; background:#e4e5e5; }
-
-/* ---------- Avatar do aluno: uma foto ou as iniciais, mesmo componente em toda a tela ---------- */
-.student-avatar { display:inline-grid; place-items:center; flex:0 0 auto; width:34px; height:34px; margin-right:12px; overflow:hidden; color:var(--yellow); background:var(--ink); font:700 17px var(--display); text-transform:uppercase; }
-.avatar-img { display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
-
-/* ---------- Botao de acao compacto (telas administrativas: listas, tabelas) ---------- */
-.btn { display:inline-flex; align-items:center; justify-content:center; min-height:34px; padding:0 12px; border:1px solid currentColor; border-radius:2px; font-size:11px; font-weight:700; text-decoration:none; cursor:pointer; }
-.btn-status { margin-right:7px; color:var(--ink); background:#edeae1; }
-.btn-status:hover { color:#fff; background:var(--ink); }
-.btn-remover { align-self:flex-start; color:var(--red); background:transparent; }
-.btn-remover:hover { color:#fff; background:var(--red); }
-.form-remover { display:inline; }
-.form-remover button { font-family:inherit; }
-.form-remover button:disabled { opacity:.55; }
-
-.table-wrap,.table-container,.tabela-pagamentos { width:100%; overflow-x:auto; border:1px solid var(--line); -webkit-overflow-scrolling:touch; }
-table { width:100%; border-collapse:collapse; background:var(--surface); }
-th,td { padding:14px 16px; border-bottom:1px solid #e6e3dc; text-align:left; font-size:13px; }
-th { color:var(--paper); background:var(--ink); font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
-tbody tr:last-child td { border-bottom:0; }
-tbody tr:hover td { background:#fdf7de; }
-
-:focus-visible { outline:3px solid var(--yellow); outline-offset:3px; }
-@keyframes reveal { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
-@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
-
-/* Tabelas viram listas organizadas no celular — ativado com a classe .table-stack no wrapper. */
-@media (max-width:640px) {
-  .table-stack table,.table-stack thead,.table-stack tbody,.table-stack th,.table-stack td,.table-stack tr { display:block; }
-  .table-stack tr[hidden] { display:none; }
-  .table-stack thead { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-  .table-stack tr { padding:14px 16px; border-bottom:1px solid #e6e3dc; }
-  .table-stack tbody tr:last-child { border-bottom:0; }
-  .table-stack td { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:6px 0; border:0; text-align:right; }
-  .table-stack td[data-label]::before { content:attr(data-label); flex:0 0 auto; margin-right:auto; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; text-align:left; }
-  .table-stack td.sem-rotulo::before,.table-stack td:empty::before { content:none; }
-  .table-stack { overflow-x:hidden; border:1px solid var(--line); }
-  /* Celulas de acao com varios botoes/formularios (status, sincronizar, revisar...)
-     nao cabem numa unica linha flex a direita - empilha em vez de espremer. */
-  .table-stack td.acao-cell { flex-direction:column; align-items:stretch; gap:8px; text-align:left; }
-  .table-stack td.acao-cell::before { margin-bottom:2px; }
+/* Blocos de fundo escuro invertem o anel de foco para continuar visível. */
+.home-header,.app-header,.admin-header,.detail-header,.account-header,
+.brand-panel,.recovery-brand,.register-shell aside,.hero,.bottom-nav,
+.home-footer,.app-footer {
+  --focus-ink:var(--yellow);
+  --focus-halo:rgba(253,207,23,.25);
 }
 
-/* Navegação inferior — só aparece no celular, no máximo 5 destinos por página. */
+/* ---------------------------------------------------------------- base -- */
+
+* { box-sizing:border-box; }
+html { min-width:320px; scroll-behavior:smooth; background:var(--ink); }
+html,body { max-width:100%; overflow-x:hidden; }
+body {
+  margin:0; min-height:100vh; min-height:100dvh;
+  color:var(--text); background:var(--paper);
+  font-family:var(--body); font-size:var(--fs-base); line-height:1.55;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+button,input,select,textarea { font:inherit; color:inherit; }
+a { color:inherit; }
+img { max-width:100%; }
+h1,h2,h3,h4 { text-wrap:balance; }
+p { text-wrap:pretty; }
+
+/* Valores monetários, datas e contagens alinham em coluna. */
+td,th,.tabular,.metric-value,.summary-grid strong,.stat-value { font-variant-numeric:tabular-nums; }
+
+.skip-link {
+  position:fixed; z-index:100; top:var(--sp-3); left:var(--sp-3);
+  padding:var(--sp-3) var(--sp-4); border-radius:var(--radius);
+  color:var(--ink); background:var(--yellow);
+  font-size:var(--fs-sm); font-weight:700; text-decoration:none;
+  transform:translateY(-180%); transition:transform .2s var(--ease);
+}
+.skip-link:focus { transform:none; }
+
+.sr-only {
+  position:absolute; width:1px; height:1px; padding:0;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+/* --------------------------------------------------------------- marca -- */
+
+.site-brand {
+  display:inline-flex; align-items:center; gap:var(--sp-3);
+  color:inherit; text-decoration:none; text-transform:uppercase;
+  font:600 15px/1 var(--display); letter-spacing:.08em;
+}
+.site-brand img { width:36px; height:36px; object-fit:contain; flex:0 0 auto; }
+.site-brand strong { display:block; margin-top:2px; color:var(--yellow); font-size:19px; }
+
+/* ---------------------------------------------------- títulos e rótulos -- */
+
+/* Rótulo de contexto acima do título. Curto e informativo, nunca decorativo. */
+.eyebrow {
+  display:flex; align-items:center; gap:var(--sp-2);
+  margin:0 0 var(--sp-2);
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:700;
+  letter-spacing:.12em; text-transform:uppercase;
+}
+.eyebrow::before { content:""; flex:0 0 auto; width:16px; height:2px; background:var(--yellow); }
+
+.page-title {
+  margin:0;
+  font:700 var(--h1)/1.05 var(--display);
+  letter-spacing:-.015em; text-transform:uppercase;
+}
+
+/* Cabeçalho de página: título à esquerda, ação principal à direita. */
+.page-head {
+  display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+  gap:var(--sp-5); padding-bottom:var(--sp-6);
+  border-bottom:1px solid var(--line-strong);
+}
+.page-head h1 { margin:0; font:700 var(--h1)/1.05 var(--display); text-transform:uppercase; letter-spacing:-.015em; }
+.page-head .page-lead { max-width:62ch; margin:var(--sp-2) 0 0; color:var(--text-2); font-size:var(--fs-sm); }
+
+/* Divisor discreto entre blocos. */
+.rope-divider { height:1px; border:0; margin:0; background:var(--line); }
+.rope-divider::before { content:none; }
+
+/* Selo numerado. Só para sequências reais (etapas de um cadastro). */
+.round-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px; flex:0 0 auto;
+  border:1.5px solid var(--gold); border-radius:50%;
+  color:var(--text); font:700 14px/1 var(--display);
+}
+
+/* ------------------------------------------------------------- campos -- */
+
+.field label,.grupo-input label {
+  display:block; margin-bottom:var(--sp-2);
+  color:var(--text); font-size:var(--fs-sm); font-weight:600;
+}
+/* Rótulo de uma opção (caixa de seleção) não é rótulo de bloco. */
+.field label.dia-opcao,.grupo-input label.dia-opcao { margin-bottom:0; }
+/* "Opcional", "Obrigatória", "Mínimo 6 caracteres": nota curta na mesma linha
+   do rótulo, alinhada à direita do campo. */
+.field label:has(small),.grupo-input label:has(small) {
+  display:flex; align-items:baseline; justify-content:space-between; gap:var(--sp-3);
+}
+.field label small,.grupo-input label small {
+  flex:0 0 auto; color:var(--text-3);
+  font-size:var(--fs-xs); font-weight:400;
+}
+
+/* Caixas de seleção e botões de opção ficam de fora: não são campos de texto e
+   não devem herdar largura total nem altura de controle. */
+.field input:not([type="checkbox"]):not([type="radio"]),
+.field select,.field textarea,
+.grupo-input input:not([type="checkbox"]):not([type="radio"]),
+.grupo-input select,.grupo-input textarea {
+  width:100%; min-height:var(--control-h); padding:0 var(--sp-3);
+  border:1px solid var(--line-strong); border-radius:var(--radius);
+  outline:none; color:var(--text); background:var(--surface);
+  font-size:var(--fs-md);
+  transition:border-color .16s ease, box-shadow .16s ease;
+}
+.field textarea,.grupo-input textarea { min-height:110px; padding-block:var(--sp-3); line-height:1.6; resize:vertical; }
+.field select,.grupo-input select { padding-right:var(--sp-2); cursor:pointer; }
+
+.field input:not([type="checkbox"]):not([type="radio"]):hover,
+.field select:hover,.field textarea:hover,
+.grupo-input input:not([type="checkbox"]):not([type="radio"]):hover,
+.grupo-input select:hover { border-color:#A8A7A2; }
+
+.field input:not([type="checkbox"]):not([type="radio"]):focus,
+.field select:focus,.field textarea:focus,
+.grupo-input input:not([type="checkbox"]):not([type="radio"]):focus,
+.grupo-input select:focus,.grupo-input textarea:focus {
+  border-color:var(--text); box-shadow:0 0 0 3px rgba(253,207,23,.45);
+}
+.field input::placeholder,.grupo-input input::placeholder,textarea::placeholder { color:var(--text-3); }
+
+.field input:not([type="checkbox"]):not([type="radio"]):disabled,
+.field select:disabled,.field textarea:disabled,
+.grupo-input input:not([type="checkbox"]):not([type="radio"]):disabled,
+.grupo-input select:disabled,
+.input-bloqueado {
+  color:var(--text-2); background:var(--surface-2); border-color:var(--line);
+  cursor:not-allowed;
+}
+input[type="file"] { padding:var(--sp-2); font-size:var(--fs-xs); background:var(--surface); }
+input[type="checkbox"],input[type="radio"] { width:18px; height:18px; accent-color:var(--gold); cursor:pointer; }
+
+/* Texto de apoio abaixo de um campo. */
+.grupo-input small,.field-hint {
+  display:block; margin-top:var(--sp-2);
+  color:var(--text-2); font-size:var(--fs-xs); line-height:1.5;
+}
+
+/* ------------------------------------------------------------- botões -- */
+
+/* Ação principal da tela. Uma por bloco. */
+.button-primary,.btn-salvar,.btn-cadastrar,.btn-escolher {
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-2);
+  min-height:var(--control-h); padding:0 var(--sp-5);
+  border:1px solid var(--yellow); border-radius:var(--radius);
+  color:var(--ink); background:var(--yellow);
+  font-size:var(--fs-sm); font-weight:700; letter-spacing:.01em;
+  text-decoration:none; cursor:pointer;
+  transition:background .16s ease, border-color .16s ease, transform .1s ease;
+}
+.button-primary:hover,.btn-salvar:hover,.btn-cadastrar:hover,.btn-escolher:hover {
+  background:var(--gold); border-color:var(--gold);
+}
+.button-primary:active,.btn-salvar:active,.btn-cadastrar:active,.btn-escolher:active { transform:translateY(1px); }
+
+/* Ação secundária. */
+.button-secondary {
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-2);
+  min-height:var(--control-h); padding:0 var(--sp-5);
+  border:1px solid var(--line-strong); border-radius:var(--radius);
+  color:var(--text); background:var(--surface);
+  font-size:var(--fs-sm); font-weight:600;
+  text-decoration:none; cursor:pointer;
+  transition:border-color .16s ease, background .16s ease;
+}
+.button-secondary:hover { border-color:var(--text); background:var(--surface-2); }
+
+.button-primary:disabled,.button-secondary:disabled,
+.btn:disabled,.btn-salvar:disabled,.btn-cadastrar:disabled,.btn-escolher:disabled {
+  border-color:var(--line); color:var(--text-3); background:var(--surface-2);
+  cursor:not-allowed; transform:none;
+}
+
+/* Botão compacto para linhas de tabela e listas. */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--control-h-sm); padding:0 var(--sp-3);
+  border:1px solid var(--line-strong); border-radius:var(--radius);
+  color:var(--text); background:var(--surface);
+  font-size:var(--fs-xs); font-weight:600; white-space:nowrap;
+  text-decoration:none; cursor:pointer;
+  transition:border-color .16s ease, background .16s ease, color .16s ease;
+}
+.btn:hover { border-color:var(--text); background:var(--surface-2); }
+.btn-status { color:var(--text); }
+/* Ação esperada de uma linha (aprovar um cadastro, por exemplo): sólida escura,
+   distinta da recusa sem gastar o amarelo, que é da ação principal da tela. */
+.btn-principal { border-color:var(--text); color:var(--surface); background:var(--text); font-weight:700; }
+.btn-principal:hover { border-color:var(--ink-2); color:var(--surface); background:var(--ink-2); }
+.btn-remover { border-color:#D9BFB9; color:var(--red-ink); }
+.btn-remover:hover { border-color:var(--red); color:var(--surface); background:var(--red); }
+
+.form-inline,.form-remover { display:inline-flex; }
+.form-inline button,.form-remover button { font-family:inherit; }
+
+/* Linha de ações no rodapé de um formulário. */
+.form-actions {
+  display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3);
+  margin-top:var(--sp-2);
+}
+
+/* -------------------------------------------------- avisos e mensagens -- */
+
+.alert,.msg {
+  display:flex; align-items:flex-start; gap:var(--sp-3);
+  padding:var(--sp-3) var(--sp-4);
+  border:1px solid var(--red); border-left-width:4px; border-radius:var(--radius);
+  color:var(--red-ink); background:var(--red-bg);
+  font-size:var(--fs-sm); line-height:1.55;
+}
+.msg-sucesso { border-color:var(--green); color:var(--green-ink); background:var(--green-bg); }
+.msg-info    { border-color:var(--blue);  color:var(--blue-ink);  background:var(--blue-bg); }
+.msg-aviso   { border-color:var(--amber); color:var(--amber-ink); background:var(--amber-bg); }
+.alert svg,.msg svg { flex:0 0 auto; width:20px; height:20px; margin-top:1px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+/* Etiqueta de situação. Sempre cor mais texto, nunca só cor. */
+.status {
+  display:inline-flex; align-items:center; gap:var(--sp-1);
+  padding:4px var(--sp-2); border-radius:var(--radius-sm);
+  font-size:var(--fs-micro); font-weight:700; line-height:1.4;
+  letter-spacing:.04em; text-transform:uppercase; white-space:nowrap;
+}
+.status::before { content:""; flex:0 0 auto; width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+/* Situação de uma mensalidade. */
+.status-pago            { color:var(--green-ink); background:var(--green-bg); }
+.status-pendente        { color:var(--amber-ink); background:var(--amber-bg); }
+.status-atrasado        { color:var(--red-ink);   background:var(--red-bg); }
+.status-cancelado       { color:var(--slate-ink); background:var(--slate-bg); }
+.status-reembolsado     { color:var(--blue-ink);  background:var(--blue-bg); }
+.status-em_processamento{ color:var(--blue-ink);  background:var(--blue-bg); }
+.status-em_analise      { color:var(--amber-ink); background:var(--amber-bg); }
+.status-recusado        { color:var(--red-ink);   background:var(--red-bg); }
+
+/* Situação do PLANO (vigência), diferente do status de uma mensalidade. */
+.status-plano-ativo              { color:var(--green-ink); background:var(--green-bg); }
+.status-plano-aguardando_analise { color:var(--amber-ink); background:var(--amber-bg); }
+.status-plano-em_processamento   { color:var(--blue-ink);  background:var(--blue-bg); }
+.status-plano-a_pagar            { color:var(--amber-ink); background:var(--amber-bg); }
+.status-plano-recusado,
+.status-plano-vencido            { color:var(--red-ink);   background:var(--red-bg); }
+.status-plano-sem_plano          { color:var(--slate-ink); background:var(--slate-bg); }
+
+/* Estado vazio: diz o que falta e, quando cabe, como resolver. */
+.empty-state {
+  padding:var(--sp-8) var(--sp-5);
+  color:var(--text-2); font-size:var(--fs-sm); text-align:center;
+}
+
+/* -------------------------------------------------------------- avatar -- */
+
+.student-avatar {
+  display:inline-grid; place-items:center; flex:0 0 auto;
+  width:32px; height:32px; margin-right:var(--sp-3);
+  overflow:hidden; border-radius:var(--radius-sm);
+  color:var(--yellow); background:var(--ink);
+  font:700 15px/1 var(--display); text-transform:uppercase;
+}
+.avatar-img { display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+
+/* ------------------------------------------------------------ tabelas -- */
+
+.table-wrap,.table-container,.tabela-pagamentos {
+  width:100%; overflow-x:auto;
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--surface); -webkit-overflow-scrolling:touch;
+}
+table { width:100%; border-collapse:collapse; background:var(--surface); }
+caption { padding:var(--sp-3) var(--sp-4); color:var(--text-2); font-size:var(--fs-xs); text-align:left; }
+
+th,td { padding:var(--sp-3) var(--sp-4); text-align:left; font-size:var(--fs-sm); vertical-align:middle; }
+th {
+  position:sticky; top:0; z-index:1;
+  border-bottom:1px solid var(--line-strong);
+  color:var(--text-2); background:var(--surface-2);
+  font-size:var(--fs-micro); font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
+}
+td { border-bottom:1px solid var(--line); }
+tbody tr:last-child td { border-bottom:0; }
+tbody tr:hover td { background:#FBF7E6; }
+td strong { font-weight:600; }
+
+/* Célula com uma pessoa: avatar e nome na mesma linha de base. */
+td .student-avatar { vertical-align:middle; }
+
+/* Célula que reúne várias ações. */
+.acao-cell { white-space:nowrap; }
+.acao-cell > * + * { margin-left:var(--sp-2); }
+
+/* ------------------------------------------------------- foco e motion -- */
+
+:focus-visible {
+  outline:2px solid var(--focus-ink); outline-offset:2px;
+  box-shadow:0 0 0 5px var(--focus-halo);
+  border-radius:var(--radius-sm);
+}
+/* O navegador já desenha o anel; não precisa também do realce de hover. */
+:focus:not(:focus-visible) { outline:none; }
+
+@keyframes reveal { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+/* Entrada de diálogo: usada por modal.css e pix.css, que nem sempre carregam juntos. */
+@keyframes dialog-in { from { opacity:0; transform:translateY(10px) scale(.99); } to { opacity:1; transform:none; } }
+@keyframes backdrop-in { from { opacity:0; } to { opacity:1; } }
+
+@media (prefers-reduced-motion:reduce) {
+  html { scroll-behavior:auto; }
+  *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
+
+/* --------------------------------------------- tabelas viram lista (mobile) -- */
+/* Ativado com a classe .table-stack no wrapper da tabela. */
+
+@media (max-width:640px) {
+  .table-stack table,.table-stack thead,.table-stack tbody,
+  .table-stack th,.table-stack td,.table-stack tr { display:block; }
+  .table-stack tr[hidden] { display:none; }
+  .table-stack thead {
+    position:absolute; width:1px; height:1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  .table-stack tr { padding:var(--sp-4); border-bottom:1px solid var(--line); }
+  .table-stack tbody tr:last-child { border-bottom:0; }
+  .table-stack tbody tr:hover td { background:transparent; }
+  .table-stack td {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:var(--sp-4); padding:var(--sp-1) 0; border:0; text-align:right;
+  }
+  .table-stack td[data-label]::before {
+    content:attr(data-label); flex:0 0 auto; margin-right:auto;
+    color:var(--text-2); font-size:10px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; text-align:left;
+  }
+  .table-stack td.sem-rotulo::before,.table-stack td:empty::before { content:none; }
+  .table-stack { overflow-x:hidden; }
+  /* Célula de ações com vários botões não cabe numa linha; empilha. */
+  .table-stack td.acao-cell {
+    flex-direction:column; align-items:stretch; gap:var(--sp-2);
+    margin-top:var(--sp-3); text-align:left;
+  }
+  .table-stack td.acao-cell::before { margin-bottom:var(--sp-1); }
+  .table-stack td.acao-cell > * + * { margin-left:0; }
+  /* No celular a área de toque precisa dos 44px. */
+  .table-stack .btn,.table-stack .button-secondary { min-height:44px; }
+}
+
+/* ------------------------------------------- navegação inferior (mobile) -- */
+
 .bottom-nav { display:none; }
+
 @media (max-width:720px) {
-  .bottom-nav { position:fixed; z-index:40; left:0; right:0; bottom:0; display:flex; justify-content:space-around; padding:6px max(6px,var(--safe-r)) calc(6px + var(--safe-b)) max(6px,var(--safe-l)); border-top:1px solid var(--ink-3); background:var(--ink); }
-  .bottom-nav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; flex:1; min-height:52px; padding:4px; border-radius:4px; color:#9a9c9d; font-size:9px; font-weight:700; letter-spacing:.03em; text-decoration:none; text-transform:uppercase; text-align:center; }
-  .bottom-nav a svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .bottom-nav {
+    position:fixed; z-index:40; left:0; right:0; bottom:0;
+    display:flex; justify-content:space-around;
+    padding:var(--sp-1) max(var(--sp-1),var(--safe-r)) calc(var(--sp-1) + var(--safe-b)) max(var(--sp-1),var(--safe-l));
+    border-top:1px solid var(--ink-3); background:var(--ink);
+  }
+  .bottom-nav a {
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--sp-1);
+    flex:1; min-height:54px; padding:var(--sp-1); border-radius:var(--radius);
+    color:var(--text-on-ink-2); font-size:10px; font-weight:600;
+    letter-spacing:.02em; text-decoration:none; text-align:center;
+  }
+  .bottom-nav a svg {
+    width:21px; height:21px; fill:none; stroke:currentColor;
+    stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
+  }
   .bottom-nav a.is-active { color:var(--yellow); }
-  body.has-bottom-nav { padding-bottom:calc(64px + var(--safe-b)); }
+  body.has-bottom-nav { padding-bottom:calc(66px + var(--safe-b)); }
+}
+
+/* ------------------------------------------------------------ impressão -- */
+
+@media print {
+  .no-print,.bottom-nav,.skip-link { display:none !important; }
+  body { background:#fff; }
+}
+
+/* ------------------------------------------------ células de tabela -- */
+
+/* Valores, datas e competências ocupam uma linha só: quebrar "R$ 1.080,00"
+   ao meio atrapalha a leitura da coluna. */
+.celula-numero,.celula-valor { white-space:nowrap; }
+.celula-valor { font-weight:600; }
+
+/* Avatar e nome lado a lado. O flex fica no <span> interno, não no <td>: um td
+   flex sai do cálculo de altura da linha e desalinha as bordas das colunas. */
+.pessoa { display:flex; align-items:center; min-width:0; }
+.pessoa > .student-avatar { margin-right:var(--sp-3); }
+.pessoa > strong { font-weight:600; }
+@media (min-width:641px) {
+  /* Largura mínima para o nome completo não cair em três linhas. */
+  td.celula-pessoa,th.coluna-pessoa { min-width:210px; }
+}
+
+/* Tabela larga: cada coluna precisa de espaço para não quebrar palavra a palavra.
+   Abaixo dessa largura o próprio wrapper rola na horizontal; no celular a tabela
+   já vira lista (.table-stack). */
+@media (min-width:641px) {
+  .tabela-pagamentos > table { min-width:940px; }
+}
+
+/* No celular a célula de ações vira uma pilha: o formulário em volta do botão
+   não pode encolher o alvo de toque. */
+@media (max-width:640px) {
+  .table-stack td.acao-cell form,
+  .table-stack td.acao-cell .form-inline,
+  .table-stack td.acao-cell .form-remover { display:block; width:100%; }
+  .table-stack td.acao-cell form button,
+  .table-stack td.acao-cell .btn,
+  .table-stack td.acao-cell .button-secondary { width:100%; }
+}
+
+/* ------------------------------------------- alvos de toque no celular -- */
+/* No toque, 44px é o mínimo confortável. Vale para navegação, botões
+   compactos e as ações em texto que ficam sozinhas numa pilha. */
+
+@media (max-width:720px) {
+  .site-brand { min-width:44px; min-height:44px; }
+  .btn { min-height:44px; padding-inline:var(--sp-4); }
+  .bottom-nav a { min-height:56px; }
 }

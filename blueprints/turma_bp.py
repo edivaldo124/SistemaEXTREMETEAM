@@ -10,6 +10,7 @@ from dao.usuarioDAO import AlunoDAO
 from modelos.professor import Professor
 from modelos.turma import Turma
 from servicos.autorizacao import admin_requerido, professor_ou_admin_requerido
+from servicos.senhas import erro_validacao_senha
 
 turma_bp = Blueprint('turma_blueprint', __name__)
 
@@ -35,6 +36,11 @@ def cadastrar_professor():
 
     if not all([nome, login, senha]):
         flash('Preencha nome, login e senha do professor.', 'erro')
+        return redirect('/admin/turmas')
+
+    erro_senha = erro_validacao_senha(senha, login)
+    if erro_senha:
+        flash(erro_senha, 'erro')
         return redirect('/admin/turmas')
 
     if Professor.query.filter_by(login=login).first():

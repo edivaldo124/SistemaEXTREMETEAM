@@ -1,13 +1,15 @@
 import hashlib
 import hmac
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from flask import Blueprint, abort, flash, render_template, request, send_file, session, redirect, url_for
+from flask_limiter.util import get_remote_address
 from sqlalchemy.exc import IntegrityError
-from config import db
+from config import db, limiter
 from modelos.usuario import Aluno
 from modelos.matricula import Matricula
 from modelos.turma import Turma
@@ -40,6 +42,7 @@ from dao.matriculaDAO import MatriculaDAO
 from dao.presencaDAO import PresencaDAO
 from servicos.armazenamento import (
     ArquivoInvalido,
+    CONTENT_TYPE_POR_EXTENSAO,
     caminho_arquivo,
     remover_arquivo,
     salvar_comprovante_manual,
@@ -48,13 +51,27 @@ from servicos.armazenamento import (
 from servicos import planos as regras_plano
 from servicos.formatacao import formatar_competencia, formatar_cpf, formatar_telefone, somente_digitos, variantes_cpf
 from servicos.email import enviar_email
+from servicos.urls import URLPublicaInvalida, url_publica
+from servicos.senhas import erro_validacao_senha
 
 auth_bp = Blueprint('auth', __name__)
+logger = logging.getLogger(__name__)
 
 MSG_ERRO = 'Erro: Credenciais incorretas!'
 
 
+def _chave_ip_e_identificador(nome_campo):
+    identificador = (request.form.get(nome_campo) or '').strip().lower()
+    resumo = hashlib.sha256(identificador.encode()).hexdigest()
+    return f'{get_remote_address()}:{resumo}'
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit('20 per minute', methods=['POST'])
+@limiter.limit(
+    '5 per 15 minutes', methods=['POST'],
+    key_func=lambda: _chave_ip_e_identificador('loginusuario'),
+)
 def pagina_login():
     if request.method == "POST":
         login = (request.form.get("loginusuario") or "").strip()
@@ -102,6 +119,7 @@ def pagina_login():
 
 
 @auth_bp.route("/cadastrar", methods=["GET", "POST"])
+@limiter.limit('5 per hour', methods=['POST'])
 def pagina_cadastro():
     if request.method == "POST":
         nome = (request.form.get("nomeusuario") or "").strip()
@@ -118,6 +136,10 @@ def pagina_cadastro():
 
         if len(somente_digitos(cpf)) != 11:
             return render_template("cadastro.html", erro="Erro: Informe um CPF com 11 dígitos!")
+
+        erro_senha = erro_validacao_senha(senha, login, email, cpf)
+        if erro_senha:
+            return render_template("cadastro.html", erro=f"Erro: {erro_senha}")
 
         if Aluno.query.filter(Aluno.cpf.in_(variantes_cpf(cpf))).first():
             return render_template("cadastro.html", erro="Erro: Este CPF já está cadastrado!")
@@ -147,17 +169,22 @@ def pagina_cadastro():
 
         admin_email = os.environ.get('ADMIN_EMAIL')
         if admin_email:
-            enviar_email(
-                admin_email, 'Administração', 'Novo cadastro aguardando aprovação — Extreme Team', 'Novo cadastro pendente',
-                [
-                    f'O aluno {nome} acabou de se cadastrar e está aguardando aprovação.',
-                    f'E-mail: {email}',
-                    f'Telefone: {telefone}',
-                    'Acesse o painel administrativo para aprovar ou recusar o cadastro.',
-                ],
-                link_url=url_for('admin_blueprint.painel_adm', _external=True),
-                link_texto='Abrir painel administrativo',
-            )
+            try:
+                link_admin = url_publica('admin_blueprint.painel_adm')
+            except URLPublicaInvalida:
+                logger.error('APP_BASE_URL inválida; aviso de novo cadastro não foi enviado ao administrador.')
+            else:
+                enviar_email(
+                    admin_email, 'Administração', 'Novo cadastro aguardando aprovação — Extreme Team', 'Novo cadastro pendente',
+                    [
+                        f'O aluno {nome} acabou de se cadastrar e está aguardando aprovação.',
+                        f'E-mail: {email}',
+                        f'Telefone: {telefone}',
+                        'Acesse o painel administrativo para aprovar ou recusar o cadastro.',
+                    ],
+                    link_url=link_admin,
+                    link_texto='Abrir painel administrativo',
+                )
 
         return render_template('login.html', msg='Cadastro enviado! Assim que for aprovado pela administração você poderá entrar.')
 
@@ -199,7 +226,7 @@ def pagina_perfil():
 
     if not aluno_dados:
         session.clear()
-        return redirect('/logout')
+        return redirect('/login')
 
     if request.method == "POST":
         plano = _plano_do_formulario()
@@ -354,8 +381,9 @@ def alterar_senha_perfil():
         flash('Senha atual incorreta. Nenhuma alteração foi feita.', 'erro')
         return redirect('/perfil')
 
-    if len(nova_senha) < 6:
-        flash('A nova senha deve ter pelo menos 6 caracteres.', 'erro')
+    erro_senha = erro_validacao_senha(nova_senha, aluno.login, aluno.email, aluno.cpf)
+    if erro_senha:
+        flash(erro_senha, 'erro')
         return redirect('/perfil')
 
     if not hmac.compare_digest(nova_senha, confirmar_senha):
@@ -404,6 +432,13 @@ def solicitar_troca_email():
         return redirect('/perfil')
 
     token = secrets.token_urlsafe(32)
+    try:
+        link_confirmacao = url_publica('auth.confirmar_email', token=token)
+    except URLPublicaInvalida:
+        logger.error('APP_BASE_URL inválida ao solicitar troca de e-mail.')
+        flash('Não foi possível gerar o link de confirmação. Avise a administração.', 'erro')
+        return redirect('/perfil')
+
     aluno.email_pendente = novo_email
     aluno.token_email_hash = hashlib.sha256(token.encode()).hexdigest()
     aluno.token_email_expira = datetime.utcnow() + TOKEN_EMAIL_VALIDADE
@@ -417,7 +452,7 @@ def solicitar_troca_email():
             'Se foi você, clique no botão abaixo para confirmar a troca. O link expira em 30 minutos.',
             'Se não foi você, pode ignorar este e-mail — nada será alterado.',
         ],
-        link_url=url_for('auth.confirmar_email', token=token, _external=True),
+        link_url=link_confirmacao,
         link_texto='Confirmar novo e-mail',
     )
     enviar_email(
@@ -463,6 +498,11 @@ TOKEN_RECUPERACAO_VALIDADE = timedelta(minutes=30)
 
 
 @auth_bp.route("/recuperar_senha", methods=["GET", "POST"])
+@limiter.limit('10 per hour', methods=['POST'])
+@limiter.limit(
+    '3 per hour', methods=['POST'],
+    key_func=lambda: _chave_ip_e_identificador('cpf'),
+)
 def recuperar_senha():
     if request.method == "POST":
         cpf = formatar_cpf(request.form.get("cpf"))
@@ -474,6 +514,12 @@ def recuperar_senha():
         # formulario para descobrir quais pares de CPF+e-mail existem na base.
         if aluno:
             token = secrets.token_urlsafe(32)
+            try:
+                link_recuperacao = url_publica('auth.redefinir_senha', token=token)
+            except URLPublicaInvalida:
+                logger.error('APP_BASE_URL inválida ao gerar link de recuperação de senha.')
+                return render_template("login.html", msg=MSG_RECUPERACAO_ENVIADA)
+
             aluno.token_recuperacao_hash = hashlib.sha256(token.encode()).hexdigest()
             aluno.token_recuperacao_expira = datetime.utcnow() + TOKEN_RECUPERACAO_VALIDADE
             db.session.commit()
@@ -486,7 +532,7 @@ def recuperar_senha():
                     'Se foi você, clique no botão abaixo para escolher uma nova senha. O link expira em 30 minutos.',
                     'Se não foi você, pode ignorar este e-mail — sua senha continua a mesma.',
                 ],
-                link_url=url_for('auth.redefinir_senha', token=token, _external=True),
+                link_url=link_recuperacao,
                 link_texto='Redefinir minha senha',
             )
 
@@ -511,8 +557,9 @@ def redefinir_senha(token):
 
     if request.method == "POST":
         nova_senha = request.form.get("nova_senha") or ""
-        if len(nova_senha) < 6:
-            return render_template("redefinir_senha.html", token=token, erro="A senha deve ter pelo menos 6 caracteres.")
+        erro_senha = erro_validacao_senha(nova_senha, aluno.login, aluno.email, aluno.cpf)
+        if erro_senha:
+            return render_template("redefinir_senha.html", token=token, erro=erro_senha)
 
         aluno.set_senha(nova_senha)
         aluno.token_recuperacao_hash = None
@@ -741,4 +788,12 @@ def ver_comprovante_manual(pagamento_id):
     if not caminho:
         abort(404)
 
-    return send_file(caminho, max_age=0, as_attachment=False)
+    extensao = caminho.rsplit('.', 1)[-1].lower()
+    tipo_conteudo = CONTENT_TYPE_POR_EXTENSAO.get(extensao, 'application/octet-stream')
+    return send_file(
+        caminho,
+        mimetype=tipo_conteudo,
+        max_age=0,
+        as_attachment=extensao == 'pdf',
+        download_name=f'comprovante-{pagamento.id}.{extensao}',
+    )

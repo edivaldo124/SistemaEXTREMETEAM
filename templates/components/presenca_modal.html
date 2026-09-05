@@ -37,9 +37,9 @@
         <table>
             <thead>
                 <tr>
-                    <th>Data</th>
-                    <th>Turma</th>
-                    <th>Presença</th>
+                    <th scope="col">Data</th>
+                    <th scope="col">Turma</th>
+                    <th scope="col">Presença</th>
                 </tr>
             </thead>
             <tbody id="corpo-historico-presenca">
@@ -47,7 +47,7 @@
                     <tr class="linha-presenca"
                         data-turma="{{ p.turma_id }}"
                         data-presente="{{ 'presente' if p.presente else 'faltou' }}">
-                        <td data-label="Data">{{ p.data_aula.strftime('%d/%m/%Y') }}</td>
+                        <td data-label="Data" class="celula-numero">{{ p.data_aula.strftime('%d/%m/%Y') }}</td>
                         <td data-label="Turma">{{ p.turma.nome }}</td>
                         <td data-label="Presença">
                             <span class="status {{ 'status-pago' if p.presente else 'status-atrasado' }}">

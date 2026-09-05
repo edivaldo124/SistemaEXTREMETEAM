@@ -17,6 +17,7 @@
     const elCopiaCola = dialog.querySelector('[data-pix-copia-cola]');
     const btnCopiar = dialog.querySelector('[data-pix-copiar]');
     const elStatus = dialog.querySelector('[data-pix-status]');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     const formatadorPreco = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatadorData = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' });
@@ -156,7 +157,7 @@
         try {
             const resposta = await fetch(`/api/mensalidades/${pagamentoId}/pix`, {
                 method: 'POST',
-                headers: { Accept: 'application/json' },
+                headers: { Accept: 'application/json', 'X-CSRFToken': csrfToken },
             });
             const dados = await lerJson(resposta);
 

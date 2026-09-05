@@ -2,18 +2,19 @@
 <html lang="pt-BR">
     <head>
         <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <title>Situação do pagamento | Centro de Treinamento Extreme Team</title>
         <link rel="icon"
               type="image/png"
               href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
+        <script src="{{ url_for('static',filename='js/checkout.js') }}" defer></script>
         <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/theme.css') }}">
+              href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/pagamento.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/pagamento.css') }}">
-        <script src="{{ url_for('static',filename='js/checkout.js') }}" defer></script>
     </head>
     <body>
         <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -21,7 +22,8 @@
         <main id="conteudo" class="pagamento-page">
             {% with mensagens = get_flashed_messages(with_categories=true) %}
                 {% for categoria, mensagem in mensagens %}
-                    <div class="msg msg-{{ categoria }}">{{ mensagem }}</div>
+                    <div class="msg msg-{{ categoria }}"
+                             role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
                 {% endfor %}
             {% endwith %}
             <div id="retorno-checkout"
@@ -29,8 +31,13 @@
                  data-status="{{ pagamento.status }}"
                  class="pagamento-container">
                 <section class="pagamento-resumo">
-                    <p class="eyebrow">Situação do pagamento</p>
-                    <h1>{{ pagamento.plano.nome_plano if pagamento.plano else 'Mensalidade' }}</h1>
+                    <div class="pagamento-resumo-topo">
+                        <div>
+                            <p class="eyebrow">Situação do pagamento</p>
+                            <h1>{{ pagamento.plano.nome_plano if pagamento.plano else 'Mensalidade' }}</h1>
+                        </div>
+                        <span class="status status-{{ pagamento.status }}" data-status-badge>{{ rotulo_status(pagamento.status) }}</span>
+                    </div>
                     <div class="pagamento-resumo-grid">
                         <div>
                             <span>Competência</span>
@@ -42,14 +49,13 @@
                         </div>
                         <div>
                             <span>Valor total</span>
-                            <strong class="pagamento-valor">R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}</strong>
+                            <strong class="pagamento-valor">{{ pagamento.valor|moeda }}</strong>
                         </div>
                         <div>
                             <span>Forma</span>
-                            <strong>{{ (pagamento.forma_pagamento or '—')|replace('_',' ')|title }}</strong>
+                            <strong>{{ pagamento.forma_pagamento|forma_pagamento }}</strong>
                         </div>
                     </div>
-                    <span class="status status-{{ pagamento.status }}" data-status-badge>{{ rotulo_status(pagamento.status) }}</span>
                 </section>
                 <section class="pagamento-metodo pagamento-estado-info"
                          id="retorno-mensagem"
@@ -60,7 +66,7 @@
                         <p class="pagamento-icone" aria-hidden="true">⚠</p>
                         <h2>Não conseguimos confirmar agora</h2>
                         <p>
-                            O Mercado Pago não respondeu à nossa consulta. Se você concluiu o pagamento, ele ainda será confirmado automaticamente — atualize esta página em alguns instantes.
+                            O Mercado Pago não respondeu à nossa consulta. Se você concluiu o pagamento, ele ainda será confirmado automaticamente. Atualize esta página em alguns instantes.
                         </p>
                     {% elif pagamento.status == 'pago' %}
                         <p class="pagamento-icone" aria-hidden="true">✅</p>
@@ -83,7 +89,7 @@
                     {% elif pagamento.status == 'recusado' %}
                         <p class="pagamento-icone" aria-hidden="true">✖</p>
                         <h2>Pagamento recusado</h2>
-                        <p>O Mercado Pago não aprovou esse pagamento. Nenhum valor foi cobrado — você pode tentar de novo por outro meio.</p>
+                        <p>O Mercado Pago não aprovou esse pagamento. Nenhum valor foi cobrado e você pode tentar de novo por outro meio.</p>
                     {% elif pagamento.status in ('cancelado', 'reembolsado') %}
                         <p class="pagamento-icone" aria-hidden="true">ℹ</p>
                         <h2>{{ rotulo_status(pagamento.status) }}</h2>
@@ -94,7 +100,7 @@
                         <p>
                             Ainda não recebemos a confirmação do Mercado Pago. Pagamentos por boleto podem levar até 3 dias úteis para compensar; cartão e Pix costumam confirmar em poucos minutos.
                         </p>
-                        <p>Você não precisa pagar de novo — assim que o Mercado Pago confirmar, esta mensalidade é baixada automaticamente.</p>
+                        <p>Você não precisa pagar de novo. Assim que o Mercado Pago confirmar, esta mensalidade é baixada automaticamente.</p>
                     {% endif %}
                 </section>
                 {% if pode_tentar_de_novo %}
@@ -109,6 +115,7 @@
                             <form class="form-outras-formas"
                                   method="POST"
                                   action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">
+                    {% include "components/csrf_field.html" %}
                                 <button type="submit" class="button-secondary" data-checkout-abrir>Outras formas de pagamento</button>
                             </form>
                         </div>

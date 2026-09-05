@@ -16,12 +16,14 @@
                    {% if secao_ativa == chave %} aria-current="page"{% endif %}>{{ rotulo }}</a>
             {% endfor %}
         </div>
-        <a href="/logout"
-           class="link-logout"
-           data-confirm-modal
-           data-modal-eyebrow="Encerrar sessão"
-           data-modal-title="Sair do painel?"
-           data-modal-message="Você precisará entrar novamente para acessar a administração."
-           data-modal-confirm="Sim, sair">Sair</a>
+        <form action="/logout" method="POST" class="logout-form"
+              data-confirm-modal
+              data-modal-eyebrow="Encerrar sessão"
+              data-modal-title="Sair do painel?"
+              data-modal-message="Você precisará entrar novamente para acessar a administração."
+              data-modal-confirm="Sim, sair">
+            {% include "components/csrf_field.html" %}
+            <button type="submit" class="link-logout">Sair</button>
+        </form>
     </nav>
 </header>

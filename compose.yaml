@@ -16,12 +16,26 @@ services:
     mem_limit: 256m
     cpus: 0.5
 
+  rate-limit:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "32mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 48m
+    cpus: 0.25
+
   app:
     build:
       context: .
     restart: unless-stopped
     depends_on:
       db:
+        condition: service_healthy
+      rate-limit:
         condition: service_healthy
     environment:
       # Aponta para o serviço "db" acima (Postgres do próprio compose), montado a
@@ -36,6 +50,9 @@ services:
       BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-}
       BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:-Extreme Team}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      RATELIMIT_STORAGE_URI: redis://rate-limit:6379/0
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,10.0.0.105}
+      TRUST_PROXY_COUNT: "1"
       MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN:-}
       MERCADO_PAGO_WEBHOOK_SECRET: ${MERCADO_PAGO_WEBHOOK_SECRET:-}
       APP_BASE_URL: ${APP_BASE_URL:-}

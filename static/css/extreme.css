@@ -1,114 +1,205 @@
-/* Extreme Team — identidade visual do centro de treinamento.
-   Regra geral: preto como base, amarelo reservado para ação/seleção/destaque,
-   dourado para hover e detalhes, bronze só em linhas finas. Sem clip-path
-   decorativo, sem texto fantasma, sem dragão repetido em toda página. */
+/* =========================================================================
+   Extreme Team - camada de identidade.
+   Carregar SEMPRE por último, depois de theme.css e da folha da tela.
 
-html { background:var(--ink); }
-body { background-color:var(--paper); }
+   Regra da marca: preto é a base, o amarelo marca ação e item ativo.
+   Fora disso ele não aparece. Sem clip-path decorativo, sem faixa inclinada,
+   sem logo repetido como textura.
+   ========================================================================= */
 
-/* ---------- Cabeçalhos: mesma barra escura em todo o sistema ---------- */
+/* --------------------------------------------------- barra superior ----- */
+/* Um único cabeçalho, usado por todas as áreas do sistema. */
+
 .home-header,.app-header,.admin-header,.detail-header,.account-header {
-  border-bottom:1px solid var(--ink-3); background:var(--ink); color:var(--paper);
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--sp-5); padding:var(--sp-4) clamp(var(--sp-5),5vw,var(--sp-11));
+  border-bottom:1px solid var(--ink-3);
+  color:var(--text-on-ink); background:var(--ink);
 }
-.app-header nav a,.admin-header a,.detail-header a,.account-header a { color:#c7c5c6; }
-.app-header nav a:hover,.admin-header a:hover,.detail-header a:hover,.account-header a:hover,
-.home-header nav a:hover { color:var(--yellow); }
-.app-header #link-sair,.link-logout { border-color:#3a3a3a; }
-.link-turmas { color:var(--yellow); }
-.admin-header a.is-active,.admin-header a[aria-current="page"] { color:var(--yellow); font-weight:700; }
-.nav-login { color:var(--ink); background:var(--yellow); border-color:var(--yellow); }
+
+.app-header nav,.admin-header nav,.admin-header > div {
+  display:flex; align-items:center; gap:var(--sp-5); min-width:0;
+}
+
+.app-header nav a,.admin-header a,.detail-header a,.account-header a,
+.home-header nav a {
+  color:var(--text-on-ink-2);
+  font-size:var(--fs-sm); font-weight:500; text-decoration:none;
+  transition:color .16s ease;
+}
+.app-header nav a:hover,.admin-header a:hover,.detail-header a:hover,
+.account-header a:hover,.home-header nav a:hover { color:var(--yellow); }
+
+/* Item ativo: amarelo mais um traço embaixo. A cor sozinha não basta. */
+.app-header nav a.is-active,.app-header nav a[aria-current="page"],
+.admin-header a.is-active,.admin-header a[aria-current="page"] {
+  position:relative; color:var(--yellow); font-weight:700;
+}
+.app-header nav a.is-active::after,.app-header nav a[aria-current="page"]::after,
+.admin-header a.is-active::after,.admin-header a[aria-current="page"]::after {
+  content:""; position:absolute; left:0; right:0; bottom:-6px;
+  height:2px; background:var(--yellow);
+}
+
+/* Sair e voltar: ação de saída, tratada como secundária. */
+.app-header #link-sair,.link-logout,
+.detail-header > a:last-child,.account-header > a:last-child {
+  padding:var(--sp-2) var(--sp-3); border:1px solid #45484B; border-radius:var(--radius);
+  color:var(--text-on-ink); font-size:var(--fs-xs); font-weight:600;
+}
+.app-header #link-sair:hover,.link-logout:hover,
+.detail-header > a:last-child:hover,.account-header > a:last-child:hover {
+  border-color:var(--yellow); color:var(--yellow);
+}
+.logout-form { margin:0; }
+.logout-form button {
+  background:transparent; font-family:inherit; cursor:pointer;
+}
+
+.link-turmas { color:var(--text-on-ink-2); }
+.nav-login {
+  min-height:40px; padding:0 var(--sp-4);
+  border:1px solid var(--yellow); border-radius:var(--radius);
+  color:var(--ink); background:var(--yellow);
+  font-size:var(--fs-sm); font-weight:700; cursor:pointer;
+}
 .nav-login:hover { background:var(--gold); border-color:var(--gold); }
 
-/* ---------- Home: hero com a marca real, sem fundo amarelo inteiro ---------- */
-.home-header { position:absolute; z-index:100; top:0; left:0; width:100%; background:linear-gradient(180deg,rgba(2,1,1,.92),transparent); border-bottom:0; }
-.hero { background:var(--ink); }
-.hero-copy { background-image:radial-gradient(rgba(253,207,23,.05) 1px,transparent 1px); background-size:26px 26px; }
-.hero h1 { color:var(--paper); text-wrap:balance; }
-.hero h1 em { color:var(--yellow); font-style:normal; }
-.hero-text { color:#b9b8b9; }
-.text-button { color:var(--paper); border-bottom-color:#4a4a4a; }
-.hero-actions .button-primary { box-shadow:none; }
-.hero-actions .button-primary:hover { transform:translateY(-2px); }
+/* Cargo de quem está logado, ao lado do botão de sair. */
+.admin-header > div > span {
+  color:var(--text-on-ink-2); font-size:var(--fs-xs); font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase;
+}
 
-.hero-visual { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; padding:48px 32px; background:var(--ink-2); overflow:hidden; }
-.hero-visual::before { content:""; position:absolute; top:0; left:0; width:100%; height:4px; background:var(--yellow); }
-.hero-visual::after { content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(253,207,23,.06) 1px,transparent 1px); background-size:22px 22px; pointer-events:none; }
-.hero-number { display:none; }
-.extreme-lockup { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:18px; text-align:center; }
-.extreme-lockup img { width:min(88%,420px); }
-.extreme-lockup small { color:var(--muted); font:600 10px var(--body); letter-spacing:.18em; text-transform:uppercase; }
-.hero-stamp { position:relative; z-index:1; right:auto; bottom:auto; display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 16px; color:var(--ink); background:var(--yellow); border-radius:50%; width:76px; height:76px; justify-content:center; transform:none; }
-.hero-stamp strong { font:800 15px/1 var(--display); }
-.hero-stamp span { font-size:6px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; text-align:center; }
+/* ---------------------------------------------------- home: hero -------- */
+/* Aqui a escala grande faz sentido: é a primeira impressão da academia. */
+
+.home-header {
+  position:absolute; z-index:10; top:0; left:0; width:100%;
+  border-bottom:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.94),rgba(0,0,0,0));
+}
+.hero { background:var(--ink); }
+.hero h1 { color:var(--text-on-ink); }
+.hero h1 em { color:var(--yellow); font-style:normal; }
+.hero-text { color:var(--text-on-ink-2); }
+.text-button { color:var(--text-on-ink); border-bottom-color:#4A4A4A; }
+.hero-actions .button-primary { box-shadow:none; }
+
+/* Mesmo preto dos dois lados: o fundo da arte da marca é preto, e um painel
+   mais claro atrás dela desenhava um retângulo visível em volta do logo. */
+.hero-visual {
+  position:relative; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:var(--sp-6);
+  padding:var(--sp-9) var(--sp-7);
+  border-left:1px solid var(--ink-3); background:var(--ink); overflow:hidden;
+}
+.hero-number,.hero-stamp { display:none; }
+
+.extreme-lockup {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; align-items:center; gap:var(--sp-4);
+  text-align:center;
+}
+.extreme-lockup img { width:min(86%,400px); }
+.extreme-lockup small {
+  color:var(--text-on-ink-2); font:600 var(--fs-micro) var(--body);
+  letter-spacing:.16em; text-transform:uppercase;
+}
 
 .proof-strip { border-bottom-color:var(--line); }
 .proof-strip p { border-left-color:var(--yellow); }
-
-.home-section { position:relative; }
 .section-copy { border-left-color:var(--yellow); }
 .method-grid { border-top-color:var(--ink); border-bottom-color:var(--ink); }
 .method-grid article { border-right-color:var(--line); }
-.method-grid article span.round-badge { margin-bottom:6px; color:var(--ink); }
-.method-grid article:nth-child(2) span.round-badge { color:var(--yellow); border-color:var(--yellow); }
-.home-footer { background:var(--ink); border-top:4px solid var(--yellow); }
+.method-grid article span.round-badge { margin-bottom:var(--sp-1); }
+.home-footer { border-top:3px solid var(--yellow); background:var(--ink); }
 
-/* ---------- Login / cadastro / recuperação: painel escuro consistente ---------- */
-.brand-panel,.recovery-brand,.register-shell aside { background:var(--ink); color:var(--paper); }
-.register-shell aside { background:var(--ink); }
-.register-shell aside::after { content:none; }
-.register-shell aside h1 em { color:var(--yellow); text-decoration:none; }
-.register-shell aside>p:not(.eyebrow) { color:#c2c4bd; }
-.register-shell li { border-top-color:#333; color:var(--paper); }
+/* ------------------------------------- login, cadastro e recuperação ---- */
+
+.brand-panel,.recovery-brand,.register-shell aside {
+  color:var(--text-on-ink); background:var(--ink);
+}
+.brand-panel::before,.brand-panel::after,
+.recovery-brand::after,.register-shell aside::after { content:none; }
+
+.brand strong,.brand-copy .eyebrow,
+.recovery-brand .eyebrow,.register-shell aside .eyebrow { color:var(--yellow); }
+.brand-copy .eyebrow::before,.recovery-brand .eyebrow::before,
+.register-shell aside .eyebrow::before { background:var(--yellow); }
+.brand-copy h1 em,.register-shell aside h1 em { color:var(--yellow); font-style:normal; text-decoration:none; }
+.brand-copy > p:last-child,.register-shell aside > p:not(.eyebrow) { color:var(--text-on-ink-2); }
+.register-shell li { border-top-color:var(--ink-3); color:var(--text-on-ink); }
 .register-shell li span { color:var(--yellow); }
-.brand-panel::before,.recovery-brand::after { right:5%; width:14px; background:var(--yellow); opacity:1; }
-.brand strong,.brand-copy .eyebrow,.recovery-brand .eyebrow,.register-shell aside .eyebrow { color:var(--yellow); }
-.brand-copy .eyebrow::before,.recovery-brand .eyebrow::before,.register-shell aside .eyebrow::before { background:var(--yellow); }
-.label-row a,.back-link { color:var(--ink); text-decoration-color:var(--gold); text-underline-offset:3px; }
-.signup a,.modal-signup a { color:var(--ink); text-decoration-color:var(--gold); }
+
+.label-row a,.back-link,.signup a,.modal-signup a {
+  color:var(--text); text-decoration:underline;
+  text-decoration-color:var(--gold); text-decoration-thickness:2px; text-underline-offset:3px;
+}
+.label-row a:hover,.back-link:hover,.signup a:hover,.modal-signup a:hover { text-decoration-color:var(--text); }
+
 .submit-button,.form-panel .button-primary { box-shadow:none; }
 
-/* ---------- Áreas internas: fichas de treino, divisores em corda ---------- */
-.profile-page,.container-admin,.container-detalhes { max-width:1320px; }
-.profile-hero,.admin-intro,.detail-intro { position:relative; padding-bottom:30px; border-bottom:0; }
-.profile-hero::after,.admin-intro::after,.detail-intro::after { content:""; display:block; position:absolute; left:0; right:0; bottom:0; height:5px; background:repeating-linear-gradient(90deg,var(--line) 0 10px,transparent 10px 14px); }
-.profile-mark,.detail-intro>span { background:var(--yellow); color:var(--ink); border-radius:50%; transform:none; }
-.summary-grid { border-color:var(--line); }
-.admin-metrics article:first-child { border-left:0; }
-.content-section,.secao,.detail-section,.secao-pagamentos { border-top-color:var(--line); }
-.section-heading>#contador-alunos { color:var(--ink); font-weight:700; }
+/* -------------------------------------------- áreas internas do sistema -- */
 
-.form-plano,.form-turma,.form-pagamento,.form-detalhes-grid .form-detalhes { border-left:4px solid var(--yellow); background:#eae8e3; }
-.plan-list article,.card-plano { border-color:var(--line); background:var(--surface); transition:border-color .18s,transform .18s; }
-.plan-list article:hover,.card-plano:hover { border-color:var(--gold); }
+.profile-page,.container-admin,.container-detalhes { max-width:1240px; }
+
+/* Um filete fino fecha o cabeçalho da página. */
+.profile-hero,.admin-intro,.detail-intro {
+  padding-bottom:var(--sp-6); border-bottom:1px solid var(--line-strong);
+}
+
+/* Marca do aluno: quadrada como o avatar da tabela, sem rotação. */
+.profile-mark,.detail-intro > span {
+  border-radius:var(--radius); color:var(--ink); background:var(--yellow);
+  transform:none;
+}
+
+/* Faixa de formulário dentro de um painel: fundo, sem borda amarela grossa. */
+.form-plano,.form-turma,.form-pagamento,.form-filtros-financeiro {
+  border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2);
+}
+
+/* Cards de plano: a borda muda no hover, sem levantar o card. */
+.plan-list article,.card-plano {
+  border-color:var(--line); background:var(--surface);
+  transition:border-color .16s ease;
+}
+.plan-list article:hover,.card-plano:hover { border-color:var(--text); transform:none; }
 .card-plano.plano-atual { border-color:var(--green); }
-.plan-list article span,.section-title>span,.plan-index { color:var(--orange-dark); }
-.btn-status { color:var(--ink); background:#e9e6df; }
-.btn-status:hover { color:var(--ink); background:var(--yellow); }
-.btn-remover { color:var(--red); }
-.btn-remover:hover { color:#fff; background:var(--red); }
-.student-avatar { background:var(--ink); color:var(--yellow); }
-.ferramentas-alunos input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(214,162,16,.16); }
 
-/* Estado vazio: marca discreta do dragão, nunca como fundo de texto importante. */
-.empty-state { position:relative; padding-top:56px !important; color:var(--muted); }
-.empty-state::before { content:""; position:absolute; top:0; left:50%; width:34px; height:34px; margin-left:-17px; background:url('/static/imagens/logo-icon.png') center/cover; border-radius:50%; opacity:.5; }
-td.empty-state::before,tr .empty-state::before { display:none; }
+.student-avatar { color:var(--yellow); background:var(--ink); }
 
-/* ---------- Modais e diálogos ---------- */
-.confirm-dialog,.modal-conteudo { border-top:4px solid var(--yellow); }
+/* Estado vazio: marca discreta da academia acima do texto. */
+.empty-state { position:relative; padding-top:var(--sp-11); }
+.empty-state::before {
+  content:""; position:absolute; top:var(--sp-7); left:50%;
+  width:30px; height:30px; margin-left:-15px;
+  background:url('/static/imagens/logo-icon.png') center/contain no-repeat;
+  opacity:.35;
+}
+td.empty-state::before,tr .empty-state::before,.table-stack .empty-state::before { display:none; }
+td.empty-state,tr .empty-state { padding-top:var(--sp-8); }
 
-/* ---------- Navegação inferior (celular) ---------- */
-.bottom-nav a svg { stroke:currentColor; }
+/* ------------------------------------------------- modais e diálogos ---- */
+
+.confirm-dialog,.modal-conteudo,.pix-dialog,.modal-dialog { border-top:3px solid var(--yellow); }
+.confirm-dialog[data-variant="danger"] { border-top-color:var(--red); }
+
+/* --------------------------------------------------------- responsivo --- */
 
 @media (max-width:900px) {
-  .hero-visual { min-height:auto; padding:44px 24px; }
+  .hero-visual { min-height:auto; padding:var(--sp-8) var(--sp-6); }
 }
 @media (max-width:720px) {
-  .app-header nav a:not(#link-sair) { display:none; }
-  body.has-bottom-nav .app-header nav a:not(#link-sair) { display:none; }
+  .app-header nav a:not(#link-sair):not(.nav-avatar-link) { display:none; }
 }
 @media (max-width:620px) {
-  .home-header .site-brand span { display:none; }
-  .extreme-lockup img { width:80%; }
-  .profile-mark,.detail-intro>span { width:58px; height:58px; }
+  .home-header .site-brand span,
+  .app-header .site-brand span,
+  .admin-header .site-brand span,
+  .detail-header .site-brand span,
+  .account-header .site-brand span { display:none; }
+  .extreme-lockup img { width:78%; }
+  .profile-mark,.detail-intro > span { width:56px; height:56px; }
 }

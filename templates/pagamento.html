@@ -2,21 +2,22 @@
 <html lang="pt-BR">
     <head>
         <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <title>Pagar mensalidade | Centro de Treinamento Extreme Team</title>
         <link rel="icon"
               type="image/png"
               href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/theme.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/extreme.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/pix.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static',filename='css/pagamento.css') }}">
         <script src="{{ url_for('static',filename='js/pagamento.js') }}" defer></script>
         <script src="{{ url_for('static',filename='js/checkout.js') }}" defer></script>
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/pix.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/pagamento.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
     <body>
         <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -24,7 +25,8 @@
         <main id="conteudo" class="pagamento-page">
             {% with mensagens = get_flashed_messages(with_categories=true) %}
                 {% for categoria, mensagem in mensagens %}
-                    <div class="msg msg-{{ categoria }}">{{ mensagem }}</div>
+                    <div class="msg msg-{{ categoria }}"
+                             role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
                 {% endfor %}
             {% endwith %}
             <div id="pagina-pagamento"
@@ -32,8 +34,13 @@
                  data-status-inicial="{{ pagamento.status }}"
                  class="pagamento-container">
                 <section class="pagamento-resumo">
-                    <p class="eyebrow">Resumo da mensalidade</p>
-                    <h1>{{ pagamento.plano.nome_plano if pagamento.plano else 'Mensalidade' }}</h1>
+                    <div class="pagamento-resumo-topo">
+                        <div>
+                            <p class="eyebrow">Resumo da mensalidade</p>
+                            <h1>{{ pagamento.plano.nome_plano if pagamento.plano else 'Mensalidade' }}</h1>
+                        </div>
+                        <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
+                    </div>
                     <div class="pagamento-resumo-grid">
                         <div>
                             <span>Aluno</span>
@@ -49,17 +56,16 @@
                         </div>
                         <div>
                             <span>Valor total</span>
-                            <strong class="pagamento-valor">R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}</strong>
+                            <strong class="pagamento-valor">{{ pagamento.valor|moeda }}</strong>
                         </div>
                     </div>
-                    <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
                 </section>
                 <section class="pagamento-metodo" data-estado="carregando">
                     <p class="pagamento-carregando" role="status" aria-live="polite">Carregando dados do pagamento…</p>
                 </section>
                 <section class="pagamento-metodo" data-estado="erro" hidden>
                     <p class="alert" data-erro-msg role="alert">Não foi possível carregar o pagamento.</p>
-                    <button type="button" class="button-secondary" data-tentar-novamente>Tentar novamente</button>
+                    <button type="button" class="button-primary" data-tentar-novamente>Tentar novamente</button>
                 </section>
                 <section class="pagamento-metodo" data-estado="pix" hidden>
                     <div class="pagamento-selo-seguranca">
@@ -96,7 +102,7 @@
                     </p>
                     <div class="pix-qr-area">
                         <img data-qr alt="QR Code para pagamento via Pix" hidden>
-                        <p class="pix-sem-qr" data-sem-qr hidden>QR Code indisponível no momento — use o código copia e cola abaixo.</p>
+                        <p class="pix-sem-qr" data-sem-qr hidden>QR Code indisponível no momento. Use o código copia e cola abaixo.</p>
                     </div>
                     <label for="pagamento-copia-cola">Pix copia e cola</label>
                     <div class="pix-copia-linha">
@@ -115,7 +121,7 @@
                         <strong data-expiracao>—</strong>
                     </p>
                     <p class="pix-status" role="status" aria-live="polite">
-                        Aguardando pagamento — esta página atualiza sozinha assim que o Pix for confirmado.
+                        Aguardando pagamento. Esta página atualiza sozinha assim que o Pix for confirmado.
                     </p>
                 </section>
                 <section class="pagamento-metodo pagamento-estado-info"
@@ -124,7 +130,7 @@
                     <p class="pagamento-icone" aria-hidden="true">⏳</p>
                     <h2>Pagamento em processamento</h2>
                     <p>
-                        O Mercado Pago está analisando o pagamento. Isso costuma levar só alguns instantes — esta página atualiza sozinha.
+                        O Mercado Pago está analisando o pagamento. Isso costuma levar poucos instantes e esta página atualiza sozinha.
                     </p>
                 </section>
                 <section class="pagamento-metodo pagamento-estado-info"
@@ -170,12 +176,13 @@
                     <section class="pagamento-metodo retorno-acoes">
                         <h2>Outras formas de pagamento</h2>
                         <p>
-                            Cartão de crédito ou débito, boleto e saldo Mercado Pago. Você é levado ao ambiente seguro do Mercado Pago e volta para cá ao final — a Extreme Team nunca vê os dados do seu cartão.
+                            Cartão de crédito ou débito, boleto e saldo Mercado Pago. Você é levado ao ambiente seguro do Mercado Pago e volta para cá ao final. A Extreme Team nunca vê os dados do seu cartão.
                         </p>
                         <div class="retorno-botoes">
                             <form class="form-outras-formas"
                                   method="POST"
                                   action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">
+                    {% include "components/csrf_field.html" %}
                                 <button type="submit" class="button-secondary" data-checkout-abrir>Ir para outras formas de pagamento</button>
                             </form>
                         </div>
@@ -186,13 +193,16 @@
                         <details>
                             <summary>Já pagou por outro meio? Envie o comprovante</summary>
                             <p>
-                                Aceitamos comprovante em JPEG, PNG ou PDF, até 8 MB. O envio não confirma o pagamento sozinho — a administração vai conferir e atualizar a situação.
+                                Aceitamos comprovante em JPEG, PNG ou PDF, até 8 MB. O envio não confirma o pagamento sozinho: a administração vai conferir e atualizar a situação.
                             </p>
                             <form action="{{ url_for('auth.enviar_comprovante_manual_aluno', pagamento_id=pagamento.id) }}"
                                   method="POST"
                                   enctype="multipart/form-data"
                                   class="form-comprovante-manual">
-                                <input type="file"
+                    {% include "components/csrf_field.html" %}
+                                <label class="sr-only" for="arquivo-comprovante">Escolher arquivo do comprovante</label>
+                                <input id="arquivo-comprovante"
+                                       type="file"
                                        name="comprovante"
                                        accept="image/jpeg,image/png,application/pdf"
                                        required>

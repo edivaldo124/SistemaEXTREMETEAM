@@ -4,6 +4,7 @@
 
     const pagamentoId = raiz.dataset.pagamentoId;
     let statusAtual = raiz.dataset.statusInicial;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     const estados = {};
     raiz.querySelectorAll('[data-estado]').forEach((el) => {
@@ -104,7 +105,7 @@
         try {
             const resposta = await fetch(`/api/mensalidades/${pagamentoId}/pix`, {
                 method: 'POST',
-                headers: { Accept: 'application/json' },
+                headers: { Accept: 'application/json', 'X-CSRFToken': csrfToken },
             });
             const dados = await resposta.json();
 

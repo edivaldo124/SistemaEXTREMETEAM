@@ -1,1 +1,73 @@
-.confirm-dialog{position:fixed;width:min(440px,calc(100% - 32px));padding:38px;border:0;border-radius:0;color:var(--ink);background:var(--paper);box-shadow:0 28px 90px rgba(0,0,0,.3);overflow:visible}.confirm-dialog[open]{animation:dialog-in .28s var(--ease)}.confirm-dialog::backdrop{background:rgba(10,12,13,.78);backdrop-filter:blur(4px);animation:backdrop-in .2s ease}.confirm-accent{position:absolute;top:0;left:0;width:100%;height:5px;background:var(--orange)}.confirm-icon{display:grid;place-items:center;width:48px;height:48px;margin-bottom:24px;color:var(--orange-dark);background:#f6ded0}.confirm-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.confirm-dialog .eyebrow{margin-bottom:10px}.confirm-dialog h2{margin:0;font:700 42px/.95 var(--display);letter-spacing:-.02em}.confirm-dialog>p:not(.eyebrow){margin:16px 0 0;color:var(--muted);font-size:13px;line-height:1.65}.confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:30px}.confirm-actions button{min-height:48px;padding:0 16px;border-radius:2px;font-size:12px;font-weight:700;cursor:pointer}.confirm-cancel{border:1px solid var(--line);color:var(--ink);background:transparent}.confirm-cancel:hover{border-color:var(--ink)}.confirm-accept{border:1px solid var(--ink);color:white;background:var(--ink)}.confirm-accept:hover{background:var(--ink-2)}.confirm-dialog[data-variant="danger"] .confirm-accent{background:var(--red)}.confirm-dialog[data-variant="danger"] .confirm-icon{color:var(--red);background:#f5deda}.confirm-dialog[data-variant="danger"] .confirm-accept{border-color:var(--red);background:var(--red)}.confirm-dialog[data-variant="danger"] .confirm-accept:hover{background:#842e22}.confirm-accept:disabled{opacity:.65;cursor:wait}@keyframes dialog-in{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}@keyframes backdrop-in{from{opacity:0}to{opacity:1}}@media(max-width:480px){.confirm-dialog{padding:30px 22px}.confirm-dialog h2{font-size:36px}.confirm-actions{grid-template-columns:1fr}.confirm-cancel{order:2}}@media(prefers-reduced-motion:reduce){.confirm-dialog[open],.confirm-dialog::backdrop{animation:none}}
+/* =========================================================================
+   Diálogo de confirmação. Um só padrão para toda ação que precisa de aval.
+   ========================================================================= */
+
+.confirm-dialog {
+  position:fixed; width:min(460px,calc(100% - 32px));
+  padding:var(--sp-7);
+  border:0; border-radius:var(--radius);
+  color:var(--text); background:var(--surface);
+  box-shadow:var(--shadow-dialogo); overflow:visible;
+}
+.confirm-dialog[open] { animation:dialog-in .24s var(--ease); }
+.confirm-dialog::backdrop {
+  background:rgba(0,0,0,.72); backdrop-filter:blur(3px);
+  animation:backdrop-in .18s ease;
+}
+
+.confirm-accent { display:none; }
+
+.confirm-icon {
+  display:grid; place-items:center;
+  width:44px; height:44px; margin-bottom:var(--sp-5);
+  border-radius:var(--radius);
+  color:var(--amber-ink); background:var(--amber-bg);
+}
+.confirm-icon svg {
+  width:24px; height:24px; fill:none; stroke:currentColor;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+}
+
+.confirm-dialog .eyebrow { margin-bottom:var(--sp-2); }
+.confirm-dialog h2 {
+  margin:0; font:700 var(--h2)/1.1 var(--display);
+  letter-spacing:-.015em; text-transform:uppercase;
+}
+.confirm-dialog > p:not(.eyebrow) {
+  max-width:52ch; margin:var(--sp-3) 0 0;
+  color:var(--text-2); font-size:var(--fs-sm); line-height:1.65;
+}
+
+/* Confirmar fica à direita, é a ação que o usuário veio fazer. */
+.confirm-actions {
+  display:flex; flex-wrap:wrap; justify-content:flex-end; gap:var(--sp-3);
+  margin-top:var(--sp-7);
+}
+.confirm-actions button {
+  min-height:var(--control-h); padding:0 var(--sp-5);
+  border-radius:var(--radius);
+  font-size:var(--fs-sm); font-weight:600; cursor:pointer;
+  transition:border-color .16s ease, background .16s ease;
+}
+.confirm-cancel { border:1px solid var(--line-strong); color:var(--text); background:var(--surface); }
+.confirm-cancel:hover { border-color:var(--text); background:var(--surface-2); }
+.confirm-accept { border:1px solid var(--text); color:var(--surface); background:var(--text); font-weight:700; }
+.confirm-accept:hover { background:var(--ink-2); }
+.confirm-accept:disabled { border-color:var(--line-strong); color:var(--text-3); background:var(--surface-2); cursor:wait; }
+
+/* Ação destrutiva: o vermelho aparece no ícone e no botão de confirmar. */
+.confirm-dialog[data-variant="danger"] .confirm-icon { color:var(--red-ink); background:var(--red-bg); }
+.confirm-dialog[data-variant="danger"] .confirm-accept { border-color:var(--red); background:var(--red); }
+.confirm-dialog[data-variant="danger"] .confirm-accept:hover { background:#83291D; }
+
+@keyframes dialog-in { from { opacity:0; transform:translateY(10px) scale(.99); } to { opacity:1; transform:none; } }
+@keyframes backdrop-in { from { opacity:0; } to { opacity:1; } }
+
+@media (max-width:480px) {
+  .confirm-dialog { padding:var(--sp-6) var(--sp-5); }
+  .confirm-actions { flex-direction:column-reverse; }
+  .confirm-actions button { width:100%; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .confirm-dialog[open],.confirm-dialog::backdrop { animation:none; }
+}

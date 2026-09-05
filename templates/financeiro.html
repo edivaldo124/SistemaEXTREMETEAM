@@ -2,6 +2,7 @@
 <html lang="pt-BR">
     <head>
         <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <title>Financeiro | Administração</title>
         <link rel="icon"
@@ -10,15 +11,17 @@
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/theme.css') }}">
         <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/dt_aluno.css') }}">
+              href="{{ url_for('static', filename='css/pgAdm.css') }}">
         <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/extreme.css') }}">
+              href="{{ url_for('static', filename='css/dt_aluno.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/financeiro.css') }}">
         <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/pgAdm.css') }}">
-        <link rel="stylesheet"
               href="{{ url_for('static', filename='css/pix.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/modal.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
     <body>
         <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -30,34 +33,35 @@
                     <div>
                         <p class="eyebrow">Administração</p>
                         <h1>Financeiro</h1>
-                        <p>Totais calculados a partir dos pagamentos registrados no banco.</p>
+                        <p>Totais calculados a partir das mensalidades registradas no período filtrado.</p>
                     </div>
                 </div>
                 {% with mensagens = get_flashed_messages(with_categories=true) %}
                     {% for categoria, mensagem in mensagens %}
-                        <div class="msg msg-{{ categoria }}">{{ mensagem }}</div>
+                        <div class="msg msg-{{ categoria }}"
+                             role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
                     {% endfor %}
                 {% endwith %}
                 <section class="financeiro-totais">
                     <article class="total-card total-recebido">
                         <span>Recebido no período</span>
-                        <strong>R$ {{ '%.2f'|format(totais.total_recebido)|replace('.', ',') }}</strong>
-                        <small>{{ totais.qtd_pago }} pagamento(s)</small>
+                        <strong>{{ totais.total_recebido|moeda }}</strong>
+                        <small>{{ totais.qtd_pago }} pagamento{{ "" if totais.qtd_pago == 1 else "s" }}</small>
                     </article>
                     <article class="total-card total-pendente">
                         <span>Pendente</span>
-                        <strong>R$ {{ '%.2f'|format(totais.total_pendente)|replace('.', ',') }}</strong>
-                        <small>{{ totais.qtd_pendente }} mensalidade(s)</small>
+                        <strong>{{ totais.total_pendente|moeda }}</strong>
+                        <small>{{ totais.qtd_pendente }} mensalidade{{ "" if totais.qtd_pendente == 1 else "s" }}</small>
                     </article>
                     <article class="total-card total-vencido">
                         <span>Vencido</span>
-                        <strong>R$ {{ '%.2f'|format(totais.total_vencido)|replace('.', ',') }}</strong>
-                        <small>{{ totais.qtd_vencido }} mensalidade(s)</small>
+                        <strong>{{ totais.total_vencido|moeda }}</strong>
+                        <small>{{ totais.qtd_vencido }} mensalidade{{ "" if totais.qtd_vencido == 1 else "s" }}</small>
                     </article>
                     <article class="total-card total-analise">
                         <span>Em análise</span>
-                        <strong>R$ {{ '%.2f'|format(totais.total_em_analise)|replace('.', ',') }}</strong>
-                        <small>{{ totais.qtd_em_analise }} comprovante(s)</small>
+                        <strong>{{ totais.total_em_analise|moeda }}</strong>
+                        <small>{{ totais.qtd_em_analise }} comprovante{{ "" if totais.qtd_em_analise == 1 else "s" }}</small>
                     </article>
                     <article class="total-card total-inadimplentes">
                         <span>Alunos inadimplentes</span>
@@ -67,11 +71,8 @@
                 </section>
                 <section class="detail-section">
                     <div class="section-title">
-                        <span>01</span>
-                        <div>
-                            <h2>Filtros</h2>
-                            <p>Refine por período, turma, plano, método, situação ou nome do aluno.</p>
-                        </div>
+                        <h2>Filtros</h2>
+                        <p>Refine por período, turma, plano, método, situação ou nome do aluno.</p>
                     </div>
                     <form method="GET"
                           action="/admin/financeiro"
@@ -146,56 +147,57 @@
                                    value="{{ filtros.get('busca_aluno', '') }}"
                                    placeholder="Buscar por nome…">
                         </div>
-                        <button type="submit" class="btn-salvar">Filtrar</button>
-                        <a href="/admin/financeiro" class="btn-voltar">Limpar filtros</a>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-salvar">Aplicar filtros</button>
+                            <a href="/admin/financeiro" class="btn-voltar">Limpar filtros</a>
+                        </div>
                     </form>
                 </section>
                 <section class="secao-pagamentos">
                     <div class="section-title">
-                        <span>02</span>
-                        <div>
-                            <h2>Mensalidades</h2>
-                            <p>{{ pagamentos|length }} resultado(s) com os filtros atuais.</p>
-                        </div>
+                        <h2>Mensalidades</h2>
+                        <p>{{ pagamentos|length }} resultado{{ "" if pagamentos|length == 1 else "s" }} com os filtros atuais.</p>
                     </div>
                     <div class="tabela-pagamentos table-stack">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Aluno</th>
-                                    <th>Plano</th>
-                                    <th>Competência</th>
-                                    <th>Valor</th>
-                                    <th>Vencimento</th>
-                                    <th>Status</th>
-                                    <th>Forma</th>
-                                    <th>Origem</th>
-                                    <th>Ação</th>
+                                    <th scope="col" class="coluna-pessoa">Aluno</th>
+                                    <th scope="col">Plano</th>
+                                    <th scope="col">Competência</th>
+                                    <th scope="col">Valor</th>
+                                    <th scope="col">Vencimento</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Forma</th>
+                                    <th scope="col">Origem</th>
+                                    <th scope="col">Ação</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for pagamento in pagamentos %}
                                     <tr>
-                                        <td data-label="Aluno">
-                                            <span class="student-avatar">
-                                                {% if pagamento.aluno.foto_arquivo %}
-                                                    <img class="avatar-img"
-                                                         src="{{ url_for('auth.foto_perfil', aluno_id=pagamento.aluno.id) }}"
-                                                         alt="">
-                                                {% else %}
-                                                    {{ pagamento.aluno.iniciais }}
-                                                {% endif %}
+                                        <td data-label="Aluno" class="celula-pessoa">
+                                            <span class="pessoa">
+                                                <span class="student-avatar">
+                                                    {% if pagamento.aluno.foto_arquivo %}
+                                                        <img class="avatar-img"
+                                                             src="{{ url_for('auth.foto_perfil', aluno_id=pagamento.aluno.id) }}"
+                                                             alt="">
+                                                    {% else %}
+                                                        {{ pagamento.aluno.iniciais }}
+                                                    {% endif %}
+                                                </span>
+                                                <span>{{ pagamento.aluno.nome }}</span>
                                             </span>
-                                            {{ pagamento.aluno.nome }}
                                         </td>
                                         <td data-label="Plano">{{ pagamento.plano.nome_plano if pagamento.plano else '—' }}</td>
-                                        <td data-label="Competência">{{ formatar_competencia(pagamento.competencia) }}</td>
-                                        <td data-label="Valor">R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}</td>
-                                        <td data-label="Vencimento">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
+                                        <td data-label="Competência" class="celula-numero">{{ formatar_competencia(pagamento.competencia) }}</td>
+                                        <td data-label="Valor" class="celula-numero">{{ pagamento.valor|moeda }}</td>
+                                        <td data-label="Vencimento" class="celula-numero">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
                                         <td data-label="Status">
                                             <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
                                         </td>
-                                        <td data-label="Forma">{{ (pagamento.forma_pagamento or '—')|replace('_', ' ')|title }}</td>
+                                        <td data-label="Forma">{{ pagamento.forma_pagamento|forma_pagamento }}</td>
                                         <td data-label="Origem">
                                             {% if pagamento.provider == 'mercado_pago' %}
                                                 Pix
@@ -212,6 +214,7 @@
                                                 <form action="{{ url_for('pix.sincronizar_pagamento', pagamento_id=pagamento.id) }}"
                                                       method="POST"
                                                       class="form-inline">
+                    {% include "components/csrf_field.html" %}
                                                     <button type="submit" class="btn btn-status">Sincronizar</button>
                                                 </form>
                                             {% endif %}
@@ -221,7 +224,7 @@
                                                         data-abrir-comprovante
                                                         data-pagamento-id="{{ pagamento.id }}"
                                                         data-aluno-nome="{{ pagamento.aluno.nome }}"
-                                                        data-valor="{{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}"
+                                                        data-valor="{{ pagamento.valor|moeda }}"
                                                         data-competencia="{{ formatar_competencia(pagamento.competencia) }}"
                                                         data-enviado-em="{{ pagamento.comprovante_manual_enviado_em.strftime('%d/%m/%Y %H:%M') if pagamento.comprovante_manual_enviado_em else '—' }}"
                                                         data-arquivo-url="{{ url_for('auth.ver_comprovante_manual', pagamento_id=pagamento.id) }}"
@@ -244,8 +247,6 @@
             </div>
         </main>
         {% include 'components/confirm_modal.html' %}
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/modal.css') }}">
         <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
         {% include 'components/comprovante_modal.html' %}
         <script src="{{ url_for('static', filename='js/comprovante_modal.js') }}" defer></script>
