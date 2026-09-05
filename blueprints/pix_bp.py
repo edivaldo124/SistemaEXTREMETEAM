@@ -9,8 +9,12 @@ from flask import Blueprint, flash, jsonify, redirect, request, session
 from dao.financeiroDAO import STATUS_FECHADOS, PagamentoDAO, rotulo_acao, rotulo_status
 from servicos.formatacao import formatar_competencia
 from servicos.mercado_pago import (
+    MAX_RETRIES_WEBHOOK,
+    MOEDA,
+    TIMEOUT_WEBHOOK_SEGUNDOS,
     MercadoPagoIndisponivel,
     buscar_pagamento,
+    buscar_pagamentos_por_referencia,
     cancelar_pagamento,
     criar_pagamento_pix,
     validar_assinatura_webhook,
@@ -24,6 +28,26 @@ logger = logging.getLogger(__name__)
 # já existe uma decisão em andamento, não deixamos gerar uma segunda cobrança em cima.
 STATUS_PAGAVEIS = ('pendente', 'atrasado', 'recusado')
 TOLERANCIA_VALOR = Decimal('0.01')
+
+# Tradução do meio de pagamento devolvido pela API do Mercado Pago (payment_type_id)
+# para o rótulo curto gravado em Pagamento.forma_pagamento.
+FORMAS_PAGAMENTO_MP = {
+    'credit_card': 'cartao_credito',
+    'debit_card': 'cartao_debito',
+    'prepaid_card': 'cartao_pre_pago',
+    'ticket': 'boleto',
+    'bank_transfer': 'pix',
+    'account_money': 'saldo_mercado_pago',
+    'atm': 'deposito',
+    'digital_wallet': 'carteira_digital',
+    'digital_currency': 'carteira_digital',
+    'voucher_card': 'voucher',
+    'crypto_transfer': 'cripto',
+}
+
+# Ordem de preferência ao escolher, entre vários pagamentos da mesma referência, qual
+# representa o estado real: um aprovado sempre vale mais que uma tentativa recusada.
+PRIORIDADE_STATUS_MP = ('approved', 'in_process', 'pending', 'authorized', 'rejected', 'cancelled', 'refunded', 'charged_back')
 
 
 def _pagamento_ou_none(pagamento_id):
@@ -63,7 +87,68 @@ def _serializar_pagamento(pagamento, *, qr_code_base64=None):
         'data_expiracao': pagamento.data_expiracao.isoformat() if pagamento.data_expiracao else None,
         'pix_expirado': _pix_expirado(pagamento),
         'provider_status_detail': pagamento.provider_status_detail,
+        'checkout_url': pagamento.checkout_url if PagamentoDAO.checkout_ainda_valido(pagamento) else None,
     }
+
+
+def _referencias_conhecidas(pagamento):
+    """Todas as referencias que esta mensalidade legitimamente pode receber de volta:
+    a do Pix direto e a do Checkout Pro."""
+    return {r for r in (pagamento.external_reference, pagamento.checkout_external_reference) if r}
+
+
+def _forma_pagamento_confirmada(resultado_mp, pagamento):
+    """Meio de pagamento realmente usado, sempre a partir da resposta da API."""
+    if resultado_mp.get('payment_method_id') == 'pix':
+        return 'pix'
+    tipo = resultado_mp.get('payment_type_id')
+    if tipo:
+        return FORMAS_PAGAMENTO_MP.get(tipo, tipo)
+    # A API nao informou o meio: se a notificacao casou com a referencia do Checkout Pro
+    # nao da para afirmar que foi Pix, entao fica o rotulo generico do provedor.
+    if resultado_mp.get('external_reference') and resultado_mp['external_reference'] == pagamento.checkout_external_reference:
+        return 'mercado_pago'
+    return 'pix'
+
+
+def _pagamento_mp_mais_relevante(pagamentos_mp):
+    """Entre os pagamentos que o MP associa a uma referencia, devolve o que manda no
+    estado final - um aprovado nunca perde para uma tentativa recusada anterior."""
+    if not pagamentos_mp:
+        return None
+
+    def peso(item):
+        status = item.get('status')
+        return PRIORIDADE_STATUS_MP.index(status) if status in PRIORIDADE_STATUS_MP else len(PRIORIDADE_STATUS_MP)
+
+    return sorted(pagamentos_mp, key=peso)[0]
+
+
+def sincronizar_por_referencia_checkout(pagamento, *, timeout=None, retries=None):
+    """Reconsulta o Checkout Pro pela referencia persistida e aplica o estado confirmado.
+
+    Usada na volta do Mercado Pago e no polling de status quando ainda nao existe
+    provider_payment_id (a preferencia nasce antes do pagamento). Nenhum dado da URL de
+    retorno entra aqui: a referencia usada e a que ESTE servidor gravou na mensalidade.
+
+    Devolve True se conseguiu falar com o MP (mesmo sem mudanca de estado).
+    Levanta MercadoPagoIndisponivel em falha de transporte.
+    """
+    referencia = pagamento.checkout_external_reference
+    if not referencia:
+        return False
+
+    resultado = buscar_pagamentos_por_referencia(referencia, timeout=timeout, retries=retries)
+    if not resultado['sucesso']:
+        logger.warning('Nao foi possivel consultar pagamentos da mensalidade %s por referencia.', pagamento.id)
+        return False
+
+    escolhido = _pagamento_mp_mais_relevante(resultado['pagamentos'])
+    if not escolhido:
+        return True  # falou com o MP, mas ninguem pagou ainda - estado local segue valendo
+
+    _processar_status_mp(pagamento, {'sucesso': True, **escolhido}, provider_payment_id=escolhido.get('payment_id'))
+    return True
 
 
 @pix_bp.route('/api/mensalidades/<int:pagamento_id>/pix', methods=['POST'])
@@ -156,17 +241,22 @@ def status_pix_mensalidade(pagamento_id):
     if not _acesso_permitido(pagamento):
         return jsonify({'erro': 'Sem permissao para esta mensalidade.'}), 403
 
-    if pagamento.status in STATUS_FECHADOS or not pagamento.provider_payment_id:
+    if pagamento.status in STATUS_FECHADOS:
         return jsonify(_serializar_pagamento(pagamento)), 200
 
     try:
-        resultado_mp = buscar_pagamento(pagamento.provider_payment_id)
+        if pagamento.provider_payment_id:
+            resultado_mp = buscar_pagamento(pagamento.provider_payment_id)
+            if resultado_mp['sucesso']:
+                _processar_status_mp(pagamento, resultado_mp)
+        # A preferencia do Checkout Pro existe antes de haver qualquer payment_id, entao
+        # a consulta e feita pela referencia persistida. Roda tambem quando ja existe um
+        # provider_payment_id (do Pix): o aluno pode ter uma cobranca Pix aberta e ainda
+        # assim concluir pelo checkout - a consulta acima nao enxergaria esse pagamento.
+        if pagamento.status not in STATUS_FECHADOS and pagamento.checkout_external_reference:
+            sincronizar_por_referencia_checkout(pagamento)
     except MercadoPagoIndisponivel:
         logger.warning('Mercado Pago indisponivel ao consultar status do pagamento %s.', pagamento.id, exc_info=True)
-        return jsonify(_serializar_pagamento(pagamento)), 200
-
-    if resultado_mp['sucesso']:
-        _processar_status_mp(pagamento, resultado_mp)
 
     return jsonify(_serializar_pagamento(pagamento)), 200
 
@@ -236,9 +326,12 @@ def webhook_mercado_pago():
     if pagamento and pagamento.status == 'pago' and pagamento.provider_payment_id == data_id:
         return '', 200  # notificacao repetida - ja processada, nem chama o MP de novo.
 
-    # Nunca confia no corpo do webhook - o status real vem sempre desta consulta direta a API.
+    # Nunca confia no corpo do webhook - o status real vem sempre desta consulta direta a
+    # API. Orcamento curto e sem retry: o Mercado Pago desiste da entrega se a resposta
+    # demorar, e o projeto nao tem fila/worker para empurrar isso para segundo plano
+    # (criar thread solta no processo web perderia o trabalho num restart).
     try:
-        resultado_mp = buscar_pagamento(data_id)
+        resultado_mp = buscar_pagamento(data_id, timeout=TIMEOUT_WEBHOOK_SEGUNDOS, retries=MAX_RETRIES_WEBHOOK)
     except MercadoPagoIndisponivel:
         logger.error('Mercado Pago indisponivel ao processar webhook do pagamento %s.', data_id, exc_info=True)
         return '', 503
@@ -267,15 +360,42 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
     """
     status_mp = resultado_mp.get('status')
     referencia_mp = resultado_mp.get('external_reference')
+    moeda_mp = resultado_mp.get('currency_id')
+    valor_mp = resultado_mp.get('transaction_amount')
 
-    if referencia_mp and pagamento.external_reference and referencia_mp != pagamento.external_reference:
+    # Uma aprovacao produz baixa financeira definitiva. Para esse estado, nao basta
+    # que os dados presentes sejam coerentes: os tres campos de conciliacao precisam
+    # existir na resposta autenticada do provedor. Assim, uma resposta incompleta nunca
+    # consegue quitar uma mensalidade por acidente.
+    if status_mp == 'approved':
+        campos_ausentes = [
+            nome for nome, valor in (
+                ('external_reference', referencia_mp),
+                ('transaction_amount', valor_mp),
+                ('currency_id', moeda_mp),
+            ) if valor is None or valor == ''
+        ]
+        if campos_ausentes:
+            logger.error(
+                'Pagamento aprovado incompleto para a mensalidade %s: campos de conciliacao ausentes=%s.',
+                pagamento.id, ','.join(campos_ausentes),
+            )
+            return
+
+    # A referencia confirmada pela API tem de ser uma das que ESTE servidor gerou e
+    # gravou para esta mensalidade (Pix direto ou Checkout Pro).
+    referencias = _referencias_conhecidas(pagamento)
+    if referencia_mp and referencias and referencia_mp not in referencias:
         logger.error(
-            'Divergencia de external_reference no pagamento %s: esperado=%s recebido=%s',
-            pagamento.id, pagamento.external_reference, referencia_mp,
+            'Divergencia de external_reference no pagamento %s: recebida uma referencia que nao pertence a esta mensalidade.',
+            pagamento.id,
         )
         return
 
-    valor_mp = resultado_mp.get('transaction_amount')
+    if moeda_mp and moeda_mp != MOEDA:
+        logger.error('Moeda inesperada no pagamento %s: esperado=%s recebido=%s', pagamento.id, MOEDA, moeda_mp)
+        return
+
     if valor_mp is not None:
         diferenca = abs(Decimal(str(valor_mp)) - Decimal(str(pagamento.valor)))
         if diferenca > TOLERANCIA_VALOR:
@@ -286,7 +406,11 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
             return
 
     if provider_payment_id and pagamento.provider_payment_id != provider_payment_id:
-        pagamento.provider_payment_id = provider_payment_id
+        # So sobrescreve o id do provedor quando ainda nao ha um, ou quando esta chegando
+        # a aprovacao de fato - uma notificacao atrasada de tentativa recusada nao pode
+        # apagar o id do pagamento que ja quitou a mensalidade.
+        if not pagamento.provider_payment_id or (status_mp == 'approved' and pagamento.status != 'pago'):
+            pagamento.provider_payment_id = provider_payment_id
 
     if status_mp == 'approved':
         if pagamento.status == 'pago':
@@ -296,7 +420,10 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
             data_pagamento = datetime.fromisoformat(data_aprovacao).date() if data_aprovacao else date.today()
         except ValueError:
             data_pagamento = date.today()
-        PagamentoDAO.marcar_pago_via_webhook(pagamento, data_pagamento=data_pagamento)
+        PagamentoDAO.marcar_pago_via_webhook(
+            pagamento, data_pagamento=data_pagamento,
+            forma_pagamento=_forma_pagamento_confirmada(resultado_mp, pagamento),
+        )
     elif status_mp in ('refunded', 'charged_back'):
         if pagamento.status != 'reembolsado':
             PagamentoDAO.marcar_reembolsado_via_webhook(pagamento)

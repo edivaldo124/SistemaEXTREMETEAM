@@ -10,6 +10,7 @@ from blueprints.usuario_bp import auth_bp
 from blueprints.adm_bp import admin_bp
 from blueprints.turma_bp import turma_bp
 from blueprints.pix_bp import pix_bp
+from blueprints.checkout_bp import checkout_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
@@ -38,6 +39,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(turma_bp)
 app.register_blueprint(pix_bp)
+app.register_blueprint(checkout_bp)
 
 with app.app_context():
     db.create_all()

@@ -22,13 +22,15 @@ def _resposta_criacao(payment_id='mp-1', status='pending'):
     }
 
 
-def _resposta_consulta(status='pending', external_reference=None, transaction_amount=None):
+def _resposta_consulta(status='pending', external_reference=None, transaction_amount=None,
+                       currency_id='BRL'):
     return {
         'sucesso': True,
         'status': status,
         'status_detail': f'{status}_detail',
         'external_reference': external_reference,
         'transaction_amount': transaction_amount,
+        'currency_id': currency_id,
         'date_approved': '2026-08-25T10:00:00.000-03:00' if status == 'approved' else None,
         'qr_code': None,
         'qr_code_base64': None,
@@ -104,7 +106,7 @@ def test_reutiliza_cobranca_pendente_valida(client, criar_pagamento, monkeypatch
     monkeypatch.setattr(pix_bp, 'criar_pagamento_pix', lambda **kw: chamadas_create.append(kw) or _resposta_criacao())
     monkeypatch.setattr(
         pix_bp, 'buscar_pagamento',
-        lambda payment_id: _resposta_consulta(status='pending', external_reference='mensalidade-x', transaction_amount=150.0),
+        lambda payment_id, **kwargs: _resposta_consulta(status='pending', external_reference='mensalidade-x', transaction_amount=150.0),
     )
 
     resp = client.post(f'/api/mensalidades/{pagamento.id}/pix')
@@ -125,7 +127,7 @@ def test_impede_cobranca_duplicada_em_chamadas_consecutivas(client, criar_pagame
     )
     monkeypatch.setattr(
         pix_bp, 'buscar_pagamento',
-        lambda payment_id: _resposta_consulta(status='pending', transaction_amount=150.0),
+        lambda payment_id, **kwargs: _resposta_consulta(status='pending', transaction_amount=150.0),
     )
 
     primeira = client.post(f'/api/mensalidades/{pagamento.id}/pix')
@@ -167,7 +169,7 @@ def test_status_nao_bate_no_mp_quando_ja_fechado(client, criar_pagamento, monkey
     logar_como_aluno(pagamento.aluno)
 
     chamadas = []
-    monkeypatch.setattr(pix_bp, 'buscar_pagamento', lambda payment_id: chamadas.append(payment_id) or _resposta_consulta())
+    monkeypatch.setattr(pix_bp, 'buscar_pagamento', lambda payment_id, **kwargs: chamadas.append(payment_id) or _resposta_consulta())
 
     resp = client.get(f'/api/mensalidades/{pagamento.id}/status')
 
@@ -186,7 +188,7 @@ def test_webhook_processa_aprovado(client, criar_pagamento, monkeypatch):
 
     monkeypatch.setattr(
         pix_bp, 'buscar_pagamento',
-        lambda payment_id: _resposta_consulta(status='approved', external_reference='ref-1', transaction_amount=150.0),
+        lambda payment_id, **kwargs: _resposta_consulta(status='approved', external_reference='ref-1', transaction_amount=150.0),
     )
 
     headers = _assinar('mp-1', secret)
@@ -219,7 +221,7 @@ def test_webhook_nao_aprova_pagamento_pendente(client, criar_pagamento, monkeypa
 
     monkeypatch.setattr(
         pix_bp, 'buscar_pagamento',
-        lambda payment_id: _resposta_consulta(status='pending', external_reference='ref-1', transaction_amount=150.0),
+        lambda payment_id, **kwargs: _resposta_consulta(status='pending', external_reference='ref-1', transaction_amount=150.0),
     )
 
     headers = _assinar('mp-1', secret)
@@ -237,7 +239,7 @@ def test_webhook_rejeita_divergencia_de_valor(client, criar_pagamento, monkeypat
 
     monkeypatch.setattr(
         pix_bp, 'buscar_pagamento',
-        lambda payment_id: _resposta_consulta(status='approved', external_reference='ref-1', transaction_amount=1.0),
+        lambda payment_id, **kwargs: _resposta_consulta(status='approved', external_reference='ref-1', transaction_amount=1.0),
     )
 
     headers = _assinar('mp-1', secret)
@@ -254,7 +256,7 @@ def test_webhook_repetido_e_idempotente(client, criar_pagamento, monkeypatch):
     secret = os.environ['MERCADO_PAGO_WEBHOOK_SECRET']
 
     chamadas = []
-    monkeypatch.setattr(pix_bp, 'buscar_pagamento', lambda payment_id: chamadas.append(payment_id) or _resposta_consulta(status='approved'))
+    monkeypatch.setattr(pix_bp, 'buscar_pagamento', lambda payment_id, **kwargs: chamadas.append(payment_id) or _resposta_consulta(status='approved'))
 
     headers = _assinar('mp-1', secret)
     resp = client.post('/api/webhooks/mercado-pago?data.id=mp-1', headers=headers,
@@ -270,7 +272,7 @@ def test_webhook_processa_em_processamento(client, criar_pagamento, monkeypatch)
 
     monkeypatch.setattr(
         pix_bp, 'buscar_pagamento',
-        lambda payment_id: _resposta_consulta(status='in_process', external_reference='ref-1', transaction_amount=150.0),
+        lambda payment_id, **kwargs: _resposta_consulta(status='in_process', external_reference='ref-1', transaction_amount=150.0),
     )
 
     headers = _assinar('mp-1', secret)
@@ -288,7 +290,7 @@ def test_webhook_processa_recusado_e_permite_nova_tentativa(client, criar_pagame
 
     monkeypatch.setattr(
         pix_bp, 'buscar_pagamento',
-        lambda payment_id: _resposta_consulta(status='rejected', external_reference='ref-1', transaction_amount=150.0),
+        lambda payment_id, **kwargs: _resposta_consulta(status='rejected', external_reference='ref-1', transaction_amount=150.0),
     )
 
     headers = _assinar('mp-1', secret)
@@ -302,7 +304,7 @@ def test_webhook_processa_recusado_e_permite_nova_tentativa(client, criar_pagame
     # 'recusado' entra em STATUS_PAGAVEIS - o aluno consegue gerar uma nova cobranca.
     logar_como_aluno(atualizado.aluno)
     monkeypatch.setattr(pix_bp, 'criar_pagamento_pix', lambda **kw: _resposta_criacao(payment_id='mp-2'))
-    monkeypatch.setattr(pix_bp, 'cancelar_pagamento', lambda payment_id: None)
+    monkeypatch.setattr(pix_bp, 'cancelar_pagamento', lambda payment_id, **kwargs: None)
     resp_retry = client.post(f'/api/mensalidades/{atualizado.id}/pix')
     assert resp_retry.status_code == 200
 
@@ -311,7 +313,7 @@ def test_webhook_falha_indisponibilidade_mp(client, criar_pagamento, monkeypatch
     pagamento = criar_pagamento(provider='mercado_pago', provider_payment_id='mp-1', external_reference='ref-1')
     secret = os.environ['MERCADO_PAGO_WEBHOOK_SECRET']
 
-    def _fake_buscar(payment_id):
+    def _fake_buscar(payment_id, **kwargs):
         raise MercadoPagoIndisponivel('fora do ar')
 
     monkeypatch.setattr(pix_bp, 'buscar_pagamento', _fake_buscar)

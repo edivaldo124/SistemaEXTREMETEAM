@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from config import db
 from modelos.matricula import Matricula
@@ -151,17 +151,109 @@ class PagamentoDAO:
 
     @staticmethod
     def buscar_por_external_reference(external_reference):
-        return Pagamento.query.filter_by(external_reference=external_reference).first()
+        """Acha a mensalidade por qualquer uma das duas referências persistidas.
+
+        O Pix direto grava em `external_reference`; o Checkout Pro em
+        `checkout_external_reference`. O webhook não sabe de antemão qual dos dois
+        originou a notificação, então procura nas duas colunas.
+        """
+        if not external_reference:
+            return None
+        return Pagamento.query.filter(
+            or_(
+                Pagamento.external_reference == external_reference,
+                Pagamento.checkout_external_reference == external_reference,
+            )
+        ).first()
+
+    @staticmethod
+    def bloquear_para_atualizacao(pagamento_id):
+        """Relê a mensalidade com trava de linha (SELECT ... FOR UPDATE).
+
+        Serializa cliques simultâneos em "Outras formas de pagamento": no Postgres de
+        produção a segunda requisição espera a primeira terminar e então enxerga a
+        preferência recém-criada, em vez de criar outra. No SQLite dos testes o SQLAlchemy
+        simplesmente não emite a cláusula — o comportamento continua correto, só sem trava.
+        """
+        return Pagamento.query.filter_by(id=pagamento_id).with_for_update().first()
+
+    @staticmethod
+    def buscar_por_checkout_preference_id(preference_id):
+        if not preference_id:
+            return None
+        return Pagamento.query.filter_by(checkout_preference_id=preference_id).first()
 
     @staticmethod
     def pix_ainda_valido(pagamento):
         """True se a cobrança Pix já gerada para este pagamento ainda pode ser
-        reaproveitada (mesma idempotency_key), em vez de criar uma nova."""
+        reaproveitada (mesma idempotency_key), em vez de criar uma nova.
+
+        Exige o copia-e-cola persistido: `provider_payment_id` também é preenchido por
+        pagamentos do Checkout Pro (cartão/boleto), e reaproveitar um deles como se
+        fosse Pix devolveria uma cobrança sem código nenhum para o aluno copiar.
+        """
         if not pagamento.provider_payment_id or pagamento.status in STATUS_FECHADOS:
+            return False
+        if not pagamento.pix_copia_cola:
             return False
         if pagamento.data_expiracao and pagamento.data_expiracao <= datetime.utcnow():
             return False
         return True
+
+    @staticmethod
+    def checkout_ainda_valido(pagamento, *, ambiente_atual=None):
+        """True se a preferência do Checkout Pro já criada pode ser reaproveitada.
+
+        Só reutiliza quando tudo continua batendo: mensalidade ainda em aberto, URL
+        gravada, preferência não expirada, ambiente igual ao atual (não devolve um
+        checkout de sandbox para quem já migrou para produção) e, principalmente, valor
+        idêntico ao da mensalidade — se o admin alterou o valor, a preferência antiga
+        cobraria a quantia errada e o pagamento seria barrado na conferência.
+        """
+        if not pagamento.checkout_preference_id or not pagamento.checkout_url:
+            return False
+        if pagamento.status in STATUS_FECHADOS:
+            return False
+        if pagamento.checkout_expira_em and pagamento.checkout_expira_em <= datetime.utcnow():
+            return False
+        if ambiente_atual and pagamento.checkout_ambiente != ambiente_atual:
+            return False
+        if pagamento.checkout_valor is None or Decimal(str(pagamento.checkout_valor)) != Decimal(str(pagamento.valor)):
+            return False
+        return True
+
+    @staticmethod
+    def salvar_dados_checkout(pagamento, *, preference_id, external_reference, url_checkout,
+                               ambiente, expira_em, ator='sistema'):
+        pagamento.provider = 'mercado_pago'
+        pagamento.checkout_preference_id = preference_id
+        pagamento.checkout_external_reference = external_reference
+        pagamento.checkout_url = url_checkout
+        pagamento.checkout_ambiente = ambiente
+        pagamento.checkout_valor = Decimal(str(pagamento.valor))
+        pagamento.checkout_criado_em = datetime.utcnow()
+        pagamento.checkout_expira_em = expira_em
+        db.session.add(PagamentoEvento(
+            pagamento_id=pagamento.id, tipo='checkout_criado',
+            detalhe=f'Preferência do Checkout Pro criada ({ambiente}).', ator=ator,
+        ))
+        db.session.commit()
+
+    @staticmethod
+    def limpar_dados_checkout(pagamento):
+        """Solta a preferência atual para que a próxima tentativa crie uma nova.
+
+        Nunca mexe em status nem em provider_payment_id: descartar o link de checkout
+        não pode alterar o que já foi confirmado sobre o pagamento.
+        """
+        pagamento.checkout_preference_id = None
+        pagamento.checkout_external_reference = None
+        pagamento.checkout_url = None
+        pagamento.checkout_ambiente = None
+        pagamento.checkout_valor = None
+        pagamento.checkout_criado_em = None
+        pagamento.checkout_expira_em = None
+        db.session.commit()
 
     @staticmethod
     def registrar_evento(pagamento_id, tipo, detalhe=None, ator=None):
@@ -186,10 +278,13 @@ class PagamentoDAO:
         db.session.commit()
 
     @staticmethod
-    def marcar_pago_via_webhook(pagamento, *, data_pagamento):
+    def marcar_pago_via_webhook(pagamento, *, data_pagamento, forma_pagamento='pix'):
+        """forma_pagamento vem do que o Mercado Pago confirmou na consulta à API
+        ('pix', 'credit_card', 'boleto', 'account_money'...). O padrão continua 'pix'
+        para não alterar o comportamento do fluxo Pix direto."""
         pagamento.status = 'pago'
         pagamento.data_pagamento = data_pagamento
-        pagamento.forma_pagamento = 'pix'
+        pagamento.forma_pagamento = (forma_pagamento or 'pix')[:30]
         pagamento.provider_status = 'approved'
         if pagamento.aluno:
             pagamento.aluno.mensalidade = 'Em Dia'

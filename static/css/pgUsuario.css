@@ -23,8 +23,10 @@
 .btn-acao-mensalidade{min-height:36px;padding:0 14px;font-size:11px}
 .mensalidade-acao-nota{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:underline}
 .mensalidade-acao-nota:hover{color:var(--ink)}
-.mensalidade-acao-extra{color:var(--muted);font-size:10px;font-weight:600;text-decoration:underline}
+.form-outras-formas{margin:0}
+.mensalidade-acao-extra{padding:0;border:0;background:none;color:var(--muted);font:600 10px var(--body);text-align:left;text-decoration:underline;cursor:pointer}
 .mensalidade-acao-extra:hover{color:var(--ink)}
+.mensalidade-acao-extra[disabled]{opacity:.55;cursor:progress;text-decoration:none}
 
 .tabela-presencas-recente{margin-top:16px}
 .btn-ver-historico-presencas{margin-top:14px}

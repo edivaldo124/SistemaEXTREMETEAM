@@ -571,6 +571,9 @@ def pagina_pagamento(pagamento_id):
         'pagamento.html',
         pagamento=pagamento,
         pode_enviar_comprovante=pagamento.status in STATUS_ACEITA_COMPROVANTE_MANUAL,
+        # Mesma lista de status que o Checkout Pro aceita - só oferece a ação quando ela
+        # realmente pode ser concluída.
+        pode_pagar_online=pagamento.status in STATUS_ACEITA_COMPROVANTE_MANUAL,
         rotulo_status=rotulo_status,
         formatar_competencia=formatar_competencia,
     )

@@ -35,6 +35,22 @@ class Pagamento(db.Model):
     data_criacao_pix = db.Column(db.DateTime, nullable=True)
     data_expiracao = db.Column(db.DateTime, nullable=True)
 
+    # RF: Checkout Pro (outras formas de pagamento - cartão, boleto, saldo MP...).
+    # Colunas próprias, separadas das do Pix direto: a preferência existe ANTES de haver
+    # qualquer payment_id, então nada disso pode reaproveitar provider_payment_id. As duas
+    # cobranças podem coexistir na mesma mensalidade sem uma sobrescrever a outra.
+    checkout_preference_id = db.Column(db.String(64), nullable=True, unique=True)
+    # Referência aleatória (não é o id da mensalidade), persistida e única. É por ela que
+    # o webhook reencontra a mensalidade quando a notificação vem do Checkout Pro.
+    checkout_external_reference = db.Column(db.String(120), nullable=True, unique=True)
+    checkout_url = db.Column(db.String(512), nullable=True)
+    checkout_ambiente = db.Column(db.String(20), nullable=True)  # 'producao' | 'sandbox'
+    # Valor congelado na criação da preferência: se o admin alterar a mensalidade depois,
+    # a preferência antiga cobraria o valor errado e precisa ser descartada.
+    checkout_valor = db.Column(db.Numeric(10, 2), nullable=True)
+    checkout_criado_em = db.Column(db.DateTime, nullable=True)
+    checkout_expira_em = db.Column(db.DateTime, nullable=True)
+
     # Último status/detalhe bruto devolvido pelo provedor - só para exibição ao
     # admin, nunca usado sozinho para decidir se o pagamento foi aprovado.
     provider_status = db.Column(db.String(30), nullable=True)

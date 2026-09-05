@@ -39,6 +39,7 @@ services:
       MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN:-}
       MERCADO_PAGO_WEBHOOK_SECRET: ${MERCADO_PAGO_WEBHOOK_SECRET:-}
       APP_BASE_URL: ${APP_BASE_URL:-}
+      MERCADO_PAGO_AMBIENTE: ${MERCADO_PAGO_AMBIENTE:-}
       UPLOAD_DIR: /app/uploads
     volumes:
       # Fotos de perfil e comprovantes manuais - o filesystem do container é

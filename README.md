@@ -2,7 +2,7 @@
 # Sistema-academia
 # SistemaEXTREMETEAM
 
-Sistema de gestão para academia (Extreme Team): cadastro e aprovação de alunos, planos, turmas, presença, mensalidades, pagamento de mensalidade via Pix (Mercado Pago), foto de perfil, comprovante manual e painel financeiro do admin.
+Sistema de gestão para academia (Extreme Team): cadastro e aprovação de alunos, planos, turmas, presença, mensalidades, pagamento de mensalidade via Pix e Checkout Pro (Mercado Pago), foto de perfil, comprovante manual e painel financeiro do admin.
 
 ## Instalação local
 
@@ -57,13 +57,15 @@ No `.env`:
 MERCADO_PAGO_ACCESS_TOKEN=
 MERCADO_PAGO_WEBHOOK_SECRET=
 APP_BASE_URL=
+MERCADO_PAGO_AMBIENTE=
 ```
 
 - `MERCADO_PAGO_ACCESS_TOKEN`: Access Token da conta Mercado Pago (teste ou produção). **Nunca** commitar o valor real; `.env.example` traz só um placeholder.
 - `MERCADO_PAGO_WEBHOOK_SECRET`: assinatura secreta do webhook, gerada no painel do Mercado Pago.
-- `APP_BASE_URL`: URL pública (HTTPS) onde a aplicação está publicada.
+- `APP_BASE_URL`: URL pública (HTTPS) onde a aplicação está publicada. **Obrigatória** para o Checkout Pro (monta as URLs de retorno e de notificação); sem ela, a ação "Outras formas de pagamento" falha de forma explícita, e o Pix direto continua funcionando.
+- `MERCADO_PAGO_AMBIENTE` (opcional): `producao` ou `sandbox`. Decide se o aluno é mandado para o `init_point` real ou para o `sandbox_init_point` do Checkout Pro. **Se não for definida**, o ambiente é deduzido do prefixo público do access token (`TEST-` = sandbox, qualquer outro = produção) — o token em si nunca é lido além do prefixo, nem registrado em log.
 
-Se estiver rodando via `docker compose`, essas 3 variáveis já são repassadas ao container pelo `compose.yaml` (a partir do `.env`).
+Se estiver rodando via `docker compose`, essas variáveis já são repassadas ao container pelo `compose.yaml` (a partir do `.env`).
 
 ### Como obter credenciais de teste
 
@@ -102,9 +104,35 @@ Por exemplo, `https://academiaextremeteam.com.br/api/webhooks/mercado-pago`. Ess
 
 Basta substituir `MERCADO_PAGO_ACCESS_TOKEN` e `MERCADO_PAGO_WEBHOOK_SECRET` no `.env` de produção pelos valores de produção, e recadastrar a URL do webhook (se o domínio mudou). **A conta e as credenciais de produção do Mercado Pago devem pertencer ao dono da academia** — nunca use uma conta de terceiros para receber os pagamentos reais dos alunos.
 
-### Pagamento por cartão (Payment Brick) - ainda não implementado
+## Outras formas de pagamento (Checkout Pro)
 
-Hoje o sistema só processa Pix. Se decidir adicionar cartão depois, use o [Payment Brick](https://www.mercadopago.com.br/developers/pt/docs/checkout-bricks/payment-brick/default-rendering) oficial: ele exige uma `MERCADO_PAGO_PUBLIC_KEY` (pode ficar no front-end) além do `MERCADO_PAGO_ACCESS_TOKEN` (só no backend), e um novo endpoint de criação de pagamento por token de cartão. Nunca implemente um formulário de cartão próprio - o Brick já cuida da tokenização sem os dados do cartão passarem pelo seu servidor (escopo PCI mínimo).
+Além do Pix direto, a mensalidade pendente oferece **"Outras formas de pagamento"**: cartão de crédito/débito, boleto, saldo Mercado Pago e o que mais estiver habilitado na conta. O aluno é levado ao checkout hospedado pelo Mercado Pago e volta para o sistema ao final.
+
+Nenhum dado de cartão passa pelo servidor da academia — número, validade e CVV são digitados dentro do ambiente do Mercado Pago (escopo PCI mínimo). Por isso não existe formulário de cartão próprio no projeto.
+
+### Fluxo
+
+1. `POST /perfil/mensalidade/<id>/checkout` — cria (ou reaproveita) uma preferência do Checkout Pro e responde `303` para a URL do Mercado Pago.
+2. O aluno escolhe o meio de pagamento no Mercado Pago.
+3. `GET /perfil/mensalidade/<id>/retorno-checkout` — volta para o sistema. Essa tela **ignora** `status`, `payment_id` e `external_reference` da query string: ela consulta a API do Mercado Pago pela referência que o próprio servidor gravou e só então mostra o estado.
+4. `POST /api/webhooks/mercado-pago` — mesmo endpoint do Pix. Valida a assinatura, consulta o pagamento na API e reencontra a mensalidade pela referência confirmada.
+
+A mensalidade só vira `pago` quando a API do Mercado Pago responde `approved` **e** external_reference, valor e moeda (BRL) batem com o que está no banco. Boleto pode levar até 3 dias úteis para compensar — nesse intervalo a tela mostra "Aguardando confirmação", nunca "aprovado".
+
+### Reuso de preferência
+
+A preferência criada é reaproveitada em cliques repetidos enquanto continuar válida (mensalidade em aberto, dentro da validade de 60 min, mesmo ambiente e **mesmo valor**). Se o admin alterar o valor da mensalidade, a preferência antiga é descartada e uma nova é criada — do contrário o aluno pagaria a quantia antiga e a conferência barraria o crédito.
+
+### Passos manuais no painel do Mercado Pago
+
+1. **Suas integrações → sua aplicação → Formas de pagamento**: habilite cartão de crédito, cartão de débito, boleto e saldo em conta. O que estiver desabilitado lá simplesmente não aparece no checkout — o código não filtra meios de pagamento.
+2. **Configurações → Webhooks**: a mesma URL do Pix (`{APP_BASE_URL}/api/webhooks/mercado-pago`) já cobre o Checkout Pro. Garanta que o tópico **Pagamentos** esteja marcado.
+3. A conta precisa estar apta a receber (dados bancários e verificação concluídos) para que boleto e cartão apareçam.
+
+### Limitações conhecidas
+
+- O processamento do webhook é **síncrono** — o projeto não tem fila nem worker. Para não estourar o tempo de entrega do Mercado Pago, a consulta feita dentro do webhook usa timeout curto (5s) e sem retry. Se o Mercado Pago não responder a tempo, o endpoint devolve `503` e a notificação é reenviada por eles; a tela de retorno e o polling de status também reconferem o pagamento.
+- Não há assinatura recorrente (`preapproval`): cada mensalidade é uma cobrança avulsa.
 
 ## Foto de perfil e comprovante manual (armazenamento de arquivos)
 

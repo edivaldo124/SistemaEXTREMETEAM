@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Pagar mensalidade | Centro de Treinamento Extreme Team</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/pix.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/pagamento.css') }}"><script src="{{ url_for('static',filename='js/pagamento.js') }}" defer></script>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Pagar mensalidade | Centro de Treinamento Extreme Team</title><link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/theme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/pix.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/pagamento.css') }}"><script src="{{ url_for('static',filename='js/pagamento.js') }}" defer></script><script src="{{ url_for('static',filename='js/checkout.js') }}" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -91,6 +91,18 @@
         <h2>{{ rotulo_status(pagamento.status) }}</h2>
         <p>Esta mensalidade não está mais disponível para pagamento online.</p>
     </section>
+
+    {% if pode_pagar_online %}
+    <section class="pagamento-metodo retorno-acoes">
+        <h2>Outras formas de pagamento</h2>
+        <p>Cartão de crédito ou débito, boleto e saldo Mercado Pago. Você é levado ao ambiente seguro do Mercado Pago e volta para cá ao final — a Extreme Team nunca vê os dados do seu cartão.</p>
+        <div class="retorno-botoes">
+            <form class="form-outras-formas" method="POST" action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">
+                <button type="submit" class="button-secondary" data-checkout-abrir>Ir para outras formas de pagamento</button>
+            </form>
+        </div>
+    </section>
+    {% endif %}
 
     {% if pode_enviar_comprovante %}
     <section class="pagamento-comprovante-manual">

@@ -31,4 +31,12 @@
 .form-comprovante-manual{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px}
 .form-comprovante-manual input[type=file]{max-width:220px;font-size:12px}
 
+.retorno-acoes h2{margin:0 0 6px;font:700 16px var(--display);text-transform:uppercase}
+.retorno-acoes p{margin:0 0 16px;color:var(--muted);font-size:12px;line-height:1.6}
+.retorno-botoes{display:flex;flex-wrap:wrap;gap:10px}
+.retorno-botoes .form-outras-formas{margin:0}
+.retorno-voltar{margin:0;text-align:center}
+.retorno-voltar a{color:var(--muted);font-size:12px;font-weight:700;text-decoration:underline}
+.retorno-voltar a:hover{color:var(--ink)}
+
 @media(max-width:420px){.pagamento-page{padding:24px 14px 70px}.pagamento-resumo,.pagamento-metodo{padding:20px}.pagamento-resumo-grid{grid-template-columns:1fr 1fr;gap:12px}}

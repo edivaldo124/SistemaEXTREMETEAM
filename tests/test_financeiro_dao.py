@@ -13,9 +13,21 @@ def test_pix_ainda_valido_true_dentro_da_validade(criar_pagamento):
     pagamento = criar_pagamento(
         provider='mercado_pago',
         provider_payment_id='123',
+        pix_copia_cola='00020126-copia-cola',
         data_expiracao=datetime.utcnow() + timedelta(minutes=10),
     )
     assert PagamentoDAO.pix_ainda_valido(pagamento) is True
+
+
+def test_pix_ainda_valido_falso_sem_copia_e_cola(criar_pagamento):
+    """provider_payment_id sozinho não basta: pagamentos do Checkout Pro (cartão/boleto)
+    também preenchem esse campo e não têm copia-e-cola para reaproveitar."""
+    pagamento = criar_pagamento(
+        provider='mercado_pago',
+        provider_payment_id='mp-boleto-do-checkout',
+        data_expiracao=datetime.utcnow() + timedelta(minutes=10),
+    )
+    assert PagamentoDAO.pix_ainda_valido(pagamento) is False
 
 
 def test_pix_ainda_valido_falso_apos_expirar(criar_pagamento):
