@@ -100,6 +100,11 @@ Por exemplo, `https://academiaextremeteam.com.br/api/webhooks/mercado-pago`. Ess
 3. Rode `flask db upgrade` contra o banco de produção (com backup/atenção — ver seção de migrations acima).
 4. Configure `MERCADO_PAGO_ACCESS_TOKEN`, `MERCADO_PAGO_WEBHOOK_SECRET` e `APP_BASE_URL` de produção no `.env` do servidor (nunca no repositório).
 
+No deploy por Docker, o `CMD` da imagem executa `flask --app servidor db upgrade`
+antes de iniciar o Gunicorn. Isso também atende planos do Render sem Shell ou
+Pre-Deploy Command. Se uma migração falhar, a nova versão não inicia e o motivo fica
+registrado nos logs do deploy, evitando executar código novo sobre um schema antigo.
+
 ### Trocando de credenciais de teste para produção
 
 Basta substituir `MERCADO_PAGO_ACCESS_TOKEN` e `MERCADO_PAGO_WEBHOOK_SECRET` no `.env` de produção pelos valores de produção, e recadastrar a URL do webhook (se o domínio mudou). **A conta e as credenciais de produção do Mercado Pago devem pertencer ao dono da academia** — nunca use uma conta de terceiros para receber os pagamentos reais dos alunos.

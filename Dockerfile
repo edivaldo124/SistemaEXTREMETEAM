@@ -33,4 +33,7 @@ RUN mkdir -p /app/uploads && chown academia:academia /app/uploads
 USER academia
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "2", "--timeout", "60", "servidor:app"]
+# O plano gratuito do Render não oferece Shell/Pre-Deploy Command. Aplicar as
+# migrations antes do Gunicorn mantém o schema compatível em cada publicação;
+# `flask db upgrade` é idempotente quando o banco já está na revisão mais nova.
+CMD ["sh", "-c", "flask --app servidor db upgrade && exec gunicorn --bind 0.0.0.0:5000 --workers 1 --threads 2 --timeout 60 servidor:app"]
