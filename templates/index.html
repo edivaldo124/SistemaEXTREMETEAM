@@ -32,11 +32,16 @@
                 </span>
             </a>
             <nav aria-label="Navegação principal">
-                <a href="#estrutura">A academia</a>
-                <a href="#metodo">Nosso método</a>
-                {% if professores_publicos %}<a href="#equipe">Professores</a>{% endif %}
-                {% if academia and academia.tem_contato %}<a href="#contato">Contato</a>{% endif %}
-                <button type="button" class="nav-login" data-abrir-login>Área do aluno</button>
+                <div class="home-nav-links">
+                    <a href="#estrutura">A academia</a>
+                    <a href="#metodo">Nosso método</a>
+                    {% if professores_publicos %}<a href="#equipe">Professores</a>{% endif %}
+                    {% if academia and academia.tem_contato %}<a href="#contato">Contato</a>{% endif %}
+                </div>
+                <button type="button" class="nav-login" data-abrir-login>
+                    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /></svg>
+                    Área do aluno
+                </button>
             </nav>
         </header>
         <main id="conteudo">
@@ -44,14 +49,12 @@
                 <div class="hero-copy">
                     <p class="eyebrow">Centro de treinamento</p>
                     <h1>
-                        Desperte
-                        <br>
-                        sua força.
+                        Desperte sua força.
                         <br>
                         <em>Vá ao extremo.</em>
                     </h1>
                     <p class="hero-text">
-                        Estrutura, acompanhamento e consistência para transformar esforço em resultado, no seu ritmo e sem atalhos.
+                        Disciplina, evolução e resultados reais. Aqui você encontra mais que treino: encontra uma equipe.
                     </p>
                     <div class="hero-actions">
                         <a class="button-primary" href="/cadastrar">Criar minha conta</a>
@@ -65,20 +68,29 @@
                         <small>Força, disciplina e evolução</small>
                     </div>
                 </div>
-            </section>
-            <section class="proof-strip" aria-label="Diferenciais">
-                <p>
-                    <strong>Treino</strong>
-                    <span>com direção</span>
-                </p>
-                <p>
-                    <strong>Rotina</strong>
-                    <span>que cabe na vida</span>
-                </p>
-                <p>
-                    <strong>Evolução</strong>
-                    <span>que você acompanha</span>
-                </p>
+                <ul class="hero-highlights" aria-label="O que você encontra aqui">
+                    <li>
+                        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3 5 14h6l-1 7 8-11h-6l1-7Z" /></svg>
+                        <div>
+                            <strong>Comece</strong>
+                            <span>Dê o primeiro passo</span>
+                        </div>
+                    </li>
+                    <li>
+                        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6m7 6V8m7 12v-9" /></svg>
+                        <div>
+                            <strong>Mantenha</strong>
+                            <span>Crie o hábito</span>
+                        </div>
+                    </li>
+                    <li>
+                        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Zm0 2H5v1a3 3 0 0 0 3 3m8-4h3v1a3 3 0 0 1-3 3m-4 4v4m-3 3h6" /></svg>
+                        <div>
+                            <strong>Supere</strong>
+                            <span>Alcance seu melhor</span>
+                        </div>
+                    </li>
+                </ul>
             </section>
             <section class="home-section" id="estrutura">
                 <div>
@@ -96,18 +108,18 @@
             <section class="method-grid" id="metodo" aria-label="Como funciona">
                 <article>
                     <span class="round-badge">01</span>
-                    <h3>Comece</h3>
-                    <p>Crie seu perfil e encontre o plano que combina com sua rotina.</p>
+                    <h3>Crie sua conta</h3>
+                    <p>Preencha seu cadastro e aguarde a liberação da administração.</p>
                 </article>
                 <article>
                     <span class="round-badge">02</span>
-                    <h3>Mantenha</h3>
-                    <p>Acompanhe pagamentos e informações da sua jornada em um só lugar.</p>
+                    <h3>Escolha seu plano</h3>
+                    <p>Contrate o plano que cabe na sua rotina e pague pela própria área do aluno.</p>
                 </article>
                 <article>
                     <span class="round-badge">03</span>
-                    <h3>Supere</h3>
-                    <p>Transforme frequência em força e disciplina em resultado.</p>
+                    <h3>Treine e acompanhe</h3>
+                    <p>Veja turmas, presença e mensalidades sempre que precisar, em um só lugar.</p>
                 </article>
             </section>
             {% if professores_publicos %}

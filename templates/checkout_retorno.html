@@ -32,12 +32,16 @@
                  class="pagamento-container">
                 <section class="pagamento-resumo">
                     <div class="pagamento-resumo-topo">
+                        <span class="icon-tile" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M8 3v3m8-3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z" /></svg>
+                        </span>
                         <div>
                             <p class="eyebrow">Situação do pagamento</p>
                             <h1>{{ pagamento.plano.nome_plano if pagamento.plano else 'Mensalidade' }}</h1>
                         </div>
                         <span class="status status-{{ pagamento.status }}" data-status-badge>{{ rotulo_status(pagamento.status) }}</span>
                     </div>
+                    <p class="pagamento-valor-destaque">{{ pagamento.valor|moeda }}</p>
                     <div class="pagamento-resumo-grid">
                         <div>
                             <span>Competência</span>
@@ -46,10 +50,6 @@
                         <div>
                             <span>Vencimento</span>
                             <strong>{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</strong>
-                        </div>
-                        <div>
-                            <span>Valor total</span>
-                            <strong class="pagamento-valor">{{ pagamento.valor|moeda }}</strong>
                         </div>
                         <div>
                             <span>Forma</span>
@@ -63,13 +63,13 @@
                          role="status"
                          aria-live="polite">
                     {% if consulta_falhou %}
-                        <p class="pagamento-icone" aria-hidden="true">⚠</p>
+                        <span class="pagamento-icone pagamento-icone-espera" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8.5v4m0 3v.01M4.2 18.5 11 5.6a1.1 1.1 0 0 1 2 0l6.8 12.9a1.1 1.1 0 0 1-1 1.6H5.2a1.1 1.1 0 0 1-1-1.6Z" /></svg></span>
                         <h2>Não conseguimos confirmar agora</h2>
                         <p>
                             O Mercado Pago não respondeu à nossa consulta. Se você concluiu o pagamento, ele ainda será confirmado automaticamente. Atualize esta página em alguns instantes.
                         </p>
                     {% elif pagamento.status == 'pago' %}
-                        <p class="pagamento-icone" aria-hidden="true">✅</p>
+                        <span class="pagamento-icone pagamento-icone-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8 12.5 2.8 2.8L16.5 9M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></span>
                         <h2>Pagamento confirmado</h2>
                         <p>O Mercado Pago confirmou o recebimento e esta mensalidade já está quitada.</p>
                         <a class="button-primary"
@@ -77,25 +77,25 @@
                             Ver comprovante
                         </a>
                     {% elif pagamento.status == 'em_processamento' %}
-                        <p class="pagamento-icone" aria-hidden="true">⏳</p>
+                        <span class="pagamento-icone pagamento-icone-espera" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 7v5l3.5 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></span>
                         <h2>Pagamento em análise</h2>
                         <p>
                             O Mercado Pago está analisando o pagamento. Assim que houver uma decisão, a situação desta mensalidade é atualizada sozinha.
                         </p>
                     {% elif pagamento.status == 'em_analise' %}
-                        <p class="pagamento-icone" aria-hidden="true">🕓</p>
+                        <span class="pagamento-icone pagamento-icone-espera" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3v3.5c0 2 4 3.3 4 5.5s-4 3.5-4 5.5V21m8-18v3.5c0 2-4 3.3-4 5.5s4 3.5 4 5.5V21" /></svg></span>
                         <h2>Comprovante em análise</h2>
                         <p>A administração está conferindo o comprovante enviado. A situação será atualizada em breve.</p>
                     {% elif pagamento.status == 'recusado' %}
-                        <p class="pagamento-icone" aria-hidden="true">✖</p>
+                        <span class="pagamento-icone pagamento-icone-erro" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 9 6 6m0-6-6 6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></span>
                         <h2>Pagamento recusado</h2>
                         <p>O Mercado Pago não aprovou esse pagamento. Nenhum valor foi cobrado e você pode tentar de novo por outro meio.</p>
                     {% elif pagamento.status in ('cancelado', 'reembolsado') %}
-                        <p class="pagamento-icone" aria-hidden="true">ℹ</p>
+                        <span class="pagamento-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 11v5m0-8.5v.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></span>
                         <h2>{{ rotulo_status(pagamento.status) }}</h2>
                         <p>Esta mensalidade não está mais disponível para pagamento online. Fale com a administração se precisar de ajuda.</p>
                     {% else %}
-                        <p class="pagamento-icone" aria-hidden="true">⌛</p>
+                        <span class="pagamento-icone pagamento-icone-espera" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3v3.5c0 2 4 3.3 4 5.5s-4 3.5-4 5.5V21m8-18v3.5c0 2-4 3.3-4 5.5s4 3.5 4 5.5V21" /></svg></span>
                         <h2>Aguardando confirmação</h2>
                         <p>
                             Ainda não recebemos a confirmação do Mercado Pago. Pagamentos por boleto podem levar até 3 dias úteis para compensar; cartão e Pix costumam confirmar em poucos minutos.

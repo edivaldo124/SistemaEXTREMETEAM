@@ -3,37 +3,47 @@
    ========================================================================= */
 
 /* ------------------------------------------------- totais do período ---- */
-/* Cinco números que resumem a tela. O filete lateral repete a cor da situação
-   correspondente na tabela abaixo. */
+/* Cinco números que resumem a tela. O ícone e o filete repetem a cor da
+   situação correspondente na tabela abaixo — nunca só a cor: cada cartão
+   diz por extenso o que conta. */
 
 .financeiro-totais {
   display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:var(--sp-3); margin:var(--sp-7) 0;
+  gap:var(--sp-4); margin:var(--sp-6) 0;
 }
 .total-card {
+  display:flex; flex-direction:column; gap:var(--sp-3);
   padding:var(--sp-5);
-  border:1px solid var(--line); border-left:4px solid var(--line-strong);
-  border-radius:var(--radius); background:var(--surface);
+  border:1px solid var(--line); border-top:4px solid var(--line-strong);
+  border-radius:var(--radius-card); background:var(--surface);
+  box-shadow:var(--shadow-card);
 }
-.total-card span {
-  display:block; margin-bottom:var(--sp-2);
-  color:var(--text-2); font-size:var(--fs-micro); font-weight:600;
+.total-card .icon-tile { width:38px; height:38px; border-radius:var(--radius); }
+.total-card .icon-tile svg { width:19px; height:19px; }
+.total-card > div > span {
+  display:block;
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:700;
   letter-spacing:.06em; text-transform:uppercase;
 }
-.total-card strong {
-  display:block; color:var(--text);
-  font:700 24px/1.1 var(--display); font-variant-numeric:tabular-nums;
+.total-card > div > strong {
+  display:block; margin-top:var(--sp-1); color:var(--text);
+  font:700 27px/1.05 var(--display); font-variant-numeric:tabular-nums;
 }
-.total-card small {
+.total-card > div > small {
   display:block; margin-top:var(--sp-1);
   color:var(--text-2); font-size:var(--fs-xs); font-variant-numeric:tabular-nums;
 }
 
-.total-recebido      { border-left-color:var(--green); }
-.total-pendente      { border-left-color:var(--gold); }
-.total-vencido       { border-left-color:var(--red); }
-.total-analise       { border-left-color:var(--amber); }
-.total-inadimplentes { border-left-color:var(--blue); }
+.total-recebido      { border-top-color:var(--green); }
+.total-recebido .icon-tile      { color:var(--green-ink); background:var(--green-bg); }
+.total-pendente      { border-top-color:var(--gold); }
+.total-pendente .icon-tile      { color:var(--amber-ink); background:var(--amber-bg); }
+.total-vencido       { border-top-color:var(--red); }
+.total-vencido .icon-tile       { color:var(--red-ink); background:var(--red-bg); }
+.total-analise       { border-top-color:var(--amber); }
+.total-analise .icon-tile       { color:var(--amber-ink); background:var(--amber-bg); }
+.total-inadimplentes { border-top-color:var(--blue); }
+.total-inadimplentes .icon-tile { color:var(--blue-ink); background:var(--blue-bg); }
 
 /* ------------------------------------------------------------ filtros --- */
 
@@ -47,7 +57,7 @@
 
 /* ------------------------------------------- revisão de comprovante ----- */
 
-.comprovante-dialog { width:min(600px,calc(100% - 32px)); }
+.comprovante-dialog { width:min(620px,calc(100% - 32px)); }
 .comprovante-resumo {
   display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-4);
   margin-bottom:var(--sp-5); padding-bottom:var(--sp-5);
@@ -55,40 +65,69 @@
 }
 .comprovante-resumo span {
   display:block; margin-bottom:var(--sp-1);
-  color:var(--text-2); font-size:var(--fs-micro); font-weight:600;
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:700;
   letter-spacing:.08em; text-transform:uppercase;
 }
 .comprovante-resumo strong { color:var(--text); font:600 var(--fs-lg)/1.3 var(--body); }
 
 .comprovante-preview-area {
-  display:flex; flex-direction:column; align-items:center; gap:var(--sp-3);
-  min-height:170px; margin-bottom:var(--sp-5); padding:var(--sp-4);
-  border:1px solid var(--line); border-radius:var(--radius);
-  background:var(--surface);
+  display:flex; flex-direction:column; align-items:center; gap:var(--sp-4);
+  min-height:180px; margin-bottom:var(--sp-5); padding:var(--sp-4);
+  border:1px solid var(--line); border-radius:var(--radius-card);
+  background:var(--surface-2);
 }
-.comprovante-preview-area img { max-width:100%; max-height:320px; object-fit:contain; }
+.comprovante-preview-area img { max-width:100%; max-height:320px; object-fit:contain; border-radius:var(--radius); }
 .comprovante-sem-preview { margin:0; color:var(--text-2); font-size:var(--fs-xs); text-align:center; }
 
 .comprovante-acoes { display:flex; flex-direction:column; gap:var(--sp-4); }
 .comprovante-acoes .form-revisao {
   padding:var(--sp-4);
-  border:1px solid var(--line); border-radius:var(--radius);
+  border:1px solid var(--line); border-radius:var(--radius-card);
   background:var(--surface-2);
 }
 
 /* --------------------------------------------------------- responsivo --- */
 
-@media (max-width:1100px) {
+@media (max-width:1180px) {
   .financeiro-totais { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
 @media (max-width:900px) {
   .form-filtros-financeiro { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:640px) {
-  .financeiro-totais { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .financeiro-totais { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-3); }
+  .total-card { padding:var(--sp-4); }
+  .total-card > div > strong { font-size:24px; }
 }
-@media (max-width:480px) {
+@media (max-width:420px) {
   .financeiro-totais { grid-template-columns:1fr; }
   .form-filtros-financeiro { grid-template-columns:1fr; }
   .comprovante-resumo { grid-template-columns:1fr; }
+}
+
+/* ------------------------------------------------ tabela de mensalidades -- */
+/* Nove colunas de dado mais três ações não cabem lado a lado em 1440px com a
+   barra lateral. As ações viram uma pilha estreita e a tabela passa a caber
+   inteira, sem rolagem horizontal. */
+
+@media (min-width:641px) {
+  .tabela-financeiro > table { min-width:0; }
+  .tabela-financeiro td.acao-cell,
+  .secao-pagamentos .tabela-financeiro td.acao-cell {
+    display:flex; flex-direction:column; align-items:stretch; gap:var(--sp-2);
+    white-space:normal;
+  }
+  .tabela-financeiro td.acao-cell > * + * { margin-left:0; }
+  .tabela-financeiro td.acao-cell .form-inline { display:flex; }
+  .tabela-financeiro td.acao-cell .btn { width:100%; }
+  /* Colunas apertadas ao mínimo legível para as nove caberem sem rolagem. */
+  .tabela-financeiro th,.tabela-financeiro td { padding:var(--sp-3); }
+  .tabela-financeiro td.celula-pessoa,.tabela-financeiro th.coluna-pessoa { min-width:152px; }
+  /* Nome longo quebra em duas linhas em vez de empurrar a tabela. */
+  .tabela-financeiro .pessoa > span:last-child { white-space:normal; }
+  .tabela-financeiro td.acao-cell { min-width:138px; }
+  .tabela-financeiro th { letter-spacing:.04em; }
+  /* "Setembro de 2026" pode quebrar em duas linhas; o valor e as datas, não. */
+  .tabela-financeiro td:nth-child(3) { white-space:normal; }
+  .secao-pagamentos:has(.tabela-financeiro) { padding-inline:var(--sp-5); }
 }

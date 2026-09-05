@@ -35,12 +35,16 @@
                  class="pagamento-container">
                 <section class="pagamento-resumo">
                     <div class="pagamento-resumo-topo">
+                        <span class="icon-tile" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M8 3v3m8-3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z" /></svg>
+                        </span>
                         <div>
                             <p class="eyebrow">Resumo da mensalidade</p>
                             <h1>{{ pagamento.plano.nome_plano if pagamento.plano else 'Mensalidade' }}</h1>
                         </div>
                         <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
                     </div>
+                    <p class="pagamento-valor-destaque">{{ pagamento.valor|moeda }}</p>
                     <div class="pagamento-resumo-grid">
                         <div>
                             <span>Aluno</span>
@@ -54,10 +58,6 @@
                             <span>Vencimento</span>
                             <strong>{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</strong>
                         </div>
-                        <div>
-                            <span>Valor total</span>
-                            <strong class="pagamento-valor">{{ pagamento.valor|moeda }}</strong>
-                        </div>
                     </div>
                 </section>
                 <section class="pagamento-metodo" data-estado="carregando">
@@ -67,7 +67,35 @@
                     <p class="alert" data-erro-msg role="alert">Não foi possível carregar o pagamento.</p>
                     <button type="button" class="button-primary" data-tentar-novamente>Tentar novamente</button>
                 </section>
-                <section class="pagamento-metodo" data-estado="pix" hidden>
+                <section class="pagamento-metodo pagamento-pix" data-estado="pix" hidden>
+                    <h2 class="pagamento-metodo-titulo">Pagar com Pix</h2>
+                    <div class="pix-qr-area">
+                        <img data-qr alt="QR Code para pagamento via Pix" hidden>
+                        <p class="pix-sem-qr" data-sem-qr hidden>QR Code indisponível no momento. Use o código copia e cola abaixo.</p>
+                    </div>
+                    <label for="pagamento-copia-cola">Pix copia e cola</label>
+                    <div class="pix-copia-linha">
+                        <input id="pagamento-copia-cola"
+                               type="text"
+                               readonly
+                               data-copia-cola
+                               aria-label="Código Pix copia e cola">
+                        <button type="button" class="button-primary" data-copiar>
+                            <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9h9v11H9zM6 15H5V4h9v1" /></svg>
+                            Copiar código
+                        </button>
+                    </div>
+                    <p class="pix-falha-copiar" data-falha-copiar hidden role="alert">
+                        Não foi possível copiar automaticamente. Selecione o código acima e copie manualmente.
+                    </p>
+                    <p class="pagamento-expiracao">
+                        Válido até
+                        <strong data-expiracao>—</strong>
+                    </p>
+                    <p class="pix-status" role="status" aria-live="polite">
+                        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3.5 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                        Aguardando pagamento. Esta página atualiza sozinha assim que o Pix for confirmado.
+                    </p>
                     <div class="pagamento-selo-seguranca">
                         <span class="selo selo-mercadopago">
                             <svg class="selo-icone"
@@ -100,34 +128,13 @@
                     <p class="pagamento-seguranca-texto">
                         Pagamento processado com criptografia pelo Mercado Pago. A Extreme Team nunca vê nem armazena os dados da sua conta bancária.
                     </p>
-                    <div class="pix-qr-area">
-                        <img data-qr alt="QR Code para pagamento via Pix" hidden>
-                        <p class="pix-sem-qr" data-sem-qr hidden>QR Code indisponível no momento. Use o código copia e cola abaixo.</p>
-                    </div>
-                    <label for="pagamento-copia-cola">Pix copia e cola</label>
-                    <div class="pix-copia-linha">
-                        <input id="pagamento-copia-cola"
-                               type="text"
-                               readonly
-                               data-copia-cola
-                               aria-label="Código Pix copia e cola">
-                        <button type="button" class="button-secondary" data-copiar>Copiar código</button>
-                    </div>
-                    <p class="pix-falha-copiar" data-falha-copiar hidden role="alert">
-                        Não foi possível copiar automaticamente. Selecione o código acima e copie manualmente.
-                    </p>
-                    <p class="pagamento-expiracao">
-                        Válido até
-                        <strong data-expiracao>—</strong>
-                    </p>
-                    <p class="pix-status" role="status" aria-live="polite">
-                        Aguardando pagamento. Esta página atualiza sozinha assim que o Pix for confirmado.
-                    </p>
                 </section>
                 <section class="pagamento-metodo pagamento-estado-info"
                          data-estado="processando"
                          hidden>
-                    <p class="pagamento-icone" aria-hidden="true">⏳</p>
+                    <span class="pagamento-icone pagamento-icone-espera" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 7v5l3.5 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </span>
                     <h2>Pagamento em processamento</h2>
                     <p>
                         O Mercado Pago está analisando o pagamento. Isso costuma levar poucos instantes e esta página atualiza sozinha.
@@ -136,7 +143,9 @@
                 <section class="pagamento-metodo pagamento-estado-info"
                          data-estado="analise"
                          hidden>
-                    <p class="pagamento-icone" aria-hidden="true">🕓</p>
+                    <span class="pagamento-icone pagamento-icone-espera" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3v3.5c0 2 4 3.3 4 5.5s-4 3.5-4 5.5V21m8-18v3.5c0 2-4 3.3-4 5.5s4 3.5 4 5.5V21" /></svg>
+                    </span>
                     <h2>Comprovante em análise</h2>
                     <p>
                         Recebemos o comprovante enviado. A administração vai conferir e a situação desta mensalidade será atualizada em breve.
@@ -145,14 +154,18 @@
                 <section class="pagamento-metodo pagamento-estado-info"
                          data-estado="aprovado"
                          hidden>
-                    <p class="pagamento-icone" aria-hidden="true">✅</p>
-                    <h2>Pagamento aprovado!</h2>
+                    <span class="pagamento-icone pagamento-icone-ok" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m8 12.5 2.8 2.8L16.5 9M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </span>
+                    <h2>Pagamento aprovado</h2>
                     <p>Redirecionando para o seu comprovante…</p>
                 </section>
                 <section class="pagamento-metodo pagamento-estado-info"
                          data-estado="expirado"
                          hidden>
-                    <p class="pagamento-icone" aria-hidden="true">⌛</p>
+                    <span class="pagamento-icone pagamento-icone-espera" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 7v5l3 1.8M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-4 8 4 4m0-4-4 4" /></svg>
+                    </span>
                     <h2>QR Code expirado</h2>
                     <p>Esse código Pix não é mais válido. Gere um novo código para continuar.</p>
                     <button type="button" class="button-primary" data-tentar-novamente>Gerar novo código Pix</button>
@@ -160,7 +173,9 @@
                 <section class="pagamento-metodo pagamento-estado-info"
                          data-estado="recusado"
                          hidden>
-                    <p class="pagamento-icone" aria-hidden="true">✖</p>
+                    <span class="pagamento-icone pagamento-icone-erro" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m9 9 6 6m0-6-6 6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </span>
                     <h2>Pagamento recusado</h2>
                     <p>O Mercado Pago não conseguiu aprovar esse pagamento. Você pode tentar novamente.</p>
                     <button type="button" class="button-primary" data-tentar-novamente>Tentar novamente</button>
@@ -168,7 +183,9 @@
                 <section class="pagamento-metodo pagamento-estado-info"
                          data-estado="encerrado"
                          hidden>
-                    <p class="pagamento-icone" aria-hidden="true">ℹ</p>
+                    <span class="pagamento-icone" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 11v5m0-8.5v.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </span>
                     <h2>{{ rotulo_status(pagamento.status) }}</h2>
                     <p>Esta mensalidade não está mais disponível para pagamento online.</p>
                 </section>
@@ -183,7 +200,11 @@
                                   method="POST"
                                   action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">
                     {% include "components/csrf_field.html" %}
-                                <button type="submit" class="button-secondary" data-checkout-abrir>Ir para outras formas de pagamento</button>
+                                <button type="submit" class="button-secondary linha-acao" data-checkout-abrir>
+                                    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18M3 10.5V7a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6.5ZM6.5 14h4" /></svg>
+                                    <span>Ir para outras formas de pagamento</span>
+                                    <svg class="icone linha-acao-seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+                                </button>
                             </form>
                         </div>
                     </section>
@@ -191,7 +212,10 @@
                 {% if pode_enviar_comprovante %}
                     <section class="pagamento-comprovante-manual">
                         <details>
-                            <summary>Já pagou por outro meio? Envie o comprovante</summary>
+                            <summary>
+                                <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" /></svg>
+                                <span>Já pagou por outro meio? Envie o comprovante</span>
+                            </summary>
                             <p>
                                 Aceitamos comprovante em JPEG, PNG ou PDF, até 8 MB. O envio não confirma o pagamento sozinho: a administração vai conferir e atualizar a situação.
                             </p>

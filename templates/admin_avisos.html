@@ -17,7 +17,7 @@
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
-    <body>
+    <body class="admin-shell">
         <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
         {% set secao_ativa = 'avisos' %}
         {% include 'components/admin_nav.html' %}
@@ -30,12 +30,22 @@
                 </div>
                 <div class="admin-metrics">
                     <article>
-                        <strong>{{ total_ativos }}</strong>
-                        <span>Alunos ativos</span>
+                        <span class="icon-tile" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6m2-6c3 0 5 2 5 6" /></svg>
+                        </span>
+                        <div>
+                            <strong>{{ total_ativos }}</strong>
+                            <span>Alunos ativos</span>
+                        </div>
                     </article>
                     <article>
-                        <strong>{{ total_inadimplentes }}</strong>
-                        <span>Com mensalidade pendente</span>
+                        <span class="icon-tile" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M12 8.5v4m0 3v.01M4.2 18.5 11 5.6a1.1 1.1 0 0 1 2 0l6.8 12.9a1.1 1.1 0 0 1-1 1.6H5.2a1.1 1.1 0 0 1-1-1.6Z" /></svg>
+                        </span>
+                        <div>
+                            <strong>{{ total_inadimplentes }}</strong>
+                            <span>Com mensalidade pendente</span>
+                        </div>
                     </article>
                 </div>
             </section>

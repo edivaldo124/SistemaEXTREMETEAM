@@ -3,15 +3,15 @@
    ========================================================================= */
 
 .confirm-dialog {
-  position:fixed; width:min(460px,calc(100% - 32px));
+  position:fixed; width:min(470px,calc(100% - 32px));
   padding:var(--sp-7);
-  border:0; border-radius:var(--radius);
+  border:0; border-radius:var(--radius-lg);
   color:var(--text); background:var(--surface);
   box-shadow:var(--shadow-dialogo); overflow:visible;
 }
 .confirm-dialog[open] { animation:dialog-in .24s var(--ease); }
 .confirm-dialog::backdrop {
-  background:rgba(0,0,0,.72); backdrop-filter:blur(3px);
+  background:rgba(0,0,0,.74); backdrop-filter:blur(4px);
   animation:backdrop-in .18s ease;
 }
 
@@ -19,8 +19,8 @@
 
 .confirm-icon {
   display:grid; place-items:center;
-  width:44px; height:44px; margin-bottom:var(--sp-5);
-  border-radius:var(--radius);
+  width:48px; height:48px; margin-bottom:var(--sp-5);
+  border-radius:var(--radius-pill);
   color:var(--amber-ink); background:var(--amber-bg);
 }
 .confirm-icon svg {
@@ -64,7 +64,7 @@
 @keyframes backdrop-in { from { opacity:0; } to { opacity:1; } }
 
 @media (max-width:480px) {
-  .confirm-dialog { padding:var(--sp-6) var(--sp-5); }
+  .confirm-dialog { padding:var(--sp-6) var(--sp-5); border-radius:var(--radius-card); }
   .confirm-actions { flex-direction:column-reverse; }
   .confirm-actions button { width:100%; }
 }

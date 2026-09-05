@@ -3,22 +3,25 @@
    Carregar SEMPRE por último, depois de theme.css e da folha da tela.
 
    Regra da marca: preto é a base, o amarelo marca ação e item ativo.
-   Fora disso ele não aparece. Sem clip-path decorativo, sem faixa inclinada,
-   sem logo repetido como textura.
+   Fora disso ele não aparece. A arte do dragão nunca é redesenhada nem
+   recortada: entra sempre como imagem inteira sobre fundo preto.
    ========================================================================= */
 
 /* --------------------------------------------------- barra superior ----- */
-/* Um único cabeçalho, usado por todas as áreas do sistema. */
+/* Um cabeçalho escuro, arredondado, flutuando sobre o papel. */
 
-.home-header,.app-header,.admin-header,.detail-header,.account-header {
+.app-header,.detail-header,.account-header {
   display:flex; align-items:center; justify-content:space-between;
-  gap:var(--sp-5); padding:var(--sp-4) clamp(var(--sp-5),5vw,var(--sp-11));
-  border-bottom:1px solid var(--ink-3);
+  gap:var(--sp-5);
+  margin:var(--sp-4) clamp(var(--sp-4),3vw,var(--sp-7)) 0;
+  padding:var(--sp-3) var(--sp-5);
+  border:1px solid var(--ink-3); border-radius:var(--radius-lg);
   color:var(--text-on-ink); background:var(--ink);
+  box-shadow:var(--shadow-card);
 }
 
-.app-header nav,.admin-header nav,.admin-header > div {
-  display:flex; align-items:center; gap:var(--sp-5); min-width:0;
+.app-header nav,.app-header > div,.admin-header > div {
+  display:flex; align-items:center; gap:var(--sp-4); min-width:0;
 }
 
 .app-header nav a,.admin-header a,.detail-header a,.account-header a,
@@ -30,60 +33,196 @@
 .app-header nav a:hover,.admin-header a:hover,.detail-header a:hover,
 .account-header a:hover,.home-header nav a:hover { color:var(--yellow); }
 
-/* Item ativo: amarelo mais um traço embaixo. A cor sozinha não basta. */
-.app-header nav a.is-active,.app-header nav a[aria-current="page"],
-.admin-header a.is-active,.admin-header a[aria-current="page"] {
-  position:relative; color:var(--yellow); font-weight:700;
-}
-.app-header nav a.is-active::after,.app-header nav a[aria-current="page"]::after,
-.admin-header a.is-active::after,.admin-header a[aria-current="page"]::after {
-  content:""; position:absolute; left:0; right:0; bottom:-6px;
-  height:2px; background:var(--yellow);
+/* Item ativo: pastilha amarela. A cor sozinha nunca basta, então o item
+   ativo também carrega aria-current. */
+.app-header nav a.is-active,.app-header nav a[aria-current="page"] {
+  color:var(--ink); background:var(--yellow); font-weight:700;
+  padding:var(--sp-2) var(--sp-4); border-radius:var(--radius-pill);
 }
 
 /* Sair e voltar: ação de saída, tratada como secundária. */
 .app-header #link-sair,.link-logout,
 .detail-header > a:last-child,.account-header > a:last-child {
-  padding:var(--sp-2) var(--sp-3); border:1px solid #45484B; border-radius:var(--radius);
-  color:var(--text-on-ink); font-size:var(--fs-xs); font-weight:600;
+  display:inline-flex; align-items:center; gap:var(--sp-2);
+  padding:var(--sp-2) var(--sp-4);
+  border:1px solid var(--ink-4); border-radius:var(--radius-pill);
+  color:var(--text-on-ink); background:transparent;
+  font-size:var(--fs-xs); font-weight:600; cursor:pointer;
+  transition:border-color .16s ease, color .16s ease, background .16s ease;
 }
 .app-header #link-sair:hover,.link-logout:hover,
 .detail-header > a:last-child:hover,.account-header > a:last-child:hover {
-  border-color:var(--yellow); color:var(--yellow);
+  border-color:var(--yellow); color:var(--yellow); background:rgba(253,207,23,.08);
 }
 .logout-form { margin:0; }
-.logout-form button {
-  background:transparent; font-family:inherit; cursor:pointer;
-}
+.logout-form button { font-family:inherit; }
 
-.link-turmas { color:var(--text-on-ink-2); }
 .nav-login {
-  min-height:40px; padding:0 var(--sp-4);
-  border:1px solid var(--yellow); border-radius:var(--radius);
+  display:inline-flex; align-items:center; gap:var(--sp-2);
+  min-height:44px; padding:0 var(--sp-5);
+  border:1px solid var(--yellow); border-radius:var(--radius-pill);
   color:var(--ink); background:var(--yellow);
-  font-size:var(--fs-sm); font-weight:700; cursor:pointer;
+  font-size:var(--fs-sm); font-weight:700; white-space:nowrap; cursor:pointer;
+  transition:background .16s ease, border-color .16s ease;
 }
 .nav-login:hover { background:var(--gold); border-color:var(--gold); }
+.nav-login .icone { width:17px; height:17px; }
 
 /* Cargo de quem está logado, ao lado do botão de sair. */
-.admin-header > div > span {
-  color:var(--text-on-ink-2); font-size:var(--fs-xs); font-weight:600;
-  letter-spacing:.1em; text-transform:uppercase;
+.admin-header > div > span,.app-header > div > span {
+  color:var(--text-on-ink-2); font-size:var(--fs-xs); font-weight:700;
+  letter-spacing:.12em; text-transform:uppercase;
+}
+
+/* ------------------------------------- administração: barra lateral ----- */
+/* No desktop a navegação vira uma coluna escura fixa ao lado do conteúdo.
+   No celular volta a ser uma barra no topo com as seções roláveis. */
+
+body.admin-shell {
+  display:grid; grid-template-columns:236px minmax(0,1fr);
+  gap:var(--sp-6); align-items:start;
+  padding:var(--sp-6) var(--sp-6) var(--sp-6) var(--sp-6);
+  min-height:100dvh;
+}
+
+.admin-header {
+  display:flex; flex-direction:column; gap:var(--sp-7);
+  position:sticky; top:var(--sp-6);
+  min-height:calc(100dvh - var(--sp-9));
+  padding:var(--sp-6) var(--sp-5);
+  border:1px solid var(--ink-3); border-radius:var(--radius-lg);
+  color:var(--text-on-ink); background:var(--ink);
+  box-shadow:var(--shadow-raised);
+  overflow:hidden;
+}
+/* Selo dourado discreto no rodapé da coluna, atrás do botão de sair. */
+.admin-header::after {
+  content:""; position:absolute; z-index:0; right:-70px; bottom:-70px;
+  width:200px; height:200px; border-radius:50%;
+  background:radial-gradient(circle,rgba(214,162,16,.30),transparent 68%);
+  pointer-events:none;
+}
+.admin-header > *,.admin-header nav { position:relative; z-index:1; }
+
+.admin-header .site-brand {
+  flex-direction:column; align-items:flex-start; gap:var(--sp-3);
+  padding-bottom:var(--sp-6); border-bottom:1px solid var(--ink-3);
+  width:100%;
+}
+.admin-header .site-brand img { width:56px; height:56px; }
+
+.admin-header nav.admin-nav {
+  display:flex; flex-direction:column; justify-content:space-between;
+  flex:1; gap:var(--sp-6); min-width:0;
+}
+.admin-nav-scroll {
+  display:flex; flex-direction:column; align-items:stretch; gap:var(--sp-1);
+}
+.admin-nav-scroll::-webkit-scrollbar { display:none; }
+
+.admin-nav-scroll a.link-turmas {
+  display:flex; align-items:center; gap:var(--sp-3);
+  min-height:48px; padding:0 var(--sp-4);
+  border-radius:var(--radius); border:1px solid transparent;
+  color:var(--text-on-ink-2); font-size:var(--fs-sm); font-weight:600;
+  text-decoration:none;
+  transition:color .16s ease, background .16s ease;
+}
+.admin-nav-scroll a.link-turmas:hover { color:var(--text-on-ink); background:var(--ink-2); }
+.admin-nav-scroll a.link-turmas .icone { width:20px; height:20px; }
+.admin-nav-scroll a.is-active,
+.admin-nav-scroll a[aria-current="page"] {
+  color:var(--ink); background:var(--yellow); font-weight:700;
+}
+.admin-nav-scroll a.is-active:hover { color:var(--ink); background:var(--yellow); }
+
+.admin-header .logout-form { width:100%; }
+.admin-header .link-logout { width:100%; justify-content:flex-start; min-height:48px; border-radius:var(--radius); }
+
+@media (max-width:1023px) {
+  body.admin-shell { grid-template-columns:minmax(0,1fr); gap:0; padding:0; }
+  .admin-header {
+    position:sticky; top:0; z-index:30;
+    flex-direction:row; flex-wrap:wrap; align-items:center; gap:var(--sp-3) var(--sp-5);
+    min-height:0; margin:0; padding:var(--sp-3) clamp(var(--sp-4),4vw,var(--sp-7));
+    border-width:0 0 1px; border-radius:0;
+  }
+  .admin-header::after { display:none; }
+  .admin-header .site-brand {
+    flex-direction:row; align-items:center; width:auto;
+    padding-bottom:0; border-bottom:0;
+  }
+  .admin-header .site-brand img { width:38px; height:38px; }
+  .admin-header nav.admin-nav {
+    flex-direction:row; align-items:center; flex-basis:100%;
+    justify-content:space-between; gap:var(--sp-4);
+  }
+  .admin-nav-scroll {
+    flex-direction:row; gap:var(--sp-2);
+    overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+  }
+  .admin-nav-scroll a.link-turmas { min-height:44px; padding-inline:var(--sp-4); white-space:nowrap; }
+  .admin-header .logout-form { width:auto; }
+  .admin-header .link-logout { width:auto; min-height:44px; border-radius:var(--radius-pill); }
+}
+/* Entre o celular e o desktop há espaço para as seções em duas linhas —
+   melhor do que cortar a última no fim do rolamento. */
+@media (max-width:1023px) and (min-width:601px) {
+  .admin-nav-scroll { flex-wrap:wrap; overflow:visible; }
+}
+/* No celular a fila rola na horizontal com os rótulos visíveis: esconder o
+   texto deixaria cinco destinos identificados só por ícone — e sem nome
+   também para quem usa leitor de tela. O degradê na borda avisa que há mais. */
+@media (max-width:600px) {
+  .admin-header nav.admin-nav { gap:var(--sp-3); }
+  .admin-nav-scroll {
+    position:relative;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);
+    mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);
+  }
+  .admin-nav-scroll a.link-turmas { padding-inline:var(--sp-3); font-size:var(--fs-xs); }
+  .admin-nav-scroll a.link-turmas .icone { width:18px; height:18px; }
+  .admin-header .link-logout { padding-inline:var(--sp-3); }
+}
+
+/* ---------------------------------------------------- home: cabeçalho --- */
+
+/* Barra flutuante alinhada com o cartão do hero: o vidro só aparece aqui,
+   onde ajuda a separar a navegação da arte que passa por baixo. */
+.home-header {
+  position:absolute; z-index:10; left:50%;
+  top:calc(clamp(var(--sp-4),3vw,var(--sp-7)) + var(--sp-4));
+  display:flex; align-items:center; justify-content:space-between; gap:var(--sp-6);
+  width:calc(100% - 2 * clamp(var(--sp-4),3vw,var(--sp-7)) - 2 * var(--sp-4));
+  max-width:1280px;
+  padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-5);
+  border:1px solid rgba(255,255,255,.16); border-radius:var(--radius-pill);
+  color:var(--text-on-ink); background:rgba(8,8,8,.62);
+  backdrop-filter:blur(14px);
+  transform:translateX(-50%);
+}
+.home-header .site-brand strong { font-size:19px; }
+
+/* Da faixa de tablet para baixo a barra fica só com a marca e a ação: o nome
+   escrito ao lado do ícone quebrava em três linhas e engolia a altura. */
+@media (max-width:900px) {
+  .home-header .site-brand span { display:none; }
+}
+@media (max-width:760px) {
+  .home-header {
+    top:var(--sp-3);
+    width:calc(100% - 2 * var(--sp-3));
+    border-radius:var(--radius-card);
+  }
 }
 
 /* ---------------------------------------------------- home: hero -------- */
 /* Aqui a escala grande faz sentido: é a primeira impressão da academia. */
 
-.home-header {
-  position:absolute; z-index:10; top:0; left:0; width:100%;
-  border-bottom:0;
-  background:linear-gradient(180deg,rgba(0,0,0,.94),rgba(0,0,0,0));
-}
 .hero { background:var(--ink); }
 .hero h1 { color:var(--text-on-ink); }
 .hero h1 em { color:var(--yellow); font-style:normal; }
 .hero-text { color:var(--text-on-ink-2); }
-.text-button { color:var(--text-on-ink); border-bottom-color:#4A4A4A; }
 .hero-actions .button-primary { box-shadow:none; }
 
 /* Mesmo preto dos dois lados: o fundo da arte da marca é preto, e um painel
@@ -92,28 +231,27 @@
   position:relative; display:flex; flex-direction:column;
   align-items:center; justify-content:center; gap:var(--sp-6);
   padding:var(--sp-9) var(--sp-7);
-  border-left:1px solid var(--ink-3); background:var(--ink); overflow:hidden;
+  background:var(--ink); overflow:hidden;
 }
-.hero-number,.hero-stamp { display:none; }
+.hero-visual::before {
+  content:""; position:absolute; inset:auto -20% -30% -20%; height:70%;
+  background:radial-gradient(ellipse at 50% 100%,rgba(214,162,16,.30),transparent 70%);
+  pointer-events:none;
+}
 
 .extreme-lockup {
   position:relative; z-index:1;
   display:flex; flex-direction:column; align-items:center; gap:var(--sp-4);
   text-align:center;
 }
-.extreme-lockup img { width:min(86%,400px); }
+.extreme-lockup img { width:min(92%,460px); }
 .extreme-lockup small {
   color:var(--text-on-ink-2); font:600 var(--fs-micro) var(--body);
-  letter-spacing:.16em; text-transform:uppercase;
+  letter-spacing:.2em; text-transform:uppercase;
 }
 
-.proof-strip { border-bottom-color:var(--line); }
-.proof-strip p { border-left-color:var(--yellow); }
 .section-copy { border-left-color:var(--yellow); }
-.method-grid { border-top-color:var(--ink); border-bottom-color:var(--ink); }
-.method-grid article { border-right-color:var(--line); }
-.method-grid article span.round-badge { margin-bottom:var(--sp-1); }
-.home-footer { border-top:3px solid var(--yellow); background:var(--ink); }
+.home-footer { background:var(--ink); }
 
 /* ------------------------------------- login, cadastro e recuperação ---- */
 
@@ -144,37 +282,37 @@
 
 .profile-page,.container-admin,.container-detalhes { max-width:1240px; }
 
-/* Um filete fino fecha o cabeçalho da página. */
-.profile-hero,.admin-intro,.detail-intro {
-  padding-bottom:var(--sp-6); border-bottom:1px solid var(--line-strong);
-}
+/* Cabeçalho de página das telas internas. */
+.admin-intro,.detail-intro { padding-bottom:var(--sp-6); border-bottom:1px solid var(--line-strong); }
 
-/* Marca do aluno: quadrada como o avatar da tabela, sem rotação. */
+/* Marca do aluno: redonda como o avatar da tabela. */
 .profile-mark,.detail-intro > span {
-  border-radius:var(--radius); color:var(--ink); background:var(--yellow);
+  border-radius:var(--radius-pill); color:var(--ink); background:var(--yellow);
   transform:none;
 }
 
-/* Faixa de formulário dentro de um painel: fundo, sem borda amarela grossa. */
+/* Faixa de formulário dentro de um painel. */
 .form-plano,.form-turma,.form-pagamento,.form-filtros-financeiro {
-  border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2);
+  border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface-2);
 }
 
 /* Cards de plano: a borda muda no hover, sem levantar o card. */
 .plan-list article,.card-plano {
   border-color:var(--line); background:var(--surface);
-  transition:border-color .16s ease;
+  transition:border-color .16s ease, box-shadow .16s ease;
 }
 .plan-list article:hover,.card-plano:hover { border-color:var(--text); transform:none; }
 .card-plano.plano-atual { border-color:var(--green); }
 
 .student-avatar { color:var(--yellow); background:var(--ink); }
+/* Sobre o cabeçalho preto o avatar precisa de contorno para não sumir. */
+.app-header .student-avatar { border:1px solid var(--ink-4); background:var(--ink-2); }
 
 /* Estado vazio: marca discreta da academia acima do texto. */
 .empty-state { position:relative; padding-top:var(--sp-11); }
 .empty-state::before {
   content:""; position:absolute; top:var(--sp-7); left:50%;
-  width:30px; height:30px; margin-left:-15px;
+  width:34px; height:34px; margin-left:-17px;
   background:url('/static/imagens/logo-icon.png') center/contain no-repeat;
   opacity:.35;
 }
@@ -183,7 +321,7 @@ td.empty-state,tr .empty-state { padding-top:var(--sp-8); }
 
 /* ------------------------------------------------- modais e diálogos ---- */
 
-.confirm-dialog,.modal-conteudo,.pix-dialog,.modal-dialog { border-top:3px solid var(--yellow); }
+.confirm-dialog,.modal-conteudo,.pix-dialog,.modal-dialog { border-top:4px solid var(--yellow); }
 .confirm-dialog[data-variant="danger"] { border-top-color:var(--red); }
 
 /* --------------------------------------------------------- responsivo --- */
@@ -191,15 +329,24 @@ td.empty-state,tr .empty-state { padding-top:var(--sp-8); }
 @media (max-width:900px) {
   .hero-visual { min-height:auto; padding:var(--sp-8) var(--sp-6); }
 }
+@media (max-width:1023px) {
+  .app-header #link-sair,.link-logout,
+  .detail-header > a:last-child,.account-header > a:last-child { min-height:44px; }
+  .app-header .student-avatar { width:44px; height:44px; font-size:19px; }
+  .app-header nav a { display:inline-flex; align-items:center; min-height:44px; }
+}
 @media (max-width:720px) {
   .app-header nav a:not(#link-sair):not(.nav-avatar-link) { display:none; }
+  .app-header,.detail-header,.account-header {
+    margin:var(--sp-3) var(--sp-3) 0; padding:var(--sp-3) var(--sp-4);
+    border-radius:var(--radius-card);
+  }
 }
 @media (max-width:620px) {
   .home-header .site-brand span,
   .app-header .site-brand span,
-  .admin-header .site-brand span,
   .detail-header .site-brand span,
   .account-header .site-brand span { display:none; }
-  .extreme-lockup img { width:78%; }
-  .profile-mark,.detail-intro > span { width:56px; height:56px; }
+  .extreme-lockup img { width:80%; }
+  .profile-mark,.detail-intro > span { width:58px; height:58px; }
 }

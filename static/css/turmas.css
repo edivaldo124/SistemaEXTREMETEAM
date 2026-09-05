@@ -1,5 +1,5 @@
 /* =========================================================================
-   Cadastro de turmas (administração).
+   Turmas: cadastro (administração) e registro de presença (professor).
    ========================================================================= */
 
 .form-turma {
@@ -15,7 +15,7 @@
 .dias-semana .dia-opcao {
   display:inline-flex; flex:0 0 auto; align-items:center; gap:var(--sp-2);
   min-height:var(--control-h); padding:0 var(--sp-4); white-space:nowrap;
-  border:1px solid var(--line-strong); border-radius:var(--radius);
+  border:1px solid var(--line-strong); border-radius:var(--radius-pill);
   background:var(--surface);
   font-size:var(--fs-sm); font-weight:600; cursor:pointer;
   transition:border-color .16s ease, background .16s ease;
@@ -28,15 +28,6 @@
 }
 .dias-semana .dia-opcao input { margin:0; }
 
-@media (max-width:900px) {
-  .form-turma { grid-template-columns:1fr 1fr; }
-  .form-turma .field:first-child { grid-column:1/-1; }
-}
-@media (max-width:540px) {
-  .form-turma { grid-template-columns:1fr; }
-  .form-turma .btn-cadastrar { width:100%; }
-}
-
 /* fieldset sem a moldura padrão do navegador: o grupo já está delimitado pela
    faixa do formulário. */
 fieldset.field { min-width:0; margin:0; padding:0; border:0; }
@@ -45,3 +36,53 @@ fieldset.field > legend {
   color:var(--text); font-size:var(--fs-sm); font-weight:600;
 }
 .tabela-matriculados { margin-top:var(--sp-5); }
+
+/* ------------------------------------------------- registro de presença -- */
+/* Linhas altas, avatar grande e uma caixa de seleção que dá para acertar com
+   o polegar: é o gesto que o professor repete 25 vezes seguidas. */
+
+.tabela-presenca .coluna-ordem,.tabela-presenca .celula-ordem { width:52px; color:var(--text-2); text-align:center; }
+.tabela-presenca td { padding-block:var(--sp-3); }
+.tabela-presenca .student-avatar { width:44px; height:44px; font-size:18px; }
+.tabela-presenca .pessoa > span:last-child { font-size:var(--fs-md); font-weight:600; }
+.tabela-presenca .celula-presenca { width:88px; text-align:center; }
+
+.marcar-presenca {
+  display:inline-grid; place-items:center;
+  width:56px; height:48px; margin:0; border-radius:var(--radius); cursor:pointer;
+  transition:background .16s ease;
+}
+.marcar-presenca:hover { background:var(--surface-2); }
+.marcar-presenca input { width:26px; height:26px; accent-color:var(--green); }
+.marcar-presenca:has(input:focus-visible) {
+  outline:2px solid var(--focus-ink); outline-offset:2px;
+  box-shadow:0 0 0 5px var(--focus-halo);
+}
+/* A linha inteira muda de fundo quando o aluno está marcado: dá para conferir
+   a chamada de relance, e o estado nunca depende só da cor da caixa. */
+.tabela-presenca tr:has(input:checked) td { background:#F1F8F4; }
+
+.barra-salvar-presenca { margin-top:var(--sp-5); }
+.barra-salvar-presenca .btn-salvar { min-height:54px; padding-inline:var(--sp-7); font-size:var(--fs-md); }
+
+@media (max-width:640px) {
+  .tabela-presenca tbody tr {
+    display:grid; grid-template-columns:auto 1fr auto; align-items:center;
+    gap:0 var(--sp-3); padding:var(--sp-3) var(--sp-4);
+  }
+  .tabela-presenca tbody tr:has(input:checked) { border-color:var(--green); background:#F1F8F4; }
+  .tabela-presenca td,.tabela-presenca td + td { display:flex; padding:0; border:0; text-align:left; }
+  .tabela-presenca td::before { content:none !important; }
+  .tabela-presenca .celula-ordem { justify-content:center; font-size:var(--fs-xs); }
+  .tabela-presenca .celula-presenca { width:auto; }
+  .barra-salvar-presenca { position:sticky; bottom:var(--sp-3); z-index:5; }
+  .barra-salvar-presenca .btn-salvar { width:100%; box-shadow:var(--shadow-raised); }
+}
+@media (max-width:900px) {
+  .form-turma { grid-template-columns:1fr 1fr; }
+  .form-turma .field:first-child { grid-column:1/-1; }
+}
+@media (max-width:540px) {
+  .form-turma { grid-template-columns:1fr; }
+  .form-turma .btn-cadastrar { width:100%; }
+}

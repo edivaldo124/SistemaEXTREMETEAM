@@ -2,7 +2,12 @@
    Telas de detalhe da administração: ficha do aluno, financeiro e turma.
    ========================================================================= */
 
-main { padding:var(--sp-8) clamp(var(--sp-5),5vw,var(--sp-10)) var(--sp-11); }
+main { padding:var(--sp-6) clamp(var(--sp-4),4vw,var(--sp-7)) var(--sp-10); }
+/* Dentro do casco da administração o espaçamento já vem do body. */
+body.admin-shell > main { padding:0 0 var(--sp-9); }
+@media (max-width:1023px) {
+  body.admin-shell > main { padding:var(--sp-6) clamp(var(--sp-4),4vw,var(--sp-7)) var(--sp-10); }
+}
 .container-detalhes { max-width:1240px; margin:auto; }
 
 /* ---------------------------------------------- cabeçalho da página ----- */
@@ -13,8 +18,8 @@ main { padding:var(--sp-8) clamp(var(--sp-5),5vw,var(--sp-10)) var(--sp-11); }
 }
 .detail-intro h1 {
   margin:0; overflow-wrap:anywhere;
-  font:700 var(--h1)/1.05 var(--display);
-  letter-spacing:-.015em; text-transform:uppercase;
+  font:700 var(--h1)/1.02 var(--display);
+  letter-spacing:-.01em; text-transform:uppercase;
 }
 .detail-intro > div > p:last-child {
   max-width:60ch; margin:var(--sp-2) 0 0;
@@ -23,18 +28,18 @@ main { padding:var(--sp-8) clamp(var(--sp-5),5vw,var(--sp-10)) var(--sp-11); }
 /* Contador ou iniciais do aluno, à direita do título. */
 .detail-intro > span {
   display:grid; place-items:center; flex:0 0 auto;
-  width:68px; height:68px; overflow:hidden;
+  width:76px; height:76px; overflow:hidden;
   color:var(--ink); background:var(--yellow);
-  font:700 28px/1 var(--display); font-variant-numeric:tabular-nums;
+  font:700 30px/1 var(--display); font-variant-numeric:tabular-nums;
 }
 .container-detalhes > .msg { margin-top:var(--sp-6); }
 
 /* ------------------------------------------------- painéis de conteúdo -- */
 
 .detail-section,.secao-pagamentos {
-  margin-top:var(--sp-8); padding:var(--sp-7);
-  border:1px solid var(--line); border-radius:var(--radius);
-  background:var(--surface);
+  margin-top:var(--sp-6); padding:var(--sp-7);
+  border:1px solid var(--line); border-radius:var(--radius-lg);
+  background:var(--surface); box-shadow:var(--shadow-card);
 }
 
 .section-title {
@@ -79,16 +84,16 @@ main { padding:var(--sp-8) clamp(var(--sp-5),5vw,var(--sp-10)) var(--sp-11); }
 .form-status { display:flex; flex-wrap:wrap; gap:var(--sp-1); }
 @media (min-width:641px) {
   .form-status { flex-wrap:nowrap; }
-  .secao-pagamentos td.acao-cell { min-width:330px; }
+  .secao-pagamentos td.acao-cell { min-width:340px; }
 }
 .form-status select,.form-status button {
-  min-height:var(--control-h-sm); padding:0 var(--sp-2);
+  min-height:var(--control-h-sm); padding:0 var(--sp-3);
   border:1px solid var(--line-strong); border-radius:var(--radius);
   background:var(--surface); font-size:var(--fs-xs);
 }
-.form-status select { max-width:130px; }
+.form-status select { max-width:140px; }
 .form-status button {
-  padding-inline:var(--sp-3);
+  padding-inline:var(--sp-4);
   border-color:var(--text); color:var(--surface); background:var(--text);
   font-weight:600; cursor:pointer;
 }
@@ -97,18 +102,20 @@ main { padding:var(--sp-8) clamp(var(--sp-5),5vw,var(--sp-10)) var(--sp-11); }
 /* --------------------------------------------------------- foto ------- */
 
 .foto-perfil-area { display:flex; align-items:center; gap:var(--sp-6); }
-.student-avatar-grande { width:88px; height:88px; margin-right:0; border-radius:var(--radius); font-size:34px; }
-.foto-perfil-acoes { display:flex; flex-wrap:wrap; gap:var(--sp-2); }
-.form-foto { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2); }
-.form-foto input[type=file] { max-width:230px; }
+.student-avatar-grande { width:96px; height:96px; margin-right:0; font-size:38px; }
+.foto-perfil-acoes { display:flex; flex-wrap:wrap; gap:var(--sp-3); }
+.form-foto { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); }
+.form-foto input[type=file] { max-width:250px; }
 
 /* ------------------------------------------- revisão de comprovante ----- */
+/* Um comprovante em análise é uma decisão pendente: o bloco fica destacado
+   com o dourado da marca e as duas saídas sempre visíveis. */
 
 .revisao-comprovante {
   display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-4);
-  padding:var(--sp-4) var(--sp-5);
-  border:1px solid var(--gold); border-left-width:4px; border-radius:var(--radius);
-  background:#FDF8E9;
+  padding:var(--sp-5);
+  border:1px solid var(--gold); border-left-width:5px; border-radius:var(--radius-card);
+  background:#FDF7E6;
 }
 .revisao-comprovante p { flex:1 1 260px; margin:0; font-size:var(--fs-xs); line-height:1.6; }
 .revisao-comprovante a { color:var(--text); font-weight:600; text-underline-offset:3px; }
@@ -119,26 +126,32 @@ main { padding:var(--sp-8) clamp(var(--sp-5),5vw,var(--sp-10)) var(--sp-11); }
   border:1px solid var(--line-strong); border-radius:var(--radius);
   background:var(--surface); font-size:var(--fs-xs);
 }
-.form-revisao input[type=text] { min-width:170px; }
+.form-revisao input[type=text] { min-width:180px; }
 
 .linha-comprovante-manual td { padding:0 !important; border:0 !important; background:transparent !important; }
 .table-stack .linha-comprovante-manual td { display:block !important; text-align:left !important; }
+@media (max-width:640px) {
+  .table-stack tbody tr.linha-comprovante-manual {
+    margin-top:calc(var(--sp-3) * -1); padding:0; border:0; background:transparent; box-shadow:none;
+  }
+}
 
 /* --------------------------------- situação do plano na ficha do aluno -- */
 
 .situacao-plano-admin {
-  margin-bottom:var(--sp-4); padding:var(--sp-4) var(--sp-5);
-  border:1px solid var(--line); border-radius:var(--radius);
-  background:var(--surface);
+  margin-bottom:var(--sp-4); padding:var(--sp-5);
+  border:1px solid var(--line); border-radius:var(--radius-card);
+  background:var(--surface-2);
 }
 .situacao-plano-admin p { margin:0 0 var(--sp-2); font-size:var(--fs-md); line-height:1.7; }
 .situacao-plano-admin p:last-child { margin-bottom:0; }
+.situacao-plano-admin .status { margin-right:var(--sp-2); }
 
 .mudanca-plano-admin {
   display:flex; flex-direction:column; gap:var(--sp-3);
-  margin-bottom:var(--sp-5); padding:var(--sp-4) var(--sp-5);
-  border:1px solid var(--gold); border-left-width:4px; border-radius:var(--radius);
-  background:#FDF8E9;
+  margin-bottom:var(--sp-5); padding:var(--sp-5);
+  border:1px solid var(--gold); border-left-width:5px; border-radius:var(--radius-card);
+  background:#FDF7E6;
 }
 .mudanca-plano-admin p { margin:0; font-size:var(--fs-md); line-height:1.7; }
 .nota-admin { color:var(--text-2); font-size:var(--fs-xs) !important; line-height:1.6; }
@@ -150,18 +163,48 @@ main { padding:var(--sp-8) clamp(var(--sp-5),5vw,var(--sp-10)) var(--sp-11); }
   .form-detalhes { grid-template-columns:1fr; }
   .detail-section,.secao-pagamentos { padding:var(--sp-5); }
 }
+/* Telas de toque: os controles da linha também chegam aos 44px. */
+@media (max-width:1023px) {
+  .form-status select,.form-status button,
+  .form-revisao input,.form-revisao select,.form-revisao button { min-height:44px; }
+}
 @media (max-width:540px) {
-  main { padding-top:var(--sp-6); }
-  .detail-intro > span { width:54px; height:54px; font-size:22px; }
+  .detail-intro > span { width:58px; height:58px; font-size:23px; }
   .form-pagamento { grid-template-columns:1fr; }
-  .detail-section,.secao-pagamentos { padding:var(--sp-4); }
+  .detail-section,.secao-pagamentos { padding:var(--sp-4); border-radius:var(--radius-card); }
   .foto-perfil-area { flex-direction:column; align-items:flex-start; }
+  .foto-perfil-acoes { width:100%; }
   .form-status select { max-width:none; flex:1 1 100%; }
   .form-status button { flex:1 1 100%; min-height:44px; }
+  .form-revisao > * { flex:1 1 100%; }
+  .form-revisao button { min-height:44px; }
 }
 
 /* Formulário de um campo só: a ação fica ao lado dele, não numa linha própria. */
 .form-pagamento .form-actions-inline { grid-column:auto; align-self:end; margin-top:0; }
 @media (max-width:540px) {
   .form-pagamento .form-actions-inline .btn-salvar { width:100%; }
+}
+
+/* ------------------------------- mensalidades na ficha do aluno --------- */
+/* A coluna de ação carrega três controles (Pix, sincronizar e a troca rápida
+   de situação). Empilhados numa coluna estreita, a tabela inteira cabe na
+   largura útil ao lado da barra lateral. */
+
+@media (min-width:641px) {
+  .tabela-mensalidades-aluno > table { min-width:0; }
+  .tabela-mensalidades-aluno th,.tabela-mensalidades-aluno td { padding:var(--sp-3); }
+  .tabela-mensalidades-aluno th { letter-spacing:.04em; }
+  .secao-pagamentos .tabela-mensalidades-aluno td.acao-cell {
+    display:flex; flex-direction:column; align-items:stretch; gap:var(--sp-2);
+    min-width:212px; white-space:normal;
+  }
+  .tabela-mensalidades-aluno td.acao-cell > * + * { margin-left:0; }
+  .tabela-mensalidades-aluno td.acao-cell .form-inline { display:flex; }
+  .tabela-mensalidades-aluno td.acao-cell .btn { width:100%; }
+  .tabela-mensalidades-aluno .form-status { flex-wrap:wrap; }
+  .tabela-mensalidades-aluno .form-status select { flex:1 1 96px; max-width:none; }
+  .tabela-mensalidades-aluno .form-status button { flex:1 1 100%; }
+  /* "Setembro de 2026" pode ocupar duas linhas; datas e valores, não. */
+  .tabela-mensalidades-aluno td:nth-child(2) { white-space:normal; }
 }

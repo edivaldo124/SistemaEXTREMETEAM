@@ -10,7 +10,7 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/professor_editar.css') }}">
     </head>
-    <body>
+    <body class="admin-shell">
         <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
         {% set secao_ativa = 'turmas' %}
         {% include 'components/admin_nav.html' %}

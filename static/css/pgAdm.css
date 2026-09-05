@@ -1,24 +1,20 @@
 /* =========================================================================
    Área administrativa: painel, turmas, avisos e área do professor.
    Escala de trabalho: título contido, densidade alta, decisão em primeiro plano.
+   A navegação da administração mora em extreme.css (barra lateral).
    ========================================================================= */
-
-/* ------------------------------------------------- navegação da área ---- */
-
-.admin-header nav.admin-nav { display:flex; align-items:center; gap:var(--sp-6); min-width:0; }
-
-.admin-nav-scroll {
-  display:flex; align-items:center; gap:var(--sp-6);
-  overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
-}
-.admin-nav-scroll::-webkit-scrollbar { display:none; }
 
 /* ------------------------------------------------------------ layout ---- */
 
 .container-admin {
-  max-width:1240px; margin:auto;
-  padding:var(--sp-8) clamp(var(--sp-5),5vw,var(--sp-10)) var(--sp-11);
+  max-width:1240px; margin:0 auto;
+  padding:var(--sp-2) 0 var(--sp-9);
 }
+@media (max-width:1023px) {
+  .container-admin { padding:var(--sp-6) clamp(var(--sp-4),4vw,var(--sp-7)) var(--sp-10); }
+}
+/* Fora do casco da administração (área do professor), o main cuida da margem. */
+body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),4vw,var(--sp-7)) var(--sp-10); }
 
 /* Cabeçalho da página: o que é esta tela, e os números que a resumem. */
 .admin-intro {
@@ -26,28 +22,34 @@
   gap:var(--sp-6);
 }
 .admin-intro h1 {
-  margin:0; font:700 var(--h1)/1.05 var(--display);
-  letter-spacing:-.015em; text-transform:uppercase;
+  margin:0; font:700 var(--h1)/1.02 var(--display);
+  letter-spacing:-.01em; text-transform:uppercase;
 }
 .admin-intro > div > p:last-child {
   max-width:60ch; margin:var(--sp-2) 0 0;
   color:var(--text-2); font-size:var(--fs-sm);
 }
 
-/* Métricas da tela: número grande, rótulo pequeno, separadas por filete. */
-.admin-metrics { display:flex; flex-wrap:wrap; }
-.admin-metrics article {
-  min-width:118px; padding:var(--sp-1) var(--sp-5);
-  border-left:1px solid var(--line-strong);
+/* Métricas da tela: cartão branco, ícone, número grande, rótulo pequeno.
+   Só entram números que o backend já calcula. */
+.admin-metrics {
+  flex-basis:100%;
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:var(--sp-3);
+  margin-top:var(--sp-2);
 }
-.admin-metrics article:first-child { padding-left:0; border-left:0; }
+.admin-metrics article {
+  display:flex; align-items:center; gap:var(--sp-4);
+  min-width:0; padding:var(--sp-4) var(--sp-5);
+  border:1px solid var(--line); border-radius:var(--radius-card);
+  background:var(--surface); box-shadow:var(--shadow-card);
+}
 .admin-metrics strong {
   display:block; color:var(--text);
-  font:700 30px/1 var(--display); font-variant-numeric:tabular-nums;
+  font:700 34px/1 var(--display); font-variant-numeric:tabular-nums;
 }
-.admin-metrics span {
+.admin-metrics article > div > span {
   display:block; margin-top:var(--sp-1);
-  color:var(--text-2); font-size:var(--fs-micro); font-weight:600;
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:700;
   letter-spacing:.06em; text-transform:uppercase;
 }
 
@@ -56,9 +58,9 @@
 /* ------------------------------------------------- painéis de conteúdo -- */
 
 .secao {
-  margin-top:var(--sp-9); padding:var(--sp-7);
-  border:1px solid var(--line); border-radius:var(--radius);
-  background:var(--surface);
+  margin-top:var(--sp-7); padding:var(--sp-7);
+  border:1px solid var(--line); border-radius:var(--radius-lg);
+  background:var(--surface); box-shadow:var(--shadow-card);
 }
 
 .section-heading {
@@ -72,7 +74,9 @@
   color:var(--text-2); font-size:var(--fs-xs); line-height:1.6;
 }
 .section-heading > #contador-alunos {
-  color:var(--text-2); font:600 var(--fs-sm) var(--body);
+  padding:var(--sp-2) var(--sp-4); border-radius:var(--radius-pill);
+  background:var(--surface-2);
+  color:var(--text-2); font:700 var(--fs-xs) var(--body);
   font-variant-numeric:tabular-nums; white-space:nowrap;
 }
 
@@ -91,14 +95,14 @@
 
 .plan-list {
   display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:var(--sp-3); margin-top:var(--sp-5);
+  gap:var(--sp-4); margin-top:var(--sp-5);
 }
 /* Texto em cima ocupando a largura toda, ações embaixo: lado a lado o nome
    ficava espremido e quebrava no meio da palavra. */
 .plan-list article {
   display:flex; flex-direction:column; gap:var(--sp-4);
   padding:var(--sp-5);
-  border:1px solid var(--line); border-radius:var(--radius);
+  border:1px solid var(--line); border-radius:var(--radius-card);
   background:var(--surface);
 }
 .plan-list article > div { min-width:0; }
@@ -107,13 +111,13 @@
 .plan-list article > .acoes-turma { margin-top:auto; }
 .plan-list article span {
   display:block; color:var(--text-2);
-  font:600 var(--fs-micro) var(--body);
+  font:700 var(--fs-micro) var(--body);
   letter-spacing:.06em; text-transform:uppercase;
 }
 .plan-list article strong {
   display:block; margin:var(--sp-2) 0 var(--sp-1);
   overflow-wrap:break-word;
-  font:700 20px/1.15 var(--display); text-transform:uppercase;
+  font:700 23px/1.1 var(--display); text-transform:uppercase;
 }
 .plan-list article p {
   margin:0; color:var(--text-2);
@@ -125,15 +129,16 @@
 
 /* ---------------------------------------------------- barra de filtro --- */
 
-.ferramentas-alunos { margin-bottom:var(--sp-4); }
+.ferramentas-alunos { position:relative; margin-bottom:var(--sp-5); }
 .ferramentas-alunos input {
-  width:min(100%,400px); min-height:var(--control-h); padding:0 var(--sp-3);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
-  outline:none; background:var(--surface); font-size:var(--fs-md);
+  width:min(100%,420px); min-height:var(--control-h); padding:0 var(--sp-4);
+  border:1px solid var(--line-strong); border-radius:var(--radius-pill);
+  background:var(--surface); font-size:var(--fs-md);
   transition:border-color .16s ease, box-shadow .16s ease;
 }
 .ferramentas-alunos input::placeholder { color:var(--text-3); }
-.ferramentas-alunos input:focus { border-color:var(--text); box-shadow:0 0 0 3px rgba(253,207,23,.45); }
+.ferramentas-alunos input:focus { border-color:var(--text); outline:none; box-shadow:0 0 0 3px rgba(253,207,23,.5); }
+.ferramentas-alunos input:focus-visible { outline:2px solid var(--focus-ink); outline-offset:2px; box-shadow:0 0 0 5px var(--focus-halo); }
 
 /* Atalho que preenche o formulário de aviso. */
 .atalhos-aviso { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-4); }
@@ -151,31 +156,16 @@
   .secao { padding:var(--sp-5); }
 }
 @media (max-width:720px) {
-  .admin-intro { flex-direction:column; align-items:flex-start; gap:var(--sp-5); }
-  .admin-metrics article:first-child { padding-left:0; }
+  .admin-intro { flex-direction:column; align-items:stretch; gap:var(--sp-5); }
   .section-heading { flex-direction:column; align-items:flex-start; gap:var(--sp-2); }
 }
 @media (max-width:540px) {
-  .admin-header { flex-wrap:wrap; row-gap:var(--sp-3); }
-  .admin-header nav.admin-nav { flex-basis:100%; justify-content:space-between; gap:var(--sp-4); }
-  .admin-nav-scroll { flex-wrap:wrap; gap:var(--sp-2) var(--sp-4); overflow-x:visible; }
-  .admin-header > div > span { display:none; }
-  .container-admin { padding-top:var(--sp-6); }
   .form-plano { grid-template-columns:1fr; }
   .form-plano .field:first-child { grid-column:auto; }
   .form-plano button { width:100%; }
-  .admin-metrics article { min-width:92px; padding-inline:var(--sp-4); }
-  .secao { margin-top:var(--sp-7); padding:var(--sp-4); }
+  .admin-metrics { grid-template-columns:1fr; }
+  .secao { margin-top:var(--sp-5); padding:var(--sp-4); border-radius:var(--radius-card); }
 }
 
 /* Ação de um formulário que ocupa a largura toda do painel. */
 .form-plano .form-actions,.form-turma .form-actions { grid-column:1/-1; margin-top:0; }
-
-/* Navegação da administração no celular: cada destino precisa de área de toque. */
-@media (max-width:720px) {
-  .admin-nav-scroll a,.link-logout {
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:44px; min-height:44px; padding-block:0;
-  }
-  .link-logout { padding-inline:var(--sp-4); }
-}

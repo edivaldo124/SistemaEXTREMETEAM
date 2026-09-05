@@ -1,28 +1,43 @@
 /* =========================================================================
    Criação de conta. Painel de marca à esquerda, formulário à direita.
+   Os campos são agrupados em três blocos nomeados — a ordem do envio e os
+   nomes dos campos continuam exatamente os mesmos.
    ========================================================================= */
 
 .register-shell {
-  display:grid; grid-template-columns:minmax(300px,.62fr) minmax(540px,1.38fr);
-  min-height:calc(100vh - 70px);
+  display:grid; grid-template-columns:minmax(300px,.62fr) minmax(520px,1.38fr);
+  gap:var(--sp-5);
+  margin:var(--sp-5) clamp(var(--sp-4),3vw,var(--sp-7)) var(--sp-8);
 }
 
 /* ---------------------------------------------------- painel de marca --- */
 
 .register-shell aside {
   position:relative; display:flex; flex-direction:column; justify-content:center;
-  gap:var(--sp-6); padding:var(--sp-10) clamp(var(--sp-7),5vw,var(--sp-11));
+  gap:var(--sp-6); padding:var(--sp-9) clamp(var(--sp-6),4vw,var(--sp-9));
+  border-radius:var(--radius-lg);
   overflow:hidden; color:var(--text-on-ink); background:var(--ink);
 }
+.register-shell aside::before {
+  content:""; position:absolute; inset:auto -30% -40% -30%; height:70%;
+  background:radial-gradient(ellipse at 50% 100%,rgba(214,162,16,.28),transparent 70%);
+  pointer-events:none;
+}
+.register-shell aside > * { position:relative; z-index:1; }
 .register-shell aside h1 {
   margin:0;
-  font:700 clamp(40px,4.4vw,64px)/.95 var(--display);
-  letter-spacing:-.02em; text-transform:uppercase;
+  font:700 clamp(38px,4.2vw,60px)/.95 var(--display);
+  letter-spacing:-.01em; text-transform:uppercase;
 }
 .register-shell aside > p:not(.eyebrow) {
   max-width:44ch; margin:0;
   color:var(--text-on-ink-2); font-size:var(--fs-md); line-height:1.7;
 }
+.aside-cta {
+  align-self:flex-start; border-radius:var(--radius-pill); padding-inline:var(--sp-6);
+  border-color:var(--ink-4); color:var(--text-on-ink); background:transparent;
+}
+.aside-cta:hover { border-color:var(--yellow); color:var(--yellow); background:rgba(253,207,23,.08); }
 
 /* Três etapas reais do cadastro: a numeração aqui informa a ordem. */
 .register-shell ol { margin:0; padding:0; list-style:none; }
@@ -39,27 +54,41 @@
 /* ------------------------------------------------------- formulário ----- */
 
 .register-panel {
-  padding:clamp(var(--sp-8),6vw,var(--sp-11)) clamp(var(--sp-5),7vw,var(--sp-11));
-  background:var(--paper);
+  padding:clamp(var(--sp-7),4vw,var(--sp-9)) clamp(var(--sp-6),4vw,var(--sp-9));
+  border:1px solid var(--line); border-radius:var(--radius-lg);
+  background:var(--surface); box-shadow:var(--shadow-card);
 }
 .register-panel .form-heading { max-width:60ch; margin-bottom:var(--sp-7); }
 .register-panel .form-heading h2 { margin:0; }
 .register-panel .page-subtitle { margin:var(--sp-3) 0 0; color:var(--text-2); font-size:var(--fs-md); }
 .register-panel .msg { margin-bottom:var(--sp-6); }
 
+/* Grupo de campos: o título numerado diz em que ponto do cadastro você está. */
+.form-grupo { min-width:0; margin:0 0 var(--sp-7); padding:0; border:0; }
+.form-grupo legend {
+  display:flex; align-items:center; gap:var(--sp-3);
+  width:100%; margin-bottom:var(--sp-5); padding:0 0 var(--sp-3);
+  border-bottom:1px solid var(--line);
+  font:700 var(--h3)/1.2 var(--display); text-transform:uppercase; letter-spacing:.01em;
+}
+.form-grupo .round-badge { width:34px; height:34px; font-size:15px; }
+
 .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-5); }
 .field-wide { grid-column:1/-1; }
 
-.register-panel .button-primary { width:100%; margin-top:var(--sp-7); }
+.register-panel .button-primary { width:100%; min-height:54px; }
+.account-header > a:last-child { min-height:44px; }
 
 @media (max-width:900px) {
   .register-shell { grid-template-columns:1fr; }
-  .register-shell aside { padding-block:var(--sp-9); }
+  .register-shell aside { padding-block:var(--sp-8); }
   .register-shell aside ol { display:none; }
 }
 @media (max-width:560px) {
+  .register-shell { margin-inline:var(--sp-3); }
+  .register-shell aside,.register-panel { border-radius:var(--radius-card); }
   .form-grid { grid-template-columns:1fr; }
   .field-wide { grid-column:auto; }
-  .register-shell aside h1 { font-size:38px; }
-  .register-panel { padding-block:var(--sp-8); }
+  .register-shell aside h1 { font-size:36px; }
+  .register-panel { padding:var(--sp-6) var(--sp-5); }
 }

@@ -21,7 +21,7 @@
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
-    <body>
+    <body class="admin-shell">
         <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
         {% set secao_ativa = 'painel' %}
         {% include 'components/admin_nav.html' %}
@@ -413,7 +413,7 @@
                             <button type="submit" class="btn-salvar">Lançar mensalidade</button>
                         </div>
                     </form>
-                    <div class="tabela-pagamentos table-stack">
+                    <div class="tabela-pagamentos tabela-mensalidades-aluno table-stack">
                         <table>
                             <thead>
                                 <tr>

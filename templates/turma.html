@@ -22,7 +22,7 @@
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
-    <body>
+    <body class="{{ 'admin-shell' if eh_admin else '' }}">
         <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
         {% if eh_admin %}
             {% set secao_ativa = 'turmas' %}
@@ -48,7 +48,7 @@
                         <h1>{{ turma.nome }}</h1>
                         <p>{{ turma.dias_semana|replace(',', ', ') }} · {{ turma.horario }} · Prof. {{ turma.professor.nome }}</p>
                     </div>
-                    <span aria-hidden="true">{{ matriculados|length }}/{{ turma.limite_alunos }}</span>
+                    <span title="Alunos matriculados">{{ matriculados|length }}/{{ turma.limite_alunos }}<span class="sr-only"> alunos matriculados</span></span>
                 </div>
                 {% with mensagens = get_flashed_messages(with_categories=true) %}
                     {% for categoria, mensagem in mensagens %}
@@ -144,10 +144,11 @@
                         <form action="/turmas/{{ turma.id }}/presenca" method="POST">
                     {% include "components/csrf_field.html" %}
                             <input type="hidden" name="data_aula" value="{{ data_aula.isoformat() }}">
-                            <div class="table-container table-stack">
+                            <div class="table-container table-stack tabela-presenca">
                                 <table>
                                     <thead>
                                         <tr>
+                                            <th scope="col" class="coluna-ordem">#</th>
                                             <th scope="col" class="coluna-pessoa">Aluno</th>
                                             <th scope="col">Presente</th>
                                         </tr>
@@ -155,6 +156,7 @@
                                     <tbody>
                                         {% for aluno in matriculados %}
                                             <tr>
+                                                <td data-label="#" class="celula-ordem">{{ loop.index }}</td>
                                                 <td data-label="Aluno" class="celula-pessoa">
                                                     <span class="pessoa">
                                                         <span class="student-avatar">
@@ -169,18 +171,24 @@
                                                         <span>{{ aluno.nome }}</span>
                                                     </span>
                                                 </td>
-                                                <td data-label="Presente">
-                                                    <input type="checkbox"
-                                                           name="presente_{{ aluno.id }}"
-                                                           {% if presencas.get(aluno.id) %}checked{% endif %}>
+                                                <td data-label="Presente" class="celula-presenca">
+                                                    <label class="marcar-presenca">
+                                                        <input type="checkbox"
+                                                               name="presente_{{ aluno.id }}"
+                                                               {% if presencas.get(aluno.id) %}checked{% endif %}>
+                                                        <span class="sr-only">Marcar presença de {{ aluno.nome }}</span>
+                                                    </label>
                                                 </td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn-salvar">Salvar presença</button>
+                            <div class="form-actions barra-salvar-presenca">
+                                <button type="submit" class="btn-salvar">
+                                    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12.5 2.8 2.8L16.5 9M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                    Salvar presença
+                                </button>
                             </div>
                         </form>
                     {% endif %}

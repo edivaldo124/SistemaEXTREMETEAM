@@ -2,12 +2,12 @@
    Comprovante de pagamento. Feito para ser lido na tela e impresso em papel.
    ========================================================================= */
 
-.comprovante-page { max-width:660px; margin:0 auto; padding:var(--sp-8) var(--sp-5) var(--sp-11); }
+.comprovante-page { max-width:660px; margin:0 auto; padding:var(--sp-6) clamp(var(--sp-4),4vw,var(--sp-5)) var(--sp-10); }
 
 .comprovante-folha {
-  padding:var(--sp-8);
-  border:1px solid var(--line); border-radius:var(--radius);
-  background:var(--surface);
+  padding:clamp(var(--sp-6),4vw,var(--sp-8));
+  border:1px solid var(--line); border-radius:var(--radius-lg);
+  background:var(--surface); box-shadow:var(--shadow-card);
 }
 
 .comprovante-cabecalho {
@@ -18,7 +18,7 @@
 /* A arte da marca tem fundo preto: sobre a folha branca ela vira uma placa
    escura deliberada em vez de um retângulo acidental. */
 .comprovante-logo {
-  flex:0 0 auto; width:40px; height:40px;
+  flex:0 0 auto; width:48px; height:48px; padding:var(--sp-1);
   border-radius:var(--radius); background:var(--ink); object-fit:contain;
 }
 .comprovante-cabecalho strong { display:block; font:700 18px/1.1 var(--display); text-transform:uppercase; }
@@ -26,7 +26,7 @@
 
 .comprovante-folha h1 {
   margin:0 0 var(--sp-3);
-  font:700 var(--h2)/1.1 var(--display); text-transform:uppercase;
+  font:700 var(--h2)/1.1 var(--display); text-transform:uppercase; letter-spacing:.01em;
 }
 .comprovante-situacao { margin:0 0 var(--sp-6); }
 
@@ -51,8 +51,8 @@
 .comprovante-aviso { margin:0 0 var(--sp-6); color:var(--text-2); font-size:var(--fs-xs); }
 
 @media (max-width:520px) {
-  .comprovante-page { padding:var(--sp-6) var(--sp-4) var(--sp-10); }
-  .comprovante-folha { padding:var(--sp-5); }
+  .comprovante-page { padding:var(--sp-5) var(--sp-4) var(--sp-9); }
+  .comprovante-folha { padding:var(--sp-5); border-radius:var(--radius-card); }
   .comprovante-dados { grid-template-columns:1fr; gap:var(--sp-4); }
 }
 
@@ -62,7 +62,8 @@
   /* Na folha impressa o comprovante mantém uma medida de leitura confortável
      e uma margem própria, sem depender só das margens do navegador. */
   .comprovante-page { max-width:170mm; padding:8mm 0; }
-  .comprovante-folha { padding:0; border:0; }
+  body::before { display:none; }
+  .comprovante-folha { padding:0; border:0; box-shadow:none; }
   .comprovante-dados { gap:var(--sp-5) var(--sp-8); }
   /* Fundos claros nem sempre saem na impressão: a borda garante o selo legível. */
   .status { border:1px solid currentColor; }
