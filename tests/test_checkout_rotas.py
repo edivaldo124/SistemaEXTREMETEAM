@@ -768,6 +768,55 @@ def test_status_consulta_o_checkout_mesmo_com_cobranca_pix_aberta(client, criar_
 # Telas
 # ---------------------------------------------------------------------------
 
+
+def test_polling_usa_consultas_curtas_sem_retentativas(client, criar_pagamento, monkeypatch, logar_como_aluno):
+    pagamento = criar_pagamento(
+        provider='mercado_pago', provider_payment_id='pix-atual',
+        external_reference='ref-pix',
+    )
+    pagamento.checkout_external_reference = 'ref-checkout'
+    PagamentoDAO.salvar(pagamento)
+    logar_como_aluno(pagamento.aluno)
+    chamadas = []
+
+    def buscar_pix(payment_id, **opcoes):
+        chamadas.append(('pix', opcoes))
+        return {'sucesso': True, **_pagamento_mp(
+            status='pending', external_reference='ref-pix', valor=150.0,
+            payment_id='pix-atual', payment_type_id='bank_transfer', payment_method_id='pix',
+        )}
+
+    def buscar_checkout(referencia, **opcoes):
+        chamadas.append(('checkout', opcoes))
+        return {'sucesso': True, 'pagamentos': []}
+
+    monkeypatch.setattr(pix_bp, 'buscar_pagamento', buscar_pix)
+    monkeypatch.setattr(pix_bp, 'buscar_pagamentos_por_referencia', buscar_checkout)
+    resposta = client.get(f'/api/mensalidades/{pagamento.id}/status')
+    assert resposta.status_code == 200
+    assert resposta.get_json()['status'] == 'pendente'
+    assert chamadas == [
+        ('pix', {'timeout': 3.0, 'retries': 0}),
+        ('checkout', {'timeout': 3.0, 'retries': 0}),
+    ]
+
+
+def test_retorno_checkout_usa_consulta_curta_sem_retentativas(client, criar_pagamento, monkeypatch, logar_como_aluno):
+    pagamento = criar_pagamento()
+    pagamento.checkout_external_reference = 'ref-checkout'
+    PagamentoDAO.salvar(pagamento)
+    logar_como_aluno(pagamento.aluno)
+    chamadas = []
+
+    def buscar(referencia, **opcoes):
+        chamadas.append(opcoes)
+        return {'sucesso': True, 'pagamentos': []}
+
+    monkeypatch.setattr(pix_bp, 'buscar_pagamentos_por_referencia', buscar)
+    resposta = client.get(f'/perfil/mensalidade/{pagamento.id}/retorno-checkout')
+    assert resposta.status_code == 200
+    assert chamadas == [{'timeout': 3.0, 'retries': 0}]
+
 def test_area_do_aluno_mostra_as_duas_acoes(client, criar_pagamento, logar_como_aluno):
     pagamento = criar_pagamento()
     logar_como_aluno(pagamento.aluno)

@@ -23,6 +23,9 @@
     const formatadorData = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
     let intervaloPolling = null;
+    let consultaEmAndamento = false;
+    let paginaAtiva = true;
+    let pollingDesejado = false;
 
     function mostrarEstado(nome) {
         Object.entries(estados).forEach(([chave, el]) => {
@@ -31,6 +34,7 @@
     }
 
     function pararPolling() {
+        pollingDesejado = false;
         if (intervaloPolling) {
             clearInterval(intervaloPolling);
             intervaloPolling = null;
@@ -38,7 +42,8 @@
     }
 
     function iniciarPolling() {
-        if (intervaloPolling) return;
+        pollingDesejado = true;
+        if (intervaloPolling || !paginaAtiva) return;
         intervaloPolling = setInterval(consultarStatus, 5000);
     }
 
@@ -61,6 +66,13 @@
         if (dados.status === 'recusado') {
             pararPolling();
             mostrarEstado('recusado');
+            return;
+        }
+        if (['cancelado', 'reembolsado'].includes(dados.status)) {
+            pararPolling();
+            const titulo = estados.encerrado?.querySelector('h2');
+            if (titulo) titulo.textContent = dados.status_rotulo || (dados.status === 'cancelado' ? 'Cancelado' : 'Reembolsado');
+            mostrarEstado('encerrado');
             return;
         }
         if (dados.status === 'em_processamento') {
@@ -90,12 +102,17 @@
     }
 
     async function consultarStatus() {
+        if (consultaEmAndamento || !paginaAtiva || !pollingDesejado) return;
+        consultaEmAndamento = true;
         try {
             const resposta = await fetch(`/api/mensalidades/${pagamentoId}/status`, { headers: { Accept: 'application/json' } });
             if (!resposta.ok) return;
-            tratarResposta(await resposta.json());
+            const dados = await resposta.json();
+            if (paginaAtiva && pollingDesejado) tratarResposta(dados);
         } catch (erro) {
             // Falha passageira de rede - mantem o estado atual, tenta de novo no proximo ciclo.
+        } finally {
+            consultaEmAndamento = false;
         }
     }
 
@@ -141,6 +158,17 @@
     });
 
     botoesTentarNovamente.forEach((botao) => botao.addEventListener('click', gerarOuAtualizarPix));
+
+    window.addEventListener('pagehide', () => {
+        paginaAtiva = false;
+        if (intervaloPolling) clearInterval(intervaloPolling);
+        intervaloPolling = null;
+    });
+    window.addEventListener('pageshow', (event) => {
+        if (!event.persisted) return;
+        paginaAtiva = true;
+        if (pollingDesejado) iniciarPolling();
+    });
 
     if (['pendente', 'atrasado', 'recusado'].includes(statusAtual)) {
         gerarOuAtualizarPix();

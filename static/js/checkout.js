@@ -45,6 +45,9 @@
 
     let consultas = 0;
     let intervalo = null;
+    let consultaEmAndamento = false;
+    let paginaAtiva = true;
+    let encerrado = false;
 
     function parar() {
         if (intervalo) {
@@ -54,17 +57,22 @@
     }
 
     async function consultar() {
+        // Uma consulta lenta não pode ocupar mais conexões a cada cinco segundos.
+        if (consultaEmAndamento || !paginaAtiva || encerrado) return;
         consultas += 1;
         if (consultas > MAXIMO_CONSULTAS) {
+            encerrado = true;
             parar();
             return;
         }
+        consultaEmAndamento = true;
         try {
             const resposta = await fetch(`/api/mensalidades/${pagamentoId}/status`, {
                 headers: { Accept: 'application/json' },
             });
             if (!resposta.ok) return;
             const dados = await resposta.json();
+            if (!paginaAtiva || encerrado) return;
             if (!dados || !dados.status) return;
 
             if (badge && dados.status_rotulo) {
@@ -75,14 +83,25 @@
             // O texto explicativo é montado no servidor: em vez de reescrevê-lo aqui
             // (e arriscar anunciar "aprovado" sem confirmação), recarrega a página.
             if (dados.status !== statusInicial) {
+                encerrado = true;
                 parar();
                 window.location.reload();
             }
         } catch (erro) {
             // Falha passageira de rede: mantém o estado atual e tenta no próximo ciclo.
+        } finally {
+            consultaEmAndamento = false;
         }
     }
 
     intervalo = setInterval(consultar, INTERVALO_MS);
-    window.addEventListener('pagehide', parar);
+    window.addEventListener('pagehide', () => {
+        paginaAtiva = false;
+        parar();
+    });
+    window.addEventListener('pageshow', (event) => {
+        if (!event.persisted) return;
+        paginaAtiva = true;
+        if (!encerrado && !intervalo) intervalo = setInterval(consultar, INTERVALO_MS);
+    });
 })();

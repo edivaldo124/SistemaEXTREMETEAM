@@ -15,6 +15,8 @@ from flask import Blueprint, abort, flash, redirect, render_template, session, u
 from dao.financeiroDAO import PagamentoDAO, rotulo_status
 from servicos.formatacao import formatar_competencia
 from servicos.mercado_pago import (
+    MAX_RETRIES_INTERATIVO,
+    TIMEOUT_STATUS_SEGUNDOS,
     ConfiguracaoInvalida,
     MercadoPagoIndisponivel,
     ambiente_mercado_pago,
@@ -164,7 +166,9 @@ def retorno_checkout(pagamento_id):
 
     consulta_falhou = False
     try:
-        sincronizar_por_referencia_checkout(pagamento)
+        sincronizar_por_referencia_checkout(
+            pagamento, timeout=TIMEOUT_STATUS_SEGUNDOS, retries=MAX_RETRIES_INTERATIVO,
+        )
     except MercadoPagoIndisponivel:
         consulta_falhou = True
         logger.warning('Mercado Pago indisponivel ao confirmar o retorno do pagamento %s.',

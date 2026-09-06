@@ -36,6 +36,10 @@
     let pagamentoIdAtual = null;
     let botaoQueAbriu = null;
     let intervaloPolling = null;
+    let consultaEmAndamento = false;
+    let paginaAtiva = true;
+    let pollingDesejado = false;
+    const ESTADOS_FINAIS = ['pago', 'cancelado', 'reembolsado', 'recusado', 'em_analise'];
 
     function mostrarEstado(nome) {
         Object.entries(estados).forEach(([chave, el]) => {
@@ -56,6 +60,7 @@
     }
 
     function pararPolling() {
+        pollingDesejado = false;
         if (intervaloPolling) {
             clearInterval(intervaloPolling);
             intervaloPolling = null;
@@ -108,7 +113,13 @@
             elStatus.textContent = 'Pagamento aprovado! Atualizando a página...';
             elStatus.classList.add('pix-status-aprovado');
         } else {
-            elStatus.textContent = 'Aguardando pagamento…';
+            const mensagens = {
+                cancelado: 'Pagamento cancelado.',
+                reembolsado: 'Pagamento reembolsado.',
+                recusado: 'Pagamento recusado. Feche esta janela e tente novamente.',
+                em_analise: 'Comprovante em análise pela administração.',
+            };
+            elStatus.textContent = mensagens[status] || 'Aguardando pagamento…';
             elStatus.classList.remove('pix-status-aprovado');
         }
     }
@@ -121,13 +132,19 @@
 
     function iniciarPolling(pagamentoId) {
         pararPolling();
+        if (!dialog.open || pagamentoIdAtual !== pagamentoId) return;
+        pollingDesejado = true;
+        if (!paginaAtiva) return;
         intervaloPolling = setInterval(async () => {
+            if (consultaEmAndamento || !paginaAtiva || !pollingDesejado || !dialog.open) return;
+            consultaEmAndamento = true;
             try {
                 const resposta = await fetch(`/api/mensalidades/${pagamentoId}/status`, {
                     headers: { Accept: 'application/json' },
                 });
                 if (!resposta.ok) return;
                 const dados = await lerJson(resposta);
+                if (!paginaAtiva || !pollingDesejado || !dialog.open || pagamentoIdAtual !== pagamentoId) return;
                 if (!dados) return;
 
                 if (dados.pix_expirado) {
@@ -137,13 +154,17 @@
 
                 atualizarStatusTexto(dados.status);
 
-                if (dados.status === 'pago') {
+                if (ESTADOS_FINAIS.includes(dados.status)) {
                     pararPolling();
+                }
+                if (dados.status === 'pago') {
                     setTimeout(() => window.location.reload(), 1500);
                 }
             } catch (erro) {
                 // Falha passageira de rede: mantem o polling, tenta de novo no proximo ciclo.
                 console.warn('Falha ao consultar status do Pix.', erro);
+            } finally {
+                consultaEmAndamento = false;
             }
         }, 5000);
     }
@@ -183,7 +204,7 @@
             if (dados.status === 'pago') {
                 pararPolling();
                 setTimeout(() => window.location.reload(), 1500);
-            } else {
+            } else if (!ESTADOS_FINAIS.includes(dados.status)) {
                 iniciarPolling(pagamentoId);
             }
         } catch (erro) {
@@ -246,5 +267,14 @@
         setTimeout(() => { btnCopiar.textContent = textoOriginal; }, 2000);
     });
 
-    window.addEventListener('pagehide', pararPolling);
+    window.addEventListener('pagehide', () => {
+        paginaAtiva = false;
+        if (intervaloPolling) clearInterval(intervaloPolling);
+        intervaloPolling = null;
+    });
+    window.addEventListener('pageshow', (event) => {
+        if (!event.persisted) return;
+        paginaAtiva = true;
+        if (pollingDesejado && dialog.open && pagamentoIdAtual) iniciarPolling(pagamentoIdAtual);
+    });
 })();

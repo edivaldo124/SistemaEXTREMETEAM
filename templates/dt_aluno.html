@@ -149,12 +149,13 @@
                                    required>
                         </div>
                         <div class="grupo-input">
-                            <label for="dt-descricao">Observações de saúde</label>
+                            <label for="dt-descricao">Observações de saúde (opcional)</label>
                             <input id="dt-descricao"
                                    type="text"
                                    name="descricao"
-                                   value="{{ u.descricao }}"
-                                   required>
+                                   value="{{ u.descricao or '' }}"
+                                   maxlength="255"
+                                   placeholder="Preencha somente se houver algo a informar">
                         </div>
                         <div class="grupo-input">
                             <label for="dt-graduacao">Graduação ou nível</label>

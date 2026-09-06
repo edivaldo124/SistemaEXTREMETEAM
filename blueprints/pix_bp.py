@@ -10,9 +10,11 @@ from config import csrf
 from dao.financeiroDAO import STATUS_FECHADOS, PagamentoDAO, rotulo_acao, rotulo_status
 from servicos.formatacao import formatar_competencia
 from servicos.mercado_pago import (
+    MAX_RETRIES_INTERATIVO,
     MAX_RETRIES_WEBHOOK,
     MOEDA,
     TIMEOUT_WEBHOOK_SEGUNDOS,
+    TIMEOUT_STATUS_SEGUNDOS,
     MercadoPagoIndisponivel,
     buscar_pagamento,
     buscar_pagamentos_por_referencia,
@@ -169,7 +171,10 @@ def criar_pix_mensalidade(pagamento_id):
 
     if PagamentoDAO.pix_ainda_valido(pagamento):
         try:
-            resultado_mp = buscar_pagamento(pagamento.provider_payment_id)
+            resultado_mp = buscar_pagamento(
+                pagamento.provider_payment_id,
+                timeout=TIMEOUT_STATUS_SEGUNDOS, retries=MAX_RETRIES_INTERATIVO,
+            )
         except MercadoPagoIndisponivel:
             logger.warning(
                 'Mercado Pago indisponivel ao reconferir cobranca pendente do pagamento %s; devolvendo dados ja salvos.',
@@ -247,7 +252,10 @@ def status_pix_mensalidade(pagamento_id):
 
     try:
         if pagamento.provider_payment_id:
-            resultado_mp = buscar_pagamento(pagamento.provider_payment_id)
+            resultado_mp = buscar_pagamento(
+                pagamento.provider_payment_id,
+                timeout=TIMEOUT_STATUS_SEGUNDOS, retries=MAX_RETRIES_INTERATIVO,
+            )
             if resultado_mp['sucesso']:
                 _processar_status_mp(pagamento, resultado_mp)
         # A preferencia do Checkout Pro existe antes de haver qualquer payment_id, entao
@@ -255,7 +263,9 @@ def status_pix_mensalidade(pagamento_id):
         # provider_payment_id (do Pix): o aluno pode ter uma cobranca Pix aberta e ainda
         # assim concluir pelo checkout - a consulta acima nao enxergaria esse pagamento.
         if pagamento.status not in STATUS_FECHADOS and pagamento.checkout_external_reference:
-            sincronizar_por_referencia_checkout(pagamento)
+            sincronizar_por_referencia_checkout(
+                pagamento, timeout=TIMEOUT_STATUS_SEGUNDOS, retries=MAX_RETRIES_INTERATIVO,
+            )
     except MercadoPagoIndisponivel:
         logger.warning('Mercado Pago indisponivel ao consultar status do pagamento %s.', pagamento.id, exc_info=True)
 

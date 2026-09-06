@@ -40,6 +40,7 @@ class _FakePreferenceResource:
 
     def create(self, payload, request_options=None):
         self._estado['chamadas'].append(('preference_create', payload))
+        self._estado.setdefault('preference_options', []).append(request_options)
         resposta = self._estado['preference_create']
         return resposta(payload) if callable(resposta) else resposta
 
@@ -383,6 +384,44 @@ def test_criar_preferencia_falha_de_transporte_levanta_indisponivel(mp_fake, bas
 
     with pytest.raises(MercadoPagoIndisponivel):
         _criar_preferencia()
+
+    opcoes = mp_fake['preference_options'][0]
+    assert 0 < opcoes.connection_timeout <= 6.0
+    assert opcoes.max_retries == 0
+    assert len(mp_fake['chamadas']) == 1
+
+
+def test_fallback_checkout_usa_apenas_tempo_restante(mp_fake, base_url, monkeypatch):
+    relogio = [0.0]
+    monkeypatch.setattr(mercado_pago.time, 'monotonic', lambda: relogio[0])
+
+    def criar(payload):
+        if 'auto_return' in payload:
+            relogio[0] += 4.0
+            return {'status': 400, 'response': {'message': 'auto_return invalid'}}
+        return _resposta_preferencia()
+
+    mp_fake['preference_create'] = criar
+    assert _criar_preferencia()['sucesso'] is True
+    primeira, segunda = mp_fake['preference_options']
+    assert primeira.connection_timeout == 6.0
+    assert segunda.connection_timeout == 2.0
+    assert primeira.max_retries == segunda.max_retries == 0
+    assert primeira.custom_headers == segunda.custom_headers
+
+
+def test_fallback_checkout_nao_reinicia_espera_esgotada(mp_fake, base_url, monkeypatch):
+    relogio = [0.0]
+    monkeypatch.setattr(mercado_pago.time, 'monotonic', lambda: relogio[0])
+
+    def criar(payload):
+        relogio[0] += 7.0
+        return {'status': 400, 'response': {'message': 'auto_return invalid'}}
+
+    mp_fake['preference_create'] = criar
+    with pytest.raises(MercadoPagoIndisponivel):
+        _criar_preferencia()
+    assert len(mp_fake['chamadas']) == 1
 
 
 def test_criar_preferencia_sem_base_url_falha_antes_de_chamar_o_mp(mp_fake, monkeypatch):

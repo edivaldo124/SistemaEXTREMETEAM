@@ -144,6 +144,7 @@ A preferência criada é reaproveitada em cliques repetidos enquanto continuar v
 
 ### Limitações conhecidas
 
+- A abertura do Checkout Pro usa timeout de até 6 segundos por chamada, sem novas tentativas automáticas; o fallback sem `auto_return` aproveita apenas o tempo restante. Consultas interativas de status usam 3 segundos por chamada, sem retentativas. Esses limites se aplicam ao transporte com a API; não são uma garantia do tempo total de carregamento da página hospedada no Mercado Pago.
 - O processamento do webhook é **síncrono** — o projeto não tem fila nem worker. Para não estourar o tempo de entrega do Mercado Pago, a consulta feita dentro do webhook usa timeout curto (5s) e sem retry. Se o Mercado Pago não responder a tempo, o endpoint devolve `503` e a notificação é reenviada por eles; a tela de retorno e o polling de status também reconferem o pagamento.
 - Não há assinatura recorrente (`preapproval`): cada mensalidade é uma cobrança avulsa.
 

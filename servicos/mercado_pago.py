@@ -17,10 +17,16 @@ DESCRICAO_PADRAO = 'Mensalidade - Extreme Team'
 TIMEOUT_SEGUNDOS = 12.0
 MAX_RETRIES = 2
 
+# Abrir o checkout e consultar status são operações interativas. Não acumular
+# tentativas enquanto o aluno espera ou enquanto o navegador faz polling.
+TIMEOUT_CHECKOUT_SEGUNDOS = 6.0
+TIMEOUT_STATUS_SEGUNDOS = 3.0
+MAX_RETRIES_INTERATIVO = 0
+
 # O webhook do Mercado Pago aborta a entrega se a resposta demorar demais (o simulador
 # do painel corta por volta de 22s). Como o processamento e sincrono - o projeto nao tem
 # fila/worker - a consulta feita dentro do webhook usa um orcamento curto e sem retry,
-# em vez dos 12s x 3 tentativas usados nas chamadas iniciadas pelo usuario.
+# em vez do limite genérico de 12s com até duas novas tentativas.
 TIMEOUT_WEBHOOK_SEGUNDOS = 5.0
 MAX_RETRIES_WEBHOOK = 0
 
@@ -240,22 +246,30 @@ def criar_preferencia_checkout(*, valor, titulo, descricao, email_pagador, exter
     if email_pagador and '@' in email_pagador:
         payload['payer'] = {'email': email_pagador}
 
-    request_options = _request_options({'x-idempotency-key': idempotency_key})
-
     def _criar(corpo):
+        restante = TIMEOUT_CHECKOUT_SEGUNDOS - (time.monotonic() - inicio)
+        if restante <= 0:
+            raise MercadoPagoIndisponivel('Tempo de abertura do checkout esgotado.')
+        request_options = _request_options(
+            {'x-idempotency-key': idempotency_key},
+            timeout=float(restante), retries=MAX_RETRIES_INTERATIVO,
+        )
         try:
             return sdk.preference().create(corpo, request_options)
         except requests.exceptions.RequestException as exc:
             raise MercadoPagoIndisponivel(f'Falha de comunicacao com o Mercado Pago: {exc}') from exc
 
-    resultado = _criar(payload)
+    inicio = time.monotonic()
+    try:
+        resultado = _criar(payload)
 
-    # Mesmo tratamento dado ao date_of_expiration do Pix: contas/ambientes que recusam
-    # auto_return (ex.: back_urls sem dominio publico) ainda conseguem checkout, so sem
-    # o retorno automatico depois da aprovacao.
-    if resultado['status'] >= 400 and _erro_menciona(resultado, 'auto_return'):
-        logger.warning('Mercado Pago recusou auto_return; recriando a preferencia sem o campo.')
-        resultado = _criar({k: v for k, v in payload.items() if k != 'auto_return'})
+        # O fallback usa apenas o tempo restante da abertura; não reinicia a espera.
+        if resultado['status'] >= 400 and _erro_menciona(resultado, 'auto_return'):
+            logger.warning('Mercado Pago recusou auto_return; recriando a preferencia sem o campo.')
+            resultado = _criar({k: v for k, v in payload.items() if k != 'auto_return'})
+    finally:
+        logger.info('Abertura de checkout no Mercado Pago: duracao_ms=%.0f',
+                    (time.monotonic() - inicio) * 1000)
 
     if resultado['status'] >= 400:
         logger.warning('Mercado Pago recusou a criacao da preferencia (status=%s).', resultado['status'])
