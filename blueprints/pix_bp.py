@@ -9,6 +9,7 @@ from config import csrf
 
 from dao.financeiroDAO import STATUS_FECHADOS, PagamentoDAO, rotulo_acao, rotulo_status
 from servicos.formatacao import formatar_competencia
+from servicos.limites_pagamento import limitar_consulta_pagamento, limitar_criacao_pagamento
 from servicos.mercado_pago import (
     MAX_RETRIES_INTERATIVO,
     MAX_RETRIES_WEBHOOK,
@@ -155,11 +156,14 @@ def sincronizar_por_referencia_checkout(pagamento, *, timeout=None, retries=None
 
 
 @pix_bp.route('/api/mensalidades/<int:pagamento_id>/pix', methods=['POST'])
+@limitar_criacao_pagamento
 def criar_pix_mensalidade(pagamento_id):
     if session.get('tipo_usuario') not in ('admin', 'aluno'):
         return jsonify({'erro': 'Faça login para continuar.'}), 401
 
-    pagamento = _pagamento_ou_none(pagamento_id)
+    # A segunda requisição espera a emissão terminar e reutiliza o Pix persistido.
+    # A trava pertence à transação do banco, inclusive entre workers do servidor.
+    pagamento = PagamentoDAO.bloquear_para_atualizacao(pagamento_id)
     if not pagamento:
         return jsonify({'erro': 'Mensalidade não encontrada.'}), 404
 
@@ -170,6 +174,7 @@ def criar_pix_mensalidade(pagamento_id):
         return jsonify({'erro': 'Esta mensalidade não está em aberto.'}), 409
 
     if PagamentoDAO.pix_ainda_valido(pagamento):
+        payment_id_consultado = pagamento.provider_payment_id
         try:
             resultado_mp = buscar_pagamento(
                 pagamento.provider_payment_id,
@@ -194,6 +199,11 @@ def criar_pix_mensalidade(pagamento_id):
                     pagamento, qr_code_base64=resultado_mp.get('qr_code_base64'),
                 )), 200
         # Senao (MP diz cancelado/rejeitado/expirado) cai para gerar uma nova tentativa abaixo.
+        # A atualização de status pode ter feito commit e liberado a trava. Relê sob
+        # trava antes de substituir, pois outra requisição pode ter emitido o novo Pix.
+        pagamento = PagamentoDAO.bloquear_para_atualizacao(pagamento_id)
+        if pagamento.status not in STATUS_PAGAVEIS or pagamento.provider_payment_id != payment_id_consultado:
+            return jsonify(_serializar_pagamento(pagamento)), 200
 
     aluno = pagamento.aluno
     if not aluno or not aluno.email:
@@ -236,6 +246,7 @@ def criar_pix_mensalidade(pagamento_id):
 
 
 @pix_bp.route('/api/mensalidades/<int:pagamento_id>/status', methods=['GET'])
+@limitar_consulta_pagamento
 def status_pix_mensalidade(pagamento_id):
     if session.get('tipo_usuario') not in ('admin', 'aluno'):
         return jsonify({'erro': 'Faça login para continuar.'}), 401
@@ -273,6 +284,7 @@ def status_pix_mensalidade(pagamento_id):
 
 
 @pix_bp.route('/admin/pagamentos/<int:pagamento_id>/sincronizar', methods=['POST'])
+@limitar_consulta_pagamento
 def sincronizar_pagamento(pagamento_id):
     """Reconsulta manualmente o status no Mercado Pago - protegido por permissão de admin,
     útil quando o webhook atrasa ou falhou e o admin quer conferir agora."""

@@ -43,12 +43,15 @@ pytest
 
 Os testes forçam um banco SQLite temporário isolado (configurado em `tests/conftest.py`) e nunca chamam a API real do Mercado Pago: o SDK é mockado. A configuração de teste substitui qualquer `DATABASE_URL` presente no shell para impedir acesso acidental ao banco real.
 
+A regressão de concorrência do Pix exige PostgreSQL, pois SQLite não aplica `SELECT FOR UPDATE`. Para executá-la, informe `TEST_POSTGRES_URL` de um PostgreSQL **local de teste** e rode `pytest tests/test_pix_concorrencia_postgres.py`. Cada caso cria e remove seu próprio schema temporário, usa duas conexões simultâneas e simula o Mercado Pago. Sem essa variável, esses casos aparecem como ignorados (`skipped`).
+
 ## Configuração de segurança
 
 - `APP_BASE_URL` define a origem usada em links de recuperação, confirmação de e-mail e retornos de pagamento. Ela não é derivada do cabeçalho `Host`.
 - `TRUSTED_HOSTS` contém os hosts aceitos, separados por vírgula. Em produção, informe o domínio público real.
 - `TRUST_PROXY_COUNT` informa quantos proxies confiáveis existem à frente do Flask. O `compose.yaml` usa `1` por causa do Caddy; uma execução local direta usa `0`.
-- `RATELIMIT_STORAGE_URI` deve apontar para Redis em produção para compartilhar os limites de autenticação entre processos. O Docker Compose já inclui esse serviço.
+- `RATELIMIT_STORAGE_URI` deve apontar para Redis em produção para compartilhar os limites de autenticação e pagamentos entre processos. O Docker Compose já inclui esse serviço; no Render, configure a URI do serviço Redis usado pela aplicação. `memory://` mantém contadores apenas dentro de cada processo.
+- Pagamentos têm limites por conta, preservados entre sessões: Pix e Checkout compartilham 10 tentativas de abertura por minuto; status, retorno do Checkout e sincronização administrativa compartilham 30 consultas por minuto. Ao atingir o limite, a aplicação responde `429` com `Retry-After: 60` antes de chamar o provedor.
 - Requisições acima de 10 MB são recusadas pelo Flask e pelo Caddy. PDFs enviados como comprovante são entregues como download.
 
 ## Pagamento de mensalidade via Pix (Mercado Pago)

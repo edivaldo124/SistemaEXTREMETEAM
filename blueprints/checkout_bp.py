@@ -14,6 +14,7 @@ from flask import Blueprint, abort, flash, jsonify, redirect, render_template, r
 
 from dao.financeiroDAO import PagamentoDAO, rotulo_status
 from servicos.formatacao import formatar_competencia
+from servicos.limites_pagamento import limitar_consulta_pagamento, limitar_criacao_pagamento
 from servicos.mercado_pago import (
     MAX_RETRIES_INTERATIVO,
     TIMEOUT_STATUS_SEGUNDOS,
@@ -76,6 +77,7 @@ def _urls_retorno(pagamento):
 
 
 @checkout_bp.route('/perfil/mensalidade/<int:pagamento_id>/checkout', methods=['POST'])
+@limitar_criacao_pagamento
 def abrir_checkout(pagamento_id):
     """Cria ou reaproveita o checkout e devolve o destino para uma navegação GET."""
     if session.get('tipo_usuario') not in ('admin', 'aluno'):
@@ -190,6 +192,7 @@ def continuar_checkout(pagamento_id):
 
 
 @checkout_bp.route('/perfil/mensalidade/<int:pagamento_id>/retorno-checkout')
+@limitar_consulta_pagamento
 def retorno_checkout(pagamento_id):
     """Volta do Mercado Pago.
 

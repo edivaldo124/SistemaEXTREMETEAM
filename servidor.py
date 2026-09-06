@@ -5,6 +5,7 @@ import secrets
 from datetime import timedelta
 from dotenv import load_dotenv
 from flask_wtf.csrf import CSRFError
+from werkzeug.exceptions import TooManyRequests
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
@@ -134,8 +135,16 @@ def requisicao_muito_grande(_erro):
 @app.errorhandler(429)
 def tentativas_demais(_erro):
     mensagem = 'Muitas tentativas. Aguarde alguns minutos e tente novamente.'
-    if request.path.startswith('/api/'):
-        return {'erro': mensagem}, 429
+    pagamento = request.blueprint in ('pix', 'checkout')
+    quer_json = request.accept_mimetypes.best_match(('text/html', 'application/json')) == 'application/json'
+    if request.path.startswith('/api/') or (pagamento and quer_json):
+        return {'erro': mensagem}, 429, {'Retry-After': '60'}
+    if pagamento:
+        # Não apresenta login a quem já está autenticado nem expõe a chave interna
+        # ou os detalhes do limite enviados pela extensão.
+        resposta = TooManyRequests(description=mensagem).get_response()
+        resposta.headers['Retry-After'] = '60'
+        return resposta
     return render_template('login.html', msg=mensagem), 429
 
 with app.app_context():

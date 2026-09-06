@@ -621,7 +621,10 @@ def foto_perfil(aluno_id):
     if not caminho:
         abort(404)
 
-    return send_file(caminho, mimetype='image/jpeg', max_age=3600)
+    resposta = send_file(caminho, mimetype='image/jpeg', conditional=False)
+    resposta.headers['Cache-Control'] = 'private, no-store'
+    resposta.headers['X-Content-Type-Options'] = 'nosniff'
+    return resposta
 
 
 @auth_bp.route('/perfil/foto', methods=['POST'])

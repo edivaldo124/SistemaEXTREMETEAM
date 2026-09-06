@@ -220,7 +220,11 @@ def detalhe_turma(turma_id):
         abort(403)
 
     data_str = request.args.get('data') or date.today().isoformat()
-    data_aula = date.fromisoformat(data_str)
+    try:
+        data_aula = date.fromisoformat(data_str)
+    except ValueError:
+        data_aula = date.today()
+        flash('Data inválida. Exibindo a aula de hoje; selecione uma data válida.', 'erro')
 
     matriculados = [m.aluno for m in MatriculaDAO.listar_por_turma(turma_id)]
     presencas = {p.aluno_id: p.presente for p in PresencaDAO.listar_por_turma_e_data(turma_id, data_aula)}
@@ -284,7 +288,10 @@ def registrar_presenca(turma_id):
     if not _acesso_permitido(turma):
         abort(403)
 
-    data_aula = date.fromisoformat(request.form.get('data_aula'))
+    try:
+        data_aula = date.fromisoformat(request.form.get('data_aula') or '')
+    except ValueError:
+        abort(400, description='Informe uma data válida para registrar a presença.')
 
     # RN05: só registra presença em turma e data de aula existentes (dia em que a turma efetivamente ocorre).
     if DIA_POR_INDICE[data_aula.weekday()] not in turma.lista_dias:

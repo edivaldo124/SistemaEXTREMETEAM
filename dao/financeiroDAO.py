@@ -641,12 +641,14 @@ class PagamentoDAO:
     def bloquear_para_atualizacao(pagamento_id):
         """Relê a mensalidade com trava de linha (SELECT ... FOR UPDATE).
 
-        Serializa cliques simultâneos em "Outras formas de pagamento": no Postgres de
+        Serializa emissões simultâneas de Pix ou Checkout: no Postgres de
         produção a segunda requisição espera a primeira terminar e então enxerga a
         preferência recém-criada, em vez de criar outra. No SQLite dos testes o SQLAlchemy
-        simplesmente não emite a cláusula — o comportamento continua correto, só sem trava.
+        simplesmente não emite a cláusula; testes de concorrência exigem PostgreSQL.
+        Atualiza também objetos já carregados pela sessão, evitando decisões com dados
+        anteriores à espera pela trava.
         """
-        return Pagamento.query.filter_by(id=pagamento_id).with_for_update().first()
+        return Pagamento.query.filter_by(id=pagamento_id).populate_existing().with_for_update().first()
 
     @staticmethod
     def buscar_por_checkout_preference_id(preference_id):
