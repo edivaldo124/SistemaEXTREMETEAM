@@ -181,9 +181,9 @@ body.modal-open { overflow:hidden; }
 }
 @media (max-width:900px) {
   .team-list { grid-template-columns:1fr; }
-  .hero { grid-template-columns:1fr; padding-top:clamp(150px,22vh,200px); }
+  .hero { grid-template-columns:1fr; padding-top:clamp(144px,18vh,176px); }
   .home-header { padding:var(--sp-2) var(--sp-2) var(--sp-1) var(--sp-4); }
-  .hero-copy { padding-block:var(--sp-6) var(--sp-8); }
+  .hero-copy { padding-block:var(--sp-5) var(--sp-7); }
   .hero-highlights { grid-template-columns:1fr; }
   .hero-highlights li { border-left:0; border-top:1px solid var(--ink-3); padding-block:var(--sp-4); }
   .hero-highlights li:first-child { border-top:0; }
@@ -198,7 +198,10 @@ body.modal-open { overflow:hidden; }
     border-radius:var(--radius-card);
     padding:var(--sp-3) var(--sp-3) var(--sp-2) var(--sp-4);
   }
-  .home-header nav { flex:1 1 auto; min-width:0; flex-wrap:wrap; justify-content:flex-end; gap:var(--sp-3); }
+  /* base 0 para a navegação caber ao lado da marca: com base automática o
+     bloco de seções (100% de largura) inflava a nav e empurrava tudo para
+     uma terceira linha, roubando altura do hero. */
+  .home-header nav { flex:1 1 0; min-width:0; flex-wrap:wrap; justify-content:flex-end; gap:var(--sp-2); }
   .home-nav-links {
     order:2; flex:1 1 100%; min-width:0; max-width:100%; gap:var(--sp-5);
     padding-top:var(--sp-2); border-top:1px solid rgba(255,255,255,.12);
@@ -212,12 +215,17 @@ body.modal-open { overflow:hidden; }
   .team-section { padding:var(--sp-8) var(--sp-4); }
   .team-profile { grid-template-columns:84px minmax(0,1fr); gap:var(--sp-4); padding:var(--sp-5); }
   .team-profile h3 { font-size:21px; }
-  .hero { margin-inline:var(--sp-3); padding-top:190px; border-radius:var(--radius-card); }
-  .hero-copy { padding-inline:var(--sp-5); }
-  .hero h1 { font-size:clamp(40px,12vw,58px); }
-  .hero-actions { flex-direction:column; align-items:stretch; gap:var(--sp-3); }
-  .hero-actions .button-primary,.hero-actions .text-button { width:100%; }
-  .hero-highlights li { padding-inline:var(--sp-5); }
+  /* No celular o cartão do hero precisa caber com título, chamada e as duas
+     ações antes da primeira rolagem: a barra flutuante encolhe e os respiros
+     internos acompanham, sem cortar a arte da marca nem apertar o toque. */
+  .hero { margin-inline:var(--sp-3); padding-top:140px; border-radius:var(--radius-card); }
+  .hero-copy { padding:var(--sp-4) var(--sp-5) var(--sp-6); }
+  .hero h1 { font-size:clamp(38px,11vw,52px); }
+  .hero-text { margin-top:var(--sp-4); font-size:var(--fs-md); line-height:1.55; }
+  .hero-actions { flex-direction:column; align-items:stretch; gap:var(--sp-3); margin-top:var(--sp-5); }
+  .hero-actions .button-primary,.hero-actions .text-button { width:100%; min-height:50px; }
+  .hero-visual { padding:var(--sp-6) var(--sp-5); }
+  .hero-highlights li { padding:var(--sp-4) var(--sp-5); }
   .home-section { padding-inline:var(--sp-5); }
   .method-grid { margin-inline:var(--sp-3); }
   .method-grid article { padding:var(--sp-6) var(--sp-5); }

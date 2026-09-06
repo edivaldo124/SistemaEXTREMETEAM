@@ -47,6 +47,41 @@
 
 /* ------------------------------------------------------------ filtros --- */
 
+.secao-filtros .section-title {
+  display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+  gap:var(--sp-3) var(--sp-5);
+}
+.secao-filtros .section-title h2 { flex:0 0 100%; }
+.secao-filtros .section-title p { flex:1 1 320px; }
+.filtros-alternar[hidden] { display:none; }
+.filtros-alternar { flex:0 0 auto; }
+
+/* Resumo do que está filtrado agora. Fica acima do formulário para continuar
+   legível mesmo com os campos recolhidos. */
+.filtros-ativos {
+  display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3);
+  margin-bottom:var(--sp-4); padding:var(--sp-4) var(--sp-5);
+  border:1px solid var(--line); border-left:4px solid var(--gold);
+  border-radius:var(--radius-card); background:var(--surface-2);
+}
+.filtros-ativos-titulo {
+  color:var(--text-2); font-size:var(--fs-micro); font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+}
+.filtros-ativos ul {
+  display:flex; flex-wrap:wrap; gap:var(--sp-2); flex:1 1 240px;
+  margin:0; padding:0; list-style:none;
+}
+.filtros-ativos li {
+  display:inline-flex; align-items:baseline; gap:var(--sp-2);
+  padding:5px var(--sp-3); border:1px solid var(--line-strong);
+  border-radius:var(--radius-pill); background:var(--surface);
+  font-size:var(--fs-xs);
+}
+.filtros-ativos li span { color:var(--text-2); }
+.filtros-ativos li strong { color:var(--text); font-weight:600; }
+.filtros-ativos-limpar { flex:0 0 auto; }
+
 .form-filtros-financeiro {
   display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
   gap:var(--sp-4); align-items:end;
@@ -99,8 +134,14 @@
   .total-card { padding:var(--sp-4); }
   .total-card > div > strong { font-size:24px; }
 }
+@media (max-width:900px) {
+  .secao-filtros .section-title { align-items:center; }
+  .form-filtros-financeiro[hidden] { display:none; }
+}
 @media (max-width:420px) {
   .financeiro-totais { grid-template-columns:1fr; }
+  .filtros-ativos { padding:var(--sp-4); }
+  .filtros-ativos-limpar { width:100%; }
   .form-filtros-financeiro { grid-template-columns:1fr; }
   .comprovante-resumo { grid-template-columns:1fr; }
 }

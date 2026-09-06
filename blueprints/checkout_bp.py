@@ -10,7 +10,7 @@ API do Mercado Pago confirmou - nada vindo da URL de retorno é levado em conta.
 import logging
 import secrets
 
-from flask import Blueprint, abort, flash, redirect, render_template, session, url_for
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, session, url_for
 
 from dao.financeiroDAO import PagamentoDAO, rotulo_status
 from servicos.formatacao import formatar_competencia
@@ -21,6 +21,7 @@ from servicos.mercado_pago import (
     MercadoPagoIndisponivel,
     ambiente_mercado_pago,
     criar_preferencia_checkout,
+    url_checkout_permitida,
 )
 from servicos.urls import URLPublicaInvalida, url_publica
 
@@ -33,6 +34,25 @@ MSG_ERRO_GENERICO = 'Não foi possível abrir as outras formas de pagamento agor
 MSG_ERRO_CONFIG = 'Pagamento online indisponível no momento. Avise a administração.'
 MSG_ERRO_INDISPONIVEL = 'O Mercado Pago está indisponível no momento. Tente novamente em instantes.'
 MSG_ERRO_SEM_EMAIL = 'Cadastre um e-mail válido no seu perfil para usar as outras formas de pagamento.'
+
+
+def _quer_json():
+    return request.accept_mimetypes.best_match(('text/html', 'application/json')) == 'application/json'
+
+
+def _erro_abertura(mensagem, destino, status):
+    if _quer_json():
+        return jsonify({'erro': mensagem}), status
+    flash(mensagem, 'erro')
+    return redirect(destino)
+
+
+def _checkout_pronto(pagamento):
+    # A navegação externa será um GET. Um 303 direto após o POST é bloqueado
+    # pelo Chrome quando a página de origem usa CSP form-action 'self'.
+    if _quer_json():
+        return jsonify({'url_checkout': pagamento.checkout_url})
+    return redirect(url_for('checkout.continuar_checkout', pagamento_id=pagamento.id), code=303)
 
 
 def _acesso_permitido(pagamento):
@@ -57,44 +77,48 @@ def _urls_retorno(pagamento):
 
 @checkout_bp.route('/perfil/mensalidade/<int:pagamento_id>/checkout', methods=['POST'])
 def abrir_checkout(pagamento_id):
-    """Cria (ou reaproveita) a preferência do Checkout Pro e redireciona para o Mercado Pago."""
+    """Cria ou reaproveita o checkout e devolve o destino para uma navegação GET."""
     if session.get('tipo_usuario') not in ('admin', 'aluno'):
-        flash('Sua sessão expirou. Entre novamente para continuar o pagamento.', 'erro')
-        return redirect(url_for('auth.pagina_login'))
+        return _erro_abertura(
+            'Sua sessão expirou. Entre novamente para continuar o pagamento.',
+            url_for('auth.pagina_login'), 401,
+        )
 
     pagamento = PagamentoDAO.bloquear_para_atualizacao(pagamento_id)
     if not pagamento:
+        if _quer_json():
+            return jsonify({'erro': 'Cobrança não encontrada.'}), 404
         abort(404)
 
     if not _acesso_permitido(pagamento):
+        if _quer_json():
+            return jsonify({'erro': 'Você não tem acesso a esta cobrança.'}), 403
         abort(403)
 
     destino_erro = url_for('auth.pagina_pagamento', pagamento_id=pagamento.id)
 
     if pagamento.status not in STATUS_PAGAVEIS:
         # Mensalidade paga/cancelada/em análise não gera preferência nova.
-        flash('Esta mensalidade não está disponível para pagamento online.', 'erro')
-        return redirect(destino_erro)
+        return _erro_abertura('Esta cobrança não está disponível para pagamento online.', destino_erro, 409)
 
     try:
         ambiente = ambiente_mercado_pago()
     except ConfiguracaoInvalida:
         logger.error('Ambiente do Mercado Pago mal configurado ao abrir checkout do pagamento %s.',
                      pagamento.id, exc_info=True)
-        flash(MSG_ERRO_CONFIG, 'erro')
-        return redirect(destino_erro)
+        return _erro_abertura(MSG_ERRO_CONFIG, destino_erro, 503)
 
     # Clique repetido / duas abas: se já existe uma preferência válida para ESTA
     # mensalidade, com o mesmo valor e no mesmo ambiente, reusa a mesma URL em vez de
     # criar outra cobrança no Mercado Pago.
-    if PagamentoDAO.checkout_ainda_valido(pagamento, ambiente_atual=ambiente):
-        return redirect(pagamento.checkout_url, code=303)
+    if (PagamentoDAO.checkout_ainda_valido(pagamento, ambiente_atual=ambiente)
+            and url_checkout_permitida(pagamento.checkout_url)):
+        return _checkout_pronto(pagamento)
 
     aluno = pagamento.aluno
     email_pagador = aluno.email if aluno and aluno.email and '@' in aluno.email else None
     if session.get('tipo_usuario') == 'aluno' and not email_pagador:
-        flash(MSG_ERRO_SEM_EMAIL, 'erro')
-        return redirect(destino_erro)
+        return _erro_abertura(MSG_ERRO_SEM_EMAIL, destino_erro, 422)
 
     # Referência aleatória, própria do Checkout Pro e persistida antes de qualquer
     # confirmação. Não é o id da mensalidade justamente para não ser adivinhável.
@@ -116,19 +140,20 @@ def abrir_checkout(pagamento_id):
     except ConfiguracaoInvalida:
         logger.error('Configuracao ausente/invalida ao criar preferencia do pagamento %s.',
                      pagamento.id, exc_info=True)
-        flash(MSG_ERRO_CONFIG, 'erro')
-        return redirect(destino_erro)
+        return _erro_abertura(MSG_ERRO_CONFIG, destino_erro, 503)
     except MercadoPagoIndisponivel:
         logger.error('Mercado Pago indisponivel ao criar preferencia do pagamento %s.',
                      pagamento.id, exc_info=True)
-        flash(MSG_ERRO_INDISPONIVEL, 'erro')
-        return redirect(destino_erro)
+        return _erro_abertura(MSG_ERRO_INDISPONIVEL, destino_erro, 503)
 
     if not resultado['sucesso']:
         # A mensagem crua do Mercado Pago fica só no log do servidor.
         logger.error('Mercado Pago recusou a preferencia do pagamento %s: %s', pagamento.id, resultado['erro'])
-        flash(MSG_ERRO_GENERICO, 'erro')
-        return redirect(destino_erro)
+        return _erro_abertura(MSG_ERRO_GENERICO, destino_erro, 502)
+
+    if not url_checkout_permitida(resultado['url_checkout']):
+        logger.error('Mercado Pago devolveu um destino de checkout não permitido para %s.', pagamento.id)
+        return _erro_abertura(MSG_ERRO_GENERICO, destino_erro, 502)
 
     PagamentoDAO.salvar_dados_checkout(
         pagamento,
@@ -140,8 +165,28 @@ def abrir_checkout(pagamento_id):
         ator=session.get('usuario') or 'sistema',
     )
 
-    # 303 força GET no destino, que é o correto depois de um POST.
-    return redirect(resultado['url_checkout'], code=303)
+    return _checkout_pronto(pagamento)
+
+
+@checkout_bp.route('/perfil/mensalidade/<int:pagamento_id>/checkout/continuar')
+def continuar_checkout(pagamento_id):
+    """Alternativa sem JavaScript: POST local, depois um link GET para o provedor."""
+    if session.get('tipo_usuario') not in ('admin', 'aluno'):
+        return redirect(url_for('auth.pagina_login'))
+    pagamento = PagamentoDAO.buscar_por_id(pagamento_id)
+    if not pagamento:
+        abort(404)
+    if not _acesso_permitido(pagamento):
+        abort(403)
+    try:
+        ambiente = ambiente_mercado_pago()
+    except ConfiguracaoInvalida:
+        ambiente = None
+    if (not ambiente or not PagamentoDAO.checkout_ainda_valido(pagamento, ambiente_atual=ambiente)
+            or not url_checkout_permitida(pagamento.checkout_url)):
+        flash('O link de pagamento não está mais disponível. Abra as formas de pagamento novamente.', 'erro')
+        return redirect(url_for('auth.pagina_pagamento', pagamento_id=pagamento.id))
+    return render_template('checkout_continuar.html', pagamento=pagamento)
 
 
 @checkout_bp.route('/perfil/mensalidade/<int:pagamento_id>/retorno-checkout')

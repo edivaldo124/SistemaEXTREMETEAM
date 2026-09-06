@@ -29,7 +29,7 @@
         {% include 'components/admin_nav.html' %}
         <main id="conteudo">
             <div class="container-detalhes">
-                <div class="detail-intro">
+                <div class="detail-intro entra">
                     <div>
                         <p class="eyebrow">Administração</p>
                         <h1>Financeiro</h1>
@@ -42,7 +42,7 @@
                              role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
                     {% endfor %}
                 {% endwith %}
-                <section class="financeiro-totais">
+                <section class="financeiro-totais entra-1">
                     <article class="total-card total-recebido">
                         <span class="icon-tile" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
@@ -94,13 +94,63 @@
                         </div>
                     </article>
                 </section>
-                <section class="detail-section">
+                {% set rotulos_forma = {'pix': 'Pix', 'dinheiro': 'Dinheiro', 'transferencia': 'Transferência', 'cartao_credito': 'Cartão de crédito', 'cartao_debito': 'Cartão de débito', 'boleto': 'Boleto'} %}
+                {% set filtros_ativos = [] %}
+                {% if filtros.get('inicio') and filtros.get('fim') %}
+                    {{ filtros_ativos.append(('Período', filtros['inicio'][8:10] ~ '/' ~ filtros['inicio'][5:7] ~ '/' ~ filtros['inicio'][0:4] ~ ' a ' ~ filtros['fim'][8:10] ~ '/' ~ filtros['fim'][5:7] ~ '/' ~ filtros['fim'][0:4])) or '' }}
+                {% elif filtros.get('inicio') %}
+                    {{ filtros_ativos.append(('A partir de', filtros['inicio'][8:10] ~ '/' ~ filtros['inicio'][5:7] ~ '/' ~ filtros['inicio'][0:4])) or '' }}
+                {% elif filtros.get('fim') %}
+                    {{ filtros_ativos.append(('Até', filtros['fim'][8:10] ~ '/' ~ filtros['fim'][5:7] ~ '/' ~ filtros['fim'][0:4])) or '' }}
+                {% endif %}
+                {% if filtros.get('turma_id') %}
+                    {% set turma_filtrada = turmas | selectattr('id', 'equalto', filtros['turma_id'] | int) | first %}
+                    {{ filtros_ativos.append(('Turma', turma_filtrada.nome if turma_filtrada else filtros['turma_id'])) or '' }}
+                {% endif %}
+                {% if filtros.get('plano_id') %}
+                    {% set plano_filtrado = planos | selectattr('id', 'equalto', filtros['plano_id'] | int) | first %}
+                    {{ filtros_ativos.append(('Plano', plano_filtrado.nome_plano if plano_filtrado else filtros['plano_id'])) or '' }}
+                {% endif %}
+                {% if filtros.get('forma_pagamento') %}
+                    {{ filtros_ativos.append(('Método', rotulos_forma.get(filtros['forma_pagamento'], filtros['forma_pagamento']))) or '' }}
+                {% endif %}
+                {% if filtros.get('status') %}
+                    {{ filtros_ativos.append(('Situação', rotulo_status(filtros['status']))) or '' }}
+                {% endif %}
+                {% if filtros.get('busca_aluno') %}
+                    {{ filtros_ativos.append(('Aluno', filtros['busca_aluno'])) or '' }}
+                {% endif %}
+                <section class="detail-section secao-filtros">
                     <div class="section-title">
                         <h2>Filtros</h2>
                         <p>Refine por período, turma, plano, método, situação ou nome do aluno.</p>
+                        <button type="button"
+                                class="btn filtros-alternar"
+                                data-filtros-alternar
+                                aria-expanded="true"
+                                aria-controls="filtros-financeiro"
+                                hidden>
+                            <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10m-7 6h4" /></svg>
+                            <span data-filtros-alternar-texto>Ocultar filtros</span>
+                        </button>
                     </div>
+                    {% if filtros_ativos %}
+                        <div class="filtros-ativos">
+                            <span class="filtros-ativos-titulo">Aplicados agora</span>
+                            <ul>
+                                {% for rotulo, valor in filtros_ativos %}
+                                    <li>
+                                        <span>{{ rotulo }}</span>
+                                        <strong>{{ valor }}</strong>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <a href="/admin/financeiro" class="btn filtros-ativos-limpar">Limpar</a>
+                        </div>
+                    {% endif %}
                     <form method="GET"
                           action="/admin/financeiro"
+                          id="filtros-financeiro"
                           class="form-filtros-financeiro">
                         <div class="grupo-input">
                             <label for="f-inicio">De</label>
@@ -273,6 +323,7 @@
         </main>
         {% include 'components/confirm_modal.html' %}
         <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/filtros_financeiro.js') }}" defer></script>
         {% include 'components/comprovante_modal.html' %}
         <script src="{{ url_for('static', filename='js/comprovante_modal.js') }}" defer></script>
     </body>

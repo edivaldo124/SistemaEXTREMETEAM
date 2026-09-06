@@ -11,8 +11,9 @@ function criarPagina(script) {
     function elemento(dataset = {}) {
         const eventos = new Map();
         const filhos = new Map();
+        const atributos = new Map();
         return {
-            dataset, textContent: '', value: '', hidden: false, open: false,
+            dataset, textContent: '', value: '', hidden: false, open: false, atributos,
             classList: { add() {}, remove() {} },
             addEventListener(nome, callback) {
                 if (!eventos.has(nome)) eventos.set(nome, []);
@@ -28,7 +29,9 @@ function criarPagina(script) {
             querySelectorAll() { return []; },
             showModal() { this.open = true; },
             close() { this.open = false; },
-            removeAttribute() {}, focus() {},
+            setAttribute(nome, valor) { atributos.set(nome, String(valor)); },
+            getAttribute(nome) { return atributos.has(nome) ? atributos.get(nome) : null; },
+            removeAttribute(nome) { atributos.delete(nome); }, focus() {},
         };
     }
 
@@ -63,13 +66,14 @@ function criarPagina(script) {
     };
     const arquivo = path.resolve(__dirname, '../../static/js', `${script}.js`);
     vm.runInNewContext(fs.readFileSync(arquivo, 'utf8'), contexto, { filename: arquivo });
+    let botaoPix = null;
     if (script === 'pix') {
-        const botao = elemento({ pagamentoId: '42' });
-        document.emitir('click', { target: { closest: () => botao } });
+        botaoPix = elemento({ pagamentoId: '42' });
+        document.emitir('click', { target: { closest: () => botaoPix } });
     }
 
     return {
-        consultas, intervalos, raiz, window,
+        consultas, intervalos, raiz, window, botaoPix,
         get recargas() { return recargas; },
         async tick() {
             for (const callback of [...intervalos.values()]) callback();

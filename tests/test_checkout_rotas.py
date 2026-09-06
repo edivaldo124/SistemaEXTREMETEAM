@@ -17,6 +17,7 @@ from dao.financeiroDAO import PagamentoDAO
 from servicos.mercado_pago import ConfiguracaoInvalida, MercadoPagoIndisponivel
 
 URL_MP = 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-1'
+JSON_HEADERS = {'Accept': 'application/json'}
 
 
 def _resposta_preferencia(preference_id='pref-1', url=URL_MP, ambiente='producao', minutos=60):
@@ -71,6 +72,87 @@ def _mockar_preferencia(monkeypatch, resposta=None, chamadas=None, ambiente='pro
 # POST /perfil/mensalidade/<id>/checkout
 # ---------------------------------------------------------------------------
 
+
+def test_abertura_json_navega_sem_redirecionar_post_externo(client, criar_pagamento, monkeypatch, logar_como_aluno):
+    pagamento = criar_pagamento()
+    logar_como_aluno(pagamento.aluno)
+    chamadas = []
+    _mockar_preferencia(monkeypatch, chamadas=chamadas)
+    for _ in range(2):
+        resposta = client.post(f'/perfil/mensalidade/{pagamento.id}/checkout', headers=JSON_HEADERS)
+        assert resposta.status_code == 200
+        assert 'Location' not in resposta.headers
+        assert resposta.get_json() == {'url_checkout': URL_MP}
+        assert "form-action 'self'" in resposta.headers['Content-Security-Policy']
+    assert len(chamadas) == 1
+    assert pagamento.status == 'pendente'
+
+
+def test_fallback_sem_js_usa_pagina_local_com_link_get(client, criar_pagamento, monkeypatch, logar_como_aluno):
+    pagamento = criar_pagamento()
+    logar_como_aluno(pagamento.aluno)
+    chamadas = []
+    _mockar_preferencia(monkeypatch, chamadas=chamadas)
+    resposta = client.post(f'/perfil/mensalidade/{pagamento.id}/checkout', follow_redirects=True)
+    assert resposta.status_code == 200
+    assert resposta.request.path.endswith('/checkout/continuar')
+    assert 'Continuar no Mercado Pago' in resposta.get_data(as_text=True)
+    assert URL_MP in resposta.get_data(as_text=True)
+    assert len(chamadas) == 1
+
+
+@pytest.mark.parametrize('situacao,codigo', [('pago', 409), ('cancelado', 409)])
+def test_json_nao_abre_cobranca_encerrada(client, criar_pagamento, monkeypatch, logar_como_aluno, situacao, codigo):
+    pagamento = criar_pagamento(status=situacao)
+    logar_como_aluno(pagamento.aluno)
+    chamadas = []
+    _mockar_preferencia(monkeypatch, chamadas=chamadas)
+    resposta = client.post(f'/perfil/mensalidade/{pagamento.id}/checkout', headers=JSON_HEADERS)
+    assert resposta.status_code == codigo
+    assert resposta.get_json()['erro']
+    assert not chamadas
+
+
+def test_json_sessao_expirada_e_cobranca_alheia(client, criar_pagamento, criar_aluno, logar_como_aluno):
+    pagamento = criar_pagamento()
+    url = f'/perfil/mensalidade/{pagamento.id}/checkout'
+    assert client.post(url, headers=JSON_HEADERS).status_code == 401
+    logar_como_aluno(criar_aluno())
+    resposta = client.post(url, headers=JSON_HEADERS)
+    assert resposta.status_code == 403
+    assert resposta.get_json()['erro']
+    assert client.get(f'{url}/continuar').status_code == 403
+
+
+def test_json_falha_mp_devolve_erro_sem_redirecionamento(client, criar_pagamento, monkeypatch, logar_como_aluno):
+    pagamento = criar_pagamento()
+    logar_como_aluno(pagamento.aluno)
+
+    def falhar():
+        raise MercadoPagoIndisponivel('Falha simulada')
+
+    _mockar_preferencia(monkeypatch, resposta=falhar)
+    resposta = client.post(f'/perfil/mensalidade/{pagamento.id}/checkout', headers=JSON_HEADERS)
+    assert resposta.status_code == 503
+    assert resposta.get_json()['erro'] == checkout_bp.MSG_ERRO_INDISPONIVEL
+    assert 'Location' not in resposta.headers
+    assert pagamento.checkout_url is None
+
+
+@pytest.mark.parametrize('destino', [
+    'javascript:alert(1)', 'http://www.mercadopago.com.br/checkout',
+    'https://www.mercadopago.com.br.evil.test/checkout',
+    'https://usuario@www.mercadopago.com.br/checkout',
+])
+def test_json_nao_abre_destino_fora_do_checkout(client, criar_pagamento, monkeypatch, logar_como_aluno, destino):
+    pagamento = criar_pagamento()
+    logar_como_aluno(pagamento.aluno)
+    _mockar_preferencia(monkeypatch, resposta=_resposta_preferencia(url=destino))
+    resposta = client.post(f'/perfil/mensalidade/{pagamento.id}/checkout', headers=JSON_HEADERS)
+    assert resposta.status_code == 502
+    assert 'url_checkout' not in resposta.get_json()
+    assert pagamento.checkout_url is None
+
 def test_aluno_cria_checkout_da_propria_mensalidade(client, criar_pagamento, monkeypatch, logar_como_aluno):
     pagamento = criar_pagamento()
     logar_como_aluno(pagamento.aluno)
@@ -81,7 +163,7 @@ def test_aluno_cria_checkout_da_propria_mensalidade(client, criar_pagamento, mon
     resp = client.post(f'/perfil/mensalidade/{pagamento.id}/checkout')
 
     assert resp.status_code == 303
-    assert resp.headers['Location'] == URL_MP
+    assert resp.headers['Location'] == f'/perfil/mensalidade/{pagamento.id}/checkout/continuar'
     assert len(chamadas) == 1
 
     atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
@@ -181,7 +263,7 @@ def test_reutiliza_preferencia_valida(client, criar_pagamento, monkeypatch, loga
     logar_como_aluno(pagamento.aluno)
     PagamentoDAO.salvar_dados_checkout(
         pagamento, preference_id='pref-existente', external_reference='checkout-existente',
-        url_checkout='https://mp.example/checkout-existente', ambiente='producao',
+        url_checkout='https://www.mercadopago.com.br/checkout-existente', ambiente='producao',
         expira_em=datetime.utcnow() + timedelta(minutes=30),
     )
 
@@ -191,7 +273,7 @@ def test_reutiliza_preferencia_valida(client, criar_pagamento, monkeypatch, loga
     resp = client.post(f'/perfil/mensalidade/{pagamento.id}/checkout')
 
     assert resp.status_code == 303
-    assert resp.headers['Location'] == 'https://mp.example/checkout-existente'
+    assert resp.headers['Location'] == f'/perfil/mensalidade/{pagamento.id}/checkout/continuar'
     assert chamadas == []  # reaproveitou, não criou outra cobrança no Mercado Pago
 
 
@@ -226,7 +308,7 @@ def test_preferencia_expirada_gera_uma_nova(client, criar_pagamento, monkeypatch
     resp = client.post(f'/perfil/mensalidade/{pagamento.id}/checkout')
 
     assert resp.status_code == 303
-    assert resp.headers['Location'] == URL_MP
+    assert resp.headers['Location'] == f'/perfil/mensalidade/{pagamento.id}/checkout/continuar'
     assert len(chamadas) == 1
     assert PagamentoDAO.buscar_por_id(pagamento.id).checkout_preference_id == 'pref-1'
 

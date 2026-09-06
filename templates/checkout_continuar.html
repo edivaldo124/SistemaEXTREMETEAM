@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+        <title>Continuar pagamento | Extreme Team</title>
+        <link rel="icon" href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/pagamento.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
+    </head>
+    <body>
+        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+        {% include 'components/detail_back_header.html' %}
+        <main id="conteudo" class="pagamento-page">
+            <section class="pagamento-container">
+                <div class="pagamento-metodo">
+                    <h1>Seu pagamento está pronto</h1>
+                    <p>Continue no Mercado Pago para escolher a forma de pagamento de {{ pagamento.valor|moeda }}.</p>
+                    <a class="button-primary" href="{{ pagamento.checkout_url }}" rel="noreferrer">Continuar no Mercado Pago</a>
+                    <p><a href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">Voltar à cobrança</a></p>
+                </div>
+            </section>
+        </main>
+    </body>
+</html>

@@ -5,6 +5,7 @@ import os
 import time
 from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
+from urllib.parse import urlsplit
 
 import mercadopago
 import requests
@@ -42,6 +43,17 @@ PREFIXO_TOKEN_TESTE = 'TEST-'
 # Janela de validade da preferencia do Checkout Pro. Curta o bastante para o valor
 # cobrado nao envelhecer, longa o bastante para o aluno terminar um boleto/cartao.
 CHECKOUT_MINUTOS_EXPIRACAO = 60
+
+
+def url_checkout_permitida(url):
+    """Só abre o checkout HTTPS do Mercado Pago Brasil, inclusive no sandbox."""
+    try:
+        partes = urlsplit(url or '')
+        return partes.scheme == 'https' and partes.netloc.lower() in (
+            'www.mercadopago.com.br', 'sandbox.mercadopago.com.br',
+        )
+    except ValueError:
+        return False
 
 
 class MercadoPagoIndisponivel(Exception):

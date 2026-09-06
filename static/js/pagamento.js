@@ -27,6 +27,38 @@
     let paginaAtiva = true;
     let pollingDesejado = false;
 
+    // ------------------------------------------------------ botão ocupado --
+    // Enquanto o servidor conversa com o Mercado Pago o botão trava, avisa por
+    // texto e por aria-busy, e ganha um giro discreto (desenhado no CSS).
+    // Sucesso, erro ou volta pelo histórico devolvem o rótulo original.
+    function alvoDoRotulo(botao) {
+        return botao.querySelector('[data-rotulo]') || botao;
+    }
+
+    function marcarOcupado(botao, rotulo) {
+        if (!botao || botao.dataset.ocupado === 'true') return false;
+        botao.disabled = true;
+        botao.dataset.ocupado = 'true';
+        botao.setAttribute('aria-busy', 'true');
+        if (rotulo) {
+            const alvo = alvoDoRotulo(botao);
+            if (!botao.dataset.textoOriginal) botao.dataset.textoOriginal = alvo.textContent;
+            alvo.textContent = rotulo;
+        }
+        return true;
+    }
+
+    function liberarBotao(botao) {
+        if (!botao) return;
+        botao.disabled = false;
+        botao.dataset.ocupado = '';
+        botao.removeAttribute('aria-busy');
+        if (botao.dataset.textoOriginal) {
+            alvoDoRotulo(botao).textContent = botao.dataset.textoOriginal;
+            botao.dataset.textoOriginal = '';
+        }
+    }
+
     function mostrarEstado(nome) {
         Object.entries(estados).forEach(([chave, el]) => {
             el.hidden = chave !== nome;
@@ -116,8 +148,9 @@
         }
     }
 
-    async function gerarOuAtualizarPix() {
+    async function gerarOuAtualizarPix(botao) {
         pararPolling();
+        marcarOcupado(botao, 'Gerando cobrança…');
         mostrarEstado('carregando');
         try {
             const resposta = await fetch(`/api/mensalidades/${pagamentoId}/pix`, {
@@ -135,6 +168,9 @@
         } catch (erro) {
             if (elErroMsg) elErroMsg.textContent = 'Falha de conexão. Verifique sua internet e tente novamente.';
             mostrarEstado('erro');
+        } finally {
+            // Deu certo ou não, o botão volta a ser clicável na tela que ficar visível.
+            liberarBotao(botao);
         }
     }
 
@@ -157,7 +193,7 @@
         setTimeout(() => { btnCopiar.textContent = textoOriginal; }, 2000);
     });
 
-    botoesTentarNovamente.forEach((botao) => botao.addEventListener('click', gerarOuAtualizarPix));
+    botoesTentarNovamente.forEach((botao) => botao.addEventListener('click', () => gerarOuAtualizarPix(botao)));
 
     window.addEventListener('pagehide', () => {
         paginaAtiva = false;

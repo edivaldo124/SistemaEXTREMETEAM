@@ -276,6 +276,7 @@
 
 /* Bloco de ação de uma mensalidade: uma ação principal e as alternativas abaixo. */
 .mensalidade-acao { display:flex; flex-direction:column; align-items:flex-start; gap:var(--sp-3); }
+.mensalidade-card .mensalidade-acao { align-items:stretch; }
 .mensalidade-card-botao { align-self:stretch; min-height:54px; font-size:var(--fs-md); letter-spacing:.06em; text-transform:uppercase; }
 .btn-acao-mensalidade { min-height:var(--control-h-sm); padding:0 var(--sp-4); font-size:var(--fs-xs); }
 
@@ -285,13 +286,47 @@
 }
 .mensalidade-acao-nota:hover { color:var(--text); }
 .form-outras-formas { margin:0; }
+
+/* Segunda forma de pagar: contornada, nunca escondida. O Pix continua sendo a
+   ação cheia; a diferença é de peso, não de presença. */
 .mensalidade-acao-extra {
-  padding:0; border:0; background:none;
-  color:var(--text-2); font:600 var(--fs-xs) var(--body);
-  text-align:left; text-decoration:underline; text-underline-offset:3px; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-2);
+  min-height:46px; padding:0 var(--sp-5);
+  border:1px solid var(--line-strong); border-radius:var(--radius);
+  color:var(--text); background:transparent;
+  font:600 var(--fs-sm) var(--body); text-align:center; cursor:pointer;
 }
-.mensalidade-acao-extra:hover { color:var(--text); }
-.mensalidade-acao-extra[disabled] { color:var(--text-3); cursor:progress; text-decoration:none; }
+.mensalidade-acao-extra .icone { width:18px; height:18px; color:var(--text-2); }
+.mensalidade-acao-extra:hover { border-color:var(--text); background:var(--surface-2); }
+.mensalidade-acao-extra[disabled] { color:var(--text-2); cursor:progress; }
+
+/* Dentro do cartão escuro da cobrança pendente, a mesma ação usa o contorno
+   claro para continuar legível sobre o preto. */
+.mensalidade-card[data-status="pendente"] .mensalidade-acao-extra,
+.mensalidade-card[data-status="atrasado"] .mensalidade-acao-extra,
+.mensalidade-card[data-status="recusado"] .mensalidade-acao-extra {
+  align-self:stretch; width:100%;
+  border-color:var(--ink-4); color:var(--text-on-ink);
+}
+.mensalidade-card[data-status="pendente"] .mensalidade-acao-extra .icone,
+.mensalidade-card[data-status="atrasado"] .mensalidade-acao-extra .icone,
+.mensalidade-card[data-status="recusado"] .mensalidade-acao-extra .icone { color:var(--yellow); }
+.mensalidade-card[data-status="pendente"] .mensalidade-acao-extra:hover,
+.mensalidade-card[data-status="atrasado"] .mensalidade-acao-extra:hover,
+.mensalidade-card[data-status="recusado"] .mensalidade-acao-extra:hover {
+  border-color:var(--yellow); color:var(--yellow); background:rgba(253,207,23,.08);
+}
+.mensalidade-card .form-outras-formas { align-self:stretch; }
+/* O aviso de falha do checkout é inserido dentro do formulário: precisa de ar
+   e de largura própria, tanto no cartão escuro quanto na linha da tabela. */
+.form-outras-formas [data-checkout-erro] { margin-top:var(--sp-3); font-size:var(--fs-xs); }
+.form-outras-formas [data-checkout-erro][hidden] { display:none; }
+
+/* Na linha da tabela as duas ações são compactas: o Pix mantém a borda escura
+   e o peso maior. */
+.btn-acao-mensalidade { border-color:var(--text); font-weight:700; }
+.tabela-pagamentos .mensalidade-acao-extra { min-height:var(--control-h-sm); padding-inline:var(--sp-4); font-size:var(--fs-xs); }
+.tabela-pagamentos .mensalidade-acao-extra .icone { width:16px; height:16px; }
 
 /* ------------------------------------------------------------ filtros --- */
 

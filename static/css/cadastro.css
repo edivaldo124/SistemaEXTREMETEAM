@@ -33,12 +33,6 @@
   max-width:44ch; margin:0;
   color:var(--text-on-ink-2); font-size:var(--fs-md); line-height:1.7;
 }
-.aside-cta {
-  align-self:flex-start; border-radius:var(--radius-pill); padding-inline:var(--sp-6);
-  border-color:var(--ink-4); color:var(--text-on-ink); background:transparent;
-}
-.aside-cta:hover { border-color:var(--yellow); color:var(--yellow); background:rgba(253,207,23,.08); }
-
 /* Três etapas reais do cadastro: a numeração aqui informa a ordem. */
 .register-shell ol { margin:0; padding:0; list-style:none; }
 .register-shell li {
@@ -80,15 +74,23 @@
 .account-header > a:last-child { min-height:44px; }
 
 @media (max-width:900px) {
-  .register-shell { grid-template-columns:1fr; }
-  .register-shell aside { padding-block:var(--sp-8); }
+  .register-shell { grid-template-columns:1fr; gap:var(--sp-4); margin-top:var(--sp-4); }
+  /* Empilhado, o painel de marca é só a chamada: as três etapas repetem o que
+     o formulário já mostra e empurravam o primeiro campo para fora da tela. */
+  .register-shell aside { gap:var(--sp-3); padding:var(--sp-6) var(--sp-5); }
   .register-shell aside ol { display:none; }
 }
 @media (max-width:560px) {
-  .register-shell { margin-inline:var(--sp-3); }
+  .register-shell { margin-inline:var(--sp-3); margin-bottom:var(--sp-6); }
   .register-shell aside,.register-panel { border-radius:var(--radius-card); }
-  .form-grid { grid-template-columns:1fr; }
+  .form-grid { grid-template-columns:1fr; gap:var(--sp-4); }
   .field-wide { grid-column:auto; }
-  .register-shell aside h1 { font-size:36px; }
-  .register-panel { padding:var(--sp-6) var(--sp-5); }
+  .register-shell aside h1 { font-size:32px; }
+  .register-shell aside > p:not(.eyebrow) { font-size:var(--fs-sm); }
+  .register-panel { padding:var(--sp-5); }
+  .register-panel .form-heading { margin-bottom:var(--sp-5); }
+  .register-panel .page-subtitle { font-size:var(--fs-sm); }
+  .form-grupo { margin-bottom:var(--sp-5); }
+  .form-grupo legend { margin-bottom:var(--sp-4); padding-bottom:var(--sp-2); font-size:var(--fs-lg); }
+  .form-grupo .round-badge { width:30px; height:30px; font-size:14px; }
 }

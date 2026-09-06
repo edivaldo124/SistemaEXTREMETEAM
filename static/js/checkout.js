@@ -1,32 +1,113 @@
-// Checkout Pro ("outras formas de pagamento"): protege contra clique duplo no botão que
-// cria a preferência e, na tela de retorno, reconsulta o backend até haver um estado
+// Checkout Pro ("outras formas de pagamento"): abre a preferência criada pelo servidor
+// e, na tela de retorno, reconsulta o backend até haver um estado
 // confirmado. Nada aqui decide se o pagamento foi aprovado - quem decide é o servidor,
 // que só confia na API do Mercado Pago.
 (() => {
-    // ---------------------------------------------------------------- clique duplo --
-    // Cada envio cria/reutiliza uma preferência no servidor; travar o botão evita
-    // disparar duas navegações enquanto o redirecionamento não acontece.
-    document.addEventListener('submit', (event) => {
+    // ---------------------------------------------------------- abertura do checkout --
+    // O POST termina no nosso servidor. A navegação externa é um GET separado,
+    // permitido mesmo quando a política de segurança restringe form-action a self.
+    const LIMITE_ABERTURA_MS = 15000;
+    const HOSTS_CHECKOUT = new Set(['www.mercadopago.com.br', 'sandbox.mercadopago.com.br']);
+    const formularios = new Map();
+    const aberturas = new Map();
+
+    function prepararFormulario(form) {
+        if (formularios.has(form)) return formularios.get(form);
+        const botao = form.querySelector('[data-checkout-abrir]');
+        if (!botao) return null;
+        const mensagem = document.createElement('p');
+        mensagem.className = 'alert';
+        mensagem.setAttribute('role', 'alert');
+        mensagem.setAttribute('data-checkout-erro', '');
+        mensagem.hidden = true;
+        form.append(mensagem);
+        const estado = { botao, mensagem, conteudoOriginal: Array.from(botao.childNodes) };
+        formularios.set(form, estado);
+        return estado;
+    }
+
+    function finalizarAbertura(form, abertura, erro = '') {
+        if (aberturas.get(form) !== abertura) return;
+        clearTimeout(abertura.timer);
+        aberturas.delete(form);
+        const estado = formularios.get(form);
+        estado.botao.disabled = false;
+        estado.botao.replaceChildren(...estado.conteudoOriginal);
+        form.removeAttribute('aria-busy');
+        estado.mensagem.textContent = erro;
+        estado.mensagem.hidden = !erro;
+    }
+
+    function cancelarAberturas() {
+        for (const [form, abertura] of aberturas) {
+            finalizarAbertura(form, abertura);
+            abertura.controlador.abort();
+        }
+    }
+
+    document.querySelectorAll('.form-outras-formas').forEach(prepararFormulario);
+
+    document.addEventListener('submit', async (event) => {
         const form = event.target.closest('.form-outras-formas');
         if (!form) return;
-        const botao = form.querySelector('[data-checkout-abrir]');
-        if (!botao) return;
-        if (botao.disabled) {
-            event.preventDefault();
-            return;
+        const estado = prepararFormulario(form);
+        if (!estado) return;
+        event.preventDefault();
+        if (aberturas.has(form)) return;
+
+        const abertura = { controlador: new AbortController(), timer: null };
+        aberturas.set(form, abertura);
+        estado.botao.disabled = true;
+        estado.botao.textContent = 'Abrindo checkout…';
+        estado.mensagem.hidden = true;
+        estado.mensagem.textContent = '';
+        form.setAttribute('aria-busy', 'true');
+        abertura.timer = setTimeout(() => {
+            finalizarAbertura(form, abertura, 'O pagamento demorou para responder. Tente novamente em instantes.');
+            abertura.controlador.abort();
+        }, LIMITE_ABERTURA_MS);
+
+        try {
+            const destino = new URL(form.action, window.location.href);
+            if (destino.origin !== window.location.origin) throw new Error('Destino de pagamento inválido. Recarregue a página.');
+            const resposta = await fetch(destino.href, {
+                method: 'POST',
+                credentials: 'same-origin',
+                mode: 'same-origin',
+                redirect: 'error',
+                headers: { Accept: 'application/json' },
+                body: new FormData(form),
+                signal: abertura.controlador.signal,
+            });
+            if (aberturas.get(form) !== abertura) return;
+            if (resposta.status === 401) throw new Error('Sua sessão expirou. Recarregue a página e entre novamente.');
+            const tipo = resposta.headers.get('content-type') || '';
+            if (!tipo.includes('application/json')) {
+                if (resposta.status === 400) throw new Error('Não foi possível validar o formulário. Recarregue a página e tente novamente.');
+                throw new Error('Não foi possível abrir o pagamento. Recarregue a página e tente novamente.');
+            }
+            const dados = await resposta.json();
+            if (aberturas.get(form) !== abertura) return;
+            if (!resposta.ok) {
+                throw new Error(typeof dados?.erro === 'string' ? dados.erro : 'Não foi possível abrir o pagamento. Tente novamente.');
+            }
+            const url = typeof dados?.url_checkout === 'string' ? new URL(dados.url_checkout) : null;
+            if (!url || url.protocol !== 'https:' || !HOSTS_CHECKOUT.has(url.hostname) || url.port || url.username || url.password) {
+                throw new Error('O endereço do pagamento é inválido. Tente novamente em instantes.');
+            }
+            window.location.assign(url.href);
+            finalizarAbertura(form, abertura);
+        } catch (erro) {
+            const mensagem = erro instanceof TypeError || erro instanceof SyntaxError
+                ? 'Não foi possível conectar ao pagamento. Tente novamente em instantes.'
+                : erro.message || 'Não foi possível abrir o pagamento. Tente novamente.';
+            finalizarAbertura(form, abertura, mensagem);
         }
-        botao.disabled = true;
-        botao.dataset.textoOriginal = botao.textContent;
-        botao.textContent = 'Abrindo checkout…';
     });
 
-    // Voltar pelo histórico (inclusive bfcache) precisa devolver o botão utilizável.
-    window.addEventListener('pageshow', () => {
-        document.querySelectorAll('[data-checkout-abrir][disabled]').forEach((botao) => {
-            botao.disabled = false;
-            if (botao.dataset.textoOriginal) botao.textContent = botao.dataset.textoOriginal;
-        });
-    });
+    // Cancelar ao sair também impede que uma resposta tardia navegue após voltar.
+    window.addEventListener('pagehide', cancelarAberturas);
+    window.addEventListener('pageshow', cancelarAberturas);
 
     // -------------------------------------------------------------- tela de retorno --
     const raiz = document.getElementById('retorno-checkout');

@@ -125,7 +125,7 @@ Nenhum dado de cartão passa pelo servidor da academia — número, validade e C
 
 ### Fluxo
 
-1. `POST /perfil/mensalidade/<id>/checkout` — cria (ou reaproveita) uma preferência do Checkout Pro e responde `303` para a URL do Mercado Pago.
+1. `POST /perfil/mensalidade/<id>/checkout` — cria (ou reaproveita) uma preferência do Checkout Pro. Com `Accept: application/json`, responde com `url_checkout` e o navegador abre o Mercado Pago por GET. Isso evita que o Chrome bloqueie um redirecionamento externo de formulário pela CSP `form-action 'self'`. Sem JavaScript, responde `303` para uma página interna com o link de continuação. Falhas e timeout liberam o botão para nova tentativa.
 2. O aluno escolhe o meio de pagamento no Mercado Pago.
 3. `GET /perfil/mensalidade/<id>/retorno-checkout` — volta para o sistema. Essa tela **ignora** `status`, `payment_id` e `external_reference` da query string: ela consulta a API do Mercado Pago pela referência que o próprio servidor gravou e só então mostra o estado.
 4. `POST /api/webhooks/mercado-pago` — mesmo endpoint do Pix. Valida a assinatura, consulta o pagamento na API e reencontra a mensalidade pela referência confirmada.

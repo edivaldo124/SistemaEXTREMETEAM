@@ -35,6 +35,38 @@
 
     let pagamentoIdAtual = null;
     let botaoQueAbriu = null;
+
+    // ------------------------------------------------------ botão ocupado --
+    // Enquanto o servidor conversa com o Mercado Pago o botão trava, avisa por
+    // texto e por aria-busy, e ganha um giro discreto (desenhado no CSS).
+    // Sucesso, erro ou volta pelo histórico devolvem o rótulo original.
+    function alvoDoRotulo(botao) {
+        return botao.querySelector('[data-rotulo]') || botao;
+    }
+
+    function marcarOcupado(botao, rotulo) {
+        if (!botao || botao.dataset.ocupado === 'true') return false;
+        botao.disabled = true;
+        botao.dataset.ocupado = 'true';
+        botao.setAttribute('aria-busy', 'true');
+        if (rotulo) {
+            const alvo = alvoDoRotulo(botao);
+            if (!botao.dataset.textoOriginal) botao.dataset.textoOriginal = alvo.textContent;
+            alvo.textContent = rotulo;
+        }
+        return true;
+    }
+
+    function liberarBotao(botao) {
+        if (!botao) return;
+        botao.disabled = false;
+        botao.dataset.ocupado = '';
+        botao.removeAttribute('aria-busy');
+        if (botao.dataset.textoOriginal) {
+            alvoDoRotulo(botao).textContent = botao.dataset.textoOriginal;
+            botao.dataset.textoOriginal = '';
+        }
+    }
     let intervaloPolling = null;
     let consultaEmAndamento = false;
     let paginaAtiva = true;
@@ -84,7 +116,7 @@
         pagamentoIdAtual = null;
         if (dialog.open) dialog.close();
         if (botaoQueAbriu) {
-            botaoQueAbriu.disabled = false;
+            liberarBotao(botaoQueAbriu);
             botaoQueAbriu.focus();
         }
         botaoQueAbriu = null;
@@ -174,6 +206,7 @@
         limparConteudoAnterior();
         mostrarEstado('carregando');
         if (!dialog.open) dialog.showModal();
+        const botaoDaLinha = botaoQueAbriu;
 
         try {
             const resposta = await fetch(`/api/mensalidades/${pagamentoId}/pix`, {
@@ -210,6 +243,17 @@
         } catch (erro) {
             elErroMsg.textContent = 'Falha de conexão. Verifique sua internet e tente novamente.';
             mostrarEstado('erro');
+        } finally {
+            // O diálogo já mostra o que aconteceu: o giro para e o rótulo volta.
+            // O botão segue travado só porque o diálogo é modal; fechar libera.
+            if (botaoDaLinha) {
+                botaoDaLinha.dataset.ocupado = '';
+                botaoDaLinha.removeAttribute('aria-busy');
+                if (botaoDaLinha.dataset.textoOriginal) {
+                    alvoDoRotulo(botaoDaLinha).textContent = botaoDaLinha.dataset.textoOriginal;
+                    botaoDaLinha.dataset.textoOriginal = '';
+                }
+            }
         }
     }
 
@@ -221,7 +265,7 @@
         if (!pagamentoId) return;
 
         botaoQueAbriu = botao;
-        botao.disabled = true;
+        marcarOcupado(botao, 'Gerando Pix…');
         abrirPix(pagamentoId);
     });
 
@@ -232,7 +276,7 @@
         );
         if (botaoAutomatico) {
             botaoQueAbriu = botaoAutomatico;
-            botaoAutomatico.disabled = true;
+            marcarOcupado(botaoAutomatico, 'Gerando Pix…');
             abrirPix(autoPixId);
         }
     }

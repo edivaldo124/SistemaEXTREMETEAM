@@ -117,7 +117,7 @@
                      id="visao-geral"
                      data-menu-panel
                      tabindex="-1">
-                <section class="aluno-hero">
+                <section class="aluno-hero entra-1">
                     <div class="profile-hero">
                         <div>
                             <p class="eyebrow">Área do aluno</p>
@@ -173,7 +173,7 @@
                 </section>
                 {% set cobranca_futura = mensalidade_atual and situacao.renovacao_antecipada and mensalidade_atual.id == situacao.cobranca.id %}
                 {% set titulo_cobranca = 'Próxima cobrança' if cobranca_futura else ('Último pagamento' if mensalidade_atual and mensalidade_atual.status == 'pago' else 'Minha cobrança') %}
-                <section class="mensalidade-destaque" aria-label="{{ titulo_cobranca }}">
+                <section class="mensalidade-destaque entra-2" aria-label="{{ titulo_cobranca }}">
                     {% if mensalidade_atual %}
                         <article class="mensalidade-card" data-status="{{ mensalidade_atual.status }}">
                             <div class="mensalidade-card-topo">

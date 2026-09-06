@@ -84,7 +84,17 @@
   --focus-ink:#000000;
   --focus-halo:rgba(253,207,23,.75);
 
+  /* ---- Movimento ----
+     Uma curva de entrada (desacelera e para) e uma de saída (some rápido).
+     Três durações bastam: resposta ao toque, mudança de estado e entrada de
+     tela. Nada aqui passa de meio segundo nem se repete. */
   --ease:cubic-bezier(.22,1,.36,1);
+  --ease-saida:cubic-bezier(.4,0,1,1);
+  --dur-rapida:180ms;
+  --dur-media:280ms;
+  --dur-entrada:420ms;
+  --desloca:10px;
+
   --safe-b:env(safe-area-inset-bottom,0px);
   --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
 }
@@ -450,9 +460,83 @@ td .student-avatar { vertical-align:middle; }
 @keyframes dialog-in { from { opacity:0; transform:translateY(10px) scale(.99); } to { opacity:1; transform:none; } }
 @keyframes backdrop-in { from { opacity:0; } to { opacity:1; } }
 
+/* --------------------------------------------------------- movimento --- */
+/* Regra da casa: cada tela tem UMA entrada, no bloco que abre a página. O
+   resto só se mexe quando a pessoa age. Sem laço, sem brilho, sem flutuação. */
+
+@keyframes entra { from { opacity:0; transform:translateY(var(--desloca)); } to { opacity:1; transform:none; } }
+
+/* Aplique .entra no bloco de abertura. Filhos com --ordem entram em cascata
+   curta; a ordem existe para guiar a leitura, não para virar espetáculo. */
+.entra { animation:entra var(--dur-entrada) var(--ease) both; }
+.entra-1,.entra-2,.entra-3,.entra-4,.entra-5 {
+  animation:entra var(--dur-entrada) var(--ease) both;
+}
+.entra-1 { animation-delay:40ms; }
+.entra-2 { animation-delay:100ms; }
+.entra-3 { animation-delay:160ms; }
+.entra-4 { animation-delay:220ms; }
+.entra-5 { animation-delay:280ms; }
+
+/* Resposta ao toque: o controle afunda um pouco e volta. */
+.button-primary,.button-secondary,.btn,.btn-salvar,.btn-cadastrar,.btn-escolher,
+.submit-button,.nav-login,.link-logout,.text-button,.confirm-actions button {
+  transition:background var(--dur-rapida) ease, border-color var(--dur-rapida) ease,
+             color var(--dur-rapida) ease, transform 90ms var(--ease-saida),
+             box-shadow var(--dur-rapida) ease;
+}
+.button-primary:active,.button-secondary:active,.btn:active,.btn-salvar:active,
+.btn-cadastrar:active,.btn-escolher:active,.submit-button:active,.nav-login:active,
+.link-logout:active,.text-button:active,.confirm-actions button:active {
+  transform:scale(.98);
+}
+.button-primary:disabled:active,.button-secondary:disabled:active,.btn:disabled:active,
+.btn-salvar:disabled:active,.btn-cadastrar:disabled:active,.btn-escolher:disabled:active,
+.submit-button:disabled:active { transform:none; }
+
+/* Campos: a borda e o anel acompanham o foco sem piscar. */
+.field input,.field select,.field textarea,
+.grupo-input input,.grupo-input select,.grupo-input textarea {
+  transition:border-color var(--dur-rapida) ease, box-shadow var(--dur-rapida) ease,
+             background var(--dur-rapida) ease;
+}
+
+/* Mensagens de erro e sucesso chegam de cima, curto. */
+.msg,.alert { animation:entra var(--dur-media) var(--ease) both; }
+
+/* Selo de situação e linha de tabela mudam de cor sem salto. */
+.status { transition:background var(--dur-rapida) ease, color var(--dur-rapida) ease; }
+tbody tr td { transition:background var(--dur-rapida) ease; }
+
+/* ------------------------------------------------ botão em operação ---- */
+/* Usado enquanto o servidor conversa com o Mercado Pago: o botão trava, avisa
+   por texto e mostra um giro discreto. O texto nunca some sozinho. */
+
+@keyframes girando { to { transform:rotate(1turn); } }
+
+[data-ocupado="true"],
+.form-outras-formas[aria-busy="true"] [data-checkout-abrir] { cursor:progress; }
+[data-ocupado="true"]::after,
+.form-outras-formas[aria-busy="true"] [data-checkout-abrir]::after {
+  content:""; flex:0 0 auto; width:15px; height:15px; margin-left:var(--sp-1);
+  border:2px solid currentColor; border-top-color:transparent; border-radius:50%;
+  opacity:.85; animation:girando 700ms linear infinite;
+}
+
 @media (prefers-reduced-motion:reduce) {
   html { scroll-behavior:auto; }
   *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  .entra,.entra-1,.entra-2,.entra-3,.entra-4,.entra-5,.msg,.alert {
+    animation:none !important; opacity:1; transform:none;
+  }
+  .button-primary:active,.button-secondary:active,.btn:active,.btn-salvar:active,
+  .btn-cadastrar:active,.btn-escolher:active,.submit-button:active,.nav-login:active,
+  .link-logout:active,.text-button:active,.confirm-actions button:active { transform:none; }
+  /* O giro vira um traço parado: continua dizendo "em andamento" sem se mexer. */
+  [data-ocupado="true"]::after,
+  .form-outras-formas[aria-busy="true"] [data-checkout-abrir]::after {
+    animation:none !important; border-top-color:currentColor; opacity:.5;
+  }
 }
 
 /* --------------------------------------------- tabelas viram lista (mobile) -- */
@@ -529,7 +613,11 @@ td .student-avatar { vertical-align:middle; }
     stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
   }
   .bottom-nav a.is-active { color:var(--ink); background:var(--yellow); }
-  body.has-bottom-nav { padding-bottom:calc(88px + var(--safe-b)); }
+  .bottom-nav a { transition:color var(--dur-rapida) ease, background var(--dur-rapida) ease; }
+  /* A barra flutua a 12px do fim e mede 68px: a folga abaixo do conteúdo cobre
+     as duas medidas mais um respiro, para nenhum botão parar embaixo dela. */
+  body.has-bottom-nav { padding-bottom:calc(104px + var(--safe-b)); }
+  html:has(body.has-bottom-nav) { scroll-padding-bottom:calc(104px + var(--safe-b)); }
 }
 
 /* ------------------------------------------------------------ impressão -- */
@@ -538,6 +626,9 @@ td .student-avatar { vertical-align:middle; }
   .no-print,.bottom-nav,.skip-link { display:none !important; }
   body { background:#fff; }
   body::before { display:none; }
+  .entra,.entra-1,.entra-2,.entra-3,.entra-4,.entra-5 {
+    animation:none !important; opacity:1; transform:none;
+  }
 }
 
 /* ------------------------------------------------ células de tabela -- */
