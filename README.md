@@ -56,12 +56,25 @@ A regressão de concorrência do Pix exige PostgreSQL, pois SQLite não aplica `
 
 ## Keep-alive (hospedagem que hiberna)
 
-No plano gratuito do Render o serviço é derrubado depois de ~15 minutos sem nenhuma requisição de entrada, e a volta custa quase um minuto de espera para o primeiro visitante. Com `KEEP_ALIVE=true`, a aplicação sobe uma thread daemon que faz um GET no próprio `/health` a cada `KEEP_ALIVE_INTERVALO` segundos (padrão 600, aceito entre 60 e 840), o que basta para nunca hibernar.
+No plano gratuito do Render o serviço é derrubado depois de ~15 minutos sem nenhuma requisição de entrada, e a volta custa quase um minuto de espera para o primeiro visitante. Com `KEEP_ALIVE=true`, a aplicação sobe uma thread daemon que faz um GET no próprio `/health` a cada `KEEP_ALIVE_INTERVALO` segundos (padrão 600, aceito entre 60 e 840), tentando reduzir os períodos sem tráfego. Se o ping falhar ou retornar um status diferente de 200, tenta novamente após 60 segundos. Isso não garante que o serviço nunca hiberne ou reinicie.
 
 - O destino do ping é sempre `APP_BASE_URL` + `/health`, nunca o cabeçalho `Host` da requisição. Sem `APP_BASE_URL` válida o keep-alive não sobe e só registra um aviso no log.
 - Deixe `KEEP_ALIVE=false` em desenvolvimento e no `docker compose` — nada hiberna nesses ambientes.
 - O plano gratuito do Render dá 750 horas de instância por mês por workspace, e o mês tem ~730 horas. Um serviço acordado o tempo todo cabe na cota; dois não.
-- A thread morre junto com o processo, então isto evita a hibernação mas não acorda um serviço que já caiu. Para isso é preciso um monitor externo (UptimeRobot, cron-job.org) apontando para `/health`.
+- A thread morre junto com o processo, então isto não acorda um serviço que já hibernou ou caiu. Para isso é preciso um monitor externo (UptimeRobot, cron-job.org) apontando para `/health`.
+
+No painel do Render, configure em **Environment** (o `.env.example` local não configura o serviço):
+
+```env
+KEEP_ALIVE=true
+APP_BASE_URL=https://seu-servico.onrender.com
+KEEP_ALIVE_INTERVALO=600
+```
+
+Use a origem HTTPS real do serviço, sem caminho. Salve e faça o deploy para aplicar.
+Nos logs, procure `Keep-alive falhou`, `Keep-alive recebeu HTTP` ou `Keep-alive desligado`.
+O Render documenta a hibernação após 15 minutos sem tráfego de entrada e a possibilidade
+de reiniciar instâncias gratuitas: https://render.com/docs/free.
 
 ## Pagamento de mensalidade via Pix (Mercado Pago)
 

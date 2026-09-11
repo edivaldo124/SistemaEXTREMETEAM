@@ -80,3 +80,26 @@ def test_ping_engole_erro_de_rede(monkeypatch):
 
     monkeypatch.setattr(keep_alive.requests, 'get', get_fake)
     keep_alive._pingar('https://academia.example.test/health')
+
+
+@pytest.mark.parametrize('status', [200, 301, 302, 403, 500])
+def test_ping_so_considera_200_como_sucesso(monkeypatch, caplog, status):
+    from types import SimpleNamespace
+    monkeypatch.setattr(keep_alive.requests, 'get', lambda *a, **kw: SimpleNamespace(status_code=status))
+    assert keep_alive._pingar('https://academia.example.test/health') is (status == 200)
+    if status != 200:
+        assert f'HTTP {status}' in caplog.text
+
+
+def test_falha_repete_em_60_segundos_e_sucesso_restaura_intervalo(monkeypatch):
+    esperas = []
+    resultados = iter([False, True])
+
+    def esperar(segundos):
+        esperas.append(segundos)
+        return len(esperas) == 3
+
+    monkeypatch.setattr(keep_alive._parar, 'wait', esperar)
+    monkeypatch.setattr(keep_alive, '_pingar', lambda url: next(resultados))
+    keep_alive._laco('https://academia.example.test/health', 600)
+    assert esperas == [600, 60, 600]

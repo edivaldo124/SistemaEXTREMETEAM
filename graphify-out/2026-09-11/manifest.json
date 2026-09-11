@@ -1,8 +1,8 @@
 {
   "blueprints/adm_bp.py": {
-    "mtime": 1789091526.273594,
-    "seen": 1789121130.162652,
-    "ast_hash": "e4f0a158524762919bef5fa96f67baec",
+    "mtime": 1789090469.9569466,
+    "seen": 1789090652.5432696,
+    "ast_hash": "40070fb3738897d9abf2d6d2e07aba62",
     "semantic_hash": ""
   },
   "blueprints/turma_bp.py": {
@@ -12,9 +12,9 @@
     "semantic_hash": ""
   },
   "blueprints/usuario_bp.py": {
-    "mtime": 1789091526.2739203,
-    "seen": 1789121130.1626687,
-    "ast_hash": "03de155bb9b49f9a98be15a38225a5d8",
+    "mtime": 1789090564.1076827,
+    "seen": 1789090652.5434268,
+    "ast_hash": "713e4e5a5de861f3aaf674e00228ab3f",
     "semantic_hash": ""
   },
   "config.py": {
@@ -60,9 +60,9 @@
     "semantic_hash": "306c4dd47cfd3ac948d41f95fc31fa09"
   },
   "dao/usuarioDAO.py": {
-    "mtime": 1789091441.631179,
-    "seen": 1789121130.1626983,
-    "ast_hash": "61dcd4d6b8d7dfac1b8bff1b61eee662",
+    "mtime": 1789089395.039734,
+    "seen": 1789090652.543767,
+    "ast_hash": "9022ca49f314e661324b0edb808c6934",
     "semantic_hash": ""
   },
   "modelos/matricula.py": {
@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1789091558.5651765,
-    "seen": 1789121130.1629543,
-    "ast_hash": "4869a500b7e8ec37c3d32d3ae96aa1c6",
+    "mtime": 1789090632.463316,
+    "seen": 1789090652.5453515,
+    "ast_hash": "dede04dafe295303eadca9a6071cad27",
     "semantic_hash": ""
   },
   "compose.yaml": {
@@ -246,9 +246,9 @@
     "semantic_hash": ""
   },
   "servicos/email.py": {
-    "mtime": 1789091526.2731109,
-    "seen": 1789121130.162774,
-    "ast_hash": "f47a0904cde42087b5ae902b4d247727",
+    "mtime": 1789089440.046303,
+    "seen": 1789090652.5442462,
+    "ast_hash": "95a3be76da678700c84151f886285798",
     "semantic_hash": ""
   },
   "templates/admin_avisos.html": {
@@ -301,8 +301,8 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1789121130.1626325,
-    "ast_hash": "415656dfbf722b4ee0b494c18bfc8682",
+    "seen": 1788730789.1727033,
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "app.py": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "tests/test_financeiro_dao.py": {
-    "mtime": 1789091441.6303654,
-    "seen": 1789121130.1629026,
-    "ast_hash": "61b475825f4ca853bc3f56e62b2093e0",
+    "mtime": 1788572839.0623708,
+    "seen": 1788577577.8363001,
+    "ast_hash": "9ffa9048db34d26190c695aad76234c6",
     "semantic_hash": ""
   },
   "tests/test_mercado_pago_servico.py": {
@@ -583,14 +583,14 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1789121130.1626186,
-    "ast_hash": "324d1aabfdaabef57d9ffa0805a7c9c6",
+    "seen": 1788730789.1726973,
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "servicos/senhas.py": {
-    "mtime": 1789091441.630237,
-    "seen": 1789121130.162795,
-    "ast_hash": "714e57111ad257981d56c20af0014b9d",
+    "mtime": 1789089356.9619818,
+    "seen": 1789090652.5443394,
+    "ast_hash": "c6f3254aa6f2b9791f744cbd913b9418",
     "semantic_hash": ""
   },
   "servicos/urls.py": {
@@ -768,15 +768,15 @@
     "semantic_hash": ""
   },
   "migrations/versions/e4b7c2a91d35_cadastro_administrativo_e_convite_de_acesso.py": {
-    "mtime": 1789091526.2743247,
-    "seen": 1789121130.1627238,
-    "ast_hash": "6020e026cd74dbddc79ff2644779d30a",
+    "mtime": 1789089347.1764998,
+    "seen": 1789090652.5439403,
+    "ast_hash": "63a05b1053c73b5541870ea74f8945ef",
     "semantic_hash": ""
   },
   "servicos/convites.py": {
-    "mtime": 1789091526.2732775,
-    "seen": 1789121130.1627707,
-    "ast_hash": "fa8fcb72751662552d88120b47a1d075",
+    "mtime": 1789090693.9596636,
+    "seen": 1789090740.0955963,
+    "ast_hash": "2d06af9734fbbde154cf6bc9de01426f",
     "semantic_hash": ""
   },
   "static/js/senha_confirmacao.js": {
@@ -786,9 +786,9 @@
     "semantic_hash": ""
   },
   "tests/test_cadastro_administrativo.py": {
-    "mtime": 1789091617.9203498,
-    "seen": 1789121130.1628828,
-    "ast_hash": "fcc32b82368cbfa9c5d6dabf93380968",
+    "mtime": 1789090564.111705,
+    "seen": 1789090652.5449252,
+    "ast_hash": "68d62cc9f80e7ba39f5471044509749b",
     "semantic_hash": ""
   },
   "templates/admin_aluno_novo.html": {
@@ -798,15 +798,9 @@
     "semantic_hash": ""
   },
   "templates/ativar_acesso.html": {
-    "mtime": 1789091558.5646317,
-    "seen": 1789121130.1629827,
-    "ast_hash": "73cb166be9afd89d140298f70c8b6fcc",
-    "semantic_hash": ""
-  },
-  "tests/test_migracao_cadastro_administrativo.py": {
-    "mtime": 1789091505.7792969,
-    "seen": 1789121130.1629167,
-    "ast_hash": "ab2a48dd50d94bb2b992b47c26779a68",
+    "mtime": 1789089631.2548351,
+    "seen": 1789090652.5454597,
+    "ast_hash": "4e939f5bb395831bcba9ffe89d09fa64",
     "semantic_hash": ""
   }
 }

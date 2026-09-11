@@ -1,9 +1,8 @@
 """Mantém a aplicação acordada em hospedagens que hibernam por inatividade.
 
-O plano gratuito do Render derruba o serviço depois de ~15 minutos sem nenhuma
-requisição HTTP de entrada, e a volta custa quase um minuto de espera para o
-primeiro visitante. Uma thread daemon bate no próprio /health em intervalos
-menores que esse para o serviço nunca chegar a hibernar.
+Uma thread daemon tenta gerar tráfego no próprio /health enquanto o processo
+está vivo. É uma tentativa de reduzir a inatividade, sem garantia de impedir
+a hibernação ou reinícios da plataforma. Não acorda um processo já suspenso.
 
 Fica desligado por padrão: só sobe quando KEEP_ALIVE=true. O destino nunca vem
 da requisição (nem do cabeçalho Host), e sim de APP_BASE_URL, a mesma origem já
@@ -28,6 +27,7 @@ INTERVALO_PADRAO = 600
 INTERVALO_MINIMO = 60
 INTERVALO_MAXIMO = 840
 TIMEOUT = 15
+INTERVALO_RETENTATIVA = 60
 
 _parar = threading.Event()
 _trava = threading.Lock()
@@ -62,15 +62,19 @@ def _pingar(url):
         )
     except requests.RequestException as exc:
         logger.warning('Keep-alive falhou: %s', exc)
-        return
-    if resposta.status_code >= 400:
+        return False
+    if resposta.status_code != 200:
         logger.warning('Keep-alive recebeu HTTP %s de %s.', resposta.status_code, url)
+        return False
+    return True
 
 
 def _laco(url, intervalo):
     # Espera antes do primeiro ping: o processo acabou de subir, então já está acordado.
-    while not _parar.wait(intervalo):
-        _pingar(url)
+    espera = intervalo
+    while not _parar.wait(espera):
+        # Uma falha transitória não deve deixar dois intervalos inteiros sem ping.
+        espera = intervalo if _pingar(url) else INTERVALO_RETENTATIVA
 
 
 def iniciar():
