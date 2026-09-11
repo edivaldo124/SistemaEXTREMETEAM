@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Ativar acesso | Centro de Treinamento Extreme Team</title>
+        <link rel="icon"
+              type="image/png"
+              href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/recuperar.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/extreme.css') }}">
+    </head>
+    <body>
+        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+        <main id="conteudo" class="recovery-shell" tabindex="-1">
+            <section class="recovery-brand">
+                <a class="site-brand" href="/">
+                    <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
+                         alt="">
+                    <span>
+                        Centro de treinamento
+                        <br>
+                        <strong>Extreme Team</strong>
+                    </span>
+                </a>
+                <div>
+                    <p class="eyebrow">Seu cadastro já existe</p>
+                    <h1>
+                        Falta só
+                        <br>
+                        a sua senha.
+                    </h1>
+                    <p>Sua matrícula, seu plano e suas mensalidades continuam como estão. Você está criando apenas a forma de entrar.</p>
+                </div>
+            </section>
+            <section class="recovery-panel">
+                {% if convite_invalido %}
+                    <div class="recovery-form entra">
+                        <a class="back-link" href="/login">Voltar ao login</a>
+                        <p class="eyebrow">Convite de acesso</p>
+                        <h2 class="page-title">Este link não vale mais</h2>
+                        <p class="page-subtitle">
+                            Convites valem por 7 dias e servem uma vez só. Peça um novo à administração da academia — sua
+                            matrícula e suas mensalidades não foram afetadas.
+                        </p>
+                    </div>
+                {% else %}
+                    <div class="recovery-form entra">
+                        <a class="back-link" href="/login">Voltar ao login</a>
+                        <p class="eyebrow">Ativar acesso</p>
+                        <h2 class="page-title">
+                            {% if primeiro_nome %}Bem-vindo, {{ primeiro_nome }}{% else %}Crie seu acesso{% endif %}
+                        </h2>
+                        <p class="page-subtitle">
+                            Convite enviado para {{ email_mascarado }}. Escolha como você vai entrar na área do aluno.
+                        </p>
+                        {% if erro %}
+                            <div class="msg" role="alert">{{ erro }}</div>
+                        {% endif %}
+                        <form id="ativacao-form"
+                              action="{{ url_for('auth.ativar_acesso', token=token) }}"
+                              method="post">
+                            {% include "components/csrf_field.html" %}
+                            <div class="field">
+                                <label for="loginusuario">Nome de usuário</label>
+                                <input id="loginusuario"
+                                       type="text"
+                                       name="loginusuario"
+                                       maxlength="50"
+                                       autocomplete="username"
+                                       autofocus
+                                       required>
+                            </div>
+                            <div class="field">
+                                <label for="senhausuario">
+                                    Senha
+                                    <small>Mínimo 8 caracteres</small>
+                                </label>
+                                <input id="senhausuario"
+                                       type="password"
+                                       name="senhausuario"
+                                       minlength="8"
+                                       maxlength="255"
+                                       autocomplete="new-password"
+                                       required>
+                            </div>
+                            <div class="field">
+                                <label for="confirmarsenhausuario">Confirmar senha</label>
+                                <input id="confirmarsenhausuario"
+                                       type="password"
+                                       name="confirmarsenhausuario"
+                                       minlength="8"
+                                       maxlength="255"
+                                       autocomplete="new-password"
+                                       required
+                                       aria-describedby="confirmarsenhausuario-erro"
+                                       data-confirmar-senha="senhausuario">
+                                <p class="field-erro"
+                                   id="confirmarsenhausuario-erro"
+                                   role="alert"
+                                   hidden>As duas senhas precisam ser iguais.</p>
+                            </div>
+                            <div class="field">
+                                <label for="telefoneusuario">
+                                    Telefone
+                                    <small>Opcional</small>
+                                </label>
+                                <input id="telefoneusuario"
+                                       type="tel"
+                                       name="telefoneusuario"
+                                       maxlength="15"
+                                       inputmode="tel"
+                                       autocomplete="tel"
+                                       placeholder="(00) 00000-0000"
+                                       data-mask="phone">
+                            </div>
+                            <button class="button-primary" type="submit">Ativar meu acesso</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </section>
+        </main>
+        <script src="{{ url_for('static', filename='js/masks.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/senha_confirmacao.js') }}"></script>
+    </body>
+</html>

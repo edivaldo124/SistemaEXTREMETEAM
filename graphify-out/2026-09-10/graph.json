@@ -11530,12 +11530,12 @@
     },
     {
       "id": "servicos_convites_rationale_78",
-      "label": "Gera o convite e envia o link para o e-mail J\u00c1 GRAVADO no cadastro. A fun\u00e7\u00e3o\u2026",
+      "label": "Gera o convite e envia o link ao e-mail do cadastro. O destino \u00e9 sempre um\u2026",
       "_origin": "ast",
       "community": 38,
       "community_name": "convites.py",
       "file_type": "rationale",
-      "norm_label": "gera o convite e envia o link para o e-mail ja gravado no cadastro. a funcao...",
+      "norm_label": "gera o convite e envia o link ao e-mail do cadastro. o destino e sempre um...",
       "source_file": "servicos/convites.py",
       "source_location": "L78"
     },
@@ -18247,7 +18247,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "servicos/convites.py",
-      "source_location": "L103",
+      "source_location": "L102",
       "weight": 1.0
     },
     {
@@ -18259,7 +18259,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "servicos/convites.py",
-      "source_location": "L86",
+      "source_location": "L85",
       "weight": 1.0
     },
     {
@@ -18271,7 +18271,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "servicos/convites.py",
-      "source_location": "L90",
+      "source_location": "L89",
       "weight": 1.0
     },
     {
@@ -18283,7 +18283,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "servicos/convites.py",
-      "source_location": "L92",
+      "source_location": "L91",
       "weight": 1.0
     },
     {
@@ -47353,7 +47353,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "servicos/convites.py",
-      "source_location": "L93",
+      "source_location": "L92",
       "weight": 0.8
     },
     {

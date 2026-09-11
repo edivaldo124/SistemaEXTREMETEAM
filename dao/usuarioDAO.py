@@ -46,6 +46,10 @@ class AlunoDAO:
         # Nome não é identificador: não é único e pode ser editado pelo próprio aluno.
         cpfs_possiveis = variantes_cpf(usuario)
         aluno = Aluno.query.filter(
+            # Cadastro sem conta de acesso não é candidato a login. Sem este filtro, o
+            # CPF - que é público e está impresso em qualquer ficha - selecionaria o
+            # registro de um aluno matriculado pela administração.
+            Aluno.senha_hash.isnot(None),
             (Aluno.login == usuario) |
             (Aluno.email == usuario) |
             (Aluno.cpf.in_(cpfs_possiveis))
@@ -61,6 +65,29 @@ class AlunoDAO:
     @staticmethod
     def buscar_por_id(aluno_id):
         return db.session.get(Aluno, aluno_id)
+
+    @staticmethod
+    def buscar_por_email(email):
+        alvo = (email or '').strip().lower()
+        return Aluno.query.filter(Aluno.email == alvo).first() if alvo else None
+
+    @staticmethod
+    def criar_pelo_admin(*, nome, cpf, datanascimento, telefone=None, email=None,
+                         descricao=None, graduacao=None, plano_id=None):
+        """Matrícula feita no balcão: sem login, sem senha e sem convite de acesso.
+
+        Nasce 'aprovado' e ativo porque quem cadastrou já é a administração - não há
+        nada a aprovar depois. O acesso ao sistema continua inexistente até o aluno
+        aceitar um convite, e isso não impede plano, mensalidades nem histórico.
+        """
+        aluno = Aluno(
+            nome=nome, cpf=cpf, datanascimento=datanascimento, telefone=telefone,
+            email=email, descricao=descricao, graduacao=graduacao, plano_id=plano_id,
+            status_cadastro='aprovado', ativo=True,
+        )
+        db.session.add(aluno)
+        db.session.commit()
+        return aluno
 
     @staticmethod
     def buscar_por_cpf(cpf):
@@ -105,9 +132,23 @@ class AlunoDAO:
         aluno = AlunoDAO.buscar_por_cpf(cpf)
         if aluno:
             aluno.nome = dados.get('nome')
-            aluno.login = dados.get('login')
             aluno.datanascimento = dados.get('datanascimento')
-            aluno.email = dados.get('email')
+
+            # Login e e-mail pertencem à CONTA. Um cadastro sem acesso pode ficar sem os
+            # dois; uma conta ativa nunca pode perdê-los (é por eles que o aluno entra e
+            # recebe os links de recuperação), então um campo vazio aqui é recusado.
+            login = (dados.get('login') or '').strip() or None
+            email = (dados.get('email') or '').strip().lower() or None
+            if aluno.acesso_ativado and not (login and email):
+                return False
+            aluno.login = login
+            if aluno.email != email:
+                # Links entregues ao endereço anterior deixam de autorizar acesso.
+                aluno.token_convite_hash = None
+                aluno.token_convite_expira = None
+                aluno.token_recuperacao_hash = None
+                aluno.token_recuperacao_expira = None
+            aluno.email = email
 
             # Garantir que não enviam None para campos de texto opcionais
             aluno.telefone = dados.get('telefone', '')

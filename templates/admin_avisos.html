@@ -47,6 +47,17 @@
                             <span>Com mensalidade pendente</span>
                         </div>
                     </article>
+                    {% if total_sem_email %}
+                        <article>
+                            <span class="icon-tile" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="m3 3 18 18M4 6h13m3 1.5V18H6.5M4 8v10h2M20 6l-8 6-3-2.2" /></svg>
+                            </span>
+                            <div>
+                                <strong>{{ total_sem_email }}</strong>
+                                <span>Sem e-mail, avisados no balcão</span>
+                            </div>
+                        </article>
+                    {% endif %}
                 </div>
             </section>
             {% with mensagens=get_flashed_messages(with_categories=true) %}
@@ -111,11 +122,11 @@
                       data-confirm-modal
                       data-modal-eyebrow="Cobrança em massa"
                       data-modal-title="Enviar cobrança para todos os inadimplentes?"
-                      data-modal-message="Um e-mail de cobrança será enviado para {{ total_inadimplentes }} aluno{{ '' if total_inadimplentes == 1 else 's' }} com mensalidade pendente."
+                      data-modal-message="Um e-mail de cobrança será enviado para {{ total_cobraveis }} aluno{{ '' if total_cobraveis == 1 else 's' }} com mensalidade pendente e e-mail cadastrado."
                       data-modal-confirm="Enviar cobranças">
                     {% include "components/csrf_field.html" %}
                     <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
-                    <button type="submit" class="btn btn-status">Enviar cobrança para {{ total_inadimplentes }} aluno{{ "" if total_inadimplentes == 1 else "s" }}</button>
+                    <button type="submit" class="btn btn-status">Enviar cobrança para {{ total_cobraveis }} aluno{{ "" if total_cobraveis == 1 else "s" }}</button>
                 </form>
             </section>
         </main>

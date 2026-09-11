@@ -215,6 +215,7 @@
                            id="busca-aluno"
                            placeholder="Buscar aluno por nome…"
                            autocomplete="off">
+                    <a href="{{ url_for('admin_blueprint.cadastrar_aluno') }}" class="button-primary">Matricular aluno</a>
                 </div>
                 <div class="table-container table-stack">
                     <table>
@@ -222,6 +223,7 @@
                             <tr>
                                 <th scope="col" class="coluna-pessoa">Aluno</th>
                                 <th scope="col">Situação</th>
+                                <th scope="col">Acesso</th>
                                 <th scope="col">Ações</th>
                             </tr>
                         </thead>
@@ -246,6 +248,9 @@
                                         <span class="status {{ 'status-pago' if u.ativo else 'status-cancelado' }}">
                                             {{ 'Ativo' if u.ativo else 'Inativo' }}
                                         </span>
+                                    </td>
+                                    <td data-label="Acesso">
+                                        <span class="status status-acesso-{{ u.estado_acesso }}">{{ u.rotulo_acesso }}</span>
                                     </td>
                                     <td data-label="Ações" class="acao-cell">
                                         <a href="/admin/usuario/{{ u.cpf }}" class="btn btn-status">Ver perfil</a>
@@ -282,11 +287,13 @@
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="3" class="empty-state">Nenhum aluno cadastrado ainda.</td>
+                                    <td colspan="4" class="empty-state">
+                                        Nenhum aluno cadastrado ainda. Use "Matricular aluno" para criar o primeiro.
+                                    </td>
                                 </tr>
                             {% endfor %}
                             <tr id="sem-resultados" hidden>
-                                <td colspan="3" class="empty-state">Nenhum aluno encontrado.</td>
+                                <td colspan="4" class="empty-state">Nenhum aluno encontrado.</td>
                             </tr>
                         </tbody>
                     </table>

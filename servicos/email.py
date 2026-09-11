@@ -1,3 +1,4 @@
+import re
 import logging
 import os
 
@@ -9,8 +10,20 @@ logger = logging.getLogger(__name__)
 BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
 
 
+def email_valido(endereco):
+    """Validação sintática básica, compartilhada pelos formulários do cadastro."""
+    return bool(endereco and len(endereco) <= 150
+                and re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', endereco))
+
+
 def enviar_email(destinatario, nome_destinatario, assunto, titulo, paragrafos, link_url=None, link_texto=None):
     """Envia um e-mail transacional via Brevo. Retorna True/False; nunca lança."""
+    if not destinatario:
+        # Aluno matriculado pela administração pode não ter e-mail próprio. Isso não é
+        # erro: o cadastro dele é gerido no balcão e simplesmente não recebe aviso.
+        logger.info('E-mail "%s" não enviado: cadastro sem endereço.', assunto)
+        return False
+
     api_key = os.environ.get('BREVO_API_KEY')
     remetente_email = os.environ.get('BREVO_SENDER_EMAIL')
     if not api_key or not remetente_email:

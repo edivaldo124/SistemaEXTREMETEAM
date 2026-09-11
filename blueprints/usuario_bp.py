@@ -3,6 +3,7 @@ import hmac
 import logging
 import os
 import secrets
+from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -48,11 +49,19 @@ from servicos.armazenamento import (
     salvar_comprovante_manual,
     salvar_foto_perfil,
 )
+from servicos import convites
 from servicos import planos as regras_plano
-from servicos.formatacao import formatar_competencia, formatar_cpf, formatar_telefone, somente_digitos, variantes_cpf
-from servicos.email import enviar_email
+from servicos.formatacao import (
+    formatar_competencia,
+    formatar_cpf,
+    formatar_telefone,
+    mascarar_email,
+    somente_digitos,
+    variantes_cpf,
+)
+from servicos.email import email_valido, enviar_email
 from servicos.urls import URLPublicaInvalida, url_publica
-from servicos.senhas import erro_validacao_senha
+from servicos.senhas import erro_confirmacao_senha, erro_validacao_senha
 
 auth_bp = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
@@ -118,8 +127,38 @@ def pagina_login():
     return render_template("login.html")
 
 
+# CPF já cadastrado nunca devolve o nome, o e-mail nem a situação de quem está na base:
+# quem digita um CPF de terceiro não pode descobrir nada sobre ele por aqui.
+MSG_CPF_JA_CADASTRADO = (
+    'Se este CPF já tiver cadastro na Extreme Team, enviamos as instruções de acesso para o '
+    'e-mail registrado na academia. Não recebeu? Fale com a administração.'
+)
+
+
+def _convidar_cadastro_existente(aluno):
+    """Cadastro administrativo que alguém tentou recriar pelo formulário público.
+
+    Em vez de abrir um segundo cadastro para a mesma pessoa, o acesso do cadastro que já
+    existe é oferecido - por e-mail, sempre para o endereço que a administração
+    registrou, nunca para o que foi digitado agora.
+    """
+    if aluno.acesso_ativado or not aluno.email or (
+        aluno.convite_pendente and aluno.token_convite_expira
+        and aluno.token_convite_expira > datetime.utcnow()
+    ):
+        return
+    try:
+        convites.enviar(aluno)
+    except convites.ConviteIndisponivel:
+        logger.warning('Convite de acesso não pôde ser enviado no cadastro duplicado do aluno %s.', aluno.id)
+
+
 @auth_bp.route("/cadastrar", methods=["GET", "POST"])
 @limiter.limit('5 per hour', methods=['POST'])
+@limiter.limit(
+    '3 per hour', methods=['POST'],
+    key_func=lambda: _chave_ip_e_identificador('cpfusuario'),
+)
 def pagina_cadastro():
     if request.method == "POST":
         nome = (request.form.get("nomeusuario") or "").strip()
@@ -127,6 +166,7 @@ def pagina_cadastro():
         datanascimento = (request.form.get("dataNascimento") or "").strip()
         cpf = formatar_cpf(request.form.get("cpfusuario"))
         senha = request.form.get("senhausuario") or ""
+        confirmacao = request.form.get("confirmarsenhausuario") or ""
         email = (request.form.get("emailusuario") or "").strip().lower()
         telefone = formatar_telefone(request.form.get("telefoneusuario"))
         descricao = (request.form.get("descricaousuario") or "").strip()
@@ -134,15 +174,26 @@ def pagina_cadastro():
         if not all([nome, login, datanascimento, cpf, senha.strip(), email, telefone]):
             return render_template("cadastro.html", erro="Erro: Preencha todos os campos obrigatórios!")
 
-        if len(somente_digitos(cpf)) != 11:
+        if len(somente_digitos(request.form.get("cpfusuario"))) != 11:
             return render_template("cadastro.html", erro="Erro: Informe um CPF com 11 dígitos!")
+
+        if not email_valido(email) or len(login) > 50 or len(nome) > 150 or len(descricao) > 255:
+            return render_template("cadastro.html", erro="Erro: Verifique o e-mail e o tamanho dos campos informados.")
 
         erro_senha = erro_validacao_senha(senha, login, email, cpf)
         if erro_senha:
             return render_template("cadastro.html", erro=f"Erro: {erro_senha}")
 
-        if Aluno.query.filter(Aluno.cpf.in_(variantes_cpf(cpf))).first():
-            return render_template("cadastro.html", erro="Erro: Este CPF já está cadastrado!")
+        # A confirmação é comparada antes de qualquer gravação e não vai para lugar
+        # nenhum depois disso: nem para o banco, nem para log.
+        erro_confirmacao = erro_confirmacao_senha(senha, confirmacao)
+        if erro_confirmacao:
+            return render_template("cadastro.html", erro=f"Erro: {erro_confirmacao}")
+
+        ja_cadastrado = Aluno.query.filter(Aluno.cpf.in_(variantes_cpf(cpf))).first()
+        if ja_cadastrado:
+            _convidar_cadastro_existente(ja_cadastrado)
+            return render_template("login.html", msg=MSG_CPF_JA_CADASTRADO)
 
         if Aluno.query.filter_by(login=login).first():
             return render_template("cadastro.html", erro="Erro: Este usuário já está cadastrado!")
@@ -493,6 +544,99 @@ def confirmar_email(token):
     return redirect('/perfil' if session.get('tipo_usuario') == 'aluno' else '/login')
 
 
+# ---------------------------------------------------------------------------
+# Ativação de acesso de um cadastro criado pela administração
+# ---------------------------------------------------------------------------
+
+@auth_bp.route("/ativar-acesso/<token>", methods=["GET", "POST"])
+# O GET também é limitado: sem isso, abrir a página é uma sondagem de token de graça.
+# 30 por hora não atrapalha quem recarrega a tela algumas vezes.
+@limiter.limit('30 per hour')
+@limiter.limit('10 per hour', methods=['POST'])
+def ativar_acesso(token):
+    """Transforma um cadastro feito no balcão na conta do próprio aluno.
+
+    Quem chega aqui provou ter recebido o e-mail que a administração registrou. Mesmo
+    assim a página mostra só o primeiro nome e o e-mail mascarado: CPF, telefone, plano
+    e mensalidades continuam fora do ar até o login. A conta criada aponta para o MESMO
+    aluno, então plano, pagamentos e histórico seguem intactos - nada é recriado.
+    """
+    aluno = convites.aluno_do_token(token)
+    if not aluno:
+        return render_template("ativar_acesso.html", convite_invalido=True), 400
+
+    contexto = {
+        'token': token,
+        'primeiro_nome': (aluno.nome or '').split()[0] if (aluno.nome or '').strip() else '',
+        'email_mascarado': mascarar_email(aluno.email),
+    }
+
+    if request.method == "POST":
+        login = (request.form.get("loginusuario") or "").strip()
+        senha = request.form.get("senhausuario") or ""
+        confirmacao = request.form.get("confirmarsenhausuario") or ""
+        telefone = formatar_telefone(request.form.get("telefoneusuario"))
+
+        if not login or len(login) > 50 or not senha.strip():
+            return render_template(
+                "ativar_acesso.html", erro="Escolha um nome de usuário com até 50 caracteres e uma senha.", **contexto,
+            ), 400
+
+        if Aluno.query.filter(Aluno.login == login, Aluno.id != aluno.id).first():
+            return render_template(
+                "ativar_acesso.html", erro="Este nome de usuário já está em uso. Escolha outro.", **contexto,
+            ), 400
+
+        erro_senha = erro_validacao_senha(senha, login, aluno.email, aluno.cpf)
+        if erro_senha:
+            return render_template("ativar_acesso.html", erro=erro_senha, **contexto), 400
+
+        erro_confirmacao = erro_confirmacao_senha(senha, confirmacao)
+        if erro_confirmacao:
+            return render_template("ativar_acesso.html", erro=erro_confirmacao, **contexto), 400
+
+        # A condição é reavaliada pelo banco na escrita: dois POSTs que leram
+        # o mesmo convite não podem substituir as credenciais um do outro.
+        valores = {
+            'login': login, 'senha_hash': generate_password_hash(senha),
+            'token_convite_hash': None, 'token_convite_expira': None,
+            'token_recuperacao_hash': None, 'token_recuperacao_expira': None,
+        }
+        if telefone:
+            valores['telefone'] = telefone
+        try:
+            alterados = Aluno.query.filter(
+                Aluno.id == aluno.id,
+                Aluno.token_convite_hash == hashlib.sha256(token.encode()).hexdigest(),
+                Aluno.token_convite_expira > datetime.utcnow(),
+                Aluno.senha_hash.is_(None),
+                Aluno.email == aluno.email,
+                Aluno.email.isnot(None),
+            ).update(valores, synchronize_session=False)
+            if alterados != 1:
+                db.session.rollback()
+                return render_template("ativar_acesso.html", convite_invalido=True), 400
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return render_template(
+                "ativar_acesso.html", erro="Este nome de usuário já está em uso. Escolha outro.", **contexto,
+            ), 400
+
+        enviar_email(
+            aluno.email, aluno.nome, 'Acesso ativado — Extreme Team', 'Seu acesso está ativo',
+            [
+                f'Olá, {contexto["primeiro_nome"] or "aluno"}.',
+                f'Seu acesso à área do aluno da Extreme Team foi ativado com o usuário {login}.',
+                'Se não foi você quem fez isso, fale com a nossa administração imediatamente.',
+            ],
+        )
+
+        return render_template("login.html", msg='Acesso ativado! Entre com o usuário e a senha que você acabou de criar.')
+
+    return render_template("ativar_acesso.html", **contexto)
+
+
 MSG_RECUPERACAO_ENVIADA = "Se os dados informados estiverem corretos, enviamos um e-mail com instruções para redefinir sua senha."
 TOKEN_RECUPERACAO_VALIDADE = timedelta(minutes=30)
 
@@ -512,7 +656,7 @@ def recuperar_senha():
 
         # Resposta identica para CPF/e-mail validos ou invalidos: evita que alguem use este
         # formulario para descobrir quais pares de CPF+e-mail existem na base.
-        if aluno:
+        if aluno and aluno.acesso_ativado:
             token = secrets.token_urlsafe(32)
             try:
                 link_recuperacao = url_publica('auth.redefinir_senha', token=token)
@@ -552,7 +696,7 @@ def redefinir_senha(token):
         None,
     )
 
-    if not aluno or not aluno.token_recuperacao_expira or aluno.token_recuperacao_expira < datetime.utcnow():
+    if not aluno or not aluno.acesso_ativado or not aluno.token_recuperacao_expira or aluno.token_recuperacao_expira <= datetime.utcnow():
         return render_template("recuperar.html", erro="Link inválido ou expirado. Solicite uma nova recuperação de senha.")
 
     if request.method == "POST":

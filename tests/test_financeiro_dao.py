@@ -54,7 +54,7 @@ def test_marcar_pago_via_webhook_sincroniza_mensalidade_do_aluno(criar_pagamento
     aluno = pagamento.aluno
     aluno.mensalidade = 'Pendente'
 
-    PagamentoDAO.marcar_pago_via_webhook(pagamento, data_pagamento=datetime.utcnow().date())
+    PagamentoDAO.marcar_pago_via_webhook(pagamento, data_pagamento=date.today())
 
     assert pagamento.status == 'pago'
     assert pagamento.forma_pagamento == 'pix'

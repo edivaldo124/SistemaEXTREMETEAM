@@ -28,6 +28,23 @@ def formatar_telefone(valor):
     return (valor or '').strip()
 
 
+def mascarar_email(valor):
+    """Mostra o bastante do e-mail para o dono se reconhecer, sem revelá-lo a terceiros.
+
+    'maria.silva@gmail.com' vira 'ma********@gmail.com'. Usado na tela de ativação de
+    acesso, onde quem abre o link ainda não provou ser dono do cadastro.
+    """
+    email = (valor or '').strip()
+    if '@' not in email:
+        return '—'
+    usuario, dominio = email.rsplit('@', 1)
+    if len(usuario) <= 2:
+        visivel = usuario[:1]
+    else:
+        visivel = usuario[:2]
+    return f'{visivel}{"*" * max(len(usuario) - len(visivel), 1)}@{dominio}'
+
+
 MESES_PT = {
     1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho',
     7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro',

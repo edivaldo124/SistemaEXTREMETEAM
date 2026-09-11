@@ -1,7 +1,7 @@
 # Graph Report - SistemaEXTREMETEAM  (2026-09-10)
 
 ## Corpus Check
-- 92 files · ~143,496 words
+- 92 files · ~143,476 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -297,11 +297,11 @@ Nodes (15): _convidar_cadastro_existente(), pagina_cadastro(), pagina_login(), C
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `PagamentoDAO` connect `PagamentoDAO` to `test_auditoria_seguranca.py`, `financeiroDAO.py`, `adm_bp.py`, `test_plano_vigencia.py`, `criar_aluno`, `ResultadoContratacao`, `criar_pagamento`, `turma_bp.py`, `test_checkout_rotas.py`, `test_pix_rotas.py`, `pix_bp.py`, `AlunoDAO`, `checkout_bp.py`, `usuario_bp.py`, `test_contratacao_plano.py`, `test_seguranca.py`, `armazenamento.py`, `._promover_vencidos`?**
-  _High betweenness centrality (0.244) - this node is a cross-community bridge._
+  _High betweenness centrality (0.245) - this node is a cross-community bridge._
 - **Why does `AlunoDAO` connect `AlunoDAO` to `test_perfil_e_foto.py`, `financeiroDAO.py`, `adm_bp.py`, `PagamentoDAO`, `criar_aluno`, `turma_bp.py`, `usuario_bp.py`, `test_seguranca.py`, `pagina_cadastro`?**
-  _High betweenness centrality (0.050) - this node is a cross-community bridge._
+  _High betweenness centrality (0.053) - this node is a cross-community bridge._
 - **Why does `Matricula` connect `turma_bp.py` to `Aluno Profile Page`, `financeiroDAO.py`, `usuario_bp.py`, `PagamentoDAO`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
+  _High betweenness centrality (0.050) - this node is a cross-community bridge._
 - **Are the 126 inferred relationships involving `PagamentoDAO` (e.g. with `aprovar_comprovante_manual()` and `atualizar_status_pagamento()`) actually correct?**
   _`PagamentoDAO` has 126 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 129 inferred relationships involving `criar_pagamento()` (e.g. with `PagamentoDAO` and `Pagamento`) actually correct?**

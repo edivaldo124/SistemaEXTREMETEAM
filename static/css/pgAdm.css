@@ -129,9 +129,19 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 
 /* ---------------------------------------------------- barra de filtro --- */
 
-.ferramentas-alunos { position:relative; margin-bottom:var(--sp-5); }
+.ferramentas-alunos {
+  position:relative; display:flex; flex-wrap:wrap; align-items:center;
+  gap:var(--sp-3); margin-bottom:var(--sp-5);
+}
+.ferramentas-alunos > a { flex:0 0 auto; }
+@media (max-width:520px) {
+  /* Numa tela estreita a busca e a matrícula ocupam a linha inteira cada uma,
+     em vez de espremerem o alvo de toque das duas. */
+  .ferramentas-alunos > * { width:100%; }
+  .ferramentas-alunos > a { justify-content:center; }
+}
 .ferramentas-alunos input {
-  width:min(100%,420px); min-height:var(--control-h); padding:0 var(--sp-4);
+  flex:1 1 260px; width:min(100%,420px); min-height:var(--control-h); padding:0 var(--sp-4);
   border:1px solid var(--line-strong); border-radius:var(--radius-pill);
   background:var(--surface); font-size:var(--fs-md);
   transition:border-color .16s ease, box-shadow .16s ease;

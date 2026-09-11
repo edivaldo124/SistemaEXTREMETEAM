@@ -186,3 +186,50 @@ O aluno pode enviar um comprovante (JPEG/PNG/PDF) numa mensalidade pendente/venc
 - Nesta versão, apenas o administrador edita essas informações. Não há envio de mensagens ao preencher os contatos.
 
 A migração `d9e2f6a14c80` cria a configuração única da academia e acrescenta campos opcionais aos professores existentes, com publicação e contatos ocultos inicialmente. Execute `flask --app servidor db upgrade` antes de iniciar a nova versão fora do Docker; a imagem Docker já executa esse comando no início. Fotos de professores utilizam o mesmo volume persistente das demais imagens.
+
+
+## Cadastro de aluno pela administração e ativação de acesso
+
+O cadastro de um aluno e a conta de acesso dele são coisas separadas. A academia atende muita gente que não vai usar o sistema, então a matrícula não exige e-mail, usuário nem senha.
+
+### Matricular no balcão
+
+**Administração → Painel → Matricular aluno** (`/admin/alunos/novo`). Pede nome, CPF e data de nascimento; telefone, e-mail, graduação, observações e plano são opcionais. A opção **Já lançar a primeira mensalidade deste plano** reaproveita a mesma regra de contratação usada pelo aluno (`PagamentoDAO.contratar_plano`), que revalida tudo contra o banco e reutiliza uma cobrança aberta em vez de criar outra.
+
+O aluno nasce com `status_cadastro='aprovado'` e `ativo=True` (quem cadastrou já é a administração), e sem conta: `login` e `senha_hash` ficam em NULL; `email` também fica em NULL quando não informado. Mensalidades, pagamentos, vencimentos e pendências funcionam desde o primeiro minuto em `/admin/usuario/<cpf>`.
+
+Três situações diferentes aparecem separadas nas telas e nunca se misturam:
+
+| Situação | Onde vive | Valores |
+|---|---|---|
+| Acesso | conta | Acesso ativado · Convite enviado · Acesso não ativado |
+| Academia | matrícula | Ativo · Inativo · cadastro pendente/aprovado/recusado |
+| Financeira | mensalidades | derivada de `situacao_plano`, nunca escrita à mão |
+
+### Ativar o acesso depois
+
+Em **`/admin/usuario/<cpf>` → Acesso ao sistema**, o administrador envia um convite para o e-mail do cadastro. O convite é um token de 32 bytes que existe só dentro do e-mail: o banco guarda apenas o SHA-256 dele, ele vale 7 dias e queima no primeiro uso. O aluno abre `/ativar-acesso/<token>`, escolhe usuário e senha e passa a entrar no **mesmo cadastro**, com plano, mensalidades e histórico intactos.
+
+Regras que sustentam isso:
+
+- CPF, nome ou data de nascimento **nunca** vinculam uma conta. Só o token, entregue num canal que a administração registrou, ativa o acesso.
+- A tela de ativação mostra apenas o primeiro nome e o e-mail mascarado. CPF, telefone, plano e valores só aparecem depois do login.
+- Quem tenta se cadastrar pelo formulário público com um CPF já existente não cria um segundo aluno: o convite vai para o e-mail **do cadastro**, nunca para o digitado, e a resposta não revela nada sobre quem está na base.
+- Aluno sem e-mail continua sendo gerenciado normalmente. O convite simplesmente não é oferecido, e os painéis de aviso mostram quantos alunos precisam ser avisados no balcão.
+- Um aluno sem senha não autentica por nenhum caminho, nem informando o CPF. A recuperação de senha só atende contas já ativadas.
+- A troca do e-mail no cadastro invalida os links anteriores de convite e recuperação. Pedidos públicos repetidos preservam um convite ainda válido; a administração pode reenviar ou revogar.
+- O uso único do convite é validado no banco durante a gravação, inclusive quando duas ativações chegam simultaneamente.
+
+### Confirmar senha
+
+O cadastro público e a ativação de acesso pedem **Confirmar senha**. A comparação é feita no navegador (aviso imediato no campo, `aria-invalid` e bloqueio do envio) e refeita no servidor com `hmac.compare_digest`, em `servicos/senhas.erro_confirmacao_senha`. As regras de força de senha existentes continuam valendo. A confirmação não é gravada em coluna nenhuma nem registrada em log.
+
+### Migração e configuração
+
+A migração `e4b7c2a91d35` torna `login`, `email` e `senha_hash` opcionais e acrescenta as três colunas de convite. Ela é aditiva: alunos existentes mantêm os três campos preenchidos e seguem com o acesso ativado. O `downgrade` se recusa a rodar enquanto houver cadastro sem conta, em vez de apagar esses alunos.
+
+```bash
+flask --app servidor db upgrade
+```
+
+Nenhuma variável de ambiente nova. O envio do convite usa a configuração de e-mail que já existe (`BREVO_API_KEY`, `BREVO_SENDER_EMAIL`) e `APP_BASE_URL` para montar o link; sem elas o convite não é gravado e o painel avisa que o envio falhou.

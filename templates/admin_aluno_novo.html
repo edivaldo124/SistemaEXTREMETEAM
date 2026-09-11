@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Matricular aluno | Administração</title>
+        <link rel="icon"
+              type="image/png"
+              href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/pgAdm.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/dt_aluno.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/extreme.css') }}">
+    </head>
+    <body class="admin-shell">
+        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+        {% set secao_ativa = 'painel' %}
+        {% include 'components/admin_nav.html' %}
+        <main id="conteudo">
+            <div class="container-detalhes">
+                <div class="detail-intro entra">
+                    <div>
+                        <p class="eyebrow">Novo cadastro</p>
+                        <h1>Matricular aluno</h1>
+                        <p>Para quem treina na academia sem usar o sistema. Não pede e-mail, usuário nem senha.</p>
+                    </div>
+                </div>
+                {% if erro %}
+                    <div class="msg msg-erro" role="alert">{{ erro }}</div>
+                {% endif %}
+                <section class="detail-section">
+                    <div class="section-title">
+                        <h2>Dados do aluno</h2>
+                        <p>Só o necessário para identificar a pessoa e controlar as mensalidades dela.</p>
+                    </div>
+                    <form action="{{ url_for('admin_blueprint.cadastrar_aluno') }}"
+                          method="POST"
+                          class="form-detalhes">
+                        {% include "components/csrf_field.html" %}
+                        <div class="grupo-input">
+                            <label for="novo-nome">Nome completo</label>
+                            <input id="novo-nome"
+                                   type="text"
+                                   name="nome"
+                                   value="{{ dados.nome or '' }}"
+                                   maxlength="150"
+                                   autocomplete="off"
+                                   required
+                                   autofocus>
+                        </div>
+                        <div class="grupo-input">
+                            <label for="novo-cpf">CPF</label>
+                            <input id="novo-cpf"
+                                   type="text"
+                                   name="cpf"
+                                   value="{{ dados.cpf or '' }}"
+                                   maxlength="14"
+                                   inputmode="numeric"
+                                   placeholder="000.000.000-00"
+                                   data-mask="cpf"
+                                   required
+                                   aria-describedby="novo-cpf-ajuda">
+                            <small id="novo-cpf-ajuda">Identifica o aluno no sistema e não pode ser alterado depois.</small>
+                        </div>
+                        <div class="grupo-input">
+                            <label for="novo-nascimento">Data de nascimento</label>
+                            <input id="novo-nascimento"
+                                   type="date"
+                                   name="datanascimento"
+                                   value="{{ dados.datanascimento or '' }}"
+                                   required>
+                        </div>
+                        <div class="grupo-input">
+                            <label for="novo-telefone">
+                                Telefone
+                                <small>Opcional</small>
+                            </label>
+                            <input id="novo-telefone"
+                                   type="tel"
+                                   name="telefone"
+                                   value="{{ dados.telefone or '' }}"
+                                   maxlength="15"
+                                   inputmode="tel"
+                                   placeholder="(00) 00000-0000"
+                                   data-mask="phone">
+                        </div>
+                        <div class="grupo-input">
+                            <label for="novo-graduacao">
+                                Graduação ou nível
+                                <small>Opcional</small>
+                            </label>
+                            <input id="novo-graduacao"
+                                   type="text"
+                                   name="graduacao"
+                                   value="{{ dados.graduacao or '' }}"
+                                   maxlength="80"
+                                   placeholder="Ex.: Kruang branco">
+                        </div>
+                        <div class="grupo-input">
+                            <label for="novo-email">
+                                E-mail
+                                <small>Opcional</small>
+                            </label>
+                            <input id="novo-email"
+                                   type="email"
+                                   name="email"
+                                   value="{{ dados.email or '' }}"
+                                   maxlength="150"
+                                   autocomplete="off"
+                                   aria-describedby="novo-email-ajuda">
+                            <small id="novo-email-ajuda">
+                                Serve para avisos de cobrança e para convidar o aluno a acessar o sistema mais tarde. Deixe em branco
+                                se ele não tiver e-mail.
+                            </small>
+                        </div>
+                        <div class="grupo-input campo-largo">
+                            <label for="novo-descricao">
+                                Observações de saúde
+                                <small>Opcional</small>
+                            </label>
+                            <input id="novo-descricao"
+                                   type="text"
+                                   name="descricao"
+                                   value="{{ dados.descricao or '' }}"
+                                   maxlength="255"
+                                   placeholder="Restrições, lesões ou condições relevantes">
+                        </div>
+                        <div class="grupo-input">
+                            <label for="novo-plano">
+                                Plano
+                                <small>Opcional</small>
+                            </label>
+                            <select id="novo-plano" name="plano_id" aria-describedby="novo-plano-ajuda">
+                                <option value="">Sem plano</option>
+                                {% for p in planos %}
+                                    <option value="{{ p.id }}"
+                                            {% if dados.plano_id == p.id|string %}selected{% endif %}>
+                                        {{ p.nome_plano }} — {{ p.preco_plano|moeda }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small id="novo-plano-ajuda">
+                                Plano de referência do cadastro. Quem define a vigência é sempre a mensalidade paga.
+                            </small>
+                        </div>
+                        <div class="grupo-input">
+                            <label class="opcao-inline" for="novo-gerar-mensalidade">
+                                <input id="novo-gerar-mensalidade"
+                                       type="checkbox"
+                                       name="gerar_mensalidade"
+                                       value="sim"
+                                       {% if dados.gerar_mensalidade %}checked{% endif %}
+                                       aria-describedby="novo-gerar-ajuda">
+                                <span>Já lançar a primeira mensalidade deste plano</span>
+                            </label>
+                            <small id="novo-gerar-ajuda">
+                                Cria uma mensalidade em aberto com o valor e o vencimento do plano. Você marca como paga na tela do
+                                aluno quando receber.
+                            </small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-salvar">Matricular aluno</button>
+                            <a href="/admin" class="btn-voltar">Voltar ao painel</a>
+                        </div>
+                    </form>
+                </section>
+                <section class="detail-section">
+                    <div class="section-title">
+                        <h2>E o acesso ao sistema?</h2>
+                        <p>Fica para depois, e só se o aluno quiser.</p>
+                    </div>
+                    <p class="nota-admin">
+                        O aluno é matriculado com o acesso desligado: você lança e baixa mensalidades normalmente, e ele não
+                        precisa de usuário nem senha para nada disso. Se um dia ele quiser entrar no sistema, abra o perfil dele e
+                        envie um convite de acesso por e-mail — é ele quem escolhe a própria senha, sobre o mesmo cadastro,
+                        mantendo plano, pagamentos e histórico.
+                    </p>
+                </section>
+            </div>
+        </main>
+        <script src="{{ url_for('static', filename='js/masks.js') }}"></script>
+    </body>
+</html>

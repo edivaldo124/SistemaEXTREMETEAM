@@ -271,6 +271,23 @@ input[type="checkbox"],input[type="radio"] { width:20px; height:20px; accent-col
   color:var(--text-2); font-size:var(--fs-xs); line-height:1.5;
 }
 
+/* Erro de um campo específico, dito ao lado dele e não no topo do formulário. */
+.field-erro {
+  margin:var(--sp-2) 0 0;
+  color:var(--red-ink); font-size:var(--fs-xs); font-weight:600; line-height:1.5;
+}
+/* O atributo `hidden` do HTML vale menos que qualquer regra de classe com `display`.
+   Sem esta linha a mensagem de erro aparecia já no carregamento da página. */
+.field-erro[hidden] { display:none; }
+.field input[aria-invalid="true"],.grupo-input input[aria-invalid="true"] { border-color:var(--red); }
+
+/* Rótulo de caixa de seleção: o texto acompanha a caixa em vez de ficar acima dela. */
+.opcao-inline {
+  display:flex; align-items:flex-start; gap:var(--sp-3);
+  margin-bottom:0; font-weight:500; line-height:1.5; cursor:pointer;
+}
+.opcao-inline input { flex:0 0 auto; margin-top:2px; }
+
 /* ------------------------------------------------------------- botões -- */
 
 /* Ação principal da tela. Uma por bloco. */
@@ -397,6 +414,13 @@ input[type="checkbox"],input[type="radio"] { width:20px; height:20px; accent-col
 .status-plano-recusado,
 .status-plano-vencido            { color:var(--red-ink);   background:var(--red-bg); }
 .status-plano-sem_plano          { color:var(--slate-ink); background:var(--slate-bg); }
+
+/* Estado da CONTA de acesso. Tem paleta própria de propósito: "Acesso não ativado"
+   é uma situação neutra do cadastro, não uma pendência financeira nem uma matrícula
+   inativa - pintar de vermelho misturaria três leituras diferentes na mesma tabela. */
+.status-acesso-ativado         { color:var(--green-ink); background:var(--green-bg); }
+.status-acesso-convite_enviado { color:var(--blue-ink);  background:var(--blue-bg); }
+.status-acesso-nao_ativado     { color:var(--slate-ink); background:var(--slate-bg); }
 
 /* Estado vazio: diz o que falta e, quando cabe, como resolver. */
 .empty-state {

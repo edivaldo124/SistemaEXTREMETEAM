@@ -108,8 +108,19 @@
                             <input id="dt-nome" type="text" name="nome" value="{{ u.nome }}" required>
                         </div>
                         <div class="grupo-input">
-                            <label for="dt-login">Nome de usuário</label>
-                            <input id="dt-login" type="text" name="login" value="{{ u.login }}" required>
+                            <label for="dt-login">
+                                Nome de usuário
+                                {% if not u.acesso_ativado %}<small>Opcional</small>{% endif %}
+                            </label>
+                            <input id="dt-login"
+                                   type="text"
+                                   name="login"
+                                   value="{{ u.login or '' }}"
+                                   maxlength="50"
+                                   {% if u.acesso_ativado %}required{% else %}aria-describedby="dt-login-ajuda"{% endif %}>
+                            {% if not u.acesso_ativado %}
+                                <small id="dt-login-ajuda">Quem não usa o sistema não precisa de usuário. O aluno escolhe o dele ao ativar o acesso.</small>
+                            {% endif %}
                         </div>
                         <div class="grupo-input">
                             <label for="dt-nascimento">Data de nascimento</label>
@@ -133,8 +144,19 @@
                             <small id="dt-cpf-ajuda">O CPF não pode ser alterado.</small>
                         </div>
                         <div class="grupo-input">
-                            <label for="dt-email">E-mail</label>
-                            <input id="dt-email" type="text" name="email" value="{{ u.email }}" required>
+                            <label for="dt-email">
+                                E-mail
+                                {% if not u.acesso_ativado %}<small>Opcional</small>{% endif %}
+                            </label>
+                            <input id="dt-email"
+                                   type="email"
+                                   name="email"
+                                   value="{{ u.email or '' }}"
+                                   maxlength="150"
+                                   {% if u.acesso_ativado %}required{% else %}aria-describedby="dt-email-ajuda"{% endif %}>
+                            {% if not u.acesso_ativado %}
+                                <small id="dt-email-ajuda">Usado para avisos de cobrança e para o convite de acesso.</small>
+                            {% endif %}
                         </div>
                         <div class="grupo-input">
                             <label for="dt-telefone">Telefone</label>
@@ -195,6 +217,73 @@
                             <a href="/admin" class="btn-voltar">Voltar ao painel</a>
                         </div>
                     </form>
+                </section>
+                <section class="detail-section">
+                    <div class="section-title">
+                        <h2>Acesso ao sistema</h2>
+                        <p>Se o aluno entra na área do aluno. Não tem relação com a matrícula nem com as mensalidades.</p>
+                    </div>
+                    <div class="situacao-plano-admin">
+                        <p>
+                            <span class="status status-acesso-{{ u.estado_acesso }}">{{ u.rotulo_acesso }}</span>
+                            {% if u.acesso_ativado %}
+                                <strong>{{ u.login }}</strong>
+                            {% elif u.convite_pendente and u.convite_enviado_em %}
+                                convite enviado em
+                                <time datetime="{{ u.convite_enviado_em.isoformat() }}">
+                                    {{ u.convite_enviado_em.strftime('%d/%m/%Y') }}
+                                </time>
+                            {% endif %}
+                        </p>
+                        {% if u.acesso_ativado %}
+                            <p class="nota-admin">
+                                O aluno entra com este usuário e a senha dele. A senha não pode ser vista nem definida por aqui:
+                                para trocá-la, ele usa "Esqueci minha senha" na tela de login.
+                            </p>
+                        {% elif u.convite_pendente %}
+                            <p class="nota-admin">
+                                O convite vale por 7 dias e serve uma vez só. Enquanto o aluno não usar o link, ele continua sem
+                                acesso — e você segue lançando as mensalidades dele normalmente.
+                            </p>
+                        {% else %}
+                            <p class="nota-admin">
+                                Este aluno é gerenciado só pela administração. Isso é o normal para quem não usa o sistema: a
+                                matrícula, o plano e as mensalidades funcionam sem conta nenhuma.
+                            </p>
+                        {% endif %}
+                    </div>
+                    {% if not u.acesso_ativado %}
+                        <form action="{{ url_for('admin_blueprint.enviar_convite_acesso', cpf=u.cpf) }}"
+                              method="POST"
+                              class="form-revisao">
+                    {% include "components/csrf_field.html" %}
+                            <label class="sr-only" for="convite-email">E-mail para enviar o convite</label>
+                            <input id="convite-email"
+                                   type="email"
+                                   name="email"
+                                   value="{{ u.email or '' }}"
+                                   maxlength="150"
+                                   placeholder="E-mail do aluno"
+                                   required>
+                            <button type="submit" class="btn btn-principal">
+                                {{ 'Reenviar convite' if u.convite_pendente else 'Enviar convite de acesso' }}
+                            </button>
+                        </form>
+                        {% if u.convite_pendente %}
+                            <form action="{{ url_for('admin_blueprint.revogar_convite_acesso', cpf=u.cpf) }}"
+                                  method="POST"
+                                  class="form-revisao"
+                                  data-confirm-modal
+                                  data-modal-variant="danger"
+                                  data-modal-eyebrow="Convite de acesso"
+                                  data-modal-title="Cancelar o convite de {{ u.nome }}?"
+                                  data-modal-message="O link enviado deixa de funcionar. O cadastro e as mensalidades não mudam."
+                                  data-modal-confirm="Cancelar convite">
+                    {% include "components/csrf_field.html" %}
+                                <button type="submit" class="btn btn-remover">Cancelar convite</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
                 </section>
                 <section class="detail-section">
                     <div class="section-title">

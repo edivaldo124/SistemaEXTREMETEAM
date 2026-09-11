@@ -144,6 +144,22 @@
                                        autocomplete="new-password"
                                        required>
                             </div>
+                            <div class="field">
+                                <label for="confirmarsenhausuario">Confirmar senha</label>
+                                <input id="confirmarsenhausuario"
+                                       type="password"
+                                       name="confirmarsenhausuario"
+                                       minlength="8"
+                                       maxlength="255"
+                                       autocomplete="new-password"
+                                       required
+                                       aria-describedby="confirmarsenhausuario-erro"
+                                       data-confirmar-senha="senhausuario">
+                                <p class="field-erro"
+                                   id="confirmarsenhausuario-erro"
+                                   role="alert"
+                                   hidden>As duas senhas precisam ser iguais.</p>
+                            </div>
                             <div class="field field-wide">
                                 <label for="descricaousuario">
                                     Observações de saúde
@@ -158,5 +174,6 @@
             </section>
         </main>
         <script src="{{ url_for('static', filename='js/masks.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/senha_confirmacao.js') }}"></script>
     </body>
 </html>
