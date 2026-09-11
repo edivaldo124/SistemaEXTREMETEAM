@@ -64,8 +64,7 @@ class Pagamento(db.Model):
     provider_status = db.Column(db.String(30), nullable=True)
     provider_status_detail = db.Column(db.String(60), nullable=True)
 
-    # Comprovante manual (dinheiro/transferência) enviado pelo próprio aluno.
-    # Enviar o arquivo NUNCA muda o status sozinho - fica 'em_analise' até o admin decidir.
+    # ar o arquivo NUNCA muda o status sozinho - fica 'em_analise' até o admin decidir.
     comprovante_manual_arquivo = db.Column(db.String(64), nullable=True)
     comprovante_manual_enviado_em = db.Column(db.DateTime, nullable=True)
     comprovante_manual_analisado_por = db.Column(db.String(100), nullable=True)

@@ -54,6 +54,15 @@ A regressão de concorrência do Pix exige PostgreSQL, pois SQLite não aplica `
 - Pagamentos têm limites por conta, preservados entre sessões: Pix e Checkout compartilham 10 tentativas de abertura por minuto; status, retorno do Checkout e sincronização administrativa compartilham 30 consultas por minuto. Ao atingir o limite, a aplicação responde `429` com `Retry-After: 60` antes de chamar o provedor.
 - Requisições acima de 10 MB são recusadas pelo Flask e pelo Caddy. PDFs enviados como comprovante são entregues como download.
 
+## Keep-alive (hospedagem que hiberna)
+
+No plano gratuito do Render o serviço é derrubado depois de ~15 minutos sem nenhuma requisição de entrada, e a volta custa quase um minuto de espera para o primeiro visitante. Com `KEEP_ALIVE=true`, a aplicação sobe uma thread daemon que faz um GET no próprio `/health` a cada `KEEP_ALIVE_INTERVALO` segundos (padrão 600, aceito entre 60 e 840), o que basta para nunca hibernar.
+
+- O destino do ping é sempre `APP_BASE_URL` + `/health`, nunca o cabeçalho `Host` da requisição. Sem `APP_BASE_URL` válida o keep-alive não sobe e só registra um aviso no log.
+- Deixe `KEEP_ALIVE=false` em desenvolvimento e no `docker compose` — nada hiberna nesses ambientes.
+- O plano gratuito do Render dá 750 horas de instância por mês por workspace, e o mês tem ~730 horas. Um serviço acordado o tempo todo cabe na cota; dois não.
+- A thread morre junto com o processo, então isto evita a hibernação mas não acorda um serviço que já caiu. Para isso é preciso um monitor externo (UptimeRobot, cron-job.org) apontando para `/health`.
+
 ## Pagamento de mensalidade via Pix (Mercado Pago)
 
 ### Instalar dependências

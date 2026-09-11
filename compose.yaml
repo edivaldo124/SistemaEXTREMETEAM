@@ -57,6 +57,8 @@ services:
       MERCADO_PAGO_WEBHOOK_SECRET: ${MERCADO_PAGO_WEBHOOK_SECRET:-}
       APP_BASE_URL: ${APP_BASE_URL:-}
       MERCADO_PAGO_AMBIENTE: ${MERCADO_PAGO_AMBIENTE:-}
+      KEEP_ALIVE: ${KEEP_ALIVE:-false}
+      KEEP_ALIVE_INTERVALO: ${KEEP_ALIVE_INTERVALO:-}
       UPLOAD_DIR: /app/uploads
     volumes:
       # Fotos de perfil e comprovantes manuais - o filesystem do container é

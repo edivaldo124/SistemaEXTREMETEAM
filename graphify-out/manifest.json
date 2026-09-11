@@ -6,15 +6,15 @@
     "semantic_hash": ""
   },
   "blueprints/turma_bp.py": {
-    "mtime": 1788628281.7667007,
-    "seen": 1788632952.5188172,
-    "ast_hash": "7d381896b8bd883913dccd6fca03e83b",
+    "mtime": 1788729757.2828956,
+    "seen": 1788730789.1727166,
+    "ast_hash": "3c55e1d6f534f254b56bbcd03682567a",
     "semantic_hash": ""
   },
   "blueprints/usuario_bp.py": {
-    "mtime": 1788625640.1508815,
-    "seen": 1788625697.8422296,
-    "ast_hash": "40d78b8e28a8e7d6e07cbaae253f9c57",
+    "mtime": 1788729782.2519221,
+    "seen": 1788730789.1727178,
+    "ast_hash": "34c6707a7a54d84b2e65a057f4fa8474",
     "semantic_hash": ""
   },
   "config.py": {
@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "dao/financeiroDAO.py": {
-    "mtime": 1788624974.7601714,
-    "seen": 1788625381.550875,
-    "ast_hash": "b598b800b56c5d9b72d050db01329b85",
+    "mtime": 1788729782.103922,
+    "seen": 1788730789.1727204,
+    "ast_hash": "159ab8accad1e4bbb49c18487885abec",
     "semantic_hash": ""
   },
   "dao/matriculaDAO.py": {
@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "servidor.py": {
-    "mtime": 1788628130.5445392,
-    "seen": 1788632952.5188532,
-    "ast_hash": "e60f806470b24c68875e13a312dfd2bb",
+    "mtime": 1788729707.994843,
+    "seen": 1788730789.172763,
+    "ast_hash": "20d4b6621c7f295d894794fd689dab67",
     "semantic_hash": ""
   },
   "static/js/index.js": {
@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1788668645.498437,
-    "seen": 1788670113.6060858,
-    "ast_hash": "97279fbd431d94ce8d822e71956b43f3",
+    "mtime": 1788729902.860051,
+    "seen": 1788730789.1728213,
+    "ast_hash": "0712d236b2166cb1d146e403048c7c17",
     "semantic_hash": ""
   },
   "compose.yaml": {
@@ -301,8 +301,8 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1788710975.859784,
-    "ast_hash": "",
+    "seen": 1788730789.1727033,
+    "ast_hash": "415656dfbf722b4ee0b494c18bfc8682",
     "semantic_hash": ""
   },
   "app.py": {
@@ -312,15 +312,15 @@
     "semantic_hash": ""
   },
   "blueprints/checkout_bp.py": {
-    "mtime": 1788668827.353631,
-    "seen": 1788670113.604598,
-    "ast_hash": "293380ce374d5d9a9249b7341f4e9b20",
+    "mtime": 1788729707.8328428,
+    "seen": 1788730789.1727135,
+    "ast_hash": "632ade0715b4f457f0ba710a6615cd55",
     "semantic_hash": ""
   },
   "blueprints/pix_bp.py": {
-    "mtime": 1788666963.0346413,
-    "seen": 1788668150.704489,
-    "ast_hash": "d803334b6a824b7ecb80d173f1eccf62",
+    "mtime": 1788729781.9509218,
+    "seen": 1788730789.1727147,
+    "ast_hash": "e139734957dafbb3ecedc78cb9ac8605",
     "semantic_hash": ""
   },
   "migrations/env.py": {
@@ -583,8 +583,8 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1788710975.8597777,
-    "ast_hash": "",
+    "seen": 1788730789.1726973,
+    "ast_hash": "324d1aabfdaabef57d9ffa0805a7c9c6",
     "semantic_hash": ""
   },
   "servicos/senhas.py": {
@@ -726,9 +726,33 @@
     "semantic_hash": ""
   },
   "tests/test_auditoria_seguranca.py": {
-    "mtime": 1788712102.095972,
-    "seen": 1788712197.3644066,
-    "ast_hash": "0139248b4d48b6b9edeca32e1c3699ec",
+    "mtime": 1788729862.8680081,
+    "seen": 1788730789.1727998,
+    "ast_hash": "9688b2a99ab4f1808fc0419f880b1ef5",
+    "semantic_hash": ""
+  },
+  "servicos/limites_pagamento.py": {
+    "mtime": 1788729707.5648425,
+    "seen": 1788730789.1727571,
+    "ast_hash": "d5c160ff610b49b25d80294554894743",
+    "semantic_hash": ""
+  },
+  "tests/test_datas_turma.py": {
+    "mtime": 1788729757.5558958,
+    "seen": 1788730789.1728036,
+    "ast_hash": "5fb7d87f8f4f76ce54540190cfa222c6",
+    "semantic_hash": ""
+  },
+  "tests/test_limites_pagamento.py": {
+    "mtime": 1788729793.6509342,
+    "seen": 1788730789.1728072,
+    "ast_hash": "945bac43c35ef5c8f5e2a1f0d2bf10fa",
+    "semantic_hash": ""
+  },
+  "tests/test_pix_concorrencia_postgres.py": {
+    "mtime": 1788729929.3610792,
+    "seen": 1788730789.1728141,
+    "ast_hash": "8fe57ce6b699c310ffc568c2c1bb65aa",
     "semantic_hash": ""
   }
 }

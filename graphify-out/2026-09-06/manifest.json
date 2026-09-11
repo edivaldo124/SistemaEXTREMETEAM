@@ -302,7 +302,7 @@
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
     "seen": 1788710975.859784,
-    "ast_hash": "415656dfbf722b4ee0b494c18bfc8682",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "app.py": {
@@ -584,7 +584,7 @@
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
     "seen": 1788710975.8597777,
-    "ast_hash": "324d1aabfdaabef57d9ffa0805a7c9c6",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "servicos/senhas.py": {
@@ -723,6 +723,12 @@
     "mtime": 1788668595.8303838,
     "seen": 1788670113.6061733,
     "ast_hash": "cf664637996c630546f50d9f1712cbd5",
+    "semantic_hash": ""
+  },
+  "tests/test_auditoria_seguranca.py": {
+    "mtime": 1788712102.095972,
+    "seen": 1788712197.3644066,
+    "ast_hash": "0139248b4d48b6b9edeca32e1c3699ec",
     "semantic_hash": ""
   }
 }
