@@ -44,7 +44,11 @@ services:
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:?defina POSTGRES_USER no arquivo .env}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}@db:5432/${POSTGRES_DB:?defina POSTGRES_DB no arquivo .env}
       SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY no arquivo .env}
       ADMIN_USER: ${ADMIN_USER:?defina ADMIN_USER no arquivo .env}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?defina ADMIN_PASSWORD no arquivo .env}
+      # Um dos dois basta. ADMIN_PASSWORD_HASH tem precedência e é o recomendado:
+      # gere com `python -m servicos.credenciais`. ADMIN_PASSWORD segue aceito para
+      # não trancar o administrador durante a migração.
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       BREVO_API_KEY: ${BREVO_API_KEY:-}
       BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-}

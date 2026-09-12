@@ -32,6 +32,9 @@ def capturar_emails(monkeypatch):
     monkeypatch.setattr('servicos.convites.enviar_email', _falso_envio)
     monkeypatch.setattr('blueprints.usuario_bp.enviar_email', _falso_envio)
     monkeypatch.setattr('blueprints.adm_bp.enviar_email', _falso_envio)
+    # Avisos e cobranças coletivas passaram a sair pela fila; a entrega dela também
+    # cai neste duplo, então drenar a fila num teste registra o envio aqui.
+    monkeypatch.setattr('servicos.fila_email.enviar_email', _falso_envio)
     return enviados
 
 
@@ -573,6 +576,11 @@ def test_cobranca_em_massa_nao_conta_quem_nao_tem_email(
 
     corpo = resposta.get_data(as_text=True)
     assert 'para 1 de 1 aluno' in corpo
+
+    # O envio saiu da requisição: a cobrança fica na fila e alcança só quem tem e-mail.
+    from servicos import fila_email
+
+    fila_email.processar_agora()
     assert [e['destinatario'] for e in capturar_emails if 'pendente' in e['assunto']] == ['com@example.com']
 
 

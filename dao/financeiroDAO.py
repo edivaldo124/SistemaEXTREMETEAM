@@ -1,7 +1,8 @@
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import func, or_
+from sqlalchemy import case, func, or_
+from sqlalchemy.orm import joinedload
 
 from config import db
 from modelos.matricula import Matricula
@@ -17,6 +18,85 @@ from modelos.solicitacao_plano import (
 )
 from modelos.usuario import Aluno
 from servicos import planos as regras_plano
+
+# Tamanho de página das listagens administrativas. Recorte feito pelo banco: o painel
+# carregava a tabela inteira e deixava o template decidir o que exibir.
+PAGINA_TAMANHO_PADRAO = 25
+
+
+class Pagina:
+    """Uma fatia de resultados já recortada pelo banco, com o que a navegação precisa."""
+
+    __slots__ = ('itens', 'pagina', 'por_pagina', 'total')
+
+    def __init__(self, itens, *, pagina, por_pagina, total):
+        self.itens = itens
+        self.pagina = pagina
+        self.por_pagina = por_pagina
+        self.total = total
+
+    @property
+    def total_paginas(self):
+        if self.por_pagina <= 0:
+            return 1
+        return max(1, -(-self.total // self.por_pagina))
+
+    @property
+    def tem_proxima(self):
+        return self.pagina < self.total_paginas
+
+    @property
+    def tem_anterior(self):
+        return self.pagina > 1
+
+    @property
+    def primeiro_da_pagina(self):
+        return 0 if not self.total else (self.pagina - 1) * self.por_pagina + 1
+
+    @property
+    def ultimo_da_pagina(self):
+        return min(self.pagina * self.por_pagina, self.total)
+
+    def __iter__(self):
+        return iter(self.itens)
+
+    def __len__(self):
+        return len(self.itens)
+
+    def __bool__(self):
+        """Uma página existe mesmo quando está vazia.
+
+        Sem isto, `__len__` fazia `{% if pagina %}` no template ser falso numa página
+        sem itens, escondendo justamente a navegação de que o usuário precisa para
+        voltar - o caso aparece quando linhas somem entre a contagem e o recorte.
+        """
+        return True
+
+
+def _paginar(consulta, *, pagina, por_pagina):
+    """Aplica LIMIT/OFFSET e conta o total numa consulta separada e barata.
+
+    A contagem descarta ordenação e carregamentos antecipados: contar linhas não precisa
+    materializar aluno nem plano de cada mensalidade.
+    """
+    try:
+        pagina = max(1, int(pagina or 1))
+    except (TypeError, ValueError):
+        pagina = 1
+    try:
+        por_pagina = min(200, max(1, int(por_pagina or PAGINA_TAMANHO_PADRAO)))
+    except (TypeError, ValueError):
+        por_pagina = PAGINA_TAMANHO_PADRAO
+
+    total = consulta.order_by(None).limit(None).offset(None).count()
+
+    # Pedir uma página além do fim devolve a última existente, em vez de uma tela vazia.
+    total_paginas = max(1, -(-total // por_pagina))
+    pagina = min(pagina, total_paginas)
+
+    itens = consulta.limit(por_pagina).offset((pagina - 1) * por_pagina).all()
+    return Pagina(itens, pagina=pagina, por_pagina=por_pagina, total=total)
+
 
 # Estados "fechados": não geram mais cobrança Pix nova nem esperam decisão de ninguém.
 STATUS_FECHADOS = ('pago', 'cancelado', 'reembolsado')
@@ -583,13 +663,17 @@ class PagamentoDAO:
         Usado pelas telas que precisam da situação de MUITOS alunos (avisos e cobrança
         em massa): chamar `listar_por_aluno` num laço fazia um SELECT e um COMMIT por
         aluno.
+
+        Aqui NÃO há promoção de status. Ela era uma escrita em lote disparada por um GET,
+        e não muda decisão nenhuma: `regras_plano` trata `pendente` e `atrasado` do mesmo
+        jeito (ambos em STATUS_A_PAGAR), e a exibição usa `Pagamento.status_efetivo`. Quem
+        materializa a promoção continua sendo o caminho do próprio aluno, em
+        `listar_por_aluno`, escopado a um aluno só.
         """
         consulta = Pagamento.query
         if aluno_ids is not None:
             consulta = consulta.filter(Pagamento.aluno_id.in_(list(aluno_ids) or [-1]))
         pagamentos = consulta.all()
-        if PagamentoDAO._promover_vencidos(pagamentos):
-            db.session.commit()
 
         mapa = {}
         for pagamento in pagamentos:
@@ -881,8 +965,33 @@ class PagamentoDAO:
     # ---------------- Painel financeiro (admin) ----------------
 
     @staticmethod
+    def status_efetivo(hoje=None):
+        """Status como o painel deve LER, com o vencimento aplicado na própria consulta.
+
+        A regra de negócio é a mesma de `_promover_vencidos`: `pendente` com vencimento
+        passado é uma cobrança atrasada. A diferença é onde ela é avaliada.
+
+        Antes, o painel materializava essa promoção com um UPDATE global disparado por
+        um GET, e o fazia DEPOIS de `totais_periodo` já ter somado - então, na primeira
+        abertura do dia, os indicadores diziam "pendente" para as mesmas linhas que a
+        tabela logo abaixo mostrava como "Vencida". Avaliar no SQL faz indicadores e
+        tabela lerem a mesma verdade, na mesma requisição, sem escrever nada.
+
+        A coluna continua sendo promovida de verdade no caminho do aluno
+        (`listar_por_aluno` / `mapa_por_aluno`), que já é escopado por aluno.
+        """
+        hoje = hoje or date.today()
+        return case(
+            (
+                (Pagamento.status == 'pendente') & (Pagamento.vencimento < hoje),
+                'atrasado',
+            ),
+            else_=Pagamento.status,
+        )
+
+    @staticmethod
     def _query_filtrada(*, inicio=None, fim=None, turma_id=None, plano_id=None, forma_pagamento=None,
-                         status=None, busca_aluno=None):
+                         status=None, busca_aluno=None, hoje=None):
         consulta = Pagamento.query.join(Aluno, Pagamento.aluno_id == Aluno.id)
 
         if inicio:
@@ -890,14 +999,20 @@ class PagamentoDAO:
         if fim:
             consulta = consulta.filter(Pagamento.vencimento <= fim)
         if turma_id:
-            ids_alunos = [m.aluno_id for m in Matricula.query.filter_by(turma_id=turma_id).all()]
-            consulta = consulta.filter(Pagamento.aluno_id.in_(ids_alunos or [-1]))
+            # Subconsulta em vez de trazer os ids para a memória: a lista de matrículas
+            # de uma turma cheia não precisa atravessar a aplicação para virar um IN.
+            matriculados = db.session.query(Matricula.aluno_id).filter(
+                Matricula.turma_id == turma_id,
+            )
+            consulta = consulta.filter(Pagamento.aluno_id.in_(matriculados))
         if plano_id:
             consulta = consulta.filter(Pagamento.plano_id == plano_id)
         if forma_pagamento:
             consulta = consulta.filter(Pagamento.forma_pagamento == forma_pagamento)
         if status:
-            consulta = consulta.filter(Pagamento.status == status)
+            # Filtrar pelo status efetivo mantém o filtro coerente com o que a tela
+            # exibe: pedir "Vencida" traz também as pendentes já vencidas.
+            consulta = consulta.filter(PagamentoDAO.status_efetivo(hoje) == status)
         if busca_aluno:
             termo = busca_aluno.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
             consulta = consulta.filter(Aluno.nome.ilike(f'%{termo}%', escape='\\'))
@@ -905,42 +1020,77 @@ class PagamentoDAO:
         return consulta
 
     @staticmethod
-    def listar_filtrado(**filtros):
-        # Reaproveita a mesma promoção pendente->atrasado usada na área do aluno.
-        pendentes_vencidos = Pagamento.query.filter(Pagamento.status == 'pendente', Pagamento.vencimento < date.today()).all()
-        for p in pendentes_vencidos:
-            p.status = 'atrasado'
-        if pendentes_vencidos:
-            db.session.commit()
+    def _com_relacionados(consulta):
+        """Carrega aluno e plano junto das mensalidades.
 
-        return PagamentoDAO._query_filtrada(**filtros).order_by(Pagamento.vencimento.desc()).all()
-
-    @staticmethod
-    def totais_periodo(*, inicio=None, fim=None):
-        """Totais do painel financeiro - sempre calculados no backend a partir do banco,
-        nunca somados no front. `inicio`/`fim` filtram pelo vencimento da mensalidade."""
-        base = PagamentoDAO._query_filtrada(inicio=inicio, fim=fim)
-
-        def soma(status_lista):
-            valor = base.filter(Pagamento.status.in_(status_lista)).with_entities(func.coalesce(func.sum(Pagamento.valor), 0)).scalar()
-            return Decimal(valor or 0)
-
-        def conta(status_lista):
-            return base.filter(Pagamento.status.in_(status_lista)).count()
-
-        alunos_inadimplentes = (
-            base.filter(Pagamento.status == 'atrasado')
-            .with_entities(Pagamento.aluno_id).distinct().count()
+        O template do painel lê `pagamento.aluno` e `pagamento.plano` em toda linha; sem
+        isso cada linha custava duas consultas extras (N+1).
+        """
+        return consulta.options(
+            joinedload(Pagamento.aluno), joinedload(Pagamento.plano),
         )
 
+    @staticmethod
+    def listar_filtrado(**filtros):
+        """Lista completa (sem paginar). Mantida para relatórios e testes."""
+        consulta = PagamentoDAO._com_relacionados(PagamentoDAO._query_filtrada(**filtros))
+        return consulta.order_by(Pagamento.vencimento.desc(), Pagamento.id.desc()).all()
+
+    @staticmethod
+    def listar_paginado(*, pagina=1, por_pagina=PAGINA_TAMANHO_PADRAO, **filtros):
+        """Uma página de mensalidades, recortada pelo banco (LIMIT/OFFSET).
+
+        O painel carregava todas as linhas e só o template decidia o que mostrar. O
+        recorte no banco mantém filtros e ordenação e devolve também o total, para a
+        navegação saber quantas páginas existem.
+        """
+        consulta = PagamentoDAO._com_relacionados(PagamentoDAO._query_filtrada(**filtros))
+        consulta = consulta.order_by(Pagamento.vencimento.desc(), Pagamento.id.desc())
+        return _paginar(consulta, pagina=pagina, por_pagina=por_pagina)
+
+    @staticmethod
+    # Sem **kwargs de propósito: aceitar `status=` ou `turma_id=` aqui e ignorá-los em
+    # silêncio faria a chamada parecer estreitar os indicadores sem estreitar nada.
+    def totais_periodo(*, inicio=None, fim=None, hoje=None):
+        """Totais do painel financeiro - sempre calculados no backend a partir do banco,
+        nunca somados no front.
+
+        `inicio`/`fim` filtram pelo vencimento da mensalidade, e esse escopo continua
+        sendo só o de datas: os demais filtros da tabela (turma, plano, forma, busca)
+        não estreitam os indicadores, como sempre foi documentado na tela.
+
+        As nove métricas saem de UMA varredura agregada, em vez das nove consultas
+        separadas de antes (quatro somas, quatro contagens e um distinct).
+        """
+        base = PagamentoDAO._query_filtrada(inicio=inicio, fim=fim, hoje=hoje)
+        efetivo = PagamentoDAO.status_efetivo(hoje)
+
+        def soma_se(alvo):
+            return func.coalesce(
+                func.sum(case((efetivo == alvo, Pagamento.valor), else_=0)), 0,
+            )
+
+        def conta_se(alvo):
+            return func.coalesce(
+                func.sum(case((efetivo == alvo, 1), else_=0)), 0,
+            )
+
+        linha = base.with_entities(
+            soma_se('pago'), soma_se('pendente'), soma_se('atrasado'), soma_se('em_analise'),
+            conta_se('pago'), conta_se('pendente'), conta_se('atrasado'), conta_se('em_analise'),
+            func.count(func.distinct(
+                case((efetivo == 'atrasado', Pagamento.aluno_id), else_=None),
+            )),
+        ).one()
+
         return {
-            'total_recebido': soma(['pago']),
-            'total_pendente': soma(['pendente']),
-            'total_vencido': soma(['atrasado']),
-            'total_em_analise': soma(['em_analise']),
-            'qtd_pago': conta(['pago']),
-            'qtd_pendente': conta(['pendente']),
-            'qtd_vencido': conta(['atrasado']),
-            'qtd_em_analise': conta(['em_analise']),
-            'alunos_inadimplentes': alunos_inadimplentes,
+            'total_recebido': Decimal(linha[0] or 0),
+            'total_pendente': Decimal(linha[1] or 0),
+            'total_vencido': Decimal(linha[2] or 0),
+            'total_em_analise': Decimal(linha[3] or 0),
+            'qtd_pago': int(linha[4] or 0),
+            'qtd_pendente': int(linha[5] or 0),
+            'qtd_vencido': int(linha[6] or 0),
+            'qtd_em_analise': int(linha[7] or 0),
+            'alunos_inadimplentes': int(linha[8] or 0),
         }

@@ -1,3 +1,4 @@
+import hashlib
 import hmac
 import secrets
 from datetime import date
@@ -13,7 +14,9 @@ from dao.turmaDAO import TurmaDAO
 from dao.financeiroDAO import ACAO_CONTRATAR, PagamentoDAO, SolicitacaoPlanoDAO, rotulo_status
 from modelos.pagamento import Pagamento
 from servicos.armazenamento import ArquivoInvalido, remover_arquivo, salvar_foto_perfil
+from servicos.autorizacao import sessao_administrativa_valida
 from servicos import convites
+from servicos import fila_email
 from servicos import planos as regras_plano
 from servicos.formatacao import formatar_competencia, formatar_cpf, formatar_telefone, somente_digitos, variantes_cpf
 from servicos.email import email_valido, enviar_email
@@ -22,7 +25,13 @@ admin_bp = Blueprint('admin_blueprint', __name__)
 
 
 def usuario_e_admin():
-    return session.get('tipo_usuario') == 'admin'
+    """Sessão administrativa ainda válida.
+
+    Delega para `servicos.autorizacao`: checar só `session['tipo_usuario']` aqui deixava
+    TODO o painel administrativo de fora da revalidação - rotacionar a credencial do
+    admin não encerrava a sessão já aberta com a senha anterior.
+    """
+    return sessao_administrativa_valida()
 
 
 @admin_bp.route("/admin")
@@ -30,7 +39,12 @@ def painel_adm():
     if not usuario_e_admin():
         return redirect('/login')
 
-    lista_usuarios = [u for u in AlunoDAO.listar_todos() if u.status_cadastro != 'pendente']
+    # Recorte e filtro vêm do banco: a tela carregava todos os alunos e separava os
+    # pendentes em Python a cada abertura.
+    pagina_alunos = AlunoDAO.listar_paginado(
+        pagina=request.args.get('pagina', type=int) or 1,
+        busca=(request.args.get('busca') or '').strip() or None,
+    )
     pendentes = AlunoDAO.listar_pendentes()
     lista_planos = PlanoDAO.listar_todos()
     token_exclusao = session.get('token_exclusao')
@@ -41,7 +55,10 @@ def painel_adm():
 
     return render_template(
         "pgAdm.html",
-        usuarios=lista_usuarios,
+        usuarios=pagina_alunos.itens,
+        pagina=pagina_alunos,
+        total_alunos=AlunoDAO.contar_cadastrados(),
+        busca=(request.args.get('busca') or '').strip(),
         pendentes=pendentes,
         planos=lista_planos,
         token_exclusao=token_exclusao
@@ -617,13 +634,20 @@ def painel_financeiro():
         'busca_aluno': (request.args.get('busca_aluno') or '').strip() or None,
     }
 
-    totais = PagamentoDAO.totais_periodo(inicio=filtros['inicio'], fim=filtros['fim'])
-    pagamentos = PagamentoDAO.listar_filtrado(**filtros)
+    # Uma única data para toda a requisição: indicadores e tabela julgam o vencimento
+    # pelo mesmo "hoje", mesmo que a página seja aberta na virada da meia-noite.
+    hoje = date.today()
+
+    totais = PagamentoDAO.totais_periodo(inicio=filtros['inicio'], fim=filtros['fim'], hoje=hoje)
+    pagina = PagamentoDAO.listar_paginado(
+        pagina=request.args.get('pagina', type=int) or 1, hoje=hoje, **filtros,
+    )
 
     return render_template(
         "financeiro.html",
         totais=totais,
-        pagamentos=pagamentos,
+        pagamentos=pagina.itens,
+        pagina=pagina,
         turmas=TurmaDAO.listar_todas(),
         planos=PlanoDAO.listar_todos(),
         filtros=request.args,
@@ -673,6 +697,19 @@ def _paragrafos_cobranca(aluno, situacao=None):
     return paragrafos
 
 
+def _chave_lote(assunto, mensagem):
+    """Identidade de um aviso: o conteúdo MAIS o dia.
+
+    Só o conteúdo não serve. Um aviso recorrente ("não vai ter treino amanhã") tem
+    sempre o mesmo texto, e sem a data o segundo envio seria descartado em silêncio
+    para sempre - com a tela ainda dizendo "enviado". A data protege contra o clique
+    duplo e o recarregar da página, que é o que a idempotência precisa cobrir, sem
+    bloquear o mesmo aviso numa outra ocasião.
+    """
+    material = f'{date.today().isoformat()}\n{assunto}\n{mensagem}'
+    return hashlib.sha256(material.encode('utf-8')).hexdigest()[:32]
+
+
 def _token_aviso():
     token = session.get('token_aviso')
     if not token:
@@ -712,9 +749,40 @@ def enviar_aviso():
         alunos = [aluno for aluno, _ in ativos if aluno.email]
 
         paragrafos = [linha.strip() for linha in mensagem.splitlines() if linha.strip()]
-        enviados = sum(1 for aluno in alunos if enviar_email(aluno.email, aluno.nome, assunto, assunto, paragrafos))
+        # O envio sai da requisição: enfileirar é uma transação curta, entregar é da
+        # fila. A chave inclui o conteúdo, então reenviar o MESMO aviso ao MESMO aluno
+        # (recarregar a página, clicar duas vezes) não duplica, e um aviso novo passa.
+        lote = _chave_lote(assunto, mensagem)
+        enfileirados = sum(
+            1 for aluno in alunos
+            if fila_email.enfileirar(
+                destinatario=aluno.email, nome_destinatario=aluno.nome,
+                assunto=assunto, titulo=assunto, paragrafos=paragrafos,
+                chave_idempotencia=f'aviso:{lote}:{aluno.id}',
+            ) is not None
+        )
+        db.session.commit()
+        fila_email.disparar()
 
-        flash(f'Aviso enviado para {enviados} de {len(alunos)} aluno(s).', 'sucesso')
+        # "0 de 50" não é sucesso: quer dizer que este mesmo aviso já foi enfileirado
+        # hoje. Sem dizer isso, a tela comemorava um envio que não vai acontecer.
+        if enfileirados:
+            mensagem = (
+                f'Aviso na fila de envio para {enfileirados} de {len(alunos)} aluno(s). '
+                'O envio continua em segundo plano.'
+            )
+            repetidos = len(alunos) - enfileirados
+            if repetidos:
+                mensagem += f' {repetidos} já tinha(m) recebido este aviso hoje.'
+            flash(mensagem, 'sucesso')
+        elif alunos:
+            flash(
+                'Este aviso, com este mesmo texto, já foi enviado hoje para todos os '
+                'alunos. Altere o texto ou aguarde até amanhã para reenviar.',
+                'erro',
+            )
+        else:
+            flash('Nenhum aluno ativo com e-mail para receber este aviso.', 'erro')
         return redirect('/admin/avisos')
 
     ativos = _situacoes_dos_ativos()
@@ -722,12 +790,18 @@ def enviar_aviso():
     # Quantos alunos DEVEM e quantos dá para AVISAR são números diferentes desde que o
     # cadastro de balcão existe. A tela mostra os dois para o total do botão bater com
     # o que o envio realmente alcança.
+    # Abrir a tela também retoma a fila: se a thread morreu num restart, as linhas
+    # pendentes voltam a ser processadas sem depender de um novo clique em "enviar".
+    fila_email.disparar()
+
     return render_template(
         "admin_avisos.html",
         total_ativos=len(ativos),
         total_inadimplentes=len(inadimplentes),
         total_cobraveis=sum(1 for aluno, _ in inadimplentes if aluno.email),
         total_sem_email=sum(1 for aluno, _ in ativos if not aluno.email),
+        fila_pendentes=fila_email.contar_pendentes(),
+        fila_falhados=fila_email.contar_falhados(),
         token_aviso=_token_aviso(),
     )
 
@@ -744,15 +818,41 @@ def cobrar_inadimplentes():
     # e-mail, para o valor citado ser exatamente o da mensalidade que está em aberto.
     devedores = [(aluno, situacao) for aluno, situacao in _situacoes_dos_ativos()
                  if aluno.email and _esta_inadimplente(aluno, situacao)]
-    enviados = sum(
-        1 for aluno, situacao in devedores
-        if enviar_email(
-            aluno.email, aluno.nome, 'Mensalidade pendente — Extreme Team', 'Sua mensalidade está pendente',
-            _paragrafos_cobranca(aluno, situacao),
-        )
-    )
 
-    flash(f'Cobrança de mensalidade enviada para {enviados} de {len(devedores)} aluno(s) inadimplente(s).', 'sucesso')
+    # A chave é por aluno e por dia: o mesmo devedor não recebe duas cobranças na mesma
+    # data, mesmo que a administração clique de novo, e amanhã a cobrança volta a poder
+    # sair se a pendência continuar.
+    hoje = date.today().isoformat()
+    enfileirados = sum(
+        1 for aluno, situacao in devedores
+        if fila_email.enfileirar(
+            destinatario=aluno.email, nome_destinatario=aluno.nome,
+            assunto='Mensalidade pendente — Extreme Team',
+            titulo='Sua mensalidade está pendente',
+            paragrafos=_paragrafos_cobranca(aluno, situacao),
+            chave_idempotencia=f'cobranca:{hoje}:{aluno.id}',
+        ) is not None
+    )
+    db.session.commit()
+    fila_email.disparar()
+
+    ja_enviados = len(devedores) - enfileirados
+    if enfileirados:
+        mensagem = (
+            f'Cobrança na fila de envio para {enfileirados} de {len(devedores)} '
+            f'aluno(s) inadimplente(s).'
+        )
+        if ja_enviados:
+            mensagem += f' {ja_enviados} já tinha(m) recebido a cobrança hoje.'
+        flash(mensagem, 'sucesso')
+    elif devedores:
+        flash(
+            f'Os {len(devedores)} inadimplente(s) já receberam a cobrança hoje. '
+            'Nada foi reenviado.',
+            'erro',
+        )
+    else:
+        flash('Nenhum aluno inadimplente com e-mail para cobrar.', 'sucesso')
     return redirect('/admin/avisos')
 
 

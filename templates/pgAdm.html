@@ -35,7 +35,7 @@
                             <svg viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6m2-6c3 0 5 2 5 6" /></svg>
                         </span>
                         <div>
-                            <strong>{{ usuarios|length }}</strong>
+                            <strong>{{ total_alunos }}</strong>
                             <span>Alunos</span>
                         </div>
                     </article>
@@ -207,14 +207,30 @@
                         <p class="eyebrow">Cadastros</p>
                         <h2>Alunos</h2>
                     </div>
-                    <span id="contador-alunos">{{ usuarios|length }} aluno{{ "" if usuarios|length == 1 else "s" }}</span>
+                    <span id="contador-alunos">
+                        {%- if busca -%}
+                            {{ pagina.total }} de {{ total_alunos }} aluno{{ "" if total_alunos == 1 else "s" }}
+                        {%- else -%}
+                            {{ pagina.total }} aluno{{ "" if pagina.total == 1 else "s" }}
+                        {%- endif -%}
+                    </span>
                 </div>
                 <div class="ferramentas-alunos">
-                    <label class="sr-only" for="busca-aluno">Buscar aluno</label>
-                    <input type="search"
-                           id="busca-aluno"
-                           placeholder="Buscar aluno por nome…"
-                           autocomplete="off">
+                    {# A busca passou a ser do servidor: filtrar só as linhas da página
+                       aberta encontraria menos alunos do que existem. #}
+                    <form class="form-busca-aluno" method="get" action="{{ url_for('admin_blueprint.painel_adm') }}" role="search">
+                        <label class="sr-only" for="busca-aluno">Buscar aluno</label>
+                        <input type="search"
+                               id="busca-aluno"
+                               name="busca"
+                               value="{{ busca }}"
+                               placeholder="Buscar aluno por nome ou CPF…"
+                               autocomplete="off">
+                        <button type="submit" class="btn">Buscar</button>
+                        {% if busca %}
+                            <a class="btn" href="{{ url_for('admin_blueprint.painel_adm') }}">Limpar busca</a>
+                        {% endif %}
+                    </form>
                     <a href="{{ url_for('admin_blueprint.cadastrar_aluno') }}" class="button-primary">Matricular aluno</a>
                 </div>
                 <div class="table-container table-stack">
@@ -288,16 +304,18 @@
                             {% else %}
                                 <tr>
                                     <td colspan="4" class="empty-state">
-                                        Nenhum aluno cadastrado ainda. Use "Matricular aluno" para criar o primeiro.
+                                        {% if busca %}
+                                            Nenhum aluno encontrado para "{{ busca }}". Tente outro nome ou CPF.
+                                        {% else %}
+                                            Nenhum aluno cadastrado ainda. Use "Matricular aluno" para criar o primeiro.
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}
-                            <tr id="sem-resultados" hidden>
-                                <td colspan="4" class="empty-state">Nenhum aluno encontrado.</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
+                {% include 'components/paginacao.html' %}
             </section>
         </main>
         {% include 'components/confirm_modal.html' %}

@@ -10,6 +10,7 @@ from config import csrf
 from dao.financeiroDAO import STATUS_FECHADOS, PagamentoDAO, rotulo_acao, rotulo_status
 from servicos.formatacao import formatar_competencia
 from servicos.limites_pagamento import limitar_consulta_pagamento, limitar_criacao_pagamento
+from servicos.autorizacao import aluno_autorizado, sessao_administrativa_valida
 from servicos.mercado_pago import (
     MAX_RETRIES_INTERATIVO,
     MAX_RETRIES_WEBHOOK,
@@ -59,9 +60,11 @@ def _pagamento_ou_none(pagamento_id):
 
 
 def _acesso_permitido(pagamento):
-    if session.get('tipo_usuario') == 'admin':
+    # Revalida a conta no banco: uma sessão de aluno desativado não abre cobrança.
+    if sessao_administrativa_valida():
         return True
-    return session.get('tipo_usuario') == 'aluno' and session.get('aluno_id') == pagamento.aluno_id
+    aluno = aluno_autorizado()
+    return aluno is not None and aluno.id == pagamento.aluno_id
 
 
 def _pix_expirado(pagamento):
@@ -288,7 +291,9 @@ def status_pix_mensalidade(pagamento_id):
 def sincronizar_pagamento(pagamento_id):
     """Reconsulta manualmente o status no Mercado Pago - protegido por permissão de admin,
     útil quando o webhook atrasa ou falhou e o admin quer conferir agora."""
-    if session.get('tipo_usuario') != 'admin':
+    # Revalida a credencial administrativa, como o resto do painel: era a última porta
+    # de admin que seguia confiando só no papel gravado na sessão.
+    if not sessao_administrativa_valida():
         return redirect('/login')
 
     pagamento = _pagamento_ou_none(pagamento_id)

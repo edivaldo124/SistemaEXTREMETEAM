@@ -17,8 +17,9 @@ from blueprints.pix_bp import pix_bp
 from blueprints.checkout_bp import checkout_bp
 from blueprints.academia_bp import academia_bp
 from modelos.academia import Academia
+from modelos.email_pendente import EmailPendente
 from modelos.professor import Professor
-from servicos import keep_alive
+from servicos import credenciais, fila_email, keep_alive
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
@@ -55,6 +56,16 @@ if quantidade_proxies:
         x_for=quantidade_proxies,
         x_proto=quantidade_proxies,
         x_host=quantidade_proxies,
+    )
+
+# O compose não pode mais exigir uma variável específica (são duas formas de informar a
+# mesma credencial), então a conferência acontece aqui: subir sem nenhuma delas deixaria
+# a academia sem acesso administrativo, e é melhor falhar no arranque do que descobrir
+# isso na tela de login.
+if not credenciais.admin_configurado():
+    raise RuntimeError(
+        'Defina ADMIN_USER e ADMIN_PASSWORD_HASH (recomendado, gere com '
+        '"python -m servicos.credenciais") ou ADMIN_PASSWORD.'
     )
 
 database_url = os.environ.get('DATABASE_URL')
@@ -140,16 +151,32 @@ def tentativas_demais(_erro):
     quer_json = request.accept_mimetypes.best_match(('text/html', 'application/json')) == 'application/json'
     if request.path.startswith('/api/') or (pagamento and quer_json):
         return {'erro': mensagem}, 429, {'Retry-After': '60'}
-    if pagamento:
-        # Não apresenta login a quem já está autenticado nem expõe a chave interna
-        # ou os detalhes do limite enviados pela extensão.
+
+    # A tela de login só faz sentido para quem ainda não entrou. Trocar a senha, o
+    # e-mail ou a foto são ações de quem JÁ está autenticado: devolver o formulário de
+    # login ali parecia que a sessão tinha caído. E nenhuma resposta expõe a chave
+    # interna nem os detalhes do limite.
+    if pagamento or session.get('tipo_usuario'):
         resposta = TooManyRequests(description=mensagem).get_response()
         resposta.headers['Retry-After'] = '60'
         return resposta
     return render_template('login.html', msg=mensagem), 429
 
-with app.app_context():
-    db.create_all()
+# O schema é responsabilidade das migrations (`flask db upgrade`, executado pelo
+# Dockerfile antes do Gunicorn), nunca da importação do módulo.
+#
+# `db.create_all()` rodava aqui a cada import - inclusive no import que o PRÓPRIO
+# `flask db upgrade` faz. Num banco vazio ele criava as tabelas já no formato atual e
+# a primeira migration então tentava adicionar colunas que acabavam de existir, com
+# "column ... already exists" no PostgreSQL: um banco novo simplesmente não subia.
+#
+# Em teste, onde cada processo usa um SQLite descartável e não há migrations a aplicar,
+# criar o schema direto do modelo continua sendo o caminho.
+if os.environ.get('CRIAR_SCHEMA_NA_IMPORTACAO', '').lower() == 'true':
+    with app.app_context():
+        db.create_all()
+
+fila_email.registrar_app(app)
 
 
 @app.route("/")

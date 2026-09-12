@@ -1,0 +1,40 @@
+{#
+  Navegação de páginas das tabelas administrativas.
+
+  Reaproveita `.btn` do tema em vez de criar um controle novo: a paginação é uma ação
+  secundária de tabela, igual a "Ver aluno" ou "Sincronizar" na mesma linha. O amarelo
+  continua reservado à ação principal da tela, então nada aqui o usa.
+
+  Espera `pagina` (dao.financeiroDAO.Pagina) e preserva os filtros da URL atual.
+#}
+{% if pagina and pagina.total_paginas > 1 %}
+<nav class="paginacao" aria-label="Navegação de páginas">
+    <p class="paginacao-intervalo" aria-live="polite">
+        Mostrando <strong>{{ pagina.primeiro_da_pagina }}–{{ pagina.ultimo_da_pagina }}</strong>
+        de <strong>{{ pagina.total }}</strong>
+    </p>
+    <div class="paginacao-controles">
+        {% if pagina.tem_anterior %}
+            <a class="btn" rel="prev"
+               href="{{ url_for(request.endpoint, **dict(request.args.to_dict(), pagina=pagina.pagina - 1)) }}">
+                Página anterior
+            </a>
+        {% else %}
+            <span class="btn" aria-disabled="true">Página anterior</span>
+        {% endif %}
+
+        <span class="paginacao-posicao">
+            Página {{ pagina.pagina }} de {{ pagina.total_paginas }}
+        </span>
+
+        {% if pagina.tem_proxima %}
+            <a class="btn" rel="next"
+               href="{{ url_for(request.endpoint, **dict(request.args.to_dict(), pagina=pagina.pagina + 1)) }}">
+                Próxima página
+            </a>
+        {% else %}
+            <span class="btn" aria-disabled="true">Próxima página</span>
+        {% endif %}
+    </div>
+</nav>
+{% endif %}

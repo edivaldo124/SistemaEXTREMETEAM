@@ -23,6 +23,7 @@ from modelos.pagamento import Pagamento
 from modelos.pagamento_evento import PagamentoEvento
 from modelos.plano import Plano
 from modelos.usuario import Aluno
+from servicos.autorizacao import impressao_credencial
 
 pix_modulo = importlib.import_module('blueprints.pix_bp')
 
@@ -105,6 +106,7 @@ def test_duas_requisicoes_pix_reutilizam_uma_cobranca_postgres(postgres_pix, mon
         db.session.add(pagamento)
         db.session.commit()
         pagamento_id, aluno_id = pagamento.id, aluno.id
+        credencial_aluno = impressao_credencial(aluno.senha_hash)
 
     entrou_na_criacao = threading.Event()
     liberar_criacao = threading.Event()
@@ -160,7 +162,9 @@ def test_duas_requisicoes_pix_reutilizam_uma_cobranca_postgres(postgres_pix, mon
         threading.current_thread().name = nome
         with app.test_client() as client:
             with client.session_transaction() as sessao:
-                sessao.update(usuario='aluno-pg', aluno_id=aluno_id, tipo_usuario='aluno')
+                # A rota revalida a conta e a credencial carimbada no login.
+                sessao.update(usuario='aluno-pg', aluno_id=aluno_id, tipo_usuario='aluno',
+                              credencial=credencial_aluno)
             resposta = client.post(f'/api/mensalidades/{pagamento_id}/pix')
             return resposta.status_code, resposta.get_json()
 

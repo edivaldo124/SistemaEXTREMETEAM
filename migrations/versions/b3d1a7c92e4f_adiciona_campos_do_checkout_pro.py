@@ -19,17 +19,43 @@ branch_labels = None
 depends_on = None
 
 
+COLUNAS_CHECKOUT = (
+    ('checkout_preference_id', sa.String(length=64)),
+    ('checkout_external_reference', sa.String(length=120)),
+    ('checkout_url', sa.String(length=512)),
+    ('checkout_ambiente', sa.String(length=20)),
+    ('checkout_valor', sa.Numeric(precision=10, scale=2)),
+    ('checkout_criado_em', sa.DateTime()),
+    ('checkout_expira_em', sa.DateTime()),
+)
+
+
+RESTRICOES_CHECKOUT = (
+    ('uq_pagamentos_checkout_preference_id', ['checkout_preference_id']),
+    ('uq_pagamentos_checkout_external_reference', ['checkout_external_reference']),
+)
+
+
 def upgrade():
+    # Confere o banco real antes de agir (ver a revisão base a1f0c3e75b92). Colunas e
+    # restrições são conferidas separadamente, pelo mesmo motivo da revisão 50f97271f0a2.
+    inspector = sa.inspect(op.get_bind())
+    colunas = {c['name'] for c in inspector.get_columns('pagamentos')}
+    faltantes = [(nome, tipo) for nome, tipo in COLUNAS_CHECKOUT if nome not in colunas]
+
+    nomes_existentes = {
+        r['name'] for r in inspector.get_unique_constraints('pagamentos') if r.get('name')
+    } | {i['name'] for i in inspector.get_indexes('pagamentos')}
+    restricoes = [(n, c) for n, c in RESTRICOES_CHECKOUT if n not in nomes_existentes]
+
+    if not faltantes and not restricoes:
+        return
+
     with op.batch_alter_table('pagamentos', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('checkout_preference_id', sa.String(length=64), nullable=True))
-        batch_op.add_column(sa.Column('checkout_external_reference', sa.String(length=120), nullable=True))
-        batch_op.add_column(sa.Column('checkout_url', sa.String(length=512), nullable=True))
-        batch_op.add_column(sa.Column('checkout_ambiente', sa.String(length=20), nullable=True))
-        batch_op.add_column(sa.Column('checkout_valor', sa.Numeric(precision=10, scale=2), nullable=True))
-        batch_op.add_column(sa.Column('checkout_criado_em', sa.DateTime(), nullable=True))
-        batch_op.add_column(sa.Column('checkout_expira_em', sa.DateTime(), nullable=True))
-        batch_op.create_unique_constraint('uq_pagamentos_checkout_preference_id', ['checkout_preference_id'])
-        batch_op.create_unique_constraint('uq_pagamentos_checkout_external_reference', ['checkout_external_reference'])
+        for nome, tipo in faltantes:
+            batch_op.add_column(sa.Column(nome, tipo, nullable=True))
+        for nome, colunas_da_restricao in restricoes:
+            batch_op.create_unique_constraint(nome, colunas_da_restricao)
 
 
 def downgrade():

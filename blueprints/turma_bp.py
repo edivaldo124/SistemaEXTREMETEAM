@@ -12,7 +12,10 @@ from dao.turmaDAO import TurmaDAO
 from dao.usuarioDAO import AlunoDAO
 from modelos.professor import Professor
 from modelos.turma import Turma
-from servicos.autorizacao import admin_requerido, professor_ou_admin_requerido
+from servicos.autorizacao import (
+    admin_requerido, professor_autorizado, professor_ou_admin_requerido,
+    sessao_administrativa_valida,
+)
 from servicos.armazenamento import (
     ArquivoInvalido, TAMANHO_MAX_FOTO, caminho_arquivo, remover_arquivo, salvar_foto_perfil,
 )
@@ -131,9 +134,11 @@ def foto_professor(professor_id):
     professor = ProfessorDAO.buscar_por_id(professor_id)
     if not professor:
         abort(404)
-    proprio_professor = (session.get('tipo_usuario') == 'professor'
-                        and session.get('professor_id') == professor.id)
-    if not professor.perfil_publico and session.get('tipo_usuario') != 'admin' and not proprio_professor:
+    # Foto de perfil ainda não publicada: só o admin e o próprio professor enxergam,
+    # e os dois passam pela revalidação de sessão.
+    da_sessao = professor_autorizado()
+    proprio_professor = da_sessao is not None and da_sessao.id == professor.id
+    if not professor.perfil_publico and not sessao_administrativa_valida() and not proprio_professor:
         abort(404)
     caminho = caminho_arquivo(professor.foto_arquivo, subpasta='professores')
     if not caminho:
@@ -207,9 +212,11 @@ def _turma_ou_404(turma_id):
 
 
 def _acesso_permitido(turma):
-    if session.get('tipo_usuario') == 'admin':
+    # Revalida em vez de confiar só no papel gravado na sessão.
+    if sessao_administrativa_valida():
         return True
-    return session.get('tipo_usuario') == 'professor' and session.get('professor_id') == turma.professor_id
+    professor = professor_autorizado()
+    return professor is not None and professor.id == turma.professor_id
 
 
 @turma_bp.route('/turmas/<int:turma_id>')
@@ -230,7 +237,7 @@ def detalhe_turma(turma_id):
     presencas = {p.aluno_id: p.presente for p in PresencaDAO.listar_por_turma_e_data(turma_id, data_aula)}
     dia_valido = DIA_POR_INDICE[data_aula.weekday()] in turma.lista_dias
 
-    eh_admin = session.get('tipo_usuario') == 'admin'
+    eh_admin = sessao_administrativa_valida()
     ids_matriculados = {a.id for a in matriculados}
     alunos_disponiveis = [a for a in AlunoDAO.listar_todos() if a.id not in ids_matriculados and a.esta_ativo] if eh_admin else []
 
@@ -311,8 +318,10 @@ def registrar_presenca(turma_id):
 
 @turma_bp.route('/professor')
 def painel_professor():
-    if session.get('tipo_usuario') != 'professor':
+    # Revalida no banco: uma sessão cujo cadastro foi removido (ou cuja senha mudou)
+    # abria a área do professor até o cookie expirar.
+    professor = professor_autorizado()
+    if professor is None:
         return redirect('/login')
 
-    professor = ProfessorDAO.buscar_por_id(session['professor_id'])
-    return render_template('pgProfessor.html', professor=professor, turmas=professor.turmas if professor else [])
+    return render_template('pgProfessor.html', professor=professor, turmas=professor.turmas)

@@ -21,6 +21,14 @@ class SolicitacaoMudancaPlano(db.Model):
 
     __tablename__ = 'solicitacoes_mudanca_plano'
 
+    # Índice criado pela migração c7a4e1b93d20 e que faltava ser declarado aqui: sem a
+    # declaração, `flask db check` acusava o índice do banco como "removido" e deixava
+    # de servir como conferência do schema. Atende a busca da solicitação pendente de
+    # um aluno, feita em toda abertura do perfil.
+    __table_args__ = (
+        db.Index('ix_solicitacoes_mudanca_plano_aluno_status', 'aluno_id', 'status'),
+    )
+
     id = db.Column(db.Integer, primary_key=True)
     aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False)
 

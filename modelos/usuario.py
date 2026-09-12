@@ -34,19 +34,21 @@ class Aluno(db.Model):
     data_vencimento = db.Column(db.String(10), nullable=True)
 
     # RF: recuperação de senha por token de uso único (nunca a senha é trocada só com CPF+e-mail).
-    token_recuperacao_hash = db.Column(db.String(64), nullable=True)
+    # Indexado porque a validação do link busca EXATAMENTE por este hash a cada clique;
+    # sem índice a rota varria a tabela de alunos inteira.
+    token_recuperacao_hash = db.Column(db.String(64), nullable=True, index=True)
     token_recuperacao_expira = db.Column(db.DateTime, nullable=True)
 
     # RF: troca de e-mail pelo próprio aluno só é aplicada após confirmação por link
     # enviado ao novo endereço (evita apontar a conta para um e-mail que não é do dono).
     email_pendente = db.Column(db.String(150), nullable=True)
-    token_email_hash = db.Column(db.String(64), nullable=True)
+    token_email_hash = db.Column(db.String(64), nullable=True, index=True)
     token_email_expira = db.Column(db.DateTime, nullable=True)
 
     # RF: convite de acesso para um cadastro criado pela administração. O aluno só vira
     # dono da conta clicando num link de uso único enviado ao e-mail que a administração
     # registrou - CPF, nome ou data de nascimento nunca bastam para assumir um cadastro.
-    token_convite_hash = db.Column(db.String(64), nullable=True)
+    token_convite_hash = db.Column(db.String(64), nullable=True, index=True)
     token_convite_expira = db.Column(db.DateTime, nullable=True)
     convite_enviado_em = db.Column(db.DateTime, nullable=True)
 

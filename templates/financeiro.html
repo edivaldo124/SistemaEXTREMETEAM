@@ -231,7 +231,7 @@
                 <section class="secao-pagamentos">
                     <div class="section-title">
                         <h2>Mensalidades</h2>
-                        <p>{{ pagamentos|length }} resultado{{ "" if pagamentos|length == 1 else "s" }} com os filtros atuais.</p>
+                        <p>{{ pagina.total }} resultado{{ "" if pagina.total == 1 else "s" }} com os filtros atuais.</p>
                     </div>
                     <div class="tabela-pagamentos tabela-financeiro table-stack">
                         <table>
@@ -270,7 +270,7 @@
                                         <td data-label="Valor" class="celula-numero">{{ pagamento.valor|moeda }}</td>
                                         <td data-label="Vencimento" class="celula-numero">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
                                         <td data-label="Status">
-                                            <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
+                                            <span class="status status-{{ pagamento.status_efetivo }}">{{ rotulo_status(pagamento.status_efetivo) }}</span>
                                         </td>
                                         <td data-label="Forma">{{ pagamento.forma_pagamento|forma_pagamento }}</td>
                                         <td data-label="Origem">
@@ -318,6 +318,7 @@
                             </tbody>
                         </table>
                     </div>
+                    {% include 'components/paginacao.html' %}
                 </section>
             </div>
         </main>

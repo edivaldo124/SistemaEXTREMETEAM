@@ -1,7 +1,7 @@
-const campoBusca = document.getElementById('busca-aluno');
-const linhasDeAlunos = document.querySelectorAll('.aluno-item');
-const contadorAlunos = document.getElementById('contador-alunos');
-const avisoSemResultados = document.getElementById('sem-resultados');
+// A busca de alunos passou a ser feita pelo servidor (formulário GET com `busca`):
+// filtrar só as linhas da página aberta escondia alunos das outras páginas e fazia o
+// contador mentir. O que sobra aqui é a formatação de preços e a validação do plano.
+
 const formularioPlano = document.getElementById('form-plano');
 const campoPreco = document.getElementById('preco-plano');
 const campoDuracao = document.getElementById('duracao-dias');
@@ -10,40 +10,6 @@ const formatadorDePreco = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
 });
-
-function normalizarTexto(texto) {
-    return texto
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
-}
-
-function atualizarListaDeAlunos() {
-    const busca = normalizarTexto(campoBusca.value.trim());
-    let encontrados = 0;
-
-    linhasDeAlunos.forEach(function (linha) {
-        const nome = normalizarTexto(linha.dataset.nome);
-        const deveAparecer = nome.includes(busca);
-        linha.hidden = !deveAparecer;
-
-        if (deveAparecer) {
-            encontrados += 1;
-        }
-    });
-
-    contadorAlunos.textContent = encontrados === 1
-        ? '1 aluno'
-        : `${encontrados} alunos`;
-
-    if (avisoSemResultados && linhasDeAlunos.length > 0) {
-        avisoSemResultados.hidden = encontrados !== 0;
-    }
-}
-
-if (campoBusca) {
-    campoBusca.addEventListener('input', atualizarListaDeAlunos);
-}
 
 document.querySelectorAll('.preco-plano').forEach(function (preco) {
     const valor = Number(preco.dataset.preco);

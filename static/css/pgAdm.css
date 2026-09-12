@@ -179,3 +179,17 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 
 /* Ação de um formulário que ocupa a largura toda do painel. */
 .form-plano .form-actions,.form-turma .form-actions { grid-column:1/-1; margin-top:0; }
+
+/* A busca virou formulário (envio ao servidor) para alcançar os alunos de todas
+   as páginas. O campo mantém a mesma aparência: o form só carrega o arranjo. */
+.form-busca-aluno {
+  flex:1 1 260px; display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3);
+}
+.form-busca-aluno input { flex:1 1 200px; }
+@media (max-width:520px) {
+  .form-busca-aluno { width:100%; }
+  /* O campo fica com a linha inteira: dividindo espaço com o botão, o texto de
+     apoio ("...ou CPF") era cortado justamente onde a tela é mais estreita. */
+  .form-busca-aluno input { flex:1 1 100%; width:100%; }
+  .form-busca-aluno .btn { flex:1 1 auto; justify-content:center; }
+}

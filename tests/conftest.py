@@ -15,6 +15,17 @@ os.environ['APP_BASE_URL'] = 'https://academia.example.test'
 os.environ['TRUSTED_HOSTS'] = 'localhost,academia.example.test'
 os.environ['TRUST_PROXY_COUNT'] = '0'
 os.environ['RATELIMIT_STORAGE_URI'] = 'memory://'
+# Sem isto, `servicos.armazenamento` cai no padrão 'uploads' e a suíte grava fotos e
+# comprovantes de teste DENTRO da pasta real do projeto, misturados aos arquivos de
+# alunos de verdade. Aponta para o mesmo diretório temporário descartável do banco.
+os.environ['UPLOAD_DIR'] = os.path.join(_DIR_TESTE, 'uploads')
+# Credencial administrativa descartável: servidor.py agora recusa subir sem nenhuma.
+os.environ.setdefault('ADMIN_USER', 'admin-teste')
+os.environ.setdefault('ADMIN_PASSWORD', 'senha-de-teste-nao-usar-em-producao')
+# A suíte não roda migrations: o schema do SQLite descartável sai direto dos modelos.
+os.environ['CRIAR_SCHEMA_NA_IMPORTACAO'] = 'true'
+# A fila de e-mail é drenada pelo próprio teste, nunca por uma thread de fundo.
+os.environ['FILA_EMAIL_SINCRONA'] = 'true'
 
 import pytest
 
@@ -54,6 +65,31 @@ def limpar_banco(app):
 def contexto_app(app):
     with app.app_context():
         yield
+
+
+@pytest.fixture
+def sem_email(monkeypatch):
+    """Substitui o provedor de e-mail em todos os módulos que o chamam.
+
+    A suíte nunca deve alcançar a rede: sem a chave do Brevo `enviar_email` já sai
+    antes do POST, mas o duplo torna isso explícito e devolve os envios ao teste.
+    """
+    import blueprints.adm_bp as adm_bp
+    import blueprints.usuario_bp as usuario_bp
+    import servicos.convites as convites
+    import servicos.email as servico_email
+    import servicos.fila_email as fila_email
+
+    enviados = []
+
+    def _falso(destinatario, nome_destinatario, assunto, *_args, **_kwargs):
+        enviados.append({'para': destinatario, 'assunto': assunto})
+        return True
+
+    for modulo in (servico_email, usuario_bp, adm_bp, convites, fila_email):
+        if hasattr(modulo, 'enviar_email'):
+            monkeypatch.setattr(modulo, 'enviar_email', _falso)
+    return enviados
 
 
 @pytest.fixture
@@ -109,20 +145,43 @@ def criar_pagamento(contexto_app, plano, criar_aluno):
     return _criar
 
 
+# A sessão carrega a "impressão" da credencial usada no login, e as rotas protegidas a
+# conferem a cada requisição (ver servicos/autorizacao.py). As fixtures precisam montar a
+# sessão como o login real monta - sem o carimbo, nenhuma rota protegida abre.
 @pytest.fixture
 def logar_como_aluno(client):
+    from servicos.autorizacao import impressao_credencial
+
     def _logar(aluno):
         with client.session_transaction() as sess:
             sess['usuario'] = aluno.login
             sess['aluno_id'] = aluno.id
             sess['tipo_usuario'] = 'aluno'
+            sess['credencial'] = impressao_credencial(aluno.senha_hash)
+    return _logar
+
+
+@pytest.fixture
+def logar_como_professor(client):
+    from servicos.autorizacao import impressao_credencial
+
+    def _logar(professor):
+        with client.session_transaction() as sess:
+            sess['usuario'] = professor.login
+            sess['professor_id'] = professor.id
+            sess['tipo_usuario'] = 'professor'
+            sess['credencial'] = impressao_credencial(professor.senha_hash)
     return _logar
 
 
 @pytest.fixture
 def logar_como_admin(client):
+    from servicos.autorizacao import impressao_credencial
+    from servicos.credenciais import referencia_credencial_admin
+
     def _logar():
         with client.session_transaction() as sess:
-            sess['usuario'] = 'admin-teste'
+            sess['usuario'] = os.environ['ADMIN_USER']
             sess['tipo_usuario'] = 'admin'
+            sess['credencial'] = impressao_credencial(referencia_credencial_admin())
     return _logar

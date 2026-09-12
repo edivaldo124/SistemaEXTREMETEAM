@@ -9,6 +9,7 @@ from dao.turmaDAO import TurmaDAO
 from dao.matriculaDAO import MatriculaDAO
 from modelos.professor import Professor
 from modelos.turma import Turma
+from servicos.autorizacao import impressao_credencial
 
 
 def _imagem_jpeg_valida():
@@ -127,6 +128,7 @@ def test_professor_ve_foto_de_aluno_da_propria_turma(client, criar_aluno, contex
         sess['usuario'] = aluno.login
         sess['aluno_id'] = aluno.id
         sess['tipo_usuario'] = 'aluno'
+        sess['credencial'] = impressao_credencial(aluno.senha_hash)
     client.post('/perfil/foto', data={'foto': (_imagem_jpeg_valida(), 'foto.jpg', 'image/jpeg')},
                 content_type='multipart/form-data')
     client.post('/logout')
@@ -135,6 +137,7 @@ def test_professor_ve_foto_de_aluno_da_propria_turma(client, criar_aluno, contex
         sess['usuario'] = professor.login
         sess['professor_id'] = professor.id
         sess['tipo_usuario'] = 'professor'
+        sess['credencial'] = impressao_credencial(professor.senha_hash)
 
     resp = client.get(f'/perfil/foto/{aluno.id}')
     assert resp.status_code == 200
@@ -149,6 +152,7 @@ def test_professor_nao_ve_foto_de_aluno_fora_da_sua_turma(client, criar_aluno, c
         sess['usuario'] = professor.login
         sess['professor_id'] = professor.id
         sess['tipo_usuario'] = 'professor'
+        sess['credencial'] = impressao_credencial(professor.senha_hash)
 
     resp = client.get(f'/perfil/foto/{aluno.id}')
     assert resp.status_code == 403

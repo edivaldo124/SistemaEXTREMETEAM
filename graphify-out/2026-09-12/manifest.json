@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1789226292.9973452,
-    "seen": 1789226697.1361008,
-    "ast_hash": "f892891d380228268d0486978e538f04",
+    "mtime": 1789192674.955365,
+    "seen": 1789193570.1003206,
+    "ast_hash": "4ac1f9dfe3e10542d391f9402c2b2f74",
     "semantic_hash": ""
   },
   "compose.yaml": {
@@ -810,9 +810,9 @@
     "semantic_hash": ""
   },
   "migrations/versions/a1f0c3e75b92_schema_inicial.py": {
-    "mtime": 1789226275.4090242,
-    "seen": 1789226697.1342504,
-    "ast_hash": "e9d3e1f2318838391a3b7576da4b4445",
+    "mtime": 1789191109.5667837,
+    "seen": 1789193570.098877,
+    "ast_hash": "72ff674fbe47241604fdcfac30185dbd",
     "semantic_hash": ""
   },
   "migrations/versions/f2c81d0a6e47_fila_de_email_e_indices_de_token.py": {
@@ -834,9 +834,9 @@
     "semantic_hash": ""
   },
   "servicos/fila_email.py": {
-    "mtime": 1789226306.6815314,
-    "seen": 1789226697.134805,
-    "ast_hash": "89850115108cdcaec0d1c17a50410a7f",
+    "mtime": 1789226030.9343188,
+    "seen": 1789226156.2267463,
+    "ast_hash": "15667f8a2fe08cd0057374b70f3a28bb",
     "semantic_hash": ""
   },
   "tests/test_fila_email_concorrencia_postgres.py": {
@@ -846,9 +846,9 @@
     "semantic_hash": ""
   },
   "tests/test_regressao_auditoria.py": {
-    "mtime": 1789226322.3700304,
-    "seen": 1789226697.1360557,
-    "ast_hash": "1c4f691be0498b828e437dad6300ae2b",
+    "mtime": 1789226047.4510264,
+    "seen": 1789226156.2278674,
+    "ast_hash": "de2f294d2e7aac64a1dcadf98fa8a05c",
     "semantic_hash": ""
   },
   "templates/components/paginacao.html": {
@@ -876,9 +876,9 @@
     "semantic_hash": ""
   },
   "REVISAO_CODEX_PARA_CLAUDE.md": {
-    "mtime": 1789226550.4363747,
-    "seen": 1789226697.136102,
-    "ast_hash": "f8dd8f0520f7f48d7e426fbc622c181a",
+    "mtime": 1789225799.1978288,
+    "seen": 1789226156.2279332,
+    "ast_hash": "8a3890e0c5c1495eda05c264b3eae909",
     "semantic_hash": ""
   }
 }

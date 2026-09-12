@@ -27,6 +27,7 @@ from servicos.mercado_pago import (
 from servicos.urls import URLPublicaInvalida, url_publica
 
 from blueprints.pix_bp import STATUS_PAGAVEIS, sincronizar_por_referencia_checkout
+from servicos.autorizacao import aluno_autorizado, sessao_administrativa_valida
 
 checkout_bp = Blueprint('checkout', __name__)
 logger = logging.getLogger(__name__)
@@ -57,10 +58,14 @@ def _checkout_pronto(pagamento):
 
 
 def _acesso_permitido(pagamento):
-    """Mesma regra já usada no Pix e na página de pagamento: o próprio aluno ou o admin."""
-    if session.get('tipo_usuario') == 'admin':
+    """Mesma regra já usada no Pix e na página de pagamento: o próprio aluno ou o admin.
+
+    Os dois lados são revalidados no banco a cada requisição (servicos/autorizacao.py).
+    """
+    if sessao_administrativa_valida():
         return True
-    return session.get('tipo_usuario') == 'aluno' and session.get('aluno_id') == pagamento.aluno_id
+    aluno = aluno_autorizado()
+    return aluno is not None and aluno.id == pagamento.aluno_id
 
 
 def _urls_retorno(pagamento):

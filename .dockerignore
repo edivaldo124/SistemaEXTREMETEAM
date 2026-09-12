@@ -1,11 +1,56 @@
+# O Dockerfile usa `COPY . .`, então tudo o que não estiver aqui entra na imagem.
+#
+# Uploads são o caso que importa: `uploads/` guarda comprovantes de pagamento e fotos
+# de perfil de alunos reais. Em execução o diretório é coberto pelo volume
+# `uploads_data`, então o conteúdo copiado não fica acessível pela aplicação - mas
+# continua dentro das camadas da imagem, ao alcance de quem puxe ou inspecione a
+# imagem. Risco de inclusão indevida, não evidência de vazamento: a exclusão fecha o
+# risco, e o volume persistente segue funcionando igual (o diretório é recriado vazio,
+# com o dono correto, no próprio Dockerfile).
+uploads/
+
+# Segredos e ambiente local
+.env
+.env.*
+!.env.example
+
+# Controle de versão e ferramentas de desenvolvimento
 .git
 .gitignore
+.github
 .idea
-.env
+.vscode
+.claude
+.agents
+.codex
+
+# Ambientes virtuais e artefatos de Python
 .venv
 venv
 __pycache__
 *.py[cod]
-*.log
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info
+
+# Testes e material de apoio: não são executados no container e só aumentam a imagem
+tests/
+graphify-out/
+README.md
 DEPLOY.md
+security_best_practices_report.md
+requirements-dev.txt
+
+# Infraestrutura que não pertence à imagem da aplicação
+compose.yaml
 docker-compose.yml
+Dockerfile
+.dockerignore
+Caddyfile
+
+# Logs e bancos locais
+*.log
+*.db
+*.sqlite
+*.sqlite3

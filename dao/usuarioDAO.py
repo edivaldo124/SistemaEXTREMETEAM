@@ -1,13 +1,29 @@
 from config import db
-from dao.financeiroDAO import PagamentoDAO
+from dao.financeiroDAO import PAGINA_TAMANHO_PADRAO, PagamentoDAO, _paginar
 from modelos.plano import Plano
 from modelos.usuario import Aluno
+from sqlalchemy import func, or_
 from sqlalchemy.exc import SQLAlchemyError
-from servicos.formatacao import variantes_cpf
+from servicos.formatacao import somente_digitos, variantes_cpf
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
 _HASH_DESCARTAVEL = generate_password_hash('senha-descartavel-para-equalizar-tempo')
+
+# Mínimo de dígitos para tratar o termo como CPF. Abaixo disso o trecho é curto demais
+# para identificar alguém e casaria com quase todo mundo.
+_MIN_DIGITOS_CPF = 4
+
+
+def _parece_busca_por_cpf(termo):
+    """O termo é um CPF, ou um pedaço dele, e não um nome que por acaso tem número?"""
+    limpo = (termo or '').strip()
+    if not limpo:
+        return False
+    # Aceita só dígitos e a pontuação usada em CPF: "529982", "529.982", "529.982.247-25".
+    if any(c not in '0123456789.-' for c in limpo):
+        return False
+    return len(somente_digitos(limpo)) >= _MIN_DIGITOS_CPF
 
 class AlunoDAO:
     @staticmethod
@@ -22,6 +38,51 @@ class AlunoDAO:
     @staticmethod
     def listar_pendentes():
         return Aluno.query.filter_by(status_cadastro='pendente').all()
+
+    @staticmethod
+    def contar_cadastrados():
+        """Quantos alunos a academia tem, sem filtro de busca.
+
+        O card do topo do painel é uma métrica da academia e fica lado a lado com
+        "Cadastros pendentes", que é global: mostrar ali o total da busca em curso
+        faria os dois números falarem de universos diferentes.
+        """
+        return Aluno.query.filter(Aluno.status_cadastro != 'pendente').count()
+
+    @staticmethod
+    def listar_paginado(*, pagina=1, por_pagina=PAGINA_TAMANHO_PADRAO, busca=None):
+        """Uma página de alunos já cadastrados, recortada e filtrada pelo banco.
+
+        O painel administrativo carregava TODOS os alunos e descartava os pendentes em
+        Python (`[u for u in listar_todos() if ...]`), trazendo a tabela inteira para a
+        memória a cada abertura. O filtro e o recorte agora são do banco; os pendentes
+        continuam saindo desta lista porque têm seção própria na tela.
+        """
+        consulta = Aluno.query.filter(Aluno.status_cadastro != 'pendente')
+        if busca:
+            def _escapar(valor):
+                return valor.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+
+            criterios = [Aluno.nome.ilike(f'%{_escapar(busca)}%', escape='\\')]
+
+            # O CPF é guardado formatado ("529.982.247-25"). Comparar o que foi digitado
+            # com a coluna crua falharia para quem digita só os números - e também para
+            # um trecho que atravesse um ponto ("529982"). Os separadores são removidos
+            # dos DOIS lados, então as três formas encontram a mesma pessoa.
+            #
+            # Só entra quando o termo é MESMO um CPF ou um pedaço dele: com qualquer
+            # dígito servindo, buscar "Aluno 3" virava `CPF LIKE '%3%'` e devolvia a
+            # academia inteira.
+            if _parece_busca_por_cpf(busca):
+                digitos = somente_digitos(busca)
+                cpf_so_digitos = func.replace(
+                    func.replace(Aluno.cpf, '.', ''), '-', '',
+                )
+                criterios.append(cpf_so_digitos.like(f'%{_escapar(digitos)}%', escape='\\'))
+
+            consulta = consulta.filter(or_(*criterios))
+        consulta = consulta.order_by(Aluno.nome.asc(), Aluno.id.asc())
+        return _paginar(consulta, pagina=pagina, por_pagina=por_pagina)
 
     @staticmethod
     def definir_status_cadastro(aluno_id, status):

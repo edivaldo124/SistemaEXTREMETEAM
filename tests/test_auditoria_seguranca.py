@@ -17,6 +17,7 @@ from dao.financeiroDAO import PagamentoDAO
 from modelos.professor import Professor
 from dao.professorDAO import ProfessorDAO
 from servicos.mercado_pago import url_checkout_permitida, validar_assinatura_webhook
+from servicos.autorizacao import impressao_credencial
 
 JSON = {'Accept': 'application/json'}
 
@@ -51,6 +52,7 @@ def logar_como_professor(client, contexto_app):
             sess['usuario'] = professor.login
             sess['professor_id'] = professor.id
             sess['tipo_usuario'] = 'professor'
+            sess['credencial'] = impressao_credencial(professor.senha_hash)
         return professor
     return _logar
 

@@ -8,6 +8,7 @@ from dao.turmaDAO import TurmaDAO
 from modelos.presenca import Presenca
 from modelos.professor import Professor
 from modelos.turma import Turma
+from servicos.autorizacao import impressao_credencial
 
 
 @pytest.fixture
@@ -66,6 +67,12 @@ def test_presenca_com_data_valida_continua_disponivel(client, criar_aluno, turma
     with client.session_transaction() as sessao:
         sessao['tipo_usuario'] = papel
         sessao['professor_id'] = turma.professor_id
+        # Cada papel carrega a credencial do SEU dono: a do admin vem do ambiente.
+        if papel == 'admin':
+            from servicos.credenciais import referencia_credencial_admin
+            sessao['credencial'] = impressao_credencial(referencia_credencial_admin())
+        else:
+            sessao['credencial'] = impressao_credencial(turma.professor.senha_hash)
 
     resposta = client.post(f'/turmas/{turma.id}/presenca', data={
         'data_aula': '2026-09-07',
@@ -80,10 +87,32 @@ def test_presenca_com_data_valida_continua_disponivel(client, criar_aluno, turma
     assert presenca.presente is True
 
 
-@pytest.mark.parametrize('papel,codigo', [(None, 302), ('aluno', 302), ('professor', 403)])
+@pytest.mark.parametrize(
+    'papel,codigo',
+    [(None, 302), ('aluno', 302), ('professor', 403), ('professor_inexistente', 302)],
+)
 @pytest.mark.parametrize('metodo', ['GET', 'POST'])
 def test_data_invalida_nao_contorna_permissoes(client, turma, papel, codigo, metodo):
-    if papel:
+    if papel == 'professor':
+        # Um professor REAL, dono de outra turma: o acesso é negado com 403 porque a
+        # sessão vale, mas a turma não é dele.
+        from dao.professorDAO import ProfessorDAO
+        from modelos.professor import Professor
+
+        outro = Professor(nome='Outro Professor', login='outro-prof', senha='senha-de-teste-123')
+        ProfessorDAO.salvar(outro)
+        with client.session_transaction() as sessao:
+            sessao['tipo_usuario'] = 'professor'
+            sessao['professor_id'] = outro.id
+            sessao['credencial'] = impressao_credencial(outro.senha_hash)
+    elif papel == 'professor_inexistente':
+        # Sessão apontando para um cadastro que não existe mais: agora ela é encerrada
+        # e o pedido volta ao login, em vez de seguir até a checagem da turma.
+        with client.session_transaction() as sessao:
+            sessao['tipo_usuario'] = 'professor'
+            sessao['professor_id'] = turma.professor_id + 1000
+            sessao['credencial'] = impressao_credencial(turma.professor.senha_hash)
+    elif papel:
         with client.session_transaction() as sessao:
             sessao['tipo_usuario'] = papel
             sessao['professor_id'] = turma.professor_id + 1

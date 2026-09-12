@@ -13,17 +13,26 @@ from config import db
 JSON = {'Accept': 'application/json'}
 
 
+# As rotas protegidas conferem a credencial carimbada no login (servicos/autorizacao.py),
+# então a sessão montada à mão precisa carregá-la como o login real carrega.
 def _sessao_aluno(cliente, aluno):
+    from servicos.autorizacao import impressao_credencial
+
     with cliente.session_transaction() as sessao:
         sessao['usuario'] = aluno.login
         sessao['tipo_usuario'] = 'aluno'
         sessao['aluno_id'] = aluno.id
+        sessao['credencial'] = impressao_credencial(aluno.senha_hash)
 
 
 def _sessao_admin(cliente, usuario):
+    from servicos.autorizacao import impressao_credencial
+    from servicos.credenciais import referencia_credencial_admin
+
     with cliente.session_transaction() as sessao:
         sessao['usuario'] = usuario
         sessao['tipo_usuario'] = 'admin'
+        sessao['credencial'] = impressao_credencial(referencia_credencial_admin())
 
 
 @pytest.fixture

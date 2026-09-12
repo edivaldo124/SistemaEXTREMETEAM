@@ -58,6 +58,31 @@
                             </div>
                         </article>
                     {% endif %}
+                    {# Acompanhamento da fila: o envio não acontece mais dentro da
+                       requisição, então a tela precisa dizer o que ainda está a caminho
+                       e o que parou de ser tentado. #}
+                    {% if fila_pendentes %}
+                        <article>
+                            <span class="icon-tile" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M12 7v5l3.5 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                            </span>
+                            <div>
+                                <strong>{{ fila_pendentes }}</strong>
+                                <span>Na fila de envio</span>
+                            </div>
+                        </article>
+                    {% endif %}
+                    {% if fila_falhados %}
+                        <article>
+                            <span class="icon-tile" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M12 8v5m0 3.5v.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
+                            </span>
+                            <div>
+                                <strong>{{ fila_falhados }}</strong>
+                                <span>Não entregues após 5 tentativas</span>
+                            </div>
+                        </article>
+                    {% endif %}
                 </div>
             </section>
             {% with mensagens=get_flashed_messages(with_categories=true) %}

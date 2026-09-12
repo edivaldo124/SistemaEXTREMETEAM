@@ -36,4 +36,8 @@ EXPOSE 5000
 # O plano gratuito do Render não oferece Shell/Pre-Deploy Command. Aplicar as
 # migrations antes do Gunicorn mantém o schema compatível em cada publicação;
 # `flask db upgrade` é idempotente quando o banco já está na revisão mais nova.
-CMD ["sh", "-c", "flask --app servidor db upgrade && exec gunicorn --bind 0.0.0.0:5000 --workers 1 --threads 2 --timeout 60 servidor:app"]
+# `--config` é explícito de propósito: o Gunicorn só lê `gunicorn.conf.py` sozinho
+# quando o diretório de trabalho é este, e é esse arquivo que sobe o consumidor da fila
+# de e-mail no worker (`post_worker_init`). Sem ele, um aviso adiado por falha do
+# provedor ficaria esperando alguém reabrir o painel.
+CMD ["sh", "-c", "flask --app servidor db upgrade && exec gunicorn --config /app/gunicorn.conf.py --bind 0.0.0.0:5000 --workers 1 --threads 2 --timeout 60 servidor:app"]

@@ -17,12 +17,88 @@ Edite o `.env` e preencha pelo menos: `DATABASE_URL`, `SECRET_KEY`, `ADMIN_USER`
 
 ## Banco de dados e migrations
 
-O projeto usa Flask-SQLAlchemy + Flask-Migrate (Alembic). Em uma base nova, `python servidor.py` já cria as tabelas automaticamente (`db.create_all()`). Para aplicar mudanças de schema em uma base **já existente** (como os campos de pagamento via Pix), use as migrations:
+O projeto usa Flask-SQLAlchemy + Flask-Migrate (Alembic). **As migrations são o único
+caminho para criar ou atualizar o schema**, tanto num banco vazio quanto num banco que
+já tem dados:
 
 ```bash
 export FLASK_APP=servidor.py
 flask db upgrade
 ```
+
+O `Dockerfile` já executa isso antes de subir o Gunicorn, então uma publicação normal
+não exige nenhum passo manual.
+
+`servidor.py` não chama mais `db.create_all()` ao ser importado. Ele fazia isso até
+mesmo durante o import que o próprio `flask db upgrade` executa: num banco vazio, criava
+as tabelas já no formato atual e a primeira migration então tentava adicionar colunas
+recém-criadas, falhando com `column "provider" of relation "pagamentos" already exists`.
+Como o container roda `flask db upgrade && gunicorn`, uma instalação nova não subia. A
+cadeia agora começa pela revisão `a1f0c3e75b92`, que cria o schema inicial.
+
+Só os testes criam o schema direto dos modelos, via `CRIAR_SCHEMA_NA_IMPORTACAO=true`
+(definido em `tests/conftest.py`, sobre um SQLite descartável). Não use essa variável em
+produção.
+
+### Banco criado pela versão antiga
+
+Um banco que nasceu do antigo `create_all()` tem as tabelas mas não tem
+`alembic_version`. Rode o upgrade normalmente:
+
+```bash
+flask db upgrade
+```
+
+Cada revisão inspeciona o banco antes de agir (coluna a coluna, índice a índice), então
+o que já existe é pulado e o que falta é criado.
+
+**Não use `flask db stamp head` para "pular" esse trabalho.** `stamp` apenas escreve a
+versão na tabela de controle, sem executar nenhum comando de schema. Um banco antigo
+carimbado como atualizado ficaria permanentemente sem o que as revisões deveriam ter
+criado — a tabela da fila de e-mail e os índices, por exemplo — e nenhum upgrade
+posterior voltaria para criá-los.
+
+Se precisar mesmo carimbar (por exemplo, um banco que você sabe estar exatamente numa
+revisão intermediária), carimbe **essa** revisão e siga com o upgrade a partir dela:
+
+```bash
+flask db stamp e4b7c2a91d35   # só se o schema corresponder EXATAMENTE a esta revisão
+flask db upgrade
+```
+
+Confirme antes, numa cópia descartável, que `flask db check` não acusa diferenças.
+
+### Backup e restauração
+
+O volume `postgres_data` **não é backup**: ele protege contra o container ser recriado,
+não contra apagar um registro por engano, contra uma migration malfeita nem contra a
+perda da máquina. O mesmo vale para `uploads_data`, que guarda comprovantes de pagamento
+e fotos de alunos.
+
+Se você já tem uma rotina de backup fora deste repositório (snapshot do provedor,
+backup gerenciado do banco), mantenha-a e confira apenas a parte de **restauração**: um
+backup nunca testado não é um backup. Se não tem, os comandos abaixo cobrem o mínimo.
+
+Gerar:
+
+```bash
+# Banco (formato custom, restaura seletivamente e comprime)
+docker compose exec -T db pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB" > backup-$(date +%F).dump
+
+# Uploads (comprovantes e fotos)
+docker run --rm -v sistemaextremeteam_uploads_data:/dados -v "$PWD":/saida alpine \
+  tar czf /saida/uploads-$(date +%F).tar.gz -C /dados .
+```
+
+Restaurar — **sempre num banco descartável primeiro**, nunca direto em produção:
+
+```bash
+createdb restauracao_teste
+pg_restore -d restauracao_teste --clean --if-exists backup-2026-09-12.dump
+```
+
+Guarde as cópias fora da máquina que roda a aplicação e confira periodicamente que uma
+restauração completa funciona de ponta a ponta.
 
 **Atenção:** o `DATABASE_URL` de desenvolvimento local aponta para um Postgres local. Em produção, `DATABASE_URL` aponta para o banco real da academia, com dados de alunos — nunca rode testes automatizados apontando para ele, e sempre revise (`flask db upgrade --sql` ou leitura manual do arquivo em `migrations/versions/`) uma migration nova antes de aplicá-la em produção.
 
@@ -53,6 +129,59 @@ A regressão de concorrência do Pix exige PostgreSQL, pois SQLite não aplica `
 - `RATELIMIT_STORAGE_URI` deve apontar para Redis em produção para compartilhar os limites de autenticação e pagamentos entre processos. O Docker Compose já inclui esse serviço; no Render, configure a URI do serviço Redis usado pela aplicação. `memory://` mantém contadores apenas dentro de cada processo.
 - Pagamentos têm limites por conta, preservados entre sessões: Pix e Checkout compartilham 10 tentativas de abertura por minuto; status, retorno do Checkout e sincronização administrativa compartilham 30 consultas por minuto. Ao atingir o limite, a aplicação responde `429` com `Retry-After: 60` antes de chamar o provedor.
 - Requisições acima de 10 MB são recusadas pelo Flask e pelo Caddy. PDFs enviados como comprovante são entregues como download.
+- `COOKIE_SECURE=true` é obrigatório em produção: com `false` o cookie de sessão viaja em HTTP simples. O padrão do código é `false` justamente para a execução local sem o Caddy; o `compose.yaml` já define `true`.
+- Envio de imagem tem limite de **pixels**, não só de bytes. Um PNG de 285 KB pode declarar 10000x10000 e custar 1146 MB ao ser decodificado, num container de 192 MB. JPEG aceita até 80 MP (o decodificador entrega em escala reduzida e o custo fica em ~12 MB); PNG e WebP, que não têm esse recurso, aceitam até 8 MP. A recusa acontece lendo o cabeçalho, antes de alocar os pixels.
+- Trocar ou redefinir a senha encerra as outras sessões abertas com a credencial antiga, e descarta os links pendentes de recuperação, convite e troca de e-mail. Quem fez a troca continua conectado.
+- Desativar ou reprovar um aluno passa a valer na requisição seguinte, não só no próximo login. O mesmo vale para um professor removido.
+
+### Credencial do administrador
+
+A senha do administrador sai do ambiente, não do banco. Prefira guardá-la como **hash**:
+a senha em texto puro fica visível em `docker inspect`, nos logs do orquestrador e no
+histórico do shell de quem editou o arquivo.
+
+```bash
+python -m servicos.credenciais     # pede a senha sem eco e imprime só o hash
+```
+
+Coloque o valor em `ADMIN_PASSWORD_HASH` e reinicie. `ADMIN_PASSWORD_HASH` tem
+precedência sobre `ADMIN_PASSWORD`, então dá para publicar o hash primeiro, confirmar
+que o login funciona e só depois remover a variável antiga — sem nenhuma janela em que
+o administrador fique trancado do lado de fora. `ADMIN_PASSWORD` continua aceito, com
+um aviso no log a cada uso.
+
+A aplicação recusa subir se nenhuma das duas estiver definida.
+
+### Publicar com um domínio próprio
+
+O `Caddyfile` do repositório atende por `localhost`, `127.0.0.1` e um IP de rede local,
+com `tls internal` (certificado da CA interna do Caddy). Isso é a configuração **local**;
+não é o que uma instalação pública deve usar.
+
+Para publicar, troque o bloco de endereços pelo domínio real e remova `tls internal` —
+o Caddy passa a emitir certificado Let's Encrypt sozinho:
+
+```caddyfile
+academia.exemplo.com.br {
+	request_body {
+		max_size 10MB
+	}
+	reverse_proxy app:5000
+}
+```
+
+E acerte, no `.env`, as variáveis que dependem do domínio:
+
+| Variável | Valor em produção |
+| --- | --- |
+| `TRUSTED_HOSTS` | o domínio real. Vazio desliga a verificação e um `Host` forjado passa a ser aceito |
+| `APP_BASE_URL` | `https://` + o mesmo domínio |
+| `COOKIE_SECURE` | `true` |
+| `TRUST_PROXY_COUNT` | `1` com o Caddy do `compose.yaml`. Alto demais faz a aplicação confiar num `X-Forwarded-For` escrito pelo cliente, e o limite por IP vira algo contornável trocando o cabeçalho |
+| `RATELIMIT_STORAGE_URI` | a URI do Redis. Com `memory://` cada worker tem a própria contagem, o limite real vira (limite x nº de workers) e zera a cada reinício |
+
+Estes valores não estão preenchidos no repositório porque dependem do domínio que a
+academia contratar.
 
 ## Keep-alive (hospedagem que hiberna)
 

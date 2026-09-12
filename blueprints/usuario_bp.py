@@ -62,6 +62,13 @@ from servicos.formatacao import (
 from servicos.email import email_valido, enviar_email
 from servicos.urls import URLPublicaInvalida, url_publica
 from servicos.senhas import erro_confirmacao_senha, erro_validacao_senha
+from servicos.autorizacao import (
+    aluno_autorizado,
+    professor_autorizado,
+    registrar_credencial,
+    sessao_administrativa_valida,
+)
+from servicos.credenciais import credencial_admin_confere, referencia_credencial_admin
 
 auth_bp = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
@@ -75,6 +82,23 @@ def _chave_ip_e_identificador(nome_campo):
     return f'{get_remote_address()}:{resumo}'
 
 
+def _chave_da_conta():
+    """Chave de limite por CONTA, caindo no IP só para quem não está autenticado.
+
+    A academia inteira costuma sair por um IP só (o Wi-Fi da recepção, o 4G de uma
+    operadora). Limitar por IP as ações de quem já entrou faria um aluno consumir a cota
+    do outro: quem trocasse a foto de perfil deixaria os colegas sem trocar a sua.
+    """
+    tipo = session.get('tipo_usuario')
+    if tipo == 'aluno' and session.get('aluno_id'):
+        return f'aluno:{session["aluno_id"]}'
+    if tipo == 'professor' and session.get('professor_id'):
+        return f'professor:{session["professor_id"]}'
+    if tipo == 'admin':
+        return 'admin'
+    return f'ip:{get_remote_address()}'
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 @limiter.limit('20 per minute', methods=['POST'])
 @limiter.limit(
@@ -86,13 +110,14 @@ def pagina_login():
         login = (request.form.get("loginusuario") or "").strip()
         senha = request.form.get("senhausuario") or ""
 
-        admin_user = os.environ.get('ADMIN_USER')
-        admin_password = os.environ.get('ADMIN_PASSWORD')
-        if admin_user and admin_password and login == admin_user and hmac.compare_digest(senha, admin_password):
+        if credencial_admin_confere(login, senha):
             # Remove qualquer sessao anterior para evitar fixacao de sessao.
             session.clear()
-            session['usuario'] = admin_user
+            session['usuario'] = os.environ.get('ADMIN_USER')
             session['tipo_usuario'] = "admin"
+            # Carimba a credencial administrativa em vigor: rotacionar
+            # ADMIN_PASSWORD_HASH encerra as sessões abertas com a senha anterior.
+            registrar_credencial(referencia_credencial_admin())
             session.permanent = True
             return redirect('/admin')
 
@@ -102,6 +127,7 @@ def pagina_login():
             session['usuario'] = professor.login
             session['professor_id'] = professor.id
             session['tipo_usuario'] = "professor"
+            registrar_credencial(professor.senha_hash)
             session.permanent = True
             return redirect('/professor')
 
@@ -119,6 +145,8 @@ def pagina_login():
             session['usuario'] = aluno.login
             session['aluno_id'] = aluno.id
             session['tipo_usuario'] = "aluno"
+            # Carimba a credencial em vigor: trocar a senha depois invalida esta sessão.
+            registrar_credencial(aluno.senha_hash)
             session.permanent = True
             return redirect('/perfil')
 
@@ -270,13 +298,10 @@ def _plano_do_formulario():
 
 @auth_bp.route("/perfil", methods=["GET", "POST"])
 def pagina_perfil():
-    if session.get('tipo_usuario') != 'aluno' or not session.get('aluno_id'):
-        return redirect('/login')
-
-    aluno_dados = db.session.get(Aluno, session['aluno_id'])
-
+    # A sessão não basta: desativação, reprovação e troca de senha valem já na próxima
+    # requisição, sem esperar o cookie expirar.
+    aluno_dados = _aluno_da_sessao()
     if not aluno_dados:
-        session.clear()
         return redirect('/login')
 
     if request.method == "POST":
@@ -375,10 +400,25 @@ def cancelar_mudanca_plano(solicitacao_id):
 TOKEN_EMAIL_VALIDADE = timedelta(minutes=30)
 
 
+def _revogar_tokens_de_conta(aluno):
+    """Descarta todo link pendente que ainda autorizaria assumir ou redirecionar a conta.
+
+    Quem acabou de provar ser o dono da senha não deve continuar alcançável por um link
+    de recuperação, de convite ou de troca de e-mail pedido antes - inclusive um pedido
+    por quem tinha o acesso indevido que motivou a troca.
+    """
+    aluno.token_recuperacao_hash = None
+    aluno.token_recuperacao_expira = None
+    aluno.token_convite_hash = None
+    aluno.token_convite_expira = None
+    aluno.email_pendente = None
+    aluno.token_email_hash = None
+    aluno.token_email_expira = None
+
+
 def _aluno_da_sessao():
-    if session.get('tipo_usuario') != 'aluno' or not session.get('aluno_id'):
-        return None
-    return db.session.get(Aluno, session['aluno_id'])
+    """Aluno da sessão revalidado no banco a cada requisição (ver servicos/autorizacao.py)."""
+    return aluno_autorizado()
 
 
 @auth_bp.route("/perfil/dados", methods=["POST"])
@@ -419,6 +459,9 @@ def atualizar_dados_perfil():
 
 
 @auth_bp.route("/perfil/senha", methods=["POST"])
+# Cada tentativa custa DOIS hashes de senha (conferir a atual e gravar a nova).
+# Por CONTA, não por IP: a academia inteira sai pelo mesmo Wi-Fi.
+@limiter.limit('15 per hour', key_func=_chave_da_conta)
 def alterar_senha_perfil():
     aluno = _aluno_da_sessao()
     if not aluno:
@@ -437,12 +480,18 @@ def alterar_senha_perfil():
         flash(erro_senha, 'erro')
         return redirect('/perfil')
 
-    if not hmac.compare_digest(nova_senha, confirmar_senha):
+    # Compara sobre bytes: uma senha com acento fazia `compare_digest` levantar
+    # TypeError (erro 500) em vez de trocar a senha.
+    if erro_confirmacao_senha(nova_senha, confirmar_senha):
         flash('A confirmação não coincide com a nova senha.', 'erro')
         return redirect('/perfil')
 
     aluno.set_senha(nova_senha)
+    # Trocar a senha derruba as outras sessões abertas com a credencial antiga; a
+    # sessão que fez a troca é recarimbada logo abaixo e continua valendo.
+    _revogar_tokens_de_conta(aluno)
     db.session.commit()
+    registrar_credencial(aluno.senha_hash)
 
     enviar_email(
         aluno.email, aluno.nome, 'Sua senha foi alterada — Extreme Team', 'Senha alterada com sucesso',
@@ -458,6 +507,9 @@ def alterar_senha_perfil():
 
 
 @auth_bp.route("/perfil/email", methods=["POST"])
+# Confere a senha (hash) e dispara dois e-mails por tentativa; sem limite, a rota é um
+# gerador de mensagens para endereços de terceiros.
+@limiter.limit('10 per hour', key_func=_chave_da_conta)
 def solicitar_troca_email():
     aluno = _aluno_da_sessao()
     if not aluno:
@@ -519,16 +571,19 @@ def solicitar_troca_email():
     return redirect('/perfil')
 
 
-@auth_bp.route("/perfil/confirmar_email/<token>")
-def confirmar_email(token):
+def _aluno_por_token(coluna, token):
+    """Localiza o aluno pelo hash do token, filtrando no banco por uma coluna indexada."""
+    if not token:
+        return None
     token_hash = hashlib.sha256(token.encode()).hexdigest()
-    aluno = next(
-        (
-            a for a in Aluno.query.filter(Aluno.token_email_hash.isnot(None)).all()
-            if hmac.compare_digest(a.token_email_hash, token_hash)
-        ),
-        None,
-    )
+    return Aluno.query.filter(coluna == token_hash).first()
+
+
+@auth_bp.route("/perfil/confirmar_email/<token>")
+# Mesma razão do link de recuperação: sem limite, a rota vira sondagem gratuita de token.
+@limiter.limit('30 per hour')
+def confirmar_email(token):
+    aluno = _aluno_por_token(Aluno.token_email_hash, token)
 
     if not aluno or not aluno.token_email_expira or aluno.token_email_expira < datetime.utcnow() or not aluno.email_pendente:
         flash('Link de confirmação inválido ou expirado. Solicite a troca de e-mail novamente.', 'erro')
@@ -686,15 +741,16 @@ def recuperar_senha():
 
 
 @auth_bp.route("/recuperar_senha/<token>", methods=["GET", "POST"])
+# Validar o token custa uma consulta indexada e, no POST, um hash de senha. Sem limite,
+# a rota é um oráculo barato de sondagem de token e um consumo de CPU de graça.
+@limiter.limit('30 per hour')
+@limiter.limit('10 per hour', methods=['POST'])
 def redefinir_senha(token):
-    token_hash = hashlib.sha256(token.encode()).hexdigest()
-    aluno = next(
-        (
-            a for a in Aluno.query.filter(Aluno.token_recuperacao_hash.isnot(None)).all()
-            if hmac.compare_digest(a.token_recuperacao_hash, token_hash)
-        ),
-        None,
-    )
+    # Consulta direta pelo hash (coluna indexada) em vez de carregar todos os alunos com
+    # token e comparar em Python. O hash tem 256 bits de entropia vinda de
+    # `secrets.token_urlsafe(32)`, então a igualdade exata no banco não abre margem de
+    # adivinhação; a resposta continua idêntica para token inexistente e expirado.
+    aluno = _aluno_por_token(Aluno.token_recuperacao_hash, token)
 
     if not aluno or not aluno.acesso_ativado or not aluno.token_recuperacao_expira or aluno.token_recuperacao_expira <= datetime.utcnow():
         return render_template("recuperar.html", erro="Link inválido ou expirado. Solicite uma nova recuperação de senha.")
@@ -706,8 +762,9 @@ def redefinir_senha(token):
             return render_template("redefinir_senha.html", token=token, erro=erro_senha)
 
         aluno.set_senha(nova_senha)
-        aluno.token_recuperacao_hash = None
-        aluno.token_recuperacao_expira = None
+        # Quem redefine por link não tem sessão aqui: todas as sessões abertas com a
+        # senha antiga deixam de valer, que é o ponto de recuperar uma conta invadida.
+        _revogar_tokens_de_conta(aluno)
         db.session.commit()
 
         enviar_email(
@@ -728,23 +785,25 @@ def redefinir_senha(token):
 # ---------------------------------------------------------------------------
 
 def _professor_pode_ver_aluno(aluno_id):
-    professor_id = session.get('professor_id')
-    if not professor_id:
+    # O professor também é revalidado: um cadastro removido não serve mais foto nenhuma.
+    professor = professor_autorizado()
+    if professor is None:
         return False
     return (
         db.session.query(Matricula.id)
         .join(Turma, Matricula.turma_id == Turma.id)
-        .filter(Matricula.aluno_id == aluno_id, Turma.professor_id == professor_id)
+        .filter(Matricula.aluno_id == aluno_id, Turma.professor_id == professor.id)
         .first() is not None
     )
 
 
 def _pode_ver_foto(aluno_id):
+    if sessao_administrativa_valida():
+        return True
     tipo = session.get('tipo_usuario')
-    if tipo == 'admin':
-        return True
-    if tipo == 'aluno' and session.get('aluno_id') == aluno_id:
-        return True
+    if tipo == 'aluno':
+        aluno = _aluno_da_sessao()
+        return aluno is not None and aluno.id == aluno_id
     if tipo == 'professor':
         return _professor_pode_ver_aluno(aluno_id)
     return False
@@ -772,6 +831,9 @@ def foto_perfil(aluno_id):
 
 
 @auth_bp.route('/perfil/foto', methods=['POST'])
+# Decodificar e reamostrar uma imagem é o processamento mais caro que um aluno
+# consegue disparar, e o container tem 192 MB.
+@limiter.limit('20 per hour', key_func=_chave_da_conta)
 def enviar_foto_perfil():
     aluno = _aluno_da_sessao()
     if not aluno:
@@ -821,13 +883,20 @@ STATUS_ACEITA_COMPROVANTE_MANUAL = ('pendente', 'atrasado', 'recusado')
 
 
 def _acesso_permitido_pagamento(pagamento):
-    if session.get('tipo_usuario') == 'admin':
+    if sessao_administrativa_valida():
         return True
-    return session.get('tipo_usuario') == 'aluno' and session.get('aluno_id') == pagamento.aluno_id
+    # Revalida a conta no banco: uma sessão de aluno desativado não abre mensalidade.
+    aluno = _aluno_da_sessao()
+    return aluno is not None and aluno.id == pagamento.aluno_id
+
+
+def _sessao_financeira_valida():
+    """Há alguém autorizado a ver mensalidades nesta sessão (admin ou aluno ativo)?"""
+    return sessao_administrativa_valida() or _aluno_da_sessao() is not None
 
 
 def _pagamento_com_acesso_ou_404(pagamento_id):
-    if session.get('tipo_usuario') not in ('admin', 'aluno'):
+    if not _sessao_financeira_valida():
         return None
     pagamento = PagamentoDAO.buscar_por_id(pagamento_id)
     if not pagamento or not _acesso_permitido_pagamento(pagamento):
@@ -837,7 +906,7 @@ def _pagamento_com_acesso_ou_404(pagamento_id):
 
 @auth_bp.route('/perfil/pagamento/<int:pagamento_id>')
 def pagina_pagamento(pagamento_id):
-    if session.get('tipo_usuario') not in ('admin', 'aluno'):
+    if not _sessao_financeira_valida():
         return redirect('/login')
 
     pagamento = _pagamento_com_acesso_ou_404(pagamento_id)
@@ -861,7 +930,7 @@ def pagina_pagamento(pagamento_id):
 
 @auth_bp.route('/perfil/mensalidade/<int:pagamento_id>/comprovante')
 def comprovante_mensalidade(pagamento_id):
-    if session.get('tipo_usuario') not in ('admin', 'aluno'):
+    if not _sessao_financeira_valida():
         return redirect('/login')
 
     pagamento = _pagamento_com_acesso_ou_404(pagamento_id)
@@ -889,6 +958,8 @@ def comprovante_mensalidade(pagamento_id):
 
 
 @auth_bp.route('/perfil/mensalidade/<int:pagamento_id>/comprovante-manual', methods=['POST'])
+# Mesmo custo de upload e validação da foto de perfil.
+@limiter.limit('20 per hour', key_func=_chave_da_conta)
 def enviar_comprovante_manual_aluno(pagamento_id):
     aluno = _aluno_da_sessao()
     if not aluno:
@@ -924,7 +995,7 @@ def enviar_comprovante_manual_aluno(pagamento_id):
 
 @auth_bp.route('/perfil/mensalidade/<int:pagamento_id>/comprovante-manual/arquivo')
 def ver_comprovante_manual(pagamento_id):
-    if session.get('tipo_usuario') not in ('admin', 'aluno'):
+    if not _sessao_financeira_valida():
         return redirect('/login')
 
     pagamento = _pagamento_com_acesso_ou_404(pagamento_id)

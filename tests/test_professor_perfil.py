@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from config import db
 from dao.professorDAO import ProfessorDAO
 from modelos.professor import Professor
+from servicos.autorizacao import impressao_credencial
 
 
 @pytest.fixture
@@ -44,6 +45,7 @@ def test_apenas_admin_edita_perfil(client, professor, tipo):
         with client.session_transaction() as sess:
             sess['tipo_usuario'] = tipo
             sess['professor_id'] = professor.id
+            sess['credencial'] = impressao_credencial(professor.senha_hash)
     for metodo in (client.get, client.post):
         resposta = metodo(f'/admin/professores/{professor.id}/editar', data={'nome_publico': 'Alterado'})
         assert resposta.status_code == 302
@@ -125,9 +127,11 @@ def test_publicar_e_retirar_foto_do_site(client, professor, logar_como_admin, pa
     with client.session_transaction() as sess:
         sess['tipo_usuario'] = 'professor'
         sess['professor_id'] = professor.id
+        sess['credencial'] = impressao_credencial(professor.senha_hash)
     assert client.get(foto_url).status_code == 200  # próprio professor
     with client.session_transaction() as sess:
         sess['professor_id'] = professor.id + 1
+        sess['credencial'] = impressao_credencial(professor.senha_hash)
     assert client.get(foto_url).status_code == 404  # outro professor
     logar_como_admin()
     client.post(url, data={'perfil_publico': 'on'})
