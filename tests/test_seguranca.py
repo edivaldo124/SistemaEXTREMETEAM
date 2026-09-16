@@ -141,7 +141,7 @@ def test_limite_de_login_por_ip_e_identificador(client, monkeypatch):
     monkeypatch.setattr(usuario_bp.ProfessorDAO, 'autenticar', lambda *_args: None)
     monkeypatch.setattr(usuario_bp.AlunoDAO, 'autenticar', lambda *_args: None)
     monkeypatch.delenv('ADMIN_USER', raising=False)
-    monkeypatch.delenv('ADMIN_PASSWORD', raising=False)
+    monkeypatch.delenv('ADMIN_PASSWORD_HASH', raising=False)
 
     respostas = [
         client.post('/login', data={'loginusuario': 'alvo', 'senhausuario': 'errada'})

@@ -301,8 +301,8 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1789121130.1626325,
-    "ast_hash": "",
+    "seen": 1789228233.254841,
+    "ast_hash": "415656dfbf722b4ee0b494c18bfc8682",
     "semantic_hash": ""
   },
   "app.py": {
@@ -583,8 +583,8 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1789121130.1626186,
-    "ast_hash": "",
+    "seen": 1789228233.254835,
+    "ast_hash": "324d1aabfdaabef57d9ffa0805a7c9c6",
     "semantic_hash": ""
   },
   "servicos/senhas.py": {
@@ -873,12 +873,6 @@
     "mtime": 1789225785.25893,
     "seen": 1789226156.2275248,
     "ast_hash": "97d3408aa7c5e0fbb6cd4a90313f54a5",
-    "semantic_hash": ""
-  },
-  "REVISAO_CODEX_PARA_CLAUDE.md": {
-    "mtime": 1789226550.4363747,
-    "seen": 1789226697.136102,
-    "ast_hash": "f8dd8f0520f7f48d7e426fbc622c181a",
     "semantic_hash": ""
   }
 }

@@ -1,6 +1,7 @@
 import os
 import tempfile
 from datetime import date, timedelta
+from werkzeug.security import generate_password_hash
 
 # Precisa rodar ANTES de qualquer "import servidor": servidor.py chama load_dotenv()
 # (que nao sobrescreve env vars ja definidas) e db.create_all() no import do modulo,
@@ -13,6 +14,9 @@ os.environ['MERCADO_PAGO_ACCESS_TOKEN'] = 'token-fake-de-teste'
 os.environ['MERCADO_PAGO_WEBHOOK_SECRET'] = 'segredo-fake-de-teste'
 os.environ['APP_BASE_URL'] = 'https://academia.example.test'
 os.environ['TRUSTED_HOSTS'] = 'localhost,academia.example.test'
+# APP_BASE_URL é https, então servidor.py recusa COOKIE_SECURE=false aqui - o padrão
+# (true) é o que a suíte precisa mesmo, para exercitar o mesmo caminho de produção.
+os.environ['COOKIE_SECURE'] = 'true'
 os.environ['TRUST_PROXY_COUNT'] = '0'
 os.environ['RATELIMIT_STORAGE_URI'] = 'memory://'
 # Sem isto, `servicos.armazenamento` cai no padrão 'uploads' e a suíte grava fotos e
@@ -21,7 +25,7 @@ os.environ['RATELIMIT_STORAGE_URI'] = 'memory://'
 os.environ['UPLOAD_DIR'] = os.path.join(_DIR_TESTE, 'uploads')
 # Credencial administrativa descartável: servidor.py agora recusa subir sem nenhuma.
 os.environ.setdefault('ADMIN_USER', 'admin-teste')
-os.environ.setdefault('ADMIN_PASSWORD', 'senha-de-teste-nao-usar-em-producao')
+os.environ.setdefault('ADMIN_PASSWORD_HASH', generate_password_hash('senha-de-teste-nao-usar-em-producao'))
 # A suíte não roda migrations: o schema do SQLite descartável sai direto dos modelos.
 os.environ['CRIAR_SCHEMA_NA_IMPORTACAO'] = 'true'
 # A fila de e-mail é drenada pelo próprio teste, nunca por uma thread de fundo.

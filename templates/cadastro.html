@@ -169,6 +169,20 @@
                             </div>
                         </div>
                     </fieldset>
+                    <section class="termos-aceite" aria-labelledby="termos-aceite-titulo">
+                        <div>
+                            <p class="eyebrow">Antes de concluir</p>
+                            <h3 id="termos-aceite-titulo">Treine com responsabilidade</h3>
+                        </div>
+                        <label class="opcao-inline" for="aceite_termos_responsabilidade">
+                            <input id="aceite_termos_responsabilidade"
+                                   type="checkbox"
+                                   name="aceite_termos_responsabilidade"
+                                   value="aceito"
+                                   required>
+                            <span>Li e aceito o <a href="{{ url_for('auth.pagina_termos_responsabilidade') }}" target="_blank" rel="noopener">Termo de Responsabilidade</a>, incluindo o compromisso de informar condições de saúde relevantes e seguir as orientações da equipe.</span>
+                        </label>
+                    </section>
                     <button class="button-primary" type="submit">Criar minha conta</button>
                 </form>
             </section>

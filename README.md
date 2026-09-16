@@ -13,7 +13,7 @@ pip install -r requirements-dev.txt   # inclui requirements.txt + pytest
 cp .env.example .env
 ```
 
-Edite o `.env` e preencha pelo menos: `DATABASE_URL`, `SECRET_KEY`, `ADMIN_USER`, `ADMIN_PASSWORD`. O arquivo `.env` nunca deve ser commitado (já está no `.gitignore`).
+Edite o `.env` e preencha pelo menos: `DATABASE_URL`, `SECRET_KEY`, `ADMIN_USER`, `ADMIN_PASSWORD_HASH`. O arquivo `.env` nunca deve ser commitado (já está no `.gitignore`).
 
 ## Banco de dados e migrations
 
@@ -124,19 +124,20 @@ A regressão de concorrência do Pix exige PostgreSQL, pois SQLite não aplica `
 ## Configuração de segurança
 
 - `APP_BASE_URL` define a origem usada em links de recuperação, confirmação de e-mail e retornos de pagamento. Ela não é derivada do cabeçalho `Host`.
-- `TRUSTED_HOSTS` contém os hosts aceitos, separados por vírgula. Em produção, informe o domínio público real.
+- `TRUSTED_HOSTS` é obrigatório e contém os hosts aceitos, separados por vírgula. Use `localhost,127.0.0.1` no desenvolvimento local ou o domínio público real em produção.
 - `TRUST_PROXY_COUNT` informa quantos proxies confiáveis existem à frente do Flask. O `compose.yaml` usa `1` por causa do Caddy; uma execução local direta usa `0`.
 - `RATELIMIT_STORAGE_URI` deve apontar para Redis em produção para compartilhar os limites de autenticação e pagamentos entre processos. O Docker Compose já inclui esse serviço; no Render, configure a URI do serviço Redis usado pela aplicação. `memory://` mantém contadores apenas dentro de cada processo.
 - Pagamentos têm limites por conta, preservados entre sessões: Pix e Checkout compartilham 10 tentativas de abertura por minuto; status, retorno do Checkout e sincronização administrativa compartilham 30 consultas por minuto. Ao atingir o limite, a aplicação responde `429` com `Retry-After: 60` antes de chamar o provedor.
 - Requisições acima de 10 MB são recusadas pelo Flask e pelo Caddy. PDFs enviados como comprovante são entregues como download.
-- `COOKIE_SECURE=true` é obrigatório em produção: com `false` o cookie de sessão viaja em HTTP simples. O padrão do código é `false` justamente para a execução local sem o Caddy; o `compose.yaml` já define `true`.
+- `COOKIE_SECURE` tem padrão `true`. Use `false` somente no desenvolvimento local sem HTTPS; a aplicação recusa iniciar com `false` quando `APP_BASE_URL` usa `https`.
+- A aplicação envia `Strict-Transport-Security: max-age=31536000` quando `APP_BASE_URL` usa HTTPS em um domínio público. O cabeçalho não é enviado para `localhost` nem loopback.
 - Envio de imagem tem limite de **pixels**, não só de bytes. Um PNG de 285 KB pode declarar 10000x10000 e custar 1146 MB ao ser decodificado, num container de 192 MB. JPEG aceita até 80 MP (o decodificador entrega em escala reduzida e o custo fica em ~12 MB); PNG e WebP, que não têm esse recurso, aceitam até 8 MP. A recusa acontece lendo o cabeçalho, antes de alocar os pixels.
 - Trocar ou redefinir a senha encerra as outras sessões abertas com a credencial antiga, e descarta os links pendentes de recuperação, convite e troca de e-mail. Quem fez a troca continua conectado.
 - Desativar ou reprovar um aluno passa a valer na requisição seguinte, não só no próximo login. O mesmo vale para um professor removido.
 
 ### Credencial do administrador
 
-A senha do administrador sai do ambiente, não do banco. Prefira guardá-la como **hash**:
+A senha do administrador sai do ambiente, não do banco, e é guardada exclusivamente como **hash**:
 a senha em texto puro fica visível em `docker inspect`, nos logs do orquestrador e no
 histórico do shell de quem editou o arquivo.
 
@@ -144,13 +145,12 @@ histórico do shell de quem editou o arquivo.
 python -m servicos.credenciais     # pede a senha sem eco e imprime só o hash
 ```
 
-Coloque o valor em `ADMIN_PASSWORD_HASH` e reinicie. `ADMIN_PASSWORD_HASH` tem
-precedência sobre `ADMIN_PASSWORD`, então dá para publicar o hash primeiro, confirmar
-que o login funciona e só depois remover a variável antiga — sem nenhuma janela em que
-o administrador fique trancado do lado de fora. `ADMIN_PASSWORD` continua aceito, com
-um aviso no log a cada uso.
+No `.env` usado pelo Docker Compose, coloque o hash entre aspas simples, por exemplo
+`ADMIN_PASSWORD_HASH='…'`, para preservar os caracteres `$`. Em painéis como o Render,
+informe o valor sem aspas. A aplicação não aceita
+`ADMIN_PASSWORD` em texto puro.
 
-A aplicação recusa subir se nenhuma das duas estiver definida.
+A aplicação recusa subir sem `ADMIN_USER` e `ADMIN_PASSWORD_HASH`.
 
 ### Publicar com um domínio próprio
 
@@ -174,7 +174,7 @@ E acerte, no `.env`, as variáveis que dependem do domínio:
 
 | Variável | Valor em produção |
 | --- | --- |
-| `TRUSTED_HOSTS` | o domínio real. Vazio desliga a verificação e um `Host` forjado passa a ser aceito |
+| `TRUSTED_HOSTS` | obrigatório: o domínio real |
 | `APP_BASE_URL` | `https://` + o mesmo domínio |
 | `COOKIE_SECURE` | `true` |
 | `TRUST_PROXY_COUNT` | `1` com o Caddy do `compose.yaml`. Alto demais faz a aplicação confiar num `X-Forwarded-For` escrito pelo cliente, e o limite por IP vira algo contornável trocando o cabeçalho |

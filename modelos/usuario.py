@@ -13,6 +13,11 @@ class Aluno(db.Model):
     mensalidade = db.Column(db.String(50), default='pendente', nullable=False)
     descricao = db.Column(db.String(255), nullable=True)
 
+    # Aceite explícito do termo vigente no momento do cadastro público. A versão
+    # preserva qual texto foi aceito mesmo quando o termo for atualizado depois.
+    termos_responsabilidade_versao = db.Column(db.String(20), nullable=True)
+    termos_responsabilidade_aceito_em = db.Column(db.DateTime, nullable=True)
+
     # RF: o cadastro do aluno na academia existe sem conta de acesso. `login`, `email` e
     # `senha_hash` descrevem SÓ a conta - um aluno matriculado pela administração nasce
     # com os três em NULL e mesmo assim tem plano, mensalidades e histórico próprios.
@@ -61,7 +66,8 @@ class Aluno(db.Model):
     # Construtor da classe
     def __init__(self, nome, datanascimento, cpf, login=None, email=None, telefone=None, senha=None,
                  descricao=None, mensalidade='pendente', plano_id=None, data_vencimento=None,
-                 status_cadastro='pendente', ativo=True, graduacao=None):
+                 status_cadastro='pendente', ativo=True, graduacao=None,
+                 termos_responsabilidade_versao=None, termos_responsabilidade_aceito_em=None):
         self.nome = nome
         self.login = login or None
         self.datanascimento = datanascimento
@@ -71,6 +77,8 @@ class Aluno(db.Model):
         if senha:
             self.set_senha(senha)
         self.descricao = descricao
+        self.termos_responsabilidade_versao = termos_responsabilidade_versao
+        self.termos_responsabilidade_aceito_em = termos_responsabilidade_aceito_em
         self.mensalidade = mensalidade
         self.plano_id = plano_id
         self.data_vencimento = data_vencimento

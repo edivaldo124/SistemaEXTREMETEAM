@@ -74,6 +74,7 @@ auth_bp = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
 
 MSG_ERRO = 'Erro: Credenciais incorretas!'
+VERSAO_TERMOS_RESPONSABILIDADE = '2026-09'
 
 
 def _chave_ip_e_identificador(nome_campo):
@@ -198,6 +199,7 @@ def pagina_cadastro():
         email = (request.form.get("emailusuario") or "").strip().lower()
         telefone = formatar_telefone(request.form.get("telefoneusuario"))
         descricao = (request.form.get("descricaousuario") or "").strip()
+        aceitou_termos = request.form.get('aceite_termos_responsabilidade') == 'aceito'
 
         if not all([nome, login, datanascimento, cpf, senha.strip(), email, telefone]):
             return render_template("cadastro.html", erro="Erro: Preencha todos os campos obrigatórios!")
@@ -218,6 +220,14 @@ def pagina_cadastro():
         if erro_confirmacao:
             return render_template("cadastro.html", erro=f"Erro: {erro_confirmacao}")
 
+        # `required` no HTML é apenas uma conveniência. A confirmação também é
+        # validada aqui para impedir cadastros enviados diretamente à rota.
+        if not aceitou_termos:
+            return render_template(
+                "cadastro.html",
+                erro='Erro: Leia e aceite o Termo de Responsabilidade para continuar.',
+            )
+
         ja_cadastrado = Aluno.query.filter(Aluno.cpf.in_(variantes_cpf(cpf))).first()
         if ja_cadastrado:
             _convidar_cadastro_existente(ja_cadastrado)
@@ -229,7 +239,12 @@ def pagina_cadastro():
         if Aluno.query.filter_by(email=email).first():
             return render_template("cadastro.html", erro="Erro: Este e-mail já está cadastrado!")
 
-        novo_aluno = Aluno(nome=nome, login=login, datanascimento=datanascimento, cpf=cpf, email=email, telefone=telefone, senha=senha, descricao=descricao)
+        novo_aluno = Aluno(
+            nome=nome, login=login, datanascimento=datanascimento, cpf=cpf,
+            email=email, telefone=telefone, senha=senha, descricao=descricao,
+            termos_responsabilidade_versao=VERSAO_TERMOS_RESPONSABILIDADE,
+            termos_responsabilidade_aceito_em=datetime.now(timezone.utc),
+        )
 
         try:
             AlunoDAO.salvar(novo_aluno)
@@ -268,6 +283,14 @@ def pagina_cadastro():
         return render_template('login.html', msg='Cadastro enviado! Assim que for aprovado pela administração você poderá entrar.')
 
     return render_template("cadastro.html")
+
+
+@auth_bp.route('/termos-de-responsabilidade')
+def pagina_termos_responsabilidade():
+    return render_template(
+        'termos_responsabilidade.html',
+        versao_termos=VERSAO_TERMOS_RESPONSABILIDADE,
+    )
 
 
 # Cada código devolvido por PagamentoDAO.contratar_plano vira uma frase para o aluno.

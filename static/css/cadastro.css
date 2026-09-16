@@ -73,6 +73,35 @@
 .register-panel .button-primary { width:100%; min-height:54px; }
 .account-header > a:last-child { min-height:44px; }
 
+/* Aceite não é mais um campo do cadastro: ganha área própria para que a pessoa
+   encontre o documento e entenda o compromisso antes de enviar os dados. */
+.termos-aceite {
+  display:grid; gap:var(--sp-4); margin:0 0 var(--sp-6); padding:var(--sp-5);
+  border:1px solid var(--line-strong); border-left:4px solid var(--gold);
+  border-radius:var(--radius); background:var(--surface-2);
+}
+.termos-aceite .eyebrow { margin-bottom:var(--sp-1); }
+.termos-aceite h3 {
+  margin:0; font:700 var(--fs-lg)/1.1 var(--display);
+  letter-spacing:.01em; text-transform:uppercase;
+}
+.termos-aceite .opcao-inline { font-size:var(--fs-sm); }
+.termos-aceite a { color:var(--text); font-weight:700; text-decoration-thickness:2px; text-underline-offset:2px; }
+.termos-aceite a:hover { color:var(--forest); }
+.termos-aceite a:focus-visible { outline:2px solid var(--focus-ink); outline-offset:3px; }
+
+/* Documento público: leitura contínua, com divisões discretas em vez de uma
+   sequência de cartões que faria o termo parecer uma lista de promoções. */
+.termos-documento { max-width:900px; }
+.termos-documento > section { padding:var(--sp-5) 0; border-top:1px solid var(--line); }
+.termos-documento > section:first-of-type { margin-top:var(--sp-7); }
+.termos-documento h2 {
+  margin:0; font:700 var(--fs-lg)/1.15 var(--display);
+  letter-spacing:.01em; text-transform:uppercase;
+}
+.termos-documento section p { margin:var(--sp-2) 0 0; color:var(--text-2); font-size:var(--fs-sm); line-height:1.7; }
+.termos-nota { margin:var(--sp-3) 0 0; padding:var(--sp-4); border-radius:var(--radius-sm); color:var(--green-ink); background:var(--green-bg); font-size:var(--fs-sm); font-weight:600; }
+
 @media (max-width:900px) {
   .register-shell { grid-template-columns:1fr; gap:var(--sp-4); margin-top:var(--sp-4); }
   /* Empilhado, o painel de marca é só a chamada: as três etapas repetem o que

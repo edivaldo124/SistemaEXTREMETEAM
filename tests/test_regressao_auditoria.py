@@ -198,8 +198,10 @@ SENHA_ACENTUADA = 'Ação-Sênior-2026'
 
 
 def test_login_do_admin_com_senha_acentuada_nao_quebra(client, monkeypatch):
+    from werkzeug.security import generate_password_hash
+
     monkeypatch.setenv('ADMIN_USER', 'admin-teste')
-    monkeypatch.setenv('ADMIN_PASSWORD', SENHA_ACENTUADA)
+    monkeypatch.setenv('ADMIN_PASSWORD_HASH', generate_password_hash(SENHA_ACENTUADA))
 
     resposta = client.post('/login', data={
         'loginusuario': 'admin-teste', 'senhausuario': SENHA_ACENTUADA,
@@ -209,8 +211,10 @@ def test_login_do_admin_com_senha_acentuada_nao_quebra(client, monkeypatch):
 
 
 def test_login_do_admin_com_senha_acentuada_errada_nao_entra(client, monkeypatch):
+    from werkzeug.security import generate_password_hash
+
     monkeypatch.setenv('ADMIN_USER', 'admin-teste')
-    monkeypatch.setenv('ADMIN_PASSWORD', SENHA_ACENTUADA)
+    monkeypatch.setenv('ADMIN_PASSWORD_HASH', generate_password_hash(SENHA_ACENTUADA))
 
     resposta = client.post('/login', data={
         'loginusuario': 'admin-teste', 'senhausuario': 'Ação-Sênior-2027',
@@ -251,7 +255,7 @@ def test_confirmacao_acentuada_divergente_ainda_e_recusada(
 
 
 # ---------------------------------------------------------------------------
-# P1.4 - Credencial administrativa por hash, com transição
+# P1.4 - Credencial administrativa exclusivamente por hash
 # ---------------------------------------------------------------------------
 
 def test_admin_entra_pelo_hash_quando_ele_esta_configurado(client, monkeypatch):
@@ -268,22 +272,15 @@ def test_admin_entra_pelo_hash_quando_ele_esta_configurado(client, monkeypatch):
     assert '/admin' in resposta.headers['Location']
 
 
-def test_hash_do_admin_tem_precedencia_sobre_a_senha_em_texto_puro(client, monkeypatch):
-    from werkzeug.security import generate_password_hash
-
+def test_admin_em_texto_puro_nao_e_uma_credencial_valida(client, monkeypatch):
     monkeypatch.setenv('ADMIN_USER', 'admin-teste')
-    monkeypatch.setenv('ADMIN_PASSWORD', 'senha-antiga-em-texto-puro')
-    monkeypatch.setenv('ADMIN_PASSWORD_HASH', generate_password_hash('senha-nova-do-hash'))
+    monkeypatch.delenv('ADMIN_PASSWORD_HASH', raising=False)
+    monkeypatch.setenv('ADMIN_PASSWORD', 'senha-em-texto-puro')
 
-    recusado = client.post('/login', data={
-        'loginusuario': 'admin-teste', 'senhausuario': 'senha-antiga-em-texto-puro',
+    resposta = client.post('/login', data={
+        'loginusuario': 'admin-teste', 'senhausuario': 'senha-em-texto-puro',
     })
-    assert recusado.status_code == 200
-
-    aceito = client.post('/login', data={
-        'loginusuario': 'admin-teste', 'senhausuario': 'senha-nova-do-hash',
-    })
-    assert aceito.status_code == 302
+    assert resposta.status_code == 200
 
 
 # ---------------------------------------------------------------------------

@@ -350,7 +350,7 @@ def test_cadastro_publico_com_cpf_de_cadastro_administrativo_nao_duplica(
         'dataNascimento': '1948-03-12', 'cpfusuario': '529.982.247-25',
         'emailusuario': 'outro-endereco@example.com', 'telefoneusuario': '11999999999',
         'senhausuario': 'TreinoForte2026', 'confirmarsenhausuario': 'TreinoForte2026',
-        'descricaousuario': '',
+        'descricaousuario': '', 'aceite_termos_responsabilidade': 'aceito',
     })
 
     corpo = resposta.get_data(as_text=True)
@@ -391,7 +391,7 @@ def test_cadastro_publico_sem_conflito_continua_criando_a_conta(client, capturar
         'dataNascimento': '1990-05-02', 'cpfusuario': '529.982.247-25',
         'emailusuario': 'bruno@example.com', 'telefoneusuario': '11999999999',
         'senhausuario': 'TreinoForte2026', 'confirmarsenhausuario': 'TreinoForte2026',
-        'descricaousuario': '',
+        'descricaousuario': '', 'aceite_termos_responsabilidade': 'aceito',
     })
 
     assert resposta.status_code == 200

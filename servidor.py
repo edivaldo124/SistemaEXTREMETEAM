@@ -2,11 +2,13 @@ from flask import *
 from config import csrf, db, limiter, migrate
 import os
 import secrets
+import ipaddress
 from datetime import timedelta
 from dotenv import load_dotenv
 from flask_wtf.csrf import CSRFError
 from werkzeug.exceptions import TooManyRequests
 from werkzeug.middleware.proxy_fix import ProxyFix
+from urllib.parse import urlsplit
 
 load_dotenv()
 
@@ -26,11 +28,39 @@ app.secret_key = os.environ.get('SECRET_KEY')
 if not app.secret_key:
     raise RuntimeError('A variavel de ambiente SECRET_KEY e obrigatoria.')
 
+valor_cookie_secure = (os.environ.get('COOKIE_SECURE') or '').strip().lower()
+if not valor_cookie_secure:
+    cookie_secure = True
+elif valor_cookie_secure == 'true':
+    cookie_secure = True
+elif valor_cookie_secure == 'false':
+    cookie_secure = False
+else:
+    raise RuntimeError('COOKIE_SECURE deve ser true ou false.')
+
+app_base_url = (os.environ.get('APP_BASE_URL') or '').strip()
+url_base_publica = urlsplit(app_base_url)
+if not cookie_secure and url_base_publica.scheme.lower() == 'https':
+    raise RuntimeError('COOKIE_SECURE=false não é permitido quando APP_BASE_URL usa HTTPS.')
+
+hostname_base_publica = url_base_publica.hostname
+try:
+    base_publica_em_loopback = bool(hostname_base_publica) and ipaddress.ip_address(
+        hostname_base_publica
+    ).is_loopback
+except ValueError:
+    base_publica_em_loopback = False
+enviar_hsts = (
+    url_base_publica.scheme.lower() == 'https'
+    and hostname_base_publica not in (None, 'localhost')
+    and not base_publica_em_loopback
+)
+
 app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
-    SESSION_COOKIE_SECURE=os.environ.get('COOKIE_SECURE', 'false').lower() == 'true',
+    SESSION_COOKIE_SECURE=cookie_secure,
     SESSION_REFRESH_EACH_REQUEST=True,
     MAX_CONTENT_LENGTH=10 * 1024 * 1024,
     MAX_FORM_MEMORY_SIZE=512 * 1024,
@@ -41,8 +71,12 @@ app.config.update(
 hosts_confiaveis = [
     host.strip() for host in (os.environ.get('TRUSTED_HOSTS') or '').split(',') if host.strip()
 ]
-if hosts_confiaveis:
-    app.config['TRUSTED_HOSTS'] = hosts_confiaveis
+if not hosts_confiaveis:
+    raise RuntimeError(
+        'TRUSTED_HOSTS é obrigatória. Use localhost,127.0.0.1 em desenvolvimento ou '
+        'o domínio real em produção.'
+    )
+app.config['TRUSTED_HOSTS'] = hosts_confiaveis
 
 try:
     quantidade_proxies = int(os.environ.get('TRUST_PROXY_COUNT', '0'))
@@ -58,14 +92,12 @@ if quantidade_proxies:
         x_host=quantidade_proxies,
     )
 
-# O compose não pode mais exigir uma variável específica (são duas formas de informar a
-# mesma credencial), então a conferência acontece aqui: subir sem nenhuma delas deixaria
-# a academia sem acesso administrativo, e é melhor falhar no arranque do que descobrir
-# isso na tela de login.
+# Sem a credencial administrativa baseada em hash, a academia fica sem acesso; falhar
+# no arranque é mais seguro do que descobrir isso na tela de login.
 if not credenciais.admin_configurado():
     raise RuntimeError(
-        'Defina ADMIN_USER e ADMIN_PASSWORD_HASH (recomendado, gere com '
-        '"python -m servicos.credenciais") ou ADMIN_PASSWORD.'
+        'Defina ADMIN_USER e ADMIN_PASSWORD_HASH (gere com '
+        '"python -m servicos.credenciais").'
     )
 
 database_url = os.environ.get('DATABASE_URL')
@@ -125,6 +157,8 @@ def adicionar_cabecalhos_de_seguranca(resposta):
         "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
         "base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
     )
+    if enviar_hsts:
+        resposta.headers.setdefault('Strict-Transport-Security', 'max-age=31536000')
     return resposta
 
 
