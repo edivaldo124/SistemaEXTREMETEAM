@@ -73,9 +73,11 @@ def aprovar_aluno(aluno_id):
     aluno = AlunoDAO.definir_status_cadastro(aluno_id, 'aprovado')
     if aluno:
         flash('Cadastro aprovado.', 'sucesso')
-        enviar_email(
-            aluno.email, aluno.nome, 'Cadastro aprovado — Extreme Team', 'Seu cadastro foi aprovado!',
-            [
+        fila_email.enfileirar_transacional(
+            f'cadastro-aprovado:{aluno.id}',
+            destinatario=aluno.email, nome_destinatario=aluno.nome,
+            assunto='Cadastro aprovado — Extreme Team', titulo='Seu cadastro foi aprovado!',
+            paragrafos=[
                 f'Olá, {aluno.nome.split()[0]}!',
                 'Boas notícias: seu cadastro na Extreme Team foi aprovado pela administração.',
                 'Você já pode entrar com seu usuário e senha para escolher um plano e começar a treinar.',
@@ -94,9 +96,11 @@ def recusar_aluno(aluno_id):
     aluno = AlunoDAO.definir_status_cadastro(aluno_id, 'recusado')
     if aluno:
         flash('Cadastro recusado.', 'sucesso')
-        enviar_email(
-            aluno.email, aluno.nome, 'Sobre seu cadastro — Extreme Team', 'Seu cadastro não foi aprovado',
-            [
+        fila_email.enfileirar_transacional(
+            f'cadastro-recusado:{aluno.id}',
+            destinatario=aluno.email, nome_destinatario=aluno.nome,
+            assunto='Sobre seu cadastro — Extreme Team', titulo='Seu cadastro não foi aprovado',
+            paragrafos=[
                 f'Olá, {aluno.nome.split()[0]}.',
                 'Analisamos seu cadastro na Extreme Team e, no momento, não foi possível aprová-lo.',
                 'Se quiser entender o motivo ou tentar novamente, fale com a nossa administração.',
@@ -664,7 +668,7 @@ def _situacao_do_aluno(aluno, pagamentos=None):
 
 def _situacoes_dos_ativos():
     """Situação de todos os alunos ativos com UMA consulta de mensalidades."""
-    alunos = [a for a in AlunoDAO.listar_todos() if a.esta_ativo]
+    alunos = AlunoDAO.listar_ativos()
     mapa = PagamentoDAO.mapa_por_aluno([a.id for a in alunos])
     return [(aluno, _situacao_do_aluno(aluno, mapa.get(aluno.id, []))) for aluno in alunos]
 
@@ -741,12 +745,14 @@ def enviar_aviso():
             flash('Preencha o assunto e a mensagem do aviso.', 'erro')
             return redirect('/admin/avisos')
 
-        ativos = _situacoes_dos_ativos()
-        if destinatarios == 'inadimplentes':
-            ativos = [(a, s) for a, s in ativos if _esta_inadimplente(a, s)]
         # Cadastro de balcão pode não ter e-mail. Ele não entra na conta de destinatários
         # para o "X de Y" continuar dizendo a verdade sobre quem podia ser avisado.
-        alunos = [aluno for aluno, _ in ativos if aluno.email]
+        if destinatarios == 'inadimplentes':
+            # Só aqui a situação (e portanto o histórico de mensalidades) é necessária.
+            alunos = [aluno for aluno, situacao in _situacoes_dos_ativos()
+                      if aluno.email and _esta_inadimplente(aluno, situacao)]
+        else:
+            alunos = [aluno for aluno in AlunoDAO.listar_ativos() if aluno.email]
 
         paragrafos = [linha.strip() for linha in mensagem.splitlines() if linha.strip()]
         # O envio sai da requisição: enfileirar é uma transação curta, entregar é da

@@ -9,3 +9,9 @@ uploads/
 
 .vercel
 .env*
+
+# Artefatos locais de testes no navegador
+.playwright-mcp/
+
+# Cache gerado pelo Graphify
+graphify-out/cache/

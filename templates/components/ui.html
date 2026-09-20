@@ -1,0 +1,48 @@
+{#
+  Macros de interface compartilhadas. Importe com:
+    {% from "components/ui.html" import badge, metrica, estado_vazio, anel with context %}
+
+  Nenhuma macro decide regra de negócio: recebem o texto e o estado já prontos.
+  As classes (.status, .et-*) vivem em theme.css e componentes.css.
+#}
+
+{# Badge de situação. `estado` vira a classe .status-<estado> (pago, pendente,
+   atrasado, em_analise...); `rotulo` é o texto exibido. Use `prefixo` para as
+   famílias status-plano e status-acesso. #}
+{% macro badge(estado, rotulo, prefixo='status') -%}
+<span class="status {{ prefixo }}-{{ estado }}">{{ rotulo }}</span>
+{%- endmacro %}
+
+{# Card de métrica: rótulo pequeno, valor grande em Bebas Neue, detalhe opcional.
+   `tom`: '' | 'ok' | 'alerta' | 'perigo' — só colore o valor, nunca substitui o texto. #}
+{% macro metrica(rotulo, valor, detalhe='', tom='') -%}
+<article class="et-metrica{{ ' et-metrica--' ~ tom if tom }}">
+    <p class="et-metrica-rotulo">{{ rotulo }}</p>
+    <p class="et-metrica-valor">{{ valor }}</p>
+    {% if detalhe %}<p class="et-metrica-detalhe">{{ detalhe }}</p>{% endif %}
+</article>
+{%- endmacro %}
+
+{# Estado vazio: diz o que não há e, se houver, o que fazer. `acao_href`/`acao_texto`
+   são opcionais e renderizam um botão secundário. #}
+{% macro estado_vazio(titulo, texto='', acao_href='', acao_texto='') -%}
+<div class="et-vazio" role="status">
+    <p class="et-vazio-titulo">{{ titulo }}</p>
+    {% if texto %}<p class="et-vazio-texto">{{ texto }}</p>{% endif %}
+    {% if acao_href and acao_texto %}<a class="button-secondary" href="{{ acao_href }}">{{ acao_texto }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{# Anel de progresso em SVG puro (sem JS, funciona com a CSP). `feito` e `total`
+   são inteiros; total 0 desenha o anel vazio em vez de dividir por zero. #}
+{% macro anel(feito, total, rotulo='') -%}
+{% set pct = ((feito / total) * 100) if total else 0 %}
+<figure class="et-anel" aria-label="{{ rotulo }} {{ feito }} de {{ total }}">
+    <svg viewBox="0 0 36 36" aria-hidden="true">
+        <circle class="et-anel-trilho" cx="18" cy="18" r="15.9155" pathLength="100" />
+        <circle class="et-anel-valor" cx="18" cy="18" r="15.9155" pathLength="100"
+                stroke-dasharray="{{ '%.1f'|format(pct) }} 100" />
+    </svg>
+    <figcaption><strong>{{ feito }}</strong><span>de {{ total }}</span></figcaption>
+</figure>
+{%- endmacro %}

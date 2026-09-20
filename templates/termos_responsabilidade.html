@@ -3,28 +3,25 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#000000">
         <link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
         <title>Termo de Responsabilidade | Extreme Team</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/cadastro.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
-    <body>
+    <body class="auth-page">
         <a class="skip-link" href="#termos">Ir para o termo</a>
         <header class="account-header">
-            <a class="site-brand" href="/">
-                <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="">
+            <a class="site-brand" href="/" aria-label="Extreme Team, início">
+                <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team">
                 <span>Centro de treinamento<br><strong>Extreme Team</strong></span>
             </a>
             <a href="{{ url_for('auth.pagina_cadastro') }}">Voltar ao cadastro</a>
         </header>
-        <main class="register-shell">
-            <aside>
-                <p class="eyebrow">Treino consciente</p>
-                <h1>Clareza antes de <em>começar.</em></h1>
-                <p>Este documento apresenta os compromissos básicos para uma prática segura e respeitosa no centro de treinamento.</p>
-            </aside>
-            <article id="termos" class="register-panel termos-documento" aria-labelledby="termos-titulo">
+        <main class="termos-page-shell">
+            <article id="termos" class="termos-documento" aria-labelledby="termos-titulo">
                 <p class="eyebrow">Versão {{ versao_termos }}</p>
                 <h1 id="termos-titulo" class="page-title">Termo de Responsabilidade</h1>
                 <p class="page-subtitle">Leia com atenção antes de criar sua conta. Em caso de dúvida, fale com a administração.</p>

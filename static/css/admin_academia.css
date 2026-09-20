@@ -2,7 +2,7 @@
 .academia-editor { max-width:1000px; }
 .academia-editor .admin-intro > div { max-width:65ch; }
 
-.academia-editor form {
+.academia-editor .academia-form {
   margin-top:var(--sp-6); padding:clamp(var(--sp-5),3vw,var(--sp-7));
   border:1px solid var(--line); border-radius:var(--radius-lg);
   background:var(--surface); box-shadow:var(--shadow-card);
@@ -17,7 +17,32 @@
 .academia-campos small { display:block; margin-top:var(--sp-2); color:var(--text-2); font-size:var(--fs-xs); line-height:1.5; }
 .academia-acoes { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-4); padding-bottom:var(--sp-6); }
 .academia-acoes span { color:var(--text-2); font-size:var(--fs-sm); }
+.mp-conexao {
+  margin-top:var(--sp-6); padding:clamp(var(--sp-5),3vw,var(--sp-7));
+  border:1px solid var(--line); border-radius:var(--radius-lg);
+  background:var(--surface); box-shadow:var(--shadow-card);
+}
+.mp-cabecalho { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:var(--sp-4); }
+.mp-cabecalho h2 { margin:0; font:700 var(--h3)/1.2 var(--display); text-transform:uppercase; letter-spacing:.01em; }
+.mp-selo {
+  display:inline-flex; align-items:center; padding:var(--sp-1) var(--sp-3);
+  border:1px solid var(--line); border-radius:999px; background:var(--surface-2);
+  color:var(--text-2); font-size:var(--fs-xs); font-weight:700; white-space:nowrap;
+}
+.mp-selo-ok { border-color:var(--green); background:var(--green-bg); color:var(--green-ink); }
+.mp-selo-atencao { border-color:var(--amber); background:var(--amber-bg); color:var(--amber-ink); }
+.mp-selo-info { border-color:var(--blue); background:var(--blue-bg); color:var(--blue-ink); }
+.mp-detalhes { display:flex; flex-wrap:wrap; gap:var(--sp-3) var(--sp-7); margin:var(--sp-5) 0 0; }
+.mp-detalhes div { min-width:0; }
+.mp-detalhes dt { color:var(--text-2); font-size:var(--fs-xs); }
+.mp-detalhes dd { margin:0; font-weight:700; overflow-wrap:anywhere; }
+.mp-texto { margin:var(--sp-5) 0 0; max-width:65ch; color:var(--text-2); line-height:1.6; }
+.mp-nota { margin-top:var(--sp-3); font-size:var(--fs-sm); }
+.mp-acoes { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); margin-top:var(--sp-5); }
+.mp-acoes form { margin:0; }
 @media (max-width:600px) {
   .academia-campos { grid-template-columns:1fr; }
   .academia-acoes .button-primary { width:100%; }
+  .mp-acoes > a, .mp-acoes button { width:100%; text-align:center; }
+  .mp-acoes form { width:100%; }
 }

@@ -9,7 +9,6 @@
               type="image/png"
               href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
         <title>Extreme Team | Centro de Treinamento</title>
-        <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/theme.css') }}">
         <link rel="stylesheet"
@@ -18,18 +17,19 @@
               href="{{ url_for('static', filename='css/contatos.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
+        <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
     </head>
     <body>
         <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
         <header class="home-header">
             <a class="site-brand" href="/" aria-label="Extreme Team, página inicial">
-                <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
-                     alt="">
-                <span>
-                    Centro de treinamento
-                    <br>
-                    <strong>Extreme Team</strong>
-                </span>
+                <img src="{{ url_for('static', filename='imagens/logo-horizontal-400.png') }}"
+                     srcset="{{ url_for('static', filename='imagens/logo-horizontal-400.png') }} 400w, {{ url_for('static', filename='imagens/logo-horizontal-800.png') }} 800w, {{ url_for('static', filename='imagens/logo-horizontal-1200.png') }} 1200w"
+                     sizes="(max-width: 760px) 134px, 196px"
+                     alt="Extreme Team"
+                     class="brand-header-img"
+                     width="196"
+                     height="88">
             </a>
             <nav aria-label="Navegação principal">
                 <div class="home-nav-links">
@@ -38,7 +38,7 @@
                     {% if professores_publicos %}<a href="#equipe">Professores</a>{% endif %}
                     {% if academia and academia.tem_contato %}<a href="#contato">Contato</a>{% endif %}
                 </div>
-                <button type="button" class="nav-login" data-abrir-login>
+                <button type="button" class="nav-login button-secondary" data-abrir-login>
                     <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /></svg>
                     Área do aluno
                 </button>
@@ -47,28 +47,29 @@
         <main id="conteudo">
             <section class="hero">
                 <div class="hero-copy">
-                    <p class="eyebrow entra-1">Centro de treinamento</p>
                     <h1 class="entra-2">
-                        Desperte sua força.
+                        DESPERTE SUA FORÇA.
                         <br>
-                        <em>Vá ao extremo.</em> 
+                        <em>VÁ AO EXTREMO.</em>
                     </h1>
                     <p class="hero-text entra-3">
                         Disciplina, evolução e resultados reais. Aqui você encontra mais que treino: encontra uma equipe.
                     </p>
                     <div class="hero-actions entra-4">
                         <a class="button-primary" href="/cadastrar">Criar minha conta</a>
-                        <button class="text-button" type="button" data-abrir-login>Já sou aluno</button>
+                        <button class="button-secondary hero-student-btn" type="button" data-abrir-login>Já sou aluno</button>
                     </div>
                 </div>
-                <div class="hero-visual entra-3">
-                    <div class="extreme-lockup">
-                        <img src="{{ url_for('static', filename='imagens/logo-header-480.png') }}"
-                             alt="Centro de Treinamento Extreme Team">
-                        <small>Força, disciplina e evolução</small>
-                    </div>
+                <div class="hero-visual entra-3" aria-hidden="true">
+                    <div class="hero-dragon-glow"></div>
+                    {# TODO: trocar por hero-dragao.webp quando o arquivo oficial existir. #}
+                    <img src="{{ url_for('static', filename='imagens/hero-emblema.webp') }}"
+                         alt=""
+                         class="hero-dragon-img"
+                         width="795"
+                         height="859">
                 </div>
-                <ul class="hero-highlights entra-5" aria-label="O que você encontra aqui">
+                <ul class="hero-highlights entra-4" aria-label="O que você encontra aqui">
                     <li>
                         <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3 5 14h6l-1 7 8-11h-6l1-7Z" /></svg>
                         <div>
@@ -94,7 +95,6 @@
             </section>
             <section class="home-section" id="estrutura">
                 <div>
-                    <p class="eyebrow">Um espaço para evoluir</p>
                     <h2 class="page-title">
                         Mais que aparelhos.
                         <br>
@@ -105,11 +105,11 @@
                     Aqui, cada treino tem intenção. Você encontra o ambiente e os planos certos para manter a constância e construir resultados sólidos.
                 </p>
             </section>
-            <section class="method-grid" id="metodo" aria-label="Como funciona">
+            <section class="method-grid" id="metodo" aria-label="Nosso método">
                 <article>
                     <span class="round-badge">01</span>
                     <h3>Crie sua conta</h3>
-                    <p>Preencha seu cadastro e aguarde a liberação da administração.</p>
+                    <p>Preencha seu cadastro e aguarde a liberação da administração para iniciar seus treinos.</p>
                 </article>
                 <article>
                     <span class="round-badge">02</span>
@@ -126,7 +126,6 @@
                 <section class="team-section" id="equipe" aria-labelledby="equipe-titulo">
                     <div class="team-heading">
                         <div>
-                            <p class="eyebrow">Quem treina com você</p>
                             <h2 id="equipe-titulo">Nossa equipe</h2>
                         </div>
                         <p>Conheça os professores, suas modalidades e a experiência que trazem para cada aula.</p>
@@ -178,8 +177,18 @@
             {% with contatos_compactos=true %}
                 {% include 'components/contatos_academia.html' %}
             {% endwith %}
-            <span>© 2026 Centro de Treinamento Extreme Team</span>
-            <a href="/cadastrar">Criar conta</a>
+            <div class="footer-bottom-row">
+                <a class="footer-brand" href="/" aria-label="Extreme Team, início">
+                    <img src="{{ url_for('static', filename='imagens/logo-horizontal-400.png') }}"
+                         srcset="{{ url_for('static', filename='imagens/logo-horizontal-400.png') }} 400w, {{ url_for('static', filename='imagens/logo-horizontal-800.png') }} 800w"
+                         sizes="160px"
+                         alt="Extreme Team"
+                         width="160"
+                         height="72">
+                </a>
+                <span>© 2026 Centro de Treinamento Extreme Team</span>
+                <a href="/cadastrar" class="footer-cta-link">Criar conta</a>
+            </div>
         </footer>
         <div id="meuModal"
              class="modal"
@@ -193,9 +202,16 @@
                         class="fechar-modal"
                         data-fechar-login
                         aria-label="Fechar login">×</button>
-                <p class="eyebrow">Área do aluno</p>
-                <h2 id="modal-title">Acesse sua conta</h2>
-                <p class="modal-intro">Continue sua evolução.</p>
+                <div class="modal-header-brand">
+                    <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
+                         alt=""
+                         width="44"
+                         height="44">
+                    <div>
+                        <h2 id="modal-title">Acesse sua conta</h2>
+                    </div>
+                </div>
+                <p class="modal-intro">Entre com seu usuário e senha para continuar sua evolução.</p>
                 <form action="/login" method="post">
                     {% include "components/csrf_field.html" %}
                     <div class="field">
@@ -204,6 +220,7 @@
                                id="inputnome"
                                name="loginusuario"
                                autocomplete="username"
+                               placeholder="Seu usuário cadastrado"
                                required>
                     </div>
                     <div class="field">
@@ -216,6 +233,7 @@
                                    id="senhausuario"
                                    name="senhausuario"
                                    autocomplete="current-password"
+                                   placeholder="Sua senha"
                                    required>
                             <button type="button"
                                     id="iconeSenha"
@@ -223,6 +241,12 @@
                                     data-alternar-senha
                                     aria-label="Mostrar senha">Ver</button>
                         </div>
+                    </div>
+                    <div class="modal-remember-row">
+                        <label class="checkbox-label" for="modal_lembrar_usuario">
+                            <input type="checkbox" id="modal_lembrar_usuario" name="lembrar_usuario">
+                            <span>Lembrar meu usuário neste aparelho</span>
+                        </label>
                     </div>
                     <button class="button-primary" type="submit">Entrar na minha conta</button>
                 </form>

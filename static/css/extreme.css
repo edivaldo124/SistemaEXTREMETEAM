@@ -24,14 +24,13 @@
   display:flex; align-items:center; gap:var(--sp-4); min-width:0;
 }
 
-.app-header nav a,.admin-header a,.detail-header a,.account-header a,
-.home-header nav a {
+.app-header nav a,.admin-header a,.detail-header a,.account-header a {
   color:var(--text-on-ink-2);
   font-size:var(--fs-sm); font-weight:500; text-decoration:none;
   transition:color .16s ease;
 }
 .app-header nav a:hover,.admin-header a:hover,.detail-header a:hover,
-.account-header a:hover,.home-header nav a:hover { color:var(--yellow); }
+.account-header a:hover { color:var(--yellow); }
 
 /* Item ativo: pastilha amarela. A cor sozinha nunca basta, então o item
    ativo também carrega aria-current. */
@@ -211,98 +210,24 @@ body.admin-shell {
   .admin-nav-scroll { scroll-behavior:auto; }
 }
 
-/* ---------------------------------------------------- home: cabeçalho --- */
-
-/* Barra flutuante alinhada com o cartão do hero: o vidro só aparece aqui,
-   onde ajuda a separar a navegação da arte que passa por baixo. */
-.home-header {
-  position:absolute; z-index:10; left:50%;
-  top:calc(clamp(var(--sp-4),3vw,var(--sp-7)) + var(--sp-4));
-  display:flex; align-items:center; justify-content:space-between; gap:var(--sp-6);
-  width:calc(100% - 2 * clamp(var(--sp-4),3vw,var(--sp-7)) - 2 * var(--sp-4));
-  max-width:1280px;
-  padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-5);
-  border:1px solid rgba(255,255,255,.16); border-radius:var(--radius-pill);
-  color:var(--text-on-ink); background:rgba(8,8,8,.62);
-  backdrop-filter:blur(14px);
-  transform:translateX(-50%);
-}
-.home-header .site-brand strong { font-size:19px; }
-
-/* Da faixa de tablet para baixo a barra fica só com a marca e a ação: o nome
-   escrito ao lado do ícone quebrava em três linhas e engolia a altura. */
-@media (max-width:900px) {
-  .home-header .site-brand span { display:none; }
-}
-@media (max-width:760px) {
-  .home-header {
-    top:var(--sp-3);
-    width:calc(100% - 2 * var(--sp-3));
-    border-radius:var(--radius-card);
-  }
-}
-
-/* ---------------------------------------------------- home: hero -------- */
-/* Aqui a escala grande faz sentido: é a primeira impressão da academia. */
-
-.hero { background:var(--ink); }
-.hero h1 { color:var(--text-on-ink); }
-.hero h1 em { color:var(--yellow); font-style:normal; }
-.hero-text { color:var(--text-on-ink-2); }
-.hero-actions .button-primary { box-shadow:none; }
-
-/* Mesmo preto dos dois lados: o fundo da arte da marca é preto, e um painel
-   mais claro atrás dela desenhava um retângulo visível em volta do logo. */
-.hero-visual {
-  position:relative; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:var(--sp-6);
-  padding:var(--sp-9) var(--sp-7);
-  background:var(--ink); overflow:hidden;
-}
-.hero-visual::before {
-  content:""; position:absolute; inset:auto -20% -30% -20%; height:70%;
-  background:radial-gradient(ellipse at 50% 100%,rgba(214,162,16,.30),transparent 70%);
-  pointer-events:none;
-}
-
-.extreme-lockup {
-  position:relative; z-index:1;
-  display:flex; flex-direction:column; align-items:center; gap:var(--sp-4);
-  text-align:center;
-}
-.extreme-lockup img { width:min(92%,460px); }
-.extreme-lockup small {
-  color:var(--text-on-ink-2); font:600 var(--fs-micro) var(--body);
-  letter-spacing:.2em; text-transform:uppercase;
-}
+/* A landing (cabeçalho, hero, rodapé, modal de login) é estilizada só em index.css.
+   Aqui ficavam um cabeçalho flutuante `position:absolute`, um .hero-visual e um
+   .extreme-lockup que venciam o index.css por carregarem depois. */
 
 .section-copy { border-left-color:var(--yellow); }
-.home-footer { background:var(--ink); }
 
 /* ------------------------------------- login, cadastro e recuperação ---- */
 
-.brand-panel,.recovery-brand,.register-shell aside {
-  color:var(--text-on-ink); background:var(--ink);
-}
-.brand-panel::before,.brand-panel::after,
-.recovery-brand::after,.register-shell aside::after { content:none; }
+/* O visual de login, cadastro e recuperação vive só em auth.css (classes .auth-*).
+   Aqui ficava um bloco para .brand-panel, .form-panel, .signup e .label-row que
+   pintava links de escuro sobre o cartão escuro e vencia o auth.css por ordem de
+   carregamento. Só sobrou o que o modal de login da landing ainda usa. */
 
-.brand strong,.brand-copy .eyebrow,
-.recovery-brand .eyebrow,.register-shell aside .eyebrow { color:var(--yellow); }
-.brand-copy .eyebrow::before,.recovery-brand .eyebrow::before,
-.register-shell aside .eyebrow::before { background:var(--yellow); }
-.brand-copy h1 em,.register-shell aside h1 em { color:var(--yellow); font-style:normal; text-decoration:none; }
-.brand-copy > p:last-child,.register-shell aside > p:not(.eyebrow) { color:var(--text-on-ink-2); }
-.register-shell li { border-top-color:var(--ink-3); color:var(--text-on-ink); }
-.register-shell li span { color:var(--yellow); }
-
-.label-row a,.back-link,.signup a,.modal-signup a {
+.modal-signup a {
   color:var(--text); text-decoration:underline;
   text-decoration-color:var(--gold); text-decoration-thickness:2px; text-underline-offset:3px;
 }
-.label-row a:hover,.back-link:hover,.signup a:hover,.modal-signup a:hover { text-decoration-color:var(--text); }
-
-.submit-button,.form-panel .button-primary { box-shadow:none; }
+.modal-signup a:hover { text-decoration-color:var(--text); }
 
 /* -------------------------------------------- áreas internas do sistema -- */
 
@@ -352,9 +277,6 @@ td.empty-state,tr .empty-state { padding-top:var(--sp-8); }
 
 /* --------------------------------------------------------- responsivo --- */
 
-@media (max-width:900px) {
-  .hero-visual { min-height:auto; padding:var(--sp-8) var(--sp-6); }
-}
 @media (max-width:1023px) {
   .app-header #link-sair,.link-logout,
   .detail-header > a:last-child,.account-header > a:last-child { min-height:44px; }
@@ -369,10 +291,8 @@ td.empty-state,tr .empty-state { padding-top:var(--sp-8); }
   }
 }
 @media (max-width:620px) {
-  .home-header .site-brand span,
   .app-header .site-brand span,
   .detail-header .site-brand span,
   .account-header .site-brand span { display:none; }
-  .extreme-lockup img { width:80%; }
   .profile-mark,.detail-intro > span { width:58px; height:58px; }
 }

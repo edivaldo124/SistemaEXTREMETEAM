@@ -1,0 +1,77 @@
+/* =========================================================================
+   Extreme Team - tokens de design (fonte única).
+   Carregado por theme.css via @import, então chega a todo template sem <link> novo.
+   Só variáveis aqui: nenhuma regra de seletor. Componentes ficam em componentes.css.
+
+   As variáveis antigas de theme.css (--yellow, --paper, --ink...) continuam
+   existindo como alias destes tokens, para as folhas de tela não quebrarem.
+   Código novo usa SEMPRE --et-*.
+   ========================================================================= */
+
+:root {
+  /* ---- Preto ----
+     --et-black é #000 de propósito, não #0A0A0A: as duas logos oficiais têm fundo
+     preto puro, e qualquer preto "quase" desenha um retângulo visível em volta
+     delas. Toda superfície que carrega logo (header, sidebar, card de login) usa
+     --et-black. --et-black-soft serve a fundos sem logo por perto. */
+  --et-black:#000000;
+  --et-black-soft:#0A0A0A;
+  --et-surface-dark:#161616;
+  --et-surface-dark-2:#202020;
+  --et-line-dark:rgba(245,185,20,.22);          /* borda dourada de baixa opacidade */
+  --et-line-dark-strong:rgba(245,185,20,.5);
+
+  /* ---- Ouro ---- */
+  --et-gold:#F5B914;
+  --et-gold-light:#FFE27A;
+  --et-gold-dark:#B7790A;
+  --et-gold-gradient:linear-gradient(135deg, var(--et-gold-light) 0%, var(--et-gold) 48%, var(--et-gold-dark) 100%);
+
+  /* ---- Apoio ---- */
+  --et-green:#1F5A3A;
+  --et-green-ok:#22A45D;      /* pontos e preenchimentos; texto de status usa os pares abaixo */
+  --et-orange:#FF8A1F;
+  --et-cream:#F6F1E6;
+  --et-danger:#E53935;
+  --et-warning:#F2A900;
+
+  /* ---- Texto ---- */
+  --et-text:#16181A;
+  --et-text-muted:#4C5155;
+  --et-text-on-dark:#F4F1E8;
+  --et-text-on-dark-muted:#A9ADB1;
+
+  /* ---- Situações: pares fundo/tinta para superfície CLARA (contraste AA) ---- */
+  --et-ok-bg:#DFEEE7;       --et-ok-ink:#14503A;
+  --et-warn-bg:#FBEFC6;     --et-warn-ink:#5F4A00;
+  --et-bad-bg:#F7E1DD;      --et-bad-ink:#7C2C22;
+  --et-info-bg:#DDE6F5;     --et-info-ink:#1A3E6C;
+  --et-neutral-bg:#E4E2DC;  --et-neutral-ink:#41454A;
+
+  /* ---- Situações sobre superfície ESCURA ---- */
+  --et-ok-bg-dark:rgba(34,164,93,.18);    --et-ok-ink-dark:#7EDBA6;
+  --et-warn-bg-dark:rgba(242,169,0,.18);  --et-warn-ink-dark:#FFD666;
+  --et-bad-bg-dark:rgba(229,57,53,.20);   --et-bad-ink-dark:#FF9C99;
+  --et-info-bg-dark:rgba(90,140,220,.20); --et-info-ink-dark:#A9C6F5;
+
+  /* ---- Tipografia ----
+     Bebas Neue só existe em peso 400 e só em caixa alta: títulos e números grandes.
+     Inter carrega o resto. */
+  --et-font-display:"Bebas Neue","Barlow Condensed",Impact,sans-serif;
+  --et-font-body:"Inter","Segoe UI",system-ui,sans-serif;
+
+  /* ---- Raios: controle < botão < cartão. Pastilha só em badge e chip. ---- */
+  --et-radius-control:10px;
+  --et-radius-btn:12px;
+  --et-radius-card:18px;
+  --et-radius-pill:999px;
+
+  /* ---- Foco: anel dourado sobre escuro, tinta + halo dourado sobre claro ---- */
+  --et-focus-on-dark:var(--et-gold);
+  --et-focus-on-light:#000000;
+  --et-focus-halo:rgba(245,185,20,.75);
+
+  /* ---- Elevação ---- */
+  --et-shadow-dark:0 18px 40px -22px rgba(0,0,0,.8);
+  --et-glow-gold:0 0 0 1px var(--et-line-dark), 0 22px 60px -30px rgba(245,185,20,.35);
+}

@@ -732,6 +732,7 @@ def test_foto_legitima_continua_sendo_aceita(contexto_app):
     'rota,metodo',
     [
         ('/perfil/senha', 'post'),
+        ('/perfil/dados', 'post'),
         ('/perfil/email', 'post'),
         ('/perfil/foto', 'post'),
         ('/perfil/confirmar_email/token-qualquer', 'get'),

@@ -1,5 +1,7 @@
 import os
+import secrets
 import tempfile
+from contextlib import contextmanager
 from datetime import date, timedelta
 from werkzeug.security import generate_password_hash
 
@@ -32,6 +34,7 @@ os.environ['CRIAR_SCHEMA_NA_IMPORTACAO'] = 'true'
 os.environ['FILA_EMAIL_SINCRONA'] = 'true'
 
 import pytest
+from flask.testing import FlaskClient
 
 from config import db, limiter
 from dao.planoDAO import PlanoDAO
@@ -52,6 +55,27 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+@pytest.fixture(autouse=True)
+def sessoes_de_teste_recebem_sid(monkeypatch):
+    """Sessão montada à mão pelo teste recebe o `sid` que o login real emite.
+
+    O login grava um identificador aleatório na sessão para o logout poder revogá-la, e
+    sessão sem ele é recusada. Os testes que fabricam a sessão com `session_transaction`
+    imitam um login já feito, então o identificador entra aqui, no fim da transação. Para
+    testar a recusa de uma sessão SEM identificador, o teste grava `sess['sid'] = ''`.
+    """
+    original = FlaskClient.session_transaction
+
+    @contextmanager
+    def _com_sid(self, *args, **kwargs):
+        with original(self, *args, **kwargs) as sessao:
+            yield sessao
+            if sessao.get('tipo_usuario') and 'sid' not in sessao:
+                sessao['sid'] = secrets.token_urlsafe(16)
+
+    monkeypatch.setattr(FlaskClient, 'session_transaction', _com_sid)
 
 
 @pytest.fixture(autouse=True)

@@ -14,11 +14,75 @@ Duas verificações acontecem aqui, juntas:
 """
 import hashlib
 import hmac
+import secrets
+from datetime import datetime, timedelta
 from functools import wraps
 
-from flask import redirect, session
+from flask import current_app, g, redirect, session
+from sqlalchemy.exc import IntegrityError
 
 CHAVE_CREDENCIAL = 'credencial'
+CHAVE_SESSAO = 'sid'
+
+# Folga sobre o tempo de vida do cookie: a linha de revogação só pode sumir depois que
+# nenhuma cópia do cookie possa mais valer.
+_FOLGA_REVOGACAO = timedelta(minutes=5)
+
+
+def iniciar_sessao():
+    """Dá um identificador à sessão recém-aberta, para o logout poder revogá-la.
+
+    Chamar logo depois do `session.clear()` de cada login.
+    """
+    session[CHAVE_SESSAO] = secrets.token_urlsafe(16)
+
+
+def revogar_sessao_atual():
+    """Registra a sessão como encerrada: cópias antigas do cookie deixam de valer.
+
+    `session.clear()` sozinho só limpa o navegador de quem clicou em "Sair"; o cookie é
+    assinado e sem estado, então uma cópia dele continuava aceita e, renovada a cada
+    requisição, não expirava nunca. Ver `modelos/sessao_revogada.py`.
+    """
+    from config import db
+    from modelos.sessao_revogada import SessaoRevogada
+
+    sid = session.get(CHAVE_SESSAO)
+    if not sid or not isinstance(sid, str):
+        return
+
+    agora = datetime.utcnow()
+    SessaoRevogada.query.filter(SessaoRevogada.expira_em < agora).delete(synchronize_session=False)
+    if db.session.get(SessaoRevogada, sid) is None:
+        db.session.add(SessaoRevogada(
+            sid=sid, expira_em=agora + current_app.permanent_session_lifetime + _FOLGA_REVOGACAO,
+        ))
+    try:
+        db.session.commit()
+    except IntegrityError:
+        # Dois logouts simultâneos da mesma sessão: o outro já a revogou.
+        db.session.rollback()
+
+
+def _sessao_ativa():
+    """A sessão tem identificador e ele não foi revogado pelo logout?
+
+    Sessão sem identificador é recusada, pelo mesmo motivo do carimbo de credencial: aceitar
+    "só desta vez" deixaria vivo justamente o cookie copiado antes desta publicação. O preço
+    é o mesmo, um novo login único para quem já estava dentro.
+    """
+    from config import db
+    from modelos.sessao_revogada import SessaoRevogada
+
+    sid = session.get(CHAVE_SESSAO)
+    if not sid or not isinstance(sid, str):
+        return False
+    if g.get('_sessao_conferida') == sid:
+        return True
+    if db.session.get(SessaoRevogada, sid) is not None:
+        return False
+    g._sessao_conferida = sid
+    return True
 
 
 def impressao_credencial(senha_hash):
@@ -62,6 +126,10 @@ def aluno_autorizado():
     if session.get('tipo_usuario') != 'aluno' or not session.get('aluno_id'):
         return None
 
+    if not _sessao_ativa():
+        encerrar_sessao()
+        return None
+
     aluno = db.session.get(Aluno, session['aluno_id'])
     if aluno is None or not aluno.esta_ativo or not _credencial_confere(aluno.senha_hash):
         encerrar_sessao()
@@ -75,6 +143,10 @@ def professor_autorizado():
     from modelos.professor import Professor
 
     if session.get('tipo_usuario') != 'professor' or not session.get('professor_id'):
+        return None
+
+    if not _sessao_ativa():
+        encerrar_sessao()
         return None
 
     professor = db.session.get(Professor, session['professor_id'])
@@ -97,6 +169,10 @@ def sessao_administrativa_valida():
     encerraria a sessão já aberta por quem usou a senha antiga.
     """
     if session.get('tipo_usuario') != 'admin':
+        return False
+
+    if not _sessao_ativa():
+        encerrar_sessao()
         return False
 
     from servicos.credenciais import referencia_credencial_admin

@@ -40,6 +40,11 @@ graphify-out/
 README.md
 DEPLOY.md
 security_best_practices_report.md
+reauditoria_seguranca_desempenho_*.md
+security-review-*/
+PROMPT_CLAUDE_CODE.md
+REDESIGN_CONTRATO.md
+tools/
 requirements-dev.txt
 
 # Infraestrutura que não pertence à imagem da aplicação

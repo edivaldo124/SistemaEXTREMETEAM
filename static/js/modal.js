@@ -17,8 +17,9 @@
         message.textContent = target.dataset.modalMessage || 'Revise esta ação antes de continuar.';
         eyebrow.textContent = target.dataset.modalEyebrow || 'Confirmar ação';
         accept.textContent = target.dataset.modalConfirm || 'Confirmar';
+        accept.disabled = false;
         dialog.dataset.variant = target.dataset.modalVariant || 'default';
-        dialog.showModal();
+        if (!dialog.open) dialog.showModal();
         cancel.focus();
     }
 
@@ -63,6 +64,7 @@
         target.dataset.modalConfirmed = 'true';
         accept.disabled = true;
         accept.textContent = target.dataset.loadingText || 'Processando…';
+        closeModal();
         target.requestSubmit();
     });
 })();

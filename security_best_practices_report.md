@@ -14,29 +14,31 @@ As seções detalhadas abaixo preservam a análise original e descrevem o estado
 | ID | Estado atual | Correção e evidência |
 |---|---|---|
 | F1 | Corrigido | Rotas administrativas buscam somente por CPF e usam as variantes formatada e numérica. Teste de regressão cobre consulta, edição, foto, cobrança e pagamento diante de colisões em nome e observações. |
-| F2 | Corrigido | `CSRFProtect` foi ativado globalmente. Os 52 formulários POST enviam token, as requisições JavaScript usam `X-CSRFToken` e somente o webhook assinado possui exceção específica. |
-| F3 | Corrigido | Login, recuperação e cadastro possuem limites. As chaves combinam IP e identificador com hash; o Docker Compose usa Redis compartilhado. |
+| F2 | Corrigido | `CSRFProtect` foi ativado globalmente. Os formulários POST enviam token (52 em 05/09; 59 em 19/09, conferidos por script), as requisições JavaScript usam `X-CSRFToken` e somente o webhook assinado possui exceção específica. |
+| F3 | Corrigido | Login, recuperação e cadastro possuem limites. As chaves combinam IP e identificador com hash; o Docker Compose usa Redis compartilhado. Desde 19/09, `/perfil/dados` também tem limite e as falhas de login são registradas (IP e resumo SHA-256 do identificador). |
 | F4 | Corrigido | Links externos usam exclusivamente `APP_BASE_URL`; `TRUSTED_HOSTS` valida o host recebido. Host manipulável não participa da URL enviada. |
 | F5 | Corrigido | Flask limita corpo a 10 MB, campos multipart a 512 KB e formulários a 100 partes. O Caddy também limita o corpo a 10 MB. |
 | F6 | Corrigido | PDFs de comprovante usam tipo fixo e `Content-Disposition: attachment`. |
 | F7 | Corrigido | Respostas incluem CSP com nonce, bloqueio de handlers inline, `nosniff`, proteção contra iframe, política de referência e permissões restritas. |
-| F8 | Corrigido | Nome foi removido dos identificadores de login. Permanecem login, e-mail e CPF, que são únicos. |
+| F8 | Corrigido | Nome foi removido dos identificadores de login. Permanecem login, e-mail e CPF, que são únicos. Desde 19/09, `AlunoDAO.autenticar` confere a senha em todos os candidatos (até 3), para que quem gravou como `login` o e-mail ou o CPF de outro aluno não bloqueie a vítima. |
 | F9 | Corrigido por configuração | `ProxyFix` só é ativado por `TRUST_PROXY_COUNT`; o Compose informa exatamente um proxy, o Caddy. Outros ambientes precisam informar sua própria topologia. |
 | F10 | Corrigido | Redirecionamentos após ações administrativas usam destino interno fixo. |
 | F11 | Corrigido | Logout aceita somente POST, possui CSRF e continua usando confirmação visual. |
-| F12 | Corrigido | Contas inexistentes executam uma verificação de hash descartável para reduzir diferença observável de tempo. |
-| F13 | Corrigido | Senhas novas exigem no mínimo oito caracteres e recusam opções comuns ou iguais aos identificadores da conta. |
+| F12 | Corrigido | Contas inexistentes executam uma verificação de hash descartável para reduzir diferença observável de tempo. Desde 19/09, a recuperação de senha também envia o e-mail fora da requisição, fechando a diferença de tempo do ramo "par CPF+e-mail existe". |
+| F13 | Corrigido | Senhas novas exigem no mínimo oito caracteres e recusam opções comuns ou iguais aos identificadores da conta. Desde 19/09, a lista de senhas comuns tem 3000 entradas (`servicos/senhas_comuns.txt`), no lugar das 8 originais. |
 | F14 | Corrigido | Assinaturas de webhook fora da janela de cinco minutos são recusadas; segundos e milissegundos são aceitos. |
 | F15 | Corrigido | `%`, `_` e `\\` são escapados no filtro `ILIKE` e passam a ser tratados como texto. |
 
 Validação executada:
 
-- `pytest -q`: **199 testes aprovados**.
+- `pytest -q`: **199 testes aprovados** em 05/09; **613 aprovados e 8 ignorados** em 19/09/2026 (os ignorados exigem `TEST_POSTGRES_URL`).
 - `pip-audit -r requirements.txt`: **nenhuma vulnerabilidade conhecida encontrada** após atualizar Flask para 3.1.3, Pillow para 12.3.0 e python-dotenv para 1.2.2.
 - `pip check`: nenhuma dependência quebrada.
 - `compileall`: módulos Python compilados sem erro.
 - `docker compose config --quiet`: configuração válida.
 - Verificação estrutural: 52 formulários POST e 52 inclusões do campo CSRF; nenhum handler HTML `onclick`, `onchange`, `onsubmit`, `onload` ou `onerror` permaneceu.
+
+**Atualização de 19/09/2026.** Uma revisão posterior encontrou e corrigiu dois achados de severidade Baixa fora desta lista (S1: `/logout` não revogava a sessão, agora revogada no servidor pela tabela `sessoes_revogadas`; S2: páginas autenticadas passam a sair com `Cache-Control: no-store`) e corrigiu os achados abertos do relatório de 17/09. Detalhes em `security-review-2026-09-17/RELATORIO.md`. Ao publicar, rodar `flask db upgrade`; quem estiver logado precisa entrar de novo uma única vez.
 
 Pendências de implantação: confirmar volume persistente de uploads e os valores efetivos de `COOKIE_SECURE`, `TRUSTED_HOSTS`, `TRUST_PROXY_COUNT`, `APP_BASE_URL` e `RATELIMIT_STORAGE_URI` no ambiente publicado. Essas verificações dependem da infraestrutura e não podem ser concluídas pela análise local.
 
@@ -495,7 +497,7 @@ Pontos que a análise estática não fecha sozinha:
 
 - **V1 — Volume de uploads em produção.** `UPLOAD_DIR` precisa apontar para volume persistente e **fora** de qualquer raiz servida estaticamente. O `compose.yaml` faz isso; confirmar que o deploy no Render também faz, ou os comprovantes se perdem a cada publicação.
 - **V2 — `COOKIE_SECURE` em produção.** O `.env` local define `COOKIE_SECURE` duas vezes, com valores diferentes (`false` e depois `true`). O último vence, mas a duplicidade é frágil. Confirmar o valor efetivo no ambiente publicado.
-- **V3 — Higiene de dependências.** As versões estão atuais (Flask 3.1.0, Werkzeug 3.1.8, Jinja2 3.1.6, Pillow 11.1.0). Não afirmo CVE específica sem consultar um banco de avisos. Recomendo `pip-audit` no CI: **Pillow é a dependência mais sensível aqui**, porque processa imagens enviadas por usuários não confiáveis.
+- **V3 — Higiene de dependências (19/09/2026: `pip-audit -r requirements.txt` sem vulnerabilidades conhecidas; ainda não há CI que o execute).** As versões estão atuais (Flask 3.1.0, Werkzeug 3.1.8, Jinja2 3.1.6, Pillow 11.1.0). Não afirmo CVE específica sem consultar um banco de avisos. Recomendo `pip-audit` no CI: **Pillow é a dependência mais sensível aqui**, porque processa imagens enviadas por usuários não confiáveis.
 
 ---
 

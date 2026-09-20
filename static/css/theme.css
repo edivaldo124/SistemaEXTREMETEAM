@@ -4,19 +4,23 @@
    theme.css define tokens e primitivas. extreme.css aplica a identidade por cima.
    ========================================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+@import url('tokens.css');
+@import url('componentes.css');
 
+/* Os valores abaixo são ALIAS dos tokens --et-* (tokens.css). Mudar a identidade
+   é mudar o token; estas variáveis só existem para as folhas de tela antigas. */
 :root {
   /* ---- Superfícies escuras (painéis de marca, barra lateral, hero) ----
      Preto puro porque a arte da marca tem fundo preto: qualquer preto
      "quase" desenha um retângulo visível em volta do logo. */
-  --ink:#000000;
-  --ink-2:#141517;
+  --ink:var(--et-black);
+  --ink-2:var(--et-surface-dark);
   --ink-3:#2C2E31;
   --ink-4:#3C3F43;
 
   /* ---- Superfícies claras: papel quente, cartão branco ---- */
-  --paper:#ECE8DE;
+  --paper:var(--et-cream);
   --paper-2:#E3DED1;     /* faixa mais funda sobre o papel */
   --surface:#FFFFFF;
   --surface-2:#F6F3EC;   /* faixas de formulário, cabeçalho de tabela */
@@ -31,7 +35,7 @@
   --text-on-ink-2:#A9ADB1;
 
   /* ---- Marca: amarelo reservado para ação e estado ativo ---- */
-  --yellow:#FDCF17;
+  --yellow:var(--et-gold);
   --yellow-soft:#FEF0BC;
   --gold:#D6A210;
 
@@ -66,8 +70,8 @@
   --shadow-dialogo:0 30px 70px -20px rgba(0,0,0,.55);
 
   /* ---- Tipografia ---- */
-  --display:"Barlow Condensed",Impact,sans-serif;
-  --body:"Inter","Segoe UI",system-ui,sans-serif;
+  --display:var(--et-font-display);
+  --body:var(--et-font-body);
 
   --fs-micro:12px; --fs-xs:13px; --fs-sm:14px; --fs-md:15px;
   --fs-base:16px;  --fs-lg:18px;
@@ -101,7 +105,7 @@
 
 /* Blocos de fundo escuro invertem o anel de foco para continuar visível. */
 .home-header,.app-header,.admin-header,.detail-header,.account-header,
-.brand-panel,.recovery-brand,.register-shell aside,.hero,.bottom-nav,
+.auth-shell,.hero,.bottom-nav,
 .home-footer,.app-footer,.aluno-hero,.mensalidade-card,.plano-situacao-card {
   --focus-ink:var(--yellow);
   --focus-halo:rgba(253,207,23,.3);
@@ -110,8 +114,12 @@
 /* ---------------------------------------------------------------- base -- */
 
 * { box-sizing:border-box; }
-html { min-width:320px; scroll-behavior:smooth; background:var(--paper); }
-html,body { max-width:100%; overflow-x:hidden; }
+/* Bebas Neue só existe em peso 400. As folhas antigas pedem 700/800 nos títulos;
+   sem isto o navegador sintetiza um negrito borrado por cima da fonte. */
+html { min-width:320px; scroll-behavior:smooth; background:var(--paper); font-synthesis-weight:none; }
+/* clip, não hidden: hidden faria o body virar contêiner de rolagem e quebraria todo
+   position:sticky da página (a marca do cadastro, cabeçalhos fixos). */
+html,body { max-width:100%; overflow-x:clip; }
 body {
   margin:0; min-height:100vh; min-height:100dvh;
   color:var(--text); background:transparent;
@@ -294,14 +302,15 @@ input[type="checkbox"],input[type="radio"] { width:20px; height:20px; accent-col
 .button-primary,.btn-salvar,.btn-cadastrar,.btn-escolher {
   display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-2);
   min-height:var(--control-h); padding:0 var(--sp-6);
-  border:1px solid var(--yellow); border-radius:var(--radius);
-  color:var(--ink); background:var(--yellow);
+  border:1px solid var(--et-gold-dark); border-radius:var(--et-radius-btn);
+  color:var(--ink); background:var(--et-gold-gradient);
   font-size:var(--fs-sm); font-weight:700; letter-spacing:.02em;
   text-decoration:none; cursor:pointer;
-  transition:background .16s ease, border-color .16s ease, transform .1s ease, box-shadow .16s ease;
+  transition:filter .16s ease, transform .1s ease, box-shadow .16s ease;
 }
 .button-primary:hover,.btn-salvar:hover,.btn-cadastrar:hover,.btn-escolher:hover {
-  background:var(--gold); border-color:var(--gold);
+  filter:brightness(1.07) saturate(1.05);
+  box-shadow:0 8px 22px -12px rgba(245,185,20,.7);
 }
 .button-primary:active,.btn-salvar:active,.btn-cadastrar:active,.btn-escolher:active { transform:translateY(1px); }
 
@@ -399,7 +408,8 @@ input[type="checkbox"],input[type="radio"] { width:20px; height:20px; accent-col
 /* Situação de uma mensalidade. */
 .status-pago            { color:var(--green-ink); background:var(--green-bg); }
 .status-pendente        { color:var(--amber-ink); background:var(--amber-bg); }
-.status-atrasado        { color:var(--red-ink);   background:var(--red-bg); }
+.status-atrasado,
+.status-vencido         { color:var(--red-ink);   background:var(--red-bg); }
 .status-cancelado       { color:var(--slate-ink); background:var(--slate-bg); }
 .status-reembolsado     { color:var(--blue-ink);  background:var(--blue-bg); }
 .status-em_processamento{ color:var(--blue-ink);  background:var(--blue-bg); }

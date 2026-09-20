@@ -12,60 +12,42 @@
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/theme.css') }}">
         <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/auth.css') }}">
+        <link rel="stylesheet"
               href="{{ url_for('static', filename='css/login.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
+        <script src="{{ url_for('static', filename='js/auth.js') }}" defer></script>
     </head>
-    <body>
+    <body class="auth-page">
         <a class="skip-link" href="#login-form">Ir para o formulário</a>
-        <main class="login-shell">
-            <section class="brand-panel entra-1" aria-labelledby="brand-title">
-                <a class="brand"
-                   href="/"
-                   aria-label="Centro de Treinamento Extreme Team, página inicial">
-                    <img src="{{ url_for('static', filename='imagens/logo-header-480.png') }}"
-                         alt=""
-                         width="240"
-                         height="120">
-                </a>
-                <div class="brand-copy">
-                    <p class="eyebrow">
-                        <span>Área do aluno</span>
-                    </p>
-                    <h1 id="brand-title">
-                        Entre para a
-                        <br>
-                        equipe <em>Extreme</em>
-                    </h1>
+        <main class="auth-shell login-shell">
+            <section class="auth-brand-panel" aria-labelledby="brand-title">
+                <div class="auth-brand-inner">
+                    <a class="auth-brand-emblem" href="/" aria-label="Extreme Team, página inicial">
+                        <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team" width="200" height="200">
+                    </a>
+                    <h1 id="brand-title"> Entre para a <br> equipe <em>Extreme</em> </h1>
                     <p>Disciplina hoje. Resultados sempre.</p>
-                    <a class="button-primary brand-cta" href="/cadastrar">Criar minha conta</a>
-                </div>
-                <div class="training-note" aria-hidden="true">
-                    <p>
-                        Força
-                        <br>
-                        Disciplina
-                        <br>
-                        Evolução
-                    </p>
                 </div>
             </section>
-            <a class="flow-swap" href="/cadastrar">
+
+            <a class="flow-swap-btn" href="/cadastrar" data-auth-swap aria-label="Ir para a criação de conta">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5" /></svg>
                 <span class="sr-only">Trocar para a criação de conta</span>
             </a>
-            <section class="form-panel entra-2" aria-labelledby="login-title">
-                <div class="mobile-brand">
-                    <a href="/" aria-label="Voltar para a página inicial">
-                        <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
-                             alt="Centro de Treinamento Extreme Team"
-                             width="56"
-                             height="56">
-                    </a>
-                </div>
-                <div class="form-wrap">
-                    <div class="form-heading">
-                        <p class="eyebrow">Bem-vindo de volta</p>
+
+            <section class="auth-form-panel" aria-labelledby="login-title">
+                <a class="auth-mobile-emblem" href="/" aria-label="Extreme Team, página inicial">
+                    <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team" width="72" height="72">
+                </a>
+                <nav class="auth-tabs" aria-label="Acesso à academia">
+                    <a href="/login" class="auth-tab active" aria-current="page">Entrar</a>
+                    <a href="/cadastrar" class="auth-tab" data-auth-swap>Criar conta</a>
+                </nav>
+
+                <div class="auth-form-wrap">
+                    <div class="auth-form-heading">
                         <h2 id="login-title">Faça login</h2>
                         <p>Entre com seu usuário e senha para continuar.</p>
                     </div>
@@ -78,11 +60,11 @@
                         </div>
                     {% endif %}
                     <form id="login-form" action="/login" method="post">
-                    {% include "components/csrf_field.html" %}
+                        {% include "components/csrf_field.html" %}
                         <div class="field">
                             <label for="loginusuario">Usuário</label>
                             <div class="input-wrap">
-                                <svg aria-hidden="true" viewBox="0 0 24 24">
+                                <svg class="field-icon" aria-hidden="true" viewBox="0 0 24 24">
                                     <path d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
                                 </svg>
                                 <input id="loginusuario"
@@ -100,7 +82,7 @@
                                 <a href="/recuperar_senha">Esqueci minha senha</a>
                             </div>
                             <div class="input-wrap">
-                                <svg aria-hidden="true" viewBox="0 0 24 24">
+                                <svg class="field-icon" aria-hidden="true" viewBox="0 0 24 24">
                                     <path d="M7 10V7a5 5 0 0 1 10 0v3m-11 0h12a2 2 0 0 1 2 2v8H4v-8a2 2 0 0 1 2-2Z" />
                                 </svg>
                                 <input id="senhausuario"
@@ -114,7 +96,7 @@
                                         aria-label="Mostrar senha"
                                         aria-pressed="false">
                                     <svg class="eye-open" aria-hidden="true" viewBox="0 0 24 24">
-                                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                                        <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
                                         <circle cx="12" cy="12" r="2.5" />
                                     </svg>
                                     <svg class="eye-closed" aria-hidden="true" viewBox="0 0 24 24">
@@ -123,11 +105,17 @@
                                 </button>
                             </div>
                         </div>
-                        <button class="submit-button" type="submit">Entrar</button>
+                        <div class="auth-remember-row">
+                            <label class="checkbox-label" for="lembrar_usuario">
+                                <input type="checkbox" id="lembrar_usuario" name="lembrar_usuario">
+                                <span>Lembrar meu usuário neste aparelho</span>
+                            </label>
+                        </div>
+                        <button class="button-primary auth-submit-btn" type="submit">Entrar</button>
                     </form>
-                    <p class="signup">
+                    <p class="auth-footer-prompt">
                         Ainda não faz parte?
-                        <a href="/cadastrar">Crie sua conta</a>
+                        <a href="/cadastrar" data-auth-swap>Crie sua conta</a>
                     </p>
                 </div>
                 <footer>
@@ -136,15 +124,5 @@
                 </footer>
             </section>
         </main>
-        <script nonce="{{ csp_nonce() }}">
-        const toggle = document.querySelector('.password-toggle');
-        const password = document.querySelector('#senhausuario');
-        toggle.addEventListener('click', () => {
-            const showing = password.type === 'text';
-            password.type = showing ? 'password' : 'text';
-            toggle.setAttribute('aria-pressed', String(!showing));
-            toggle.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha');
-        });
-    </script>
     </body>
 </html>

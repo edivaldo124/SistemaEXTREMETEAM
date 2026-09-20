@@ -1,0 +1,611 @@
+/* =========================================================================
+   Extreme Team - Folha compartilhada de autenticação e fluxos públicos
+   (Login, Cadastro, Recuperar Senha, Redefinir Senha, Ativar Acesso)
+   ========================================================================= */
+
+@view-transition {
+  navigation: auto;
+}
+
+body.auth-page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(var(--sp-4), 3vw, var(--sp-7));
+  background-color: var(--et-cream);
+}
+
+/* ----------------------------------------------------------- Shell/Card -- */
+.auth-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: 9fr 11fr;
+  width: min(1140px, 100%);
+  min-height: min(680px, calc(100dvh - 2 * var(--sp-7)));
+  border: 1px solid var(--et-line-dark);
+  border-radius: var(--et-radius-card);
+  background: var(--et-surface-dark);
+  box-shadow: var(--et-shadow-dark), var(--et-glow-gold);
+  overflow: clip;
+  transition: opacity 220ms var(--ease), transform 220ms var(--ease);
+}
+
+.auth-shell.register-variant {
+  grid-template-columns: 3fr 5fr;
+  min-height: min(780px, calc(100dvh - 2 * var(--sp-7)));
+}
+
+.auth-shell.auth-transitioning {
+  opacity: 0;
+  transform: scale(0.985);
+}
+
+/* ----------------------------------------------------- Painel de Marca --- */
+/* Só o emblema oficial e uma frase. O bloco interno é `sticky` e ocupa a altura da
+   janela: no cadastro, cujo formulário é bem mais alto que a tela, a marca continua à
+   vista enquanto a pessoa rola, em vez de deixar um vazio preto no painel. */
+.auth-brand-panel {
+  position: relative;
+  padding: 0 clamp(var(--sp-7), 4vw, var(--sp-9));
+  color: var(--et-text-on-dark);
+  background: var(--et-black);
+  overflow: clip;
+}
+
+.auth-brand-inner {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-4);
+  min-height: min(100%, 100dvh);
+  padding-block: var(--sp-8);
+  max-width: 34ch;
+}
+
+.auth-brand-emblem {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: clamp(150px, 15vw, 200px);
+  margin-bottom: var(--sp-4);
+}
+
+/* Brilho dourado atrás do emblema. A imagem é RGB com placa preta: `lighten` faz o
+   preto dela ceder ao brilho em vez de tapá-lo com um retângulo. */
+.auth-brand-emblem::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -35%;
+  background: radial-gradient(circle, rgba(245, 185, 20, 0.28) 0%, rgba(183, 121, 10, 0.1) 42%, transparent 68%);
+}
+
+.auth-brand-emblem img {
+  display: block;
+  width: 100%;
+  height: auto;
+  mix-blend-mode: lighten;
+}
+
+.auth-brand-inner h1 {
+  margin: 0;
+  font-family: var(--et-font-display);
+  font-size: clamp(38px, 4vw, 54px);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--et-text-on-dark);
+}
+
+.auth-brand-inner h1 em {
+  font-style: normal;
+  color: var(--et-gold);
+}
+
+.auth-brand-inner p {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+}
+
+/* Emblema do celular: o painel de marca some abaixo de 720px, então a identidade
+   passa a abrir o cartão único. */
+.auth-mobile-emblem {
+  display: none;
+}
+
+/* ------------------------------------------- Botão de Troca de Fluxo ⇄ --- */
+.flow-swap-btn {
+  position: absolute;
+  z-index: 10;
+  left: calc(45% - 28px);
+  top: min(50%, 420px);
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--et-black);
+  border-radius: 50%;
+  color: var(--et-black);
+  background: var(--et-gold-gradient);
+  transform: translateY(-50%);
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+
+.auth-shell.register-variant .flow-swap-btn {
+  left: calc(37.5% - 28px);
+}
+
+.flow-swap-btn svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.flow-swap-btn:hover {
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: var(--et-glow-gold);
+}
+
+.flow-swap-btn:focus-visible {
+  outline: 3px solid var(--et-gold);
+  outline-offset: 4px;
+}
+
+/* ------------------------------------------------ Painel do Formulário --- */
+.auth-form-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(var(--sp-6), 4vw, var(--sp-9)) clamp(var(--sp-6), 5vw, var(--sp-10));
+  background: var(--et-surface-dark);
+  /* Leve efeito vidro com fallback sólido */
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--et-text-on-dark);
+}
+
+@supports not (backdrop-filter: blur(10px)) {
+  .auth-form-panel {
+    background: var(--et-surface-dark);
+  }
+}
+
+.auth-form-wrap {
+  width: 100%;
+  max-width: 440px;
+  margin: auto;
+}
+
+.auth-shell.register-variant .auth-form-wrap {
+  max-width: 540px;
+}
+
+/* --------------------------------------------------------- Abas Mobile --- */
+/* Em telas grandes (> 720px) as abas ficam ocultas */
+.auth-tabs {
+  display: none;
+}
+
+/* ------------------------------------------------ Cabeçalho Formulário --- */
+.auth-form-heading {
+  margin-bottom: var(--sp-6);
+}
+
+.auth-form-heading h2 {
+  margin: 0;
+  font-family: var(--et-font-display);
+  font-size: clamp(32px, 3.6vw, 44px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--et-text-on-dark);
+}
+
+.auth-form-heading p {
+  margin: var(--sp-2) 0 0;
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------- Campos de Entrada --- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Só no login, onde os campos ficam empilhados direto no <form>. Dentro do
+   .form-grid do cadastro a margem empurrava a segunda célula de cada linha. */
+.auth-form-wrap form > .field + .field {
+  margin-top: var(--sp-5);
+}
+
+.field label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 22px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--et-text-on-dark);
+}
+
+.field label small {
+  margin-left: var(--sp-2);
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.label-row a {
+  color: var(--et-gold);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.label-row a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrap > .field-icon {
+  position: absolute;
+  left: var(--sp-4);
+  width: 20px;
+  height: 20px;
+  color: var(--et-text-on-dark-muted);
+  pointer-events: none;
+}
+
+.field input[type="text"],
+.field input[type="password"],
+.field input[type="email"],
+.field input[type="tel"],
+.field input[type="date"],
+.field textarea {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--et-line-dark);
+  border-radius: var(--et-radius-control);
+  color: var(--et-text-on-dark);
+  background: var(--et-surface-dark-2);
+  font-family: var(--et-font-body);
+  font-size: var(--fs-md);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.input-wrap input {
+  padding-left: 48px;
+  padding-right: 50px;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--et-text-on-dark-muted);
+  opacity: 0.7;
+}
+
+.field input:hover,
+.field textarea:hover {
+  border-color: var(--et-line-dark-strong);
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--et-gold);
+  background: var(--et-black);
+  box-shadow: 0 0 0 3px rgba(245, 185, 20, 0.28);
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline: 2px solid var(--et-gold);
+  outline-offset: 1px;
+}
+
+.field textarea {
+  min-height: 84px;
+  padding: var(--sp-3) var(--sp-4);
+  resize: vertical;
+}
+
+/* ------------------------------------------------------ Botão de Senha --- */
+.password-toggle {
+  position: absolute;
+  right: var(--sp-2);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--et-text-on-dark-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.password-toggle:hover {
+  color: var(--et-gold);
+  background: rgba(245, 185, 20, 0.1);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--et-gold);
+}
+
+.password-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.password-toggle .eye-closed {
+  display: none;
+}
+
+.password-toggle[aria-pressed="true"] .eye-open {
+  display: none;
+}
+
+.password-toggle[aria-pressed="true"] .eye-closed {
+  display: block;
+}
+
+/* ---------------------------------- Lembrar usuário / Opção Checkbox --- */
+.auth-remember-row {
+  margin-top: var(--sp-5);
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--et-text-on-dark-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--et-gold);
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  line-height: 1.4;
+}
+
+.checkbox-label:hover span {
+  color: var(--et-text-on-dark);
+}
+
+/* ------------------------------------------------------ Alertas / Erro --- */
+.alert,
+.msg {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid rgba(229, 57, 53, 0.4);
+  border-radius: var(--et-radius-control);
+  color: var(--et-bad-ink-dark);
+  background: var(--et-bad-bg-dark);
+  font-size: var(--fs-sm);
+}
+
+.alert svg,
+.msg svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+}
+
+/* ---------------------------------------------------- Botões de Ação --- */
+.button-primary.auth-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 50px;
+  margin-top: var(--sp-6);
+  border: 0;
+  border-radius: var(--et-radius-btn);
+  color: var(--et-black);
+  background: var(--et-gold-gradient);
+  font-family: var(--et-font-body);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(245, 185, 20, 0.25);
+  transition: transform 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+
+.button-primary.auth-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(245, 185, 20, 0.35);
+}
+
+.button-primary.auth-submit-btn:active {
+  transform: translateY(1px);
+}
+
+.button-primary.auth-submit-btn:focus-visible {
+  outline: 2px solid var(--et-gold);
+  outline-offset: 3px;
+}
+
+.auth-footer-prompt {
+  margin: var(--sp-6) 0 0;
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.auth-footer-prompt a {
+  color: var(--et-gold);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-footer-prompt a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-form-panel footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding-top: var(--sp-7);
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-micro);
+}
+
+/* --------------------------------------------- Responsivo (Mobile ≤ 720px) - */
+@media (max-width: 900px) {
+  .auth-shell {
+    grid-template-columns: 17fr 23fr;
+  }
+  .flow-swap-btn {
+    left: calc(42.5% - 24px);
+    width: 48px;
+    height: 48px;
+  }
+  .flow-swap-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 720px) {
+  body.auth-page {
+    display: block;
+    padding: var(--sp-3);
+  }
+
+  .auth-shell,
+  .auth-shell.register-variant {
+    display: block;
+    width: 100%;
+    min-height: auto;
+    border-radius: var(--et-radius-card);
+    background: var(--et-surface-dark);
+  }
+
+  /* Oculta o painel de marca e o botão flutuante no mobile */
+  .auth-brand-panel,
+  .flow-swap-btn {
+    display: none !important;
+  }
+
+  /* Card único no mobile */
+  .auth-form-panel {
+    padding: var(--sp-6) var(--sp-5) var(--sp-7);
+    border-radius: var(--et-radius-card);
+  }
+
+  .auth-form-wrap {
+    max-width: 100%;
+  }
+
+  .auth-mobile-emblem {
+    display: block;
+    width: 72px;
+    margin: 0 auto var(--sp-5);
+  }
+
+  .auth-mobile-emblem img {
+    display: block;
+    width: 100%;
+    height: auto;
+    mix-blend-mode: lighten;
+  }
+
+  /* Abas visíveis no mobile */
+  .auth-tabs {
+    display: flex;
+    margin-bottom: var(--sp-6);
+    border-bottom: 1px solid var(--et-line-dark);
+  }
+
+  .auth-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    color: var(--et-text-on-dark-muted);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: color 160ms ease, border-color 160ms ease;
+  }
+
+  .auth-tab.active,
+  .auth-tab[aria-current="page"] {
+    color: var(--et-gold);
+    border-bottom-color: var(--et-gold);
+  }
+
+  .auth-tab:focus-visible {
+    outline: 2px solid var(--et-gold);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-shell,
+  .flow-swap-btn,
+  .button-primary.auth-submit-btn {
+    transition: none !important;
+  }
+}

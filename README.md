@@ -133,6 +133,7 @@ A regressão de concorrência do Pix exige PostgreSQL, pois SQLite não aplica `
 - A aplicação envia `Strict-Transport-Security: max-age=31536000` quando `APP_BASE_URL` usa HTTPS em um domínio público. O cabeçalho não é enviado para `localhost` nem loopback.
 - Envio de imagem tem limite de **pixels**, não só de bytes. Um PNG de 285 KB pode declarar 10000x10000 e custar 1146 MB ao ser decodificado, num container de 192 MB. JPEG aceita até 80 MP (o decodificador entrega em escala reduzida e o custo fica em ~12 MB); PNG e WebP, que não têm esse recurso, aceitam até 8 MP. A recusa acontece lendo o cabeçalho, antes de alocar os pixels.
 - Trocar ou redefinir a senha encerra as outras sessões abertas com a credencial antiga, e descarta os links pendentes de recuperação, convite e troca de e-mail. Quem fez a troca continua conectado.
+- **Sair** revoga a sessão no servidor: cada login grava um identificador aleatório (`sid`) no cookie e o logout o registra em `sessoes_revogadas`, então uma cópia do cookie feita antes não volta a valer. Na publicação que trouxe esse controle (migration `b5d9c3e71a26`, aplicada pelo `flask db upgrade` do Dockerfile), quem já estava logado precisa entrar de novo uma única vez. Páginas de quem está autenticado saem com `Cache-Control: no-store`, para o botão "Voltar" não reexibir dados pessoais.
 - Desativar ou reprovar um aluno passa a valer na requisição seguinte, não só no próximo login. O mesmo vale para um professor removido.
 
 ### Credencial do administrador
@@ -229,7 +230,27 @@ MERCADO_PAGO_AMBIENTE=
 
 Se estiver rodando via `docker compose`, essas variáveis já são repassadas ao container pelo `compose.yaml` (a partir do `.env`).
 
-### Como obter credenciais de teste
+### Conectar a conta por OAuth (a academia não cria aplicativo)
+
+O caminho recomendado. Quem opera a plataforma cria **um único aplicativo** no Mercado Pago; a academia só clica em **Conectar Mercado Pago** em `/admin/academia`, autoriza na tela do Mercado Pago e volta. Nenhum token é copiado para o `.env` nem digitado por ninguém.
+
+Configuração, uma vez só:
+
+1. No painel de desenvolvedores do Mercado Pago, crie o aplicativo e, em *URLs de redirecionamento*, cadastre `{APP_BASE_URL}/admin/mercado-pago/callback`. Ative também o **PKCE** no aplicativo.
+2. No `.env` do servidor, preencha `MERCADO_PAGO_CLIENT_ID` e `MERCADO_PAGO_CLIENT_SECRET` (os do aplicativo, **não** os da conta da academia). `MERCADO_PAGO_WEBHOOK_SECRET` continua obrigatório: é a assinatura do aplicativo e vale para os pagamentos de todas as contas conectadas.
+3. Opcional, mas recomendado em produção: `MERCADO_PAGO_TOKEN_KEY` com uma chave Fernet dedicada (comando no `.env.example`). Sem ela, a chave de cifra é derivada da `SECRET_KEY`, e trocar a `SECRET_KEY` deixa os tokens ilegíveis até a academia reconectar.
+4. Rode `flask db upgrade` (cria a tabela `mercado_pago_conexao`; o Dockerfile já faz isso).
+
+Como funciona:
+
+- Os tokens ficam **cifrados** no banco (Fernet) e nunca aparecem em tela nem em log. A autorização usa `state` de uso único (10 min, preso à sessão do administrador) e PKCE `S256`.
+- O access token dura cerca de 180 dias e é **renovado sozinho** 15 dias antes de vencer. O refresh token é de uso único, então a renovação corre sob lock de linha para dois processos não gastarem o mesmo. Se o Mercado Pago recusar a renovação (autorização revogada), a tela mostra "Reconexão necessária" e basta clicar em Reconectar.
+- A conta conectada **tem prioridade** sobre `MERCADO_PAGO_ACCESS_TOKEN`. Sem conexão, o token do `.env` continua valendo, então uma instalação que já funciona não quebra ao atualizar. Desconectar volta a usar o token do `.env`, se houver.
+- Em modo `live_mode=false` (conta de teste), o Checkout Pro usa o sandbox, a menos que `MERCADO_PAGO_AMBIENTE` diga o contrário.
+- Trocar para **outra conta** do Mercado Pago não migra cobranças abertas: as que foram criadas na conta anterior deixam de ser confirmadas automaticamente (a tela avisa).
+- Para testar localmente é preciso um endereço público HTTPS (túnel) em `APP_BASE_URL`, porque o Mercado Pago só redireciona para a URL cadastrada no aplicativo.
+
+### Como obter credenciais de teste (modo manual, sem OAuth)
 
 1. Acesse [Suas integrações → Credenciais](https://www.mercadopago.com.br/developers/pt/docs/your-integrations/credentials) no painel de desenvolvedores do Mercado Pago.
 2. Crie (ou use) uma aplicação e copie o **Access Token de teste**.
@@ -269,7 +290,7 @@ registrado nos logs do deploy, evitando executar código novo sobre um schema an
 
 ### Trocando de credenciais de teste para produção
 
-Basta substituir `MERCADO_PAGO_ACCESS_TOKEN` e `MERCADO_PAGO_WEBHOOK_SECRET` no `.env` de produção pelos valores de produção, e recadastrar a URL do webhook (se o domínio mudou). **A conta e as credenciais de produção do Mercado Pago devem pertencer ao dono da academia** — nunca use uma conta de terceiros para receber os pagamentos reais dos alunos.
+Basta substituir `MERCADO_PAGO_ACCESS_TOKEN` e `MERCADO_PAGO_WEBHOOK_SECRET` no `.env` de produção pelos valores de produção, e recadastrar a URL do webhook (se o domínio mudou). **A conta de produção do Mercado Pago que recebe os pagamentos deve pertencer ao dono da academia** — nunca use uma conta de terceiros para receber os pagamentos reais dos alunos. Com OAuth, o aplicativo (client id/secret) fica com quem opera a plataforma, mas quem autoriza a conexão é o dono da academia, com a conta dele.
 
 ## Outras formas de pagamento (Checkout Pro)
 

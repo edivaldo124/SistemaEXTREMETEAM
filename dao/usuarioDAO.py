@@ -36,6 +36,17 @@ class AlunoDAO:
         return Aluno.query.all()
 
     @staticmethod
+    def listar_ativos():
+        """Alunos ativos (RN02: cadastro aprovado e não desativado), filtrados pelo banco.
+
+        Equivale a `Aluno.esta_ativo`. Carregar a tabela inteira para descartar o resto
+        em Python fazia o custo crescer com quem já saiu ou nunca foi aprovado.
+        """
+        return Aluno.query.filter(
+            Aluno.status_cadastro == 'aprovado', Aluno.ativo.is_(True),
+        ).all()
+
+    @staticmethod
     def listar_pendentes():
         return Aluno.query.filter_by(status_cadastro='pendente').all()
 
@@ -106,7 +117,12 @@ class AlunoDAO:
     def autenticar(usuario, senha):
         # Nome não é identificador: não é único e pode ser editado pelo próprio aluno.
         cpfs_possiveis = variantes_cpf(usuario)
-        aluno = Aluno.query.filter(
+        # `login`, `e-mail` e `cpf` são únicos CADA UM na sua coluna, mas nada impede que o
+        # `login` de um aluno seja o e-mail ou o CPF de outro. Escolher um único registro
+        # com `.first()` deixaria o atacante que cadastrou esse login "na frente" da
+        # vítima e ela seria recusada com a senha certa. São no máximo três candidatos
+        # (um por coluna); a senha decide quem entra.
+        candidatos = Aluno.query.filter(
             # Cadastro sem conta de acesso não é candidato a login. Sem este filtro, o
             # CPF - que é público e está impresso em qualquer ficha - selecionaria o
             # registro de um aluno matriculado pela administração.
@@ -114,13 +130,16 @@ class AlunoDAO:
             (Aluno.login == usuario) |
             (Aluno.email == usuario) |
             (Aluno.cpf.in_(cpfs_possiveis))
-        ).first()
+        ).order_by(Aluno.id).limit(3).all()
 
         # Mantém uma verificação de hash mesmo quando a conta não existe, reduzindo a
         # diferença de tempo usada para enumerar logins válidos.
-        senha_valida = aluno.verificar_senha(senha) if aluno else check_password_hash(_HASH_DESCARTAVEL, senha)
-        if aluno and senha_valida:
-            return aluno
+        if not candidatos:
+            check_password_hash(_HASH_DESCARTAVEL, senha)
+            return None
+        for aluno in candidatos:
+            if aluno.verificar_senha(senha):
+                return aluno
         return None
 
     @staticmethod

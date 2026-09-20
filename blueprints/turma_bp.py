@@ -239,7 +239,7 @@ def detalhe_turma(turma_id):
 
     eh_admin = sessao_administrativa_valida()
     ids_matriculados = {a.id for a in matriculados}
-    alunos_disponiveis = [a for a in AlunoDAO.listar_todos() if a.id not in ids_matriculados and a.esta_ativo] if eh_admin else []
+    alunos_disponiveis = [a for a in AlunoDAO.listar_ativos() if a.id not in ids_matriculados] if eh_admin else []
 
     return render_template(
         'turma.html',

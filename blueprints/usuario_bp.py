@@ -3,11 +3,12 @@ import hmac
 import logging
 import os
 import secrets
+import threading
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from flask import Blueprint, abort, flash, render_template, request, send_file, session, redirect, url_for
+from flask import Blueprint, abort, current_app, flash, render_template, request, send_file, session, redirect, url_for
 from flask_limiter.util import get_remote_address
 from sqlalchemy.exc import IntegrityError
 from config import db, limiter
@@ -49,7 +50,7 @@ from servicos.armazenamento import (
     salvar_comprovante_manual,
     salvar_foto_perfil,
 )
-from servicos import convites
+from servicos import convites, fila_email
 from servicos import planos as regras_plano
 from servicos.formatacao import (
     formatar_competencia,
@@ -64,6 +65,7 @@ from servicos.urls import URLPublicaInvalida, url_publica
 from servicos.senhas import erro_confirmacao_senha, erro_validacao_senha
 from servicos.autorizacao import (
     aluno_autorizado,
+    iniciar_sessao,
     professor_autorizado,
     registrar_credencial,
     sessao_administrativa_valida,
@@ -100,6 +102,41 @@ def _chave_da_conta():
     return f'ip:{get_remote_address()}'
 
 
+def _em_segundo_plano(tarefa, *args, **kwargs):
+    """Roda `tarefa` fora da requisição, para o tempo de resposta não revelar nada.
+
+    Em `/recuperar_senha` só o par CPF+e-mail que existe chama o provedor (até 10 s de
+    timeout). Feito na requisição, esse ramo demora centenas de milissegundos a mais
+    que o ramo "não existe" e serve de oráculo. A thread tem contexto e sessão de banco
+    próprios; o que a tarefa precisar do banco deve ser recarregado por id.
+
+    Sem thread de fundo (`FILA_EMAIL_SINCRONA`: testes e depuração local) roda na hora.
+    """
+    if os.environ.get('FILA_EMAIL_SINCRONA', '').lower() == 'true':
+        tarefa(*args, **kwargs)
+        return
+
+    app = current_app._get_current_object()
+
+    def _executar():
+        with app.app_context():
+            try:
+                tarefa(*args, **kwargs)
+            except Exception:
+                logger.exception('Tarefa em segundo plano falhou.')
+
+    threading.Thread(target=_executar, name='tarefa-segundo-plano', daemon=True).start()
+
+
+def _enviar_em_segundo_plano(*args, **kwargs):
+    """E-mail COM token (recuperação, confirmação): não pode ir para a `fila_email`.
+
+    A fila guarda o `link_url` em claro na tabela, e esses tokens hoje só existem como
+    hash no banco. Sai numa thread própria e o e-mail não persiste em lugar nenhum.
+    """
+    _em_segundo_plano(lambda: enviar_email(*args, **kwargs))
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 @limiter.limit('20 per minute', methods=['POST'])
 @limiter.limit(
@@ -114,6 +151,7 @@ def pagina_login():
         if credencial_admin_confere(login, senha):
             # Remove qualquer sessao anterior para evitar fixacao de sessao.
             session.clear()
+            iniciar_sessao()
             session['usuario'] = os.environ.get('ADMIN_USER')
             session['tipo_usuario'] = "admin"
             # Carimba a credencial administrativa em vigor: rotacionar
@@ -125,6 +163,7 @@ def pagina_login():
         professor = ProfessorDAO.autenticar(login, senha)
         if professor:
             session.clear()
+            iniciar_sessao()
             session['usuario'] = professor.login
             session['professor_id'] = professor.id
             session['tipo_usuario'] = "professor"
@@ -142,6 +181,7 @@ def pagina_login():
                 return render_template('login.html', msg='Sua conta está desativada. Fale com a administração.')
 
             session.clear()
+            iniciar_sessao()
             # O ID nao muda se o aluno editar o login ou o nome (o email so muda apos confirmacao).
             session['usuario'] = aluno.login
             session['aluno_id'] = aluno.id
@@ -151,16 +191,24 @@ def pagina_login():
             session.permanent = True
             return redirect('/perfil')
 
+        # Só o resumo do identificador: quem erra a tela às vezes digita a senha no campo
+        # de usuário, então o valor cru não pode ir para o log.
+        logger.warning(
+            'Login recusado: ip=%s id_sha256=%s',
+            get_remote_address(), hashlib.sha256(login.lower().encode()).hexdigest()[:12],
+        )
         return render_template('login.html', msg=MSG_ERRO)
 
     return render_template("login.html")
 
 
-# CPF já cadastrado nunca devolve o nome, o e-mail nem a situação de quem está na base:
-# quem digita um CPF de terceiro não pode descobrir nada sobre ele por aqui.
-MSG_CPF_JA_CADASTRADO = (
-    'Se este CPF já tiver cadastro na Extreme Team, enviamos as instruções de acesso para o '
-    'e-mail registrado na academia. Não recebeu? Fale com a administração.'
+# CPF ou e-mail já cadastrados nunca devolvem o nome, o e-mail nem a situação de quem
+# está na base: quem digita dados de terceiro não pode descobrir nada sobre ele por aqui.
+# Por isso a resposta é a MESMA para cadastro novo, CPF existente e e-mail existente.
+MSG_CADASTRO_RECEBIDO = (
+    'Recebemos sua solicitação. Você vai receber um e-mail com os próximos passos: a análise do '
+    'seu cadastro pela administração ou, se você já tiver cadastro na Extreme Team, as instruções '
+    'de acesso. Não recebeu? Fale com a administração.'
 )
 
 
@@ -182,6 +230,13 @@ def _convidar_cadastro_existente(aluno):
         logger.warning('Convite de acesso não pôde ser enviado no cadastro duplicado do aluno %s.', aluno.id)
 
 
+def _convidar_cadastro_existente_por_id(aluno_id):
+    """Versão para thread de fundo: a sessão da requisição não vale fora dela."""
+    aluno = db.session.get(Aluno, aluno_id)
+    if aluno:
+        _convidar_cadastro_existente(aluno)
+
+
 @auth_bp.route("/cadastrar", methods=["GET", "POST"])
 @limiter.limit('5 per hour', methods=['POST'])
 @limiter.limit(
@@ -201,24 +256,33 @@ def pagina_cadastro():
         descricao = (request.form.get("descricaousuario") or "").strip()
         aceitou_termos = request.form.get('aceite_termos_responsabilidade') == 'aceito'
 
+        # Repopula o formulário em qualquer erro abaixo, exceto os campos de senha
+        # (não é boa prática devolver senha digitada em HTML).
+        dados_formulario = {
+            "nome": nome, "login": login, "datanascimento": datanascimento, "cpf": cpf[:14],
+            "email": email, "telefone": telefone, "descricao": descricao,
+            "aceitou_termos": aceitou_termos,
+        }
+
         if not all([nome, login, datanascimento, cpf, senha.strip(), email, telefone]):
-            return render_template("cadastro.html", erro="Erro: Preencha todos os campos obrigatórios!")
+            return render_template("cadastro.html", erro="Erro: Preencha todos os campos obrigatórios!", dados=dados_formulario)
 
         if len(somente_digitos(request.form.get("cpfusuario"))) != 11:
-            return render_template("cadastro.html", erro="Erro: Informe um CPF com 11 dígitos!")
+            return render_template("cadastro.html", erro="Erro: Informe um CPF com 11 dígitos!", dados=dados_formulario)
 
-        if not email_valido(email) or len(login) > 50 or len(nome) > 150 or len(descricao) > 255:
-            return render_template("cadastro.html", erro="Erro: Verifique o e-mail e o tamanho dos campos informados.")
+        if (not email_valido(email) or len(login) > 50 or len(nome) > 150
+                or len(telefone) > 20 or len(descricao) > 255):
+            return render_template("cadastro.html", erro="Erro: Verifique o e-mail e o tamanho dos campos informados.", dados=dados_formulario)
 
         erro_senha = erro_validacao_senha(senha, login, email, cpf)
         if erro_senha:
-            return render_template("cadastro.html", erro=f"Erro: {erro_senha}")
+            return render_template("cadastro.html", erro=f"Erro: {erro_senha}", dados=dados_formulario)
 
         # A confirmação é comparada antes de qualquer gravação e não vai para lugar
         # nenhum depois disso: nem para o banco, nem para log.
         erro_confirmacao = erro_confirmacao_senha(senha, confirmacao)
         if erro_confirmacao:
-            return render_template("cadastro.html", erro=f"Erro: {erro_confirmacao}")
+            return render_template("cadastro.html", erro=f"Erro: {erro_confirmacao}", dados=dados_formulario)
 
         # `required` no HTML é apenas uma conveniência. A confirmação também é
         # validada aqui para impedir cadastros enviados diretamente à rota.
@@ -226,18 +290,40 @@ def pagina_cadastro():
             return render_template(
                 "cadastro.html",
                 erro='Erro: Leia e aceite o Termo de Responsabilidade para continuar.',
+                dados=dados_formulario,
             )
 
+        # Os ramos de colisão de CPF e de e-mail respondem IGUAL ao cadastro novo e fazem o
+        # mesmo trabalho caro (o hash da senha), sem criar nada e sem esperar o provedor de
+        # e-mail: nem o texto nem o tempo dizem se o CPF ou o e-mail já existem.
         ja_cadastrado = Aluno.query.filter(Aluno.cpf.in_(variantes_cpf(cpf))).first()
         if ja_cadastrado:
-            _convidar_cadastro_existente(ja_cadastrado)
-            return render_template("login.html", msg=MSG_CPF_JA_CADASTRADO)
+            generate_password_hash(senha)
+            _em_segundo_plano(_convidar_cadastro_existente_por_id, ja_cadastrado.id)
+            return render_template("login.html", msg=MSG_CADASTRO_RECEBIDO)
 
+        # O nome de usuário continua com aviso explícito: quem escolhe um já usado
+        # precisa saber para trocar. Não é dado pessoal, ao contrário de CPF e e-mail.
         if Aluno.query.filter_by(login=login).first():
-            return render_template("cadastro.html", erro="Erro: Este usuário já está cadastrado!")
+            return render_template("cadastro.html", erro="Erro: Este usuário já está em uso. Escolha outro.", dados=dados_formulario)
 
-        if Aluno.query.filter_by(email=email).first():
-            return render_template("cadastro.html", erro="Erro: Este e-mail já está cadastrado!")
+        dono_do_email = Aluno.query.filter_by(email=email).first()
+        if dono_do_email:
+            generate_password_hash(senha)
+            # Quem manda no endereço fica sabendo do pedido; quem digitou não descobre nada.
+            fila_email.enfileirar_transacional(
+                f'cadastro-email-existente:{dono_do_email.id}',
+                destinatario=dono_do_email.email, nome_destinatario=dono_do_email.nome,
+                assunto='Pedido de cadastro com o seu e-mail — Extreme Team',
+                titulo='Pedido de cadastro com o seu e-mail',
+                paragrafos=[
+                    f'Olá, {(dono_do_email.nome or "").split()[0] if (dono_do_email.nome or "").strip() else "aluno"}.',
+                    'Alguém tentou criar um cadastro na Extreme Team usando este e-mail, que já está associado a uma conta.',
+                    'Se foi você, entre pela página de login com o seu usuário e use "Esqueci minha senha" se precisar.',
+                    'Se não foi você, pode ignorar este e-mail: nada foi alterado.',
+                ],
+            )
+            return render_template("login.html", msg=MSG_CADASTRO_RECEBIDO)
 
         novo_aluno = Aluno(
             nome=nome, login=login, datanascimento=datanascimento, cpf=cpf,
@@ -250,11 +336,13 @@ def pagina_cadastro():
             AlunoDAO.salvar(novo_aluno)
         except IntegrityError:
             db.session.rollback()
-            return render_template("cadastro.html", erro="Erro: Não foi possível cadastrar. Verifique se os dados já estão em uso.")
+            return render_template("cadastro.html", erro="Erro: Não foi possível cadastrar. Verifique se os dados já estão em uso.", dados=dados_formulario)
 
-        enviar_email(
-            email, nome, 'Cadastro recebido — Extreme Team', 'Recebemos seu cadastro',
-            [
+        fila_email.enfileirar_transacional(
+            f'cadastro-recebido:{novo_aluno.id}',
+            destinatario=email, nome_destinatario=nome,
+            assunto='Cadastro recebido — Extreme Team', titulo='Recebemos seu cadastro',
+            paragrafos=[
                 f'Olá, {nome.split()[0]}!',
                 'Seu cadastro na Extreme Team foi recebido e está em análise pela nossa administração.',
                 'Assim que for aprovado, você poderá entrar com seu usuário e senha.',
@@ -268,9 +356,11 @@ def pagina_cadastro():
             except URLPublicaInvalida:
                 logger.error('APP_BASE_URL inválida; aviso de novo cadastro não foi enviado ao administrador.')
             else:
-                enviar_email(
-                    admin_email, 'Administração', 'Novo cadastro aguardando aprovação — Extreme Team', 'Novo cadastro pendente',
-                    [
+                fila_email.enfileirar_transacional(
+                    f'cadastro-aviso-admin:{novo_aluno.id}',
+                    destinatario=admin_email, nome_destinatario='Administração',
+                    assunto='Novo cadastro aguardando aprovação — Extreme Team', titulo='Novo cadastro pendente',
+                    paragrafos=[
                         f'O aluno {nome} acabou de se cadastrar e está aguardando aprovação.',
                         f'E-mail: {email}',
                         f'Telefone: {telefone}',
@@ -280,7 +370,7 @@ def pagina_cadastro():
                     link_texto='Abrir painel administrativo',
                 )
 
-        return render_template('login.html', msg='Cadastro enviado! Assim que for aprovado pela administração você poderá entrar.')
+        return render_template('login.html', msg=MSG_CADASTRO_RECEBIDO)
 
     return render_template("cadastro.html")
 
@@ -445,6 +535,9 @@ def _aluno_da_sessao():
 
 
 @auth_bp.route("/perfil/dados", methods=["POST"])
+# Cada tentativa confere a senha atual (hash). Mesmo teto das rotas irmãs, por CONTA:
+# quem tem só a sessão (cookie roubado, aparelho compartilhado) não pode adivinhá-la aqui.
+@limiter.limit('15 per hour', key_func=_chave_da_conta)
 def atualizar_dados_perfil():
     aluno = _aluno_da_sessao()
     if not aluno:
@@ -464,6 +557,12 @@ def atualizar_dados_perfil():
         flash('Preencha nome e usuário para salvar as alterações.', 'erro')
         return redirect('/perfil')
 
+    # Mesmos limites das colunas e do /cadastrar: acima deles o PostgreSQL recusa a
+    # gravação e a rota responderia 500.
+    if len(nome) > 150 or len(login) > 50 or len(telefone) > 20 or len(descricao) > 255:
+        flash('Algum campo passou do tamanho permitido (nome 150, usuário 50, telefone 20, descrição 255).', 'erro')
+        return redirect('/perfil')
+
     if Aluno.query.filter(Aluno.login == login, Aluno.id != aluno.id).first():
         flash('Este nome de usuário já está em uso.', 'erro')
         return redirect('/perfil')
@@ -472,7 +571,13 @@ def atualizar_dados_perfil():
     aluno.login = login
     aluno.telefone = telefone
     aluno.descricao = descricao
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        # Outro aluno pegou o mesmo login entre a checagem acima e a gravação.
+        db.session.rollback()
+        flash('Este nome de usuário já está em uso.', 'erro')
+        return redirect('/perfil')
 
     # Mantem a sessao coerente caso o login exibido tenha mudado.
     session['usuario'] = aluno.login
@@ -516,9 +621,11 @@ def alterar_senha_perfil():
     db.session.commit()
     registrar_credencial(aluno.senha_hash)
 
-    enviar_email(
-        aluno.email, aluno.nome, 'Sua senha foi alterada — Extreme Team', 'Senha alterada com sucesso',
-        [
+    fila_email.enfileirar_transacional(
+        f'senha-alterada:{aluno.id}',
+        destinatario=aluno.email, nome_destinatario=aluno.nome,
+        assunto='Sua senha foi alterada — Extreme Team', titulo='Senha alterada com sucesso',
+        paragrafos=[
             f'Olá, {aluno.nome.split()[0]}.',
             'A senha da sua conta na Extreme Team acabou de ser alterada pelo seu perfil.',
             'Se não foi você quem fez isso, entre em contato com a nossa administração imediatamente.',
@@ -549,6 +656,11 @@ def solicitar_troca_email():
         flash('Informe o novo e-mail.', 'erro')
         return redirect('/perfil')
 
+    # `email_pendente` é String(150) e o endereço vai direto para o provedor de e-mail.
+    if not email_valido(novo_email):
+        flash('Informe um e-mail válido, com até 150 caracteres.', 'erro')
+        return redirect('/perfil')
+
     if novo_email == aluno.email:
         flash('Este já é o seu e-mail atual.', 'erro')
         return redirect('/perfil')
@@ -570,7 +682,8 @@ def solicitar_troca_email():
     aluno.token_email_expira = datetime.utcnow() + TOKEN_EMAIL_VALIDADE
     db.session.commit()
 
-    enviar_email(
+    # Com token: fora da fila (ver `_enviar_em_segundo_plano`). Sem token: pela fila.
+    _enviar_em_segundo_plano(
         novo_email, aluno.nome, 'Confirme seu novo e-mail — Extreme Team', 'Confirme seu novo e-mail',
         [
             f'Olá, {aluno.nome.split()[0]}.',
@@ -581,9 +694,11 @@ def solicitar_troca_email():
         link_url=link_confirmacao,
         link_texto='Confirmar novo e-mail',
     )
-    enviar_email(
-        aluno.email, aluno.nome, 'Pedido de troca de e-mail — Extreme Team', 'Pedido de troca de e-mail',
-        [
+    fila_email.enfileirar_transacional(
+        f'troca-email-aviso:{aluno.id}',
+        destinatario=aluno.email, nome_destinatario=aluno.nome,
+        assunto='Pedido de troca de e-mail — Extreme Team', titulo='Pedido de troca de e-mail',
+        paragrafos=[
             f'Olá, {aluno.nome.split()[0]}.',
             f'Foi solicitada a troca do e-mail da sua conta na Extreme Team para {novo_email}.',
             'Enviamos um link de confirmação para o novo endereço. Se não foi você quem pediu, fale com a nossa administração.',
@@ -613,9 +728,9 @@ def confirmar_email(token):
         return redirect('/perfil' if session.get('tipo_usuario') == 'aluno' else '/login')
 
     aluno.email = aluno.email_pendente
-    aluno.email_pendente = None
-    aluno.token_email_hash = None
-    aluno.token_email_expira = None
+    # Link de recuperação ou de convite enviado ao endereço ANTIGO não pode continuar
+    # valendo depois da troca: quem ainda controla a caixa velha assumiria a conta.
+    _revogar_tokens_de_conta(aluno)
     db.session.commit()
 
     flash('E-mail confirmado e atualizado com sucesso.', 'sucesso')
@@ -660,6 +775,11 @@ def ativar_acesso(token):
                 "ativar_acesso.html", erro="Escolha um nome de usuário com até 50 caracteres e uma senha.", **contexto,
             ), 400
 
+        if len(telefone) > 20:
+            return render_template(
+                "ativar_acesso.html", erro="Informe um telefone com até 20 caracteres.", **contexto,
+            ), 400
+
         if Aluno.query.filter(Aluno.login == login, Aluno.id != aluno.id).first():
             return render_template(
                 "ativar_acesso.html", erro="Este nome de usuário já está em uso. Escolha outro.", **contexto,
@@ -701,9 +821,11 @@ def ativar_acesso(token):
                 "ativar_acesso.html", erro="Este nome de usuário já está em uso. Escolha outro.", **contexto,
             ), 400
 
-        enviar_email(
-            aluno.email, aluno.nome, 'Acesso ativado — Extreme Team', 'Seu acesso está ativo',
-            [
+        fila_email.enfileirar_transacional(
+            f'acesso-ativado:{aluno.id}',
+            destinatario=aluno.email, nome_destinatario=aluno.nome,
+            assunto='Acesso ativado — Extreme Team', titulo='Seu acesso está ativo',
+            paragrafos=[
                 f'Olá, {contexto["primeiro_nome"] or "aluno"}.',
                 f'Seu acesso à área do aluno da Extreme Team foi ativado com o usuário {login}.',
                 'Se não foi você quem fez isso, fale com a nossa administração imediatamente.',
@@ -746,7 +868,7 @@ def recuperar_senha():
             aluno.token_recuperacao_expira = datetime.utcnow() + TOKEN_RECUPERACAO_VALIDADE
             db.session.commit()
 
-            enviar_email(
+            _enviar_em_segundo_plano(
                 aluno.email, aluno.nome, 'Redefinir sua senha — Extreme Team', 'Redefinir sua senha',
                 [
                     f'Olá, {aluno.nome.split()[0]}.',
@@ -790,9 +912,11 @@ def redefinir_senha(token):
         _revogar_tokens_de_conta(aluno)
         db.session.commit()
 
-        enviar_email(
-            aluno.email, aluno.nome, 'Sua senha foi alterada — Extreme Team', 'Senha alterada com sucesso',
-            [
+        fila_email.enfileirar_transacional(
+            f'senha-redefinida:{aluno.id}',
+            destinatario=aluno.email, nome_destinatario=aluno.nome,
+            assunto='Sua senha foi alterada — Extreme Team', titulo='Senha alterada com sucesso',
+            paragrafos=[
                 f'Olá, {aluno.nome.split()[0]}.',
                 'A senha da sua conta na Extreme Team acabou de ser alterada.',
                 'Se não foi você quem fez isso, entre em contato com a nossa administração imediatamente.',

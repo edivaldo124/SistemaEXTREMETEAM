@@ -1,125 +1,208 @@
 /* =========================================================================
-   Criação de conta. Painel de marca à esquerda, formulário à direita.
-   Os campos são agrupados em três blocos nomeados — a ordem do envio e os
-   nomes dos campos continuam exatamente os mesmos.
+   Extreme Team - Folha de Cadastro (/cadastrar) e Termos de Responsabilidade
+   Complementa auth.css com os grupos de campos e blocos de termos.
    ========================================================================= */
 
-.register-shell {
-  display:grid; grid-template-columns:minmax(300px,.62fr) minmax(520px,1.38fr);
-  gap:var(--sp-5);
-  margin:var(--sp-5) clamp(var(--sp-4),3vw,var(--sp-7)) var(--sp-8);
+/* ---------------------------------------------------- Grupos de Campos --- */
+.form-grupo {
+  min-width: 0;
+  margin: 0 0 var(--sp-6);
+  padding: 0;
+  border: 0;
 }
 
-/* ---------------------------------------------------- painel de marca --- */
-
-.register-shell aside {
-  position:relative; display:flex; flex-direction:column; justify-content:center;
-  gap:var(--sp-6); padding:var(--sp-9) clamp(var(--sp-6),4vw,var(--sp-9));
-  border-radius:var(--radius-lg);
-  overflow:hidden; color:var(--text-on-ink); background:var(--ink);
-}
-.register-shell aside::before {
-  content:""; position:absolute; inset:auto -30% -40% -30%; height:70%;
-  background:radial-gradient(ellipse at 50% 100%,rgba(214,162,16,.28),transparent 70%);
-  pointer-events:none;
-}
-.register-shell aside > * { position:relative; z-index:1; }
-.register-shell aside h1 {
-  margin:0;
-  font:700 clamp(38px,4.2vw,60px)/.95 var(--display);
-  letter-spacing:-.01em; text-transform:uppercase;
-}
-.register-shell aside > p:not(.eyebrow) {
-  max-width:44ch; margin:0;
-  color:var(--text-on-ink-2); font-size:var(--fs-md); line-height:1.7;
-}
-/* Três etapas reais do cadastro: a numeração aqui informa a ordem. */
-.register-shell ol { margin:0; padding:0; list-style:none; }
-.register-shell li {
-  display:flex; align-items:center; gap:var(--sp-4);
-  padding:var(--sp-3) 0; border-top:1px solid var(--ink-3);
-  color:var(--text-on-ink); font-size:var(--fs-sm); font-weight:600;
-}
-.register-shell li span {
-  flex:0 0 auto; color:var(--yellow);
-  font:700 var(--fs-sm) var(--body); font-variant-numeric:tabular-nums;
-}
-
-/* ------------------------------------------------------- formulário ----- */
-
-.register-panel {
-  padding:clamp(var(--sp-7),4vw,var(--sp-9)) clamp(var(--sp-6),4vw,var(--sp-9));
-  border:1px solid var(--line); border-radius:var(--radius-lg);
-  background:var(--surface); box-shadow:var(--shadow-card);
-}
-.register-panel .form-heading { max-width:60ch; margin-bottom:var(--sp-7); }
-.register-panel .form-heading h2 { margin:0; }
-.register-panel .page-subtitle { margin:var(--sp-3) 0 0; color:var(--text-2); font-size:var(--fs-md); }
-.register-panel .msg { margin-bottom:var(--sp-6); }
-
-/* Grupo de campos: o título numerado diz em que ponto do cadastro você está. */
-.form-grupo { min-width:0; margin:0 0 var(--sp-7); padding:0; border:0; }
 .form-grupo legend {
-  display:flex; align-items:center; gap:var(--sp-3);
-  width:100%; margin-bottom:var(--sp-5); padding:0 0 var(--sp-3);
-  border-bottom:1px solid var(--line);
-  font:700 var(--h3)/1.2 var(--display); text-transform:uppercase; letter-spacing:.01em;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  margin-bottom: var(--sp-4);
+  padding: 0 0 var(--sp-3);
+  border-bottom: 1px solid var(--et-line-dark);
+  font-family: var(--et-font-display);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--et-gold);
 }
-.form-grupo .round-badge { width:34px; height:34px; font-size:15px; }
 
-.form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-5); }
-.field-wide { grid-column:1/-1; }
+.form-grupo .round-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--et-gold-gradient);
+  color: var(--et-black);
+  font-family: var(--et-font-display);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+}
 
-.register-panel .button-primary { width:100%; min-height:54px; }
-.account-header > a:last-child { min-height:44px; }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
 
-/* Aceite não é mais um campo do cadastro: ganha área própria para que a pessoa
-   encontre o documento e entenda o compromisso antes de enviar os dados. */
+.field-wide {
+  grid-column: 1 / -1;
+}
+
+.field-erro {
+  margin: var(--sp-2) 0 0;
+  color: var(--et-bad-ink-dark);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+
+/* -------------------------------------------------- Aceite dos Termos ---- */
 .termos-aceite {
-  display:grid; gap:var(--sp-4); margin:0 0 var(--sp-6); padding:var(--sp-5);
-  border:1px solid var(--line-strong); border-left:4px solid var(--gold);
-  border-radius:var(--radius); background:var(--surface-2);
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0 var(--sp-6);
+  padding: var(--sp-5);
+  border: 1px solid var(--et-line-dark);
+  border-left: 4px solid var(--et-gold);
+  border-radius: var(--et-radius-control);
+  background: var(--et-surface-dark-2);
 }
-.termos-aceite .eyebrow { margin-bottom:var(--sp-1); }
+
+.termos-aceite .eyebrow {
+  margin: 0 0 var(--sp-1);
+  color: var(--et-gold);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .termos-aceite h3 {
-  margin:0; font:700 var(--fs-lg)/1.1 var(--display);
-  letter-spacing:.01em; text-transform:uppercase;
+  margin: 0;
+  font-family: var(--et-font-display);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--et-text-on-dark);
 }
-.termos-aceite .opcao-inline { font-size:var(--fs-sm); }
-.termos-aceite a { color:var(--text); font-weight:700; text-decoration-thickness:2px; text-underline-offset:2px; }
-.termos-aceite a:hover { color:var(--forest); }
-.termos-aceite a:focus-visible { outline:2px solid var(--focus-ink); outline-offset:3px; }
 
-/* Documento público: leitura contínua, com divisões discretas em vez de uma
-   sequência de cartões que faria o termo parecer uma lista de promoções. */
-.termos-documento { max-width:900px; }
-.termos-documento > section { padding:var(--sp-5) 0; border-top:1px solid var(--line); }
-.termos-documento > section:first-of-type { margin-top:var(--sp-7); }
+.termos-aceite .opcao-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--et-text-on-dark-muted);
+}
+
+.termos-aceite .opcao-inline input[type="checkbox"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.termos-aceite a {
+  color: var(--et-gold);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.termos-aceite a:hover {
+  color: var(--et-gold-light);
+}
+
+/* ------------------------------------------- Documento de Termos Completo - */
+.termos-page-shell {
+  max-width: 860px;
+  margin: var(--sp-6) auto var(--sp-9);
+  padding: clamp(var(--sp-6), 5vw, var(--sp-9));
+  border: 1px solid var(--et-line-dark);
+  border-radius: var(--et-radius-card);
+  background: var(--et-surface-dark);
+  color: var(--et-text-on-dark);
+  box-shadow: var(--et-shadow-dark);
+}
+
+.termos-documento > section {
+  padding: var(--sp-5) 0;
+  border-top: 1px solid var(--et-line-dark);
+}
+
+.termos-documento > section:first-of-type {
+  margin-top: var(--sp-6);
+}
+
 .termos-documento h2 {
-  margin:0; font:700 var(--fs-lg)/1.15 var(--display);
-  letter-spacing:.01em; text-transform:uppercase;
+  margin: 0;
+  font-family: var(--et-font-display);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--et-gold);
 }
-.termos-documento section p { margin:var(--sp-2) 0 0; color:var(--text-2); font-size:var(--fs-sm); line-height:1.7; }
-.termos-nota { margin:var(--sp-3) 0 0; padding:var(--sp-4); border-radius:var(--radius-sm); color:var(--green-ink); background:var(--green-bg); font-size:var(--fs-sm); font-weight:600; }
 
-@media (max-width:900px) {
-  .register-shell { grid-template-columns:1fr; gap:var(--sp-4); margin-top:var(--sp-4); }
-  /* Empilhado, o painel de marca é só a chamada: as três etapas repetem o que
-     o formulário já mostra e empurravam o primeiro campo para fora da tela. */
-  .register-shell aside { gap:var(--sp-3); padding:var(--sp-6) var(--sp-5); }
-  .register-shell aside ol { display:none; }
+.termos-documento section p {
+  margin: var(--sp-2) 0 0;
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
 }
-@media (max-width:560px) {
-  .register-shell { margin-inline:var(--sp-3); margin-bottom:var(--sp-6); }
-  .register-shell aside,.register-panel { border-radius:var(--radius-card); }
-  .form-grid { grid-template-columns:1fr; gap:var(--sp-4); }
-  .field-wide { grid-column:auto; }
-  .register-shell aside h1 { font-size:32px; }
-  .register-shell aside > p:not(.eyebrow) { font-size:var(--fs-sm); }
-  .register-panel { padding:var(--sp-5); }
-  .register-panel .form-heading { margin-bottom:var(--sp-5); }
-  .register-panel .page-subtitle { font-size:var(--fs-sm); }
-  .form-grupo { margin-bottom:var(--sp-5); }
-  .form-grupo legend { margin-bottom:var(--sp-4); padding-bottom:var(--sp-2); font-size:var(--fs-lg); }
-  .form-grupo .round-badge { width:30px; height:30px; font-size:14px; }
+
+.termos-nota {
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-4);
+  border-radius: var(--et-radius-control);
+  color: var(--et-ok-ink-dark);
+  background: var(--et-ok-bg-dark);
+  border: 1px solid rgba(34, 164, 93, 0.3);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--et-line-dark);
+}
+
+.account-header .site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  text-decoration: none;
+  color: var(--et-text);
+}
+
+.account-header .site-brand img {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--et-radius-control);
+}
+
+.account-header a:last-child {
+  color: var(--et-gold-dark);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.account-header a:last-child:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .field-wide {
+    grid-column: auto;
+  }
 }

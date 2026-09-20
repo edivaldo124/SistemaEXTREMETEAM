@@ -4,6 +4,7 @@
         <meta charset="UTF-8">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#000000">
         <title>Recuperar senha | Centro de Treinamento Extreme Team</title>
         <link rel="icon"
               type="image/png"
@@ -11,45 +12,44 @@
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/theme.css') }}">
         <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/auth.css') }}">
+        <link rel="stylesheet"
               href="{{ url_for('static', filename='css/recuperar.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
-    <body>
-        <main class="recovery-shell">
-            <section class="recovery-brand">
-                <a class="site-brand" href="/">
-                    <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
-                         alt="">
-                    <span>
-                        Centro de treinamento
-                        <br>
-                        <strong>Extreme Team</strong>
-                    </span>
-                </a>
-                <div>
-                    <p class="eyebrow">Recuperação segura</p>
-                    <h1>
-                        Volte para
-                        <br>
-                        o seu ritmo.
-                    </h1>
-                    <p>Confirme seus dados cadastrados e defina uma nova senha de acesso.</p>
+    <body class="auth-page">
+        <a class="skip-link" href="#recuperar-form">Ir para o formulário</a>
+        <main class="auth-shell recovery-shell">
+            <section class="auth-brand-panel" aria-labelledby="brand-title">
+                <div class="auth-brand-inner">
+                    <a class="auth-brand-emblem" href="/" aria-label="Extreme Team, página inicial">
+                        <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team" width="200" height="200">
+                    </a>
+                    <h1 id="brand-title"> Volte para <br> o seu <em>ritmo</em>. </h1>
+                    <p>Confirme seus dados cadastrados e enviaremos o link para você definir uma nova senha de acesso.</p>
                 </div>
             </section>
-            <section class="recovery-panel">
-                <div class="recovery-form entra">
-                    <a class="back-link" href="/login">Voltar ao login</a>
-                    <p class="eyebrow">Redefinir acesso</p>
-                    <h2 class="page-title">Recuperar senha</h2>
-                    <p class="page-subtitle">
-                        Use o CPF e e-mail vinculados à sua conta. Enviaremos um link para você escolher uma nova senha.
-                    </p>
+
+            <section class="auth-form-panel recovery-panel" aria-labelledby="recovery-title">
+                <a class="auth-mobile-emblem" href="/" aria-label="Extreme Team, página inicial">
+                    <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team" width="72" height="72">
+                </a>
+                <div class="auth-form-wrap recovery-form">
+                    <a class="back-link" href="/login">
+                        <span aria-hidden="true">&larr;</span> Voltar ao login
+                    </a>
+                    <div class="auth-form-heading">
+                        <h2 id="recovery-title" class="page-title">Recuperar senha</h2>
+                        <p class="page-subtitle">
+                            Use o CPF e o e-mail vinculados à sua conta. Enviaremos um link para você escolher uma nova senha.
+                        </p>
+                    </div>
                     {% if erro %}
-                        <div class="msg" role="alert">{{ erro }}</div>
+                        <div class="alert msg" role="alert">{{ erro }}</div>
                     {% endif %}
-                    <form action="/recuperar_senha" method="post">
-                    {% include "components/csrf_field.html" %}
+                    <form id="recuperar-form" action="/recuperar_senha" method="post">
+                        {% include "components/csrf_field.html" %}
                         <div class="field">
                             <label for="cpf">CPF</label>
                             <input id="cpf"
@@ -60,15 +60,25 @@
                                    autocomplete="off"
                                    placeholder="000.000.000-00"
                                    data-mask="cpf"
-                                   required>
+                                   required
+                                   autofocus>
                         </div>
                         <div class="field">
                             <label for="email">E-mail cadastrado</label>
-                            <input id="email" type="email" name="email" autocomplete="email" required>
+                            <input id="email"
+                                   type="email"
+                                   name="email"
+                                   autocomplete="email"
+                                   placeholder="seu.email@exemplo.com"
+                                   required>
                         </div>
-                        <button class="button-primary" type="submit">Enviar link de recuperação</button>
+                        <button class="button-primary auth-submit-btn" type="submit">Enviar link de recuperação</button>
                     </form>
                 </div>
+                <footer>
+                    <span>© 2026 Centro de Treinamento Extreme Team</span>
+                    <span>Força &amp; disciplina</span>
+                </footer>
             </section>
         </main>
         <script src="{{ url_for('static', filename='js/masks.js') }}"></script>

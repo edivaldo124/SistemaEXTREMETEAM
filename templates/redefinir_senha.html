@@ -4,6 +4,7 @@
         <meta charset="UTF-8">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#000000">
         <title>Nova senha | Centro de Treinamento Extreme Team</title>
         <link rel="icon"
               type="image/png"
@@ -11,56 +12,62 @@
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/theme.css') }}">
         <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/auth.css') }}">
+        <link rel="stylesheet"
               href="{{ url_for('static', filename='css/recuperar.css') }}">
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
-    <body>
-        <main class="recovery-shell">
-            <section class="recovery-brand">
-                <a class="site-brand" href="/">
-                    <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
-                         alt="">
-                    <span>
-                        Centro de treinamento
-                        <br>
-                        <strong>Extreme Team</strong>
-                    </span>
-                </a>
-                <div>
-                    <p class="eyebrow">Recuperação segura</p>
-                    <h1>
-                        Volte para
-                        <br>
-                        o seu ritmo.
-                    </h1>
-                    <p>Escolha uma nova senha de acesso.</p>
+    <body class="auth-page">
+        <a class="skip-link" href="#redefinir-form">Ir para o formulário</a>
+        <main class="auth-shell recovery-shell">
+            <section class="auth-brand-panel" aria-labelledby="brand-title">
+                <div class="auth-brand-inner">
+                    <a class="auth-brand-emblem" href="/" aria-label="Extreme Team, página inicial">
+                        <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team" width="200" height="200">
+                    </a>
+                    <h1 id="brand-title"> Volte para <br> o seu <em>ritmo</em>. </h1>
+                    <p>Defina sua nova senha de acesso e continue sua evolução.</p>
                 </div>
             </section>
-            <section class="recovery-panel">
-                <div class="recovery-form entra">
-                    <a class="back-link" href="/login">Voltar ao login</a>
-                    <p class="eyebrow">Redefinir acesso</p>
-                    <h2 class="page-title">Nova senha</h2>
-                    <p class="page-subtitle">Escolha uma nova senha para sua conta.</p>
+
+            <section class="auth-form-panel recovery-panel" aria-labelledby="redefinir-title">
+                <a class="auth-mobile-emblem" href="/" aria-label="Extreme Team, página inicial">
+                    <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team" width="72" height="72">
+                </a>
+                <div class="auth-form-wrap recovery-form">
+                    <a class="back-link" href="/login">
+                        <span aria-hidden="true">&larr;</span> Voltar ao login
+                    </a>
+                    <div class="auth-form-heading">
+                        <h2 id="redefinir-title" class="page-title">Nova senha</h2>
+                        <p class="page-subtitle">Escolha uma nova senha segura para sua conta (mínimo de 8 caracteres).</p>
+                    </div>
                     {% if erro %}
-                        <div class="msg" role="alert">{{ erro }}</div>
+                        <div class="alert msg" role="alert">{{ erro }}</div>
                     {% endif %}
-                    <form action="{{ url_for('auth.redefinir_senha', token=token) }}"
+                    <form id="redefinir-form"
+                          action="{{ url_for('auth.redefinir_senha', token=token) }}"
                           method="post">
-                    {% include "components/csrf_field.html" %}
+                        {% include "components/csrf_field.html" %}
                         <div class="field">
                             <label for="nova_senha">Nova senha</label>
                             <input id="nova_senha"
                                    type="password"
                                    name="nova_senha"
                                    autocomplete="new-password"
+                                   placeholder="Digite sua nova senha"
                                    minlength="8"
-                                   required>
+                                   required
+                                   autofocus>
                         </div>
-                        <button class="button-primary" type="submit">Salvar nova senha</button>
+                        <button class="button-primary auth-submit-btn" type="submit">Salvar nova senha</button>
                     </form>
                 </div>
+                <footer>
+                    <span>© 2026 Centro de Treinamento Extreme Team</span>
+                    <span>Força &amp; disciplina</span>
+                </footer>
             </section>
         </main>
     </body>

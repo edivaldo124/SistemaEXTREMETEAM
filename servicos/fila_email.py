@@ -27,6 +27,7 @@ banco, que sobrevive a ela.
 """
 import logging
 import os
+import secrets
 import threading
 from datetime import datetime, timedelta
 
@@ -109,6 +110,34 @@ def enfileirar(*, destinatario, nome_destinatario, assunto, titulo, paragrafos,
             existente.proxima_tentativa = datetime.utcnow()
             return existente
         return None
+    return item
+
+
+def enfileirar_transacional(evento, *, destinatario, nome_destinatario, assunto, titulo,
+                            paragrafos, link_url=None, link_texto=None):
+    """E-mail transacional que NÃO carrega token, pela fila durável e fora da requisição.
+
+    Enviar direto segura uma das threads HTTP por até 10 s de timeout do provedor, e um
+    processo reiniciado no meio perde o e-mail. Aqui a requisição só grava a linha.
+
+    Não use para e-mail com link de token (recuperação, confirmação, convite): a fila
+    guarda o `link_url` em claro na tabela, e esses tokens hoje só existem como hash.
+
+    A chave leva um sufixo aleatório porque a idempotência existe para absorver clique
+    duplo em lote, não para engolir o segundo evento legítimo (duas trocas de senha no
+    mesmo dia). Faz commit: o e-mail é o último passo da rota.
+    """
+    item = enfileirar(
+        destinatario=destinatario, nome_destinatario=nome_destinatario, assunto=assunto,
+        titulo=titulo, paragrafos=paragrafos, link_url=link_url, link_texto=link_texto,
+        chave_idempotencia=f'{evento}:{secrets.token_hex(12)}',
+    )
+    db.session.commit()
+    if os.environ.get('FILA_EMAIL_SINCRONA', '').lower() == 'true':
+        # Sem thread de fundo (testes, depuração local): entrega na hora, como o resto.
+        processar_agora()
+    else:
+        disparar()
     return item
 
 

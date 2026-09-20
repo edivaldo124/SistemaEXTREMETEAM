@@ -5,8 +5,13 @@ from config import db
 from modelos.academia import Academia
 from servicos.autorizacao import admin_requerido
 from servicos.contatos import validar_email, validar_instagram, validar_whatsapp
+from servicos.mercado_pago_conta import estado_conexao
 
 academia_bp = Blueprint('academia', __name__)
+
+
+def _pagina(dados, status=200):
+    return render_template('admin_academia.html', dados=dados, mp=estado_conexao()), status
 
 
 @academia_bp.route('/admin/academia', methods=['GET', 'POST'])
@@ -30,7 +35,7 @@ def configuracoes():
                 raise ValueError('Preencha o endereço antes de adicionar um complemento.')
         except ValueError as exc:
             flash(str(exc), 'erro')
-            return render_template('admin_academia.html', dados=dados), 400
+            return _pagina(dados, 400)
 
         academia = academia or Academia(id=1)
         for campo, valor in normalizados.items():
@@ -41,7 +46,7 @@ def configuracoes():
         except SQLAlchemyError:
             db.session.rollback()
             flash('Não foi possível salvar. Tente novamente.', 'erro')
-            return render_template('admin_academia.html', dados=dados), 500
+            return _pagina(dados, 500)
         flash('Informações da academia atualizadas.', 'sucesso')
         return redirect(url_for('academia.configuracoes'))
-    return render_template('admin_academia.html', dados=academia)
+    return _pagina(academia)

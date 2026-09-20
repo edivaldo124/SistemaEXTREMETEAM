@@ -18,10 +18,13 @@ from blueprints.turma_bp import turma_bp
 from blueprints.pix_bp import pix_bp
 from blueprints.checkout_bp import checkout_bp
 from blueprints.academia_bp import academia_bp
+from blueprints.mercado_pago_oauth_bp import mercado_pago_oauth_bp
 from modelos.academia import Academia
 from modelos.email_pendente import EmailPendente
 from modelos.professor import Professor
+from modelos.sessao_revogada import SessaoRevogada  # noqa: F401  (registra a tabela no metadata)
 from servicos import credenciais, fila_email, keep_alive
+from servicos.autorizacao import revogar_sessao_atual
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
@@ -133,6 +136,7 @@ app.register_blueprint(turma_bp)
 app.register_blueprint(pix_bp)
 app.register_blueprint(checkout_bp)
 app.register_blueprint(academia_bp)
+app.register_blueprint(mercado_pago_oauth_bp)
 
 
 @app.context_processor
@@ -159,6 +163,11 @@ def adicionar_cabecalhos_de_seguranca(resposta):
     )
     if enviar_hsts:
         resposta.headers.setdefault('Strict-Transport-Security', 'max-age=31536000')
+    # Página de quem está autenticado (CPF, financeiro, fichas) nunca vai para o cache nem
+    # para o bfcache do navegador: depois do logout o botão "Voltar" não a reexibe. Quem
+    # já definiu a própria política (as fotos, `private, no-store`) é preservado.
+    if request.endpoint != 'static' and session.get('tipo_usuario'):
+        resposta.headers.setdefault('Cache-Control', 'no-store')
     return resposta
 
 
@@ -226,6 +235,9 @@ def health():
 
 @app.route("/logout", methods=['POST'])
 def logout():
+    # Só limpar o cookie do navegador não encerra nada: o cookie é assinado e sem estado,
+    # e uma cópia dele continuaria aceita. Revoga-se o identificador da sessão no banco.
+    revogar_sessao_atual()
     session.clear()
     return redirect('/')
 

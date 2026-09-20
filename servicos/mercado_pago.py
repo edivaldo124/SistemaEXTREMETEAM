@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import logging
+import math
 import os
 import time
 from datetime import datetime, timedelta
@@ -69,9 +70,14 @@ class ConfiguracaoInvalida(Exception):
 
 
 def _sdk():
-    token = os.environ.get('MERCADO_PAGO_ACCESS_TOKEN')
+    # Import tardio: servicos.mercado_pago_conta importa este modulo (excecoes e URL).
+    from servicos.mercado_pago_conta import access_token_vigente
+
+    token = access_token_vigente()
     if not token:
-        raise MercadoPagoIndisponivel('MERCADO_PAGO_ACCESS_TOKEN nao configurado.')
+        raise MercadoPagoIndisponivel(
+            'Nenhuma credencial do Mercado Pago: conecte a conta no painel ou defina MERCADO_PAGO_ACCESS_TOKEN.'
+        )
     return mercadopago.SDK(token)
 
 
@@ -92,8 +98,9 @@ def _valor_para_float(valor: Decimal) -> float:
 def ambiente_mercado_pago():
     """Diz se a integracao esta apontando para producao ou para o sandbox.
 
-    Prioriza a configuracao explicita em MERCADO_PAGO_AMBIENTE; sem ela, usa o prefixo
-    publico do access token ('TEST-' identifica credencial de teste). Em caso de duvida
+    Prioriza a configuracao explicita em MERCADO_PAGO_AMBIENTE; depois o live_mode da
+    conta conectada por OAuth; sem nenhuma das duas, usa o prefixo publico do access
+    token do ambiente ('TEST-' identifica credencial de teste). Em caso de duvida
     assume producao, que e o modo restritivo (nunca devolve uma URL de sandbox para
     quem esta com credencial real).
     """
@@ -104,6 +111,12 @@ def ambiente_mercado_pago():
         raise ConfiguracaoInvalida(
             f"MERCADO_PAGO_AMBIENTE deve ser '{AMBIENTE_PRODUCAO}' ou '{AMBIENTE_SANDBOX}'."
         )
+
+    from servicos.mercado_pago_conta import ambiente_da_conexao
+
+    da_conexao = ambiente_da_conexao()
+    if da_conexao:
+        return da_conexao
 
     token = os.environ.get('MERCADO_PAGO_ACCESS_TOKEN') or ''
     return AMBIENTE_SANDBOX if token.startswith(PREFIXO_TOKEN_TESTE) else AMBIENTE_PRODUCAO
@@ -422,6 +435,10 @@ def validar_assinatura_webhook(*, x_signature, x_request_id, data_id, secret, ag
     try:
         instante_assinatura = float(ts)
     except (TypeError, ValueError):
+        return False
+    # `float('nan')` faz `abs(agora - ts) > tolerancia` dar False: sem esta checagem um
+    # `ts=nan` passaria pela janela de recência.
+    if not math.isfinite(instante_assinatura):
         return False
     if instante_assinatura > 10_000_000_000:
         instante_assinatura /= 1000

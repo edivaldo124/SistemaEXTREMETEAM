@@ -358,6 +358,16 @@ def test_webhook_recusa_assinatura_antiga(criar_pagamento):
     ) is False
 
 
+def test_webhook_recusa_ts_nao_numerico_finito():
+    """`ts=nan` fazia a comparação da janela dar False e passava pela checagem de recência."""
+    for ts in ('nan', 'inf', '-inf'):
+        manifest = f'id:mp-1;request-id:req-1;ts:{ts};'
+        v1 = hmac.new(b'segredo', manifest.encode(), hashlib.sha256).hexdigest()
+        assert validar_assinatura_webhook(
+            x_signature=f'ts={ts},v1={v1}', x_request_id='req-1', data_id='mp-1', secret='segredo',
+        ) is False, ts
+
+
 def test_webhook_valido_com_valor_divergente_nao_quita(client, criar_pagamento, monkeypatch):
     """Hipótese: assinatura válida basta para quitar, mesmo com valor errado."""
     monkeypatch.setenv('MERCADO_PAGO_WEBHOOK_SECRET', 'segredo-de-teste')

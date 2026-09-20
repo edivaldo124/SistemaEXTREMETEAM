@@ -8,6 +8,7 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_academia.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
     </head>
     <body class="admin-shell">
@@ -26,7 +27,7 @@
             {% for categoria, mensagem in get_flashed_messages(with_categories=true) %}
                 <div class="msg msg-{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
             {% endfor %}
-            <form method="POST" action="{{ url_for('academia.configuracoes') }}">
+            <form class="academia-form" method="POST" action="{{ url_for('academia.configuracoes') }}">
                 {% include 'components/csrf_field.html' %}
                 <fieldset class="academia-grupo">
                     <legend>Canais oficiais</legend>
@@ -72,6 +73,69 @@
                     <span>As alterações ficam visíveis no site após salvar.</span>
                 </div>
             </form>
+            <section class="mp-conexao" aria-labelledby="mp-titulo">
+                <div class="mp-cabecalho">
+                    <div>
+                        <p class="eyebrow">Recebimento de mensalidades</p>
+                        <h2 id="mp-titulo">Mercado Pago</h2>
+                    </div>
+                    {% if mp.conectada and mp.precisa_reconectar %}
+                        <span class="mp-selo mp-selo-atencao">Reconexão necessária</span>
+                    {% elif mp.conectada %}
+                        <span class="mp-selo mp-selo-ok">Conectada</span>
+                    {% elif mp.usa_credencial_do_servidor %}
+                        <span class="mp-selo mp-selo-info">Credencial do servidor</span>
+                    {% else %}
+                        <span class="mp-selo mp-selo-neutro">Não conectada</span>
+                    {% endif %}
+                </div>
+
+                {% if mp.conectada %}
+                    <dl class="mp-detalhes">
+                        <div><dt>Conta</dt><dd>{{ mp.mp_user_id }}</dd></div>
+                        <div><dt>Modo</dt><dd>{{ 'Produção' if mp.live_mode else 'Teste' }}</dd></div>
+                        <div><dt>Conectada em</dt><dd>{{ mp.conectado_em.strftime('%d/%m/%Y') }}</dd></div>
+                    </dl>
+                    {% if mp.precisa_reconectar %}
+                        <p class="mp-texto">A autorização desta conta expirou ou foi revogada. Enquanto ela não for renovada, o pagamento online das mensalidades fica indisponível. Reconecte para voltar a receber.</p>
+                    {% else %}
+                        <p class="mp-texto">As mensalidades pagas online caem direto nesta conta. A autorização é renovada automaticamente, sem você precisar fazer nada.</p>
+                    {% endif %}
+                {% elif mp.oauth_disponivel %}
+                    <p class="mp-texto">Conecte a conta do Mercado Pago que vai receber as mensalidades. Você será levado ao Mercado Pago para autorizar e volta para esta página. Não é preciso criar aplicativo nem copiar chave nenhuma.</p>
+                    {% if mp.usa_credencial_do_servidor %}
+                        <p class="mp-texto mp-nota">Enquanto você não conectar, o sistema usa a credencial configurada no servidor.</p>
+                    {% endif %}
+                {% elif mp.usa_credencial_do_servidor %}
+                    <p class="mp-texto">O sistema está usando a credencial do Mercado Pago configurada no servidor. A conexão pelo painel ainda não foi habilitada.</p>
+                {% else %}
+                    <p class="mp-texto">Nenhuma conta do Mercado Pago está configurada, então o pagamento online das mensalidades está indisponível. A conexão pelo painel ainda não foi habilitada neste servidor; avise quem administra a plataforma.</p>
+                {% endif %}
+
+                {% if mp.oauth_disponivel or mp.conectada %}
+                    <div class="mp-acoes">
+                        {% if mp.oauth_disponivel %}
+                            <a class="{{ 'button-secondary' if mp.conectada and not mp.precisa_reconectar else 'button-primary' }}"
+                               href="{{ url_for('mercado_pago_oauth.conectar') }}">
+                                {{ 'Conectar Mercado Pago' if not mp.conectada else 'Reconectar' }}
+                            </a>
+                        {% endif %}
+                        {% if mp.conectada %}
+                            <form method="POST" action="{{ url_for('mercado_pago_oauth.desconectar') }}"
+                                  data-confirm-modal
+                                  data-modal-eyebrow="Mercado Pago"
+                                  data-modal-title="Desconectar a conta?"
+                                  data-modal-message="O pagamento online das mensalidades deixa de funcionar até você conectar uma conta de novo. Cobranças já abertas não serão confirmadas automaticamente."
+                                  data-modal-confirm="Sim, desconectar">
+                                {% include 'components/csrf_field.html' %}
+                                <button type="submit" class="button-secondary">Desconectar</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </section>
         </main>
+        {% include 'components/confirm_modal.html' %}
+        <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
     </body>
 </html>
