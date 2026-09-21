@@ -6,12 +6,13 @@ from modelos.academia import Academia
 from servicos.autorizacao import admin_requerido
 from servicos.contatos import validar_email, validar_instagram, validar_whatsapp
 from servicos.mercado_pago_conta import estado_conexao
+from servicos.gmail_conta import estado as estado_gmail
 
 academia_bp = Blueprint('academia', __name__)
 
 
 def _pagina(dados, status=200):
-    return render_template('admin_academia.html', dados=dados, mp=estado_conexao()), status
+    return render_template('admin_academia.html', dados=dados, mp=estado_conexao(), gmail=estado_gmail()), status
 
 
 @academia_bp.route('/admin/academia', methods=['GET', 'POST'])

@@ -1,4 +1,4 @@
-# Graph Report - SistemaEXTREMETEAM  (2026-09-20)
+# Graph Report - SistemaEXTREMETEAM  (2026-09-21)
 
 ## Corpus Check
 - 127 files · ~191,984 words
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6fd9855b`
+- Built from commit: `795bb2b4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -33,7 +33,7 @@
 - planos.py
 - pix_bp.py
 - logar_como_admin
-- MercadoPagoIndisponivel
+- turma_bp.py
 - checkout_bp.py
 - pix.js
 - .contratar_plano
@@ -70,7 +70,7 @@
 - .buscar_por_id
 - test_arranque_seguranca.py
 - test_fila_email_concorrencia_postgres.py
-- turma_bp.py
+- MercadoPagoIndisponivel
 - servidor.py
 - autorizacao.py
 - pagina_cadastro
@@ -93,14 +93,14 @@
 - Atualização de 19/09/2026 — correções aplicadas e nova varredura
 - Severidade BAIXA
 - ativar_acesso
-- test_linha_com_defeito_nao_trava_a_fila_atras_dela
+- enfileirar_transacional
 - Relatório de segurança — Sistema Extreme Team
 - Severidade MÉDIA
 - Severidade ALTA
-- test_reenviar_um_aviso_que_desistiu_volta_a_enfileirar
+- test_linha_com_defeito_nao_trava_a_fila_atras_dela
 - enviar_email
+- test_reenviar_um_aviso_que_desistiu_volta_a_enfileirar
 - test_um_envio_ainda_pendente_continua_sendo_recusado
-- enfileirar_transacional
 - test_limite_atingido_nao_mostra_login_a_quem_ja_entrou
 - test_retentativa_acontece_sem_ninguem_abrir_o_painel
 - test_trocar_a_credencial_do_admin_encerra_a_sessao_administrativa
@@ -206,9 +206,9 @@ Nodes (26): _acesso_permitido(), criar_pix_mensalidade(), _forma_pagamento_confi
 Cohesion: 0.08
 Nodes (66): _convidar_cadastro_existente(), Cadastro administrativo que alguém tentou recriar pelo formulário público. Em…, AlunoDAO, Uma página de alunos já cadastrados, recortada e filtrada pelo banco. O painel…, logar_como_admin(), capturar_emails(), _matricular(), fixture (+58 more)
 
-### Community 19 - "MercadoPagoIndisponivel"
-Cohesion: 0.16
-Nodes (18): buscar_pagamento(), buscar_pagamentos_por_referencia(), cancelar_pagamento(), MercadoPagoIndisponivel, Exception, Consulta o pagamento diretamente na API do Mercado Pago - fonte de verdade de…, Lista os pagamentos que o Mercado Pago associa a uma external_reference. Usada…, Cancela uma cobranca Pix pendente no Mercado Pago. Best-effort: nunca lanca. (+10 more)
+### Community 19 - "turma_bp.py"
+Cohesion: 0.20
+Nodes (13): _acesso_permitido(), cadastrar_professor(), cadastrar_turma(), desmatricular_aluno(), detalhe_turma(), matricular_aluno(), painel_professor(), route (+5 more)
 
 ### Community 20 - "checkout_bp.py"
 Cohesion: 0.09
@@ -255,8 +255,8 @@ Cohesion: 0.07
 Nodes (52): _aluno_do_cpf_ou_painel(), aprovar_aluno(), aprovar_comprovante_manual(), ativar_aluno(), atualizar_status_pagamento(), cadastrar_aluno(), cadastrar_pagamento(), cadastrar_plano() (+44 more)
 
 ### Community 36 - "test_perfil_e_foto.py"
-Cohesion: 0.16
-Nodes (13): TurmaDAO, Turma, Cadastrar Turma Form, Sonda: a data vem da query string e é convertida sem tratamento., test_data_invalida_na_turma_nao_derruba_a_rota(), fixture, turma(), _imagem_jpeg_valida() (+5 more)
+Cohesion: 0.14
+Nodes (15): gerenciar_turmas(), remover_turma(), TurmaDAO, Turma, Cadastrar Turma Form, Sonda: a data vem da query string e é convertida sem tratamento., test_data_invalida_na_turma_nao_derruba_a_rota(), fixture (+7 more)
 
 ### Community 37 - "test_regressao_auditoria.py"
 Cohesion: 0.07
@@ -268,7 +268,7 @@ Nodes (8): Aluno, Se existe uma conta de acesso, e não se o aluno está em dia 
 
 ### Community 41 - "Academia"
 Cohesion: 0.13
-Nodes (19): configuracoes(), _pagina(), route, editar_professor(), Academia, link_email(), Normalização de contatos profissionais antes de montar links públicos., validar_email() (+11 more)
+Nodes (20): configuracoes(), _pagina(), route, editar_professor(), Academia, admin_requerido(), link_email(), Normalização de contatos profissionais antes de montar links públicos. (+12 more)
 
 ### Community 42 - "pagamento_polling.test.cjs"
 Cohesion: 0.22
@@ -295,7 +295,7 @@ Cohesion: 0.83
 Nodes (3): _campos_professor(), downgrade(), upgrade()
 
 ### Community 49 - "impressao_credencial"
-Cohesion: 0.29
+Cohesion: 0.32
 Nodes (8): Presenca, impressao_credencial(), Resumo curto e não reversível do hash da senha, guardado na sessão. Nunca é a…, parametrize, test_consulta_com_data_invalida_exibe_hoje_e_aviso(), test_data_invalida_nao_contorna_permissoes(), test_presenca_com_data_invalida_nao_grava(), test_presenca_com_data_valida_continua_disponivel()
 
 ### Community 50 - "botao_ocupado.test.cjs"
@@ -350,9 +350,9 @@ Nodes (14): _env_arranque(), Validações feitas por servidor.py no arranque (CO
 Cohesion: 0.18
 Nodes (10): _enfileirar_em_transacao_propria(), postgres_fila(), fixture, Idempotência da fila de e-mail sob concorrência real, em PostgreSQL…, A recusa de uma chave repetida não pode desfazer o lote inteiro. Um…, A trava do lote precisa valer até o fim do lote. Comitar linha a linha…, Enfileira e comita numa sessão própria, como faria outra requisição., test_chave_duplicada_nao_descarta_os_outros_destinatarios_do_lote() (+2 more)
 
-### Community 66 - "turma_bp.py"
-Cohesion: 0.17
-Nodes (16): _acesso_permitido(), cadastrar_professor(), cadastrar_turma(), desmatricular_aluno(), detalhe_turma(), gerenciar_turmas(), matricular_aluno(), painel_professor() (+8 more)
+### Community 66 - "MercadoPagoIndisponivel"
+Cohesion: 0.16
+Nodes (18): buscar_pagamento(), buscar_pagamentos_por_referencia(), cancelar_pagamento(), MercadoPagoIndisponivel, Exception, Consulta o pagamento diretamente na API do Mercado Pago - fonte de verdade de…, Lista os pagamentos que o Mercado Pago associa a uma external_reference. Usada…, Cancela uma cobranca Pix pendente no Mercado Pago. Best-effort: nunca lanca. (+10 more)
 
 ### Community 67 - "servidor.py"
 Cohesion: 0.06
@@ -426,6 +426,10 @@ Nodes (7): F10 — Redirecionamento aberto via `Referer`, F11 — `/logout` acei
 Cohesion: 0.22
 Nodes (8): ativar_acesso(), Transforma um cadastro feito no balcão na conta do próprio aluno. Quem chega…, mascarar_email(), Mostra o bastante do e-mail para o dono se reconhecer, sem revelá-lo a…, _carregar_senhas_comuns(), erro_confirmacao_senha(), Retorna uma mensagem quando a confirmação não repete exatamente a senha. A…, Lê a lista de senhas comuns (uma por linha; `#` abre comentário) para um…
 
+### Community 96 - "enfileirar_transacional"
+Cohesion: 0.50
+Nodes (4): enfileirar(), enfileirar_transacional(), E-mail transacional que NÃO carrega token, pela fila durável e fora da…, Registra um e-mail para envio. Devolve a linha criada, ou None se já existia.…
+
 ### Community 97 - "Relatório de segurança — Sistema Extreme Team"
 Cohesion: 0.33
 Nodes (6): A verificar em execução, Atualização após as correções, Ordem de correção sugerida, Relatório de segurança — Sistema Extreme Team, Sumário executivo, Verificado e correto
@@ -442,10 +446,6 @@ Nodes (5): F1 — Aluno consegue desviar a ficha administrativa de outro aluno, 
 Cohesion: 0.24
 Nodes (6): enviar_email(), _enviar_via_gmail(), _obter_token_gmail(), Envia e-mail transacional pela Gmail API. Retorna True/False; nunca lança., limpar_cache_token(), fixture
 
-### Community 103 - "enfileirar_transacional"
-Cohesion: 0.50
-Nodes (4): enfileirar(), enfileirar_transacional(), E-mail transacional que NÃO carrega token, pela fila durável e fora da…, Registra um e-mail para envio. Devolve a linha criada, ou None se já existia.…
-
 ## Knowledge Gaps
 - **112 isolated node(s):** `modal`, `input_senha`, `icone_senha`, `formularioPlano`, `campoPreco` (+107 more)
   These have ≤1 connection - possible missing edges or undocumented components.
@@ -456,7 +456,7 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `PagamentoDAO` connect `PagamentoDAO` to `config.py`, `test_financeiro_dao.py`, `criar_aluno`, `test_mudanca_plano.py`, `pix_bp.py`, `logar_como_admin`, `checkout_bp.py`, `.contratar_plano`, `test_auditoria_seguranca.py`, `adm_bp.py`, `test_regressao_auditoria.py`, `Aluno`, `criar_pagamento`, `test_pix_rotas.py`, `test_checkout_rotas.py`, `test_seguranca.py`, `.buscar_por_id`, `.totais_periodo`, `usuario_bp.py`?**
   _High betweenness centrality (0.164) - this node is a cross-community bridge._
-- **Why does `AlunoDAO` connect `logar_como_admin` to `config.py`, `turma_bp.py`, `adm_bp.py`, `criar_aluno`, `pagina_cadastro`, `test_mudanca_plano.py`, `pagina_login`, `PagamentoDAO`, `Aluno`, `usuario_bp.py`, `test_perfil_e_foto.py`, `test_regressao_auditoria.py`, `test_seguranca.py`?**
+- **Why does `AlunoDAO` connect `logar_como_admin` to `config.py`, `adm_bp.py`, `criar_aluno`, `pagina_cadastro`, `test_mudanca_plano.py`, `pagina_login`, `PagamentoDAO`, `Aluno`, `usuario_bp.py`, `test_perfil_e_foto.py`, `test_regressao_auditoria.py`, `turma_bp.py`, `test_seguranca.py`?**
   _High betweenness centrality (0.039) - this node is a cross-community bridge._
 - **Why does `Aluno` connect `Aluno` to `config.py`, `adm_bp.py`, `autorizacao.py`, `pagina_cadastro`, `test_mudanca_plano.py`, `PagamentoDAO`, `criar_aluno`, `test_regressao_auditoria.py`, `usuario_bp.py`, `logar_como_admin`, `test_seguranca.py`, `convites.py`, `ativar_acesso`?**
   _High betweenness centrality (0.036) - this node is a cross-community bridge._

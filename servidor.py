@@ -19,10 +19,12 @@ from blueprints.pix_bp import pix_bp
 from blueprints.checkout_bp import checkout_bp
 from blueprints.academia_bp import academia_bp
 from blueprints.mercado_pago_oauth_bp import mercado_pago_oauth_bp
+from blueprints.gmail_oauth_bp import gmail_oauth_bp
 from modelos.academia import Academia
 from modelos.email_pendente import EmailPendente
 from modelos.professor import Professor
 from modelos.sessao_revogada import SessaoRevogada  # noqa: F401  (registra a tabela no metadata)
+from modelos.gmail_conexao import GmailConexao  # noqa: F401
 from servicos import credenciais, fila_email, keep_alive
 from servicos.autorizacao import revogar_sessao_atual
 
@@ -137,6 +139,7 @@ app.register_blueprint(pix_bp)
 app.register_blueprint(checkout_bp)
 app.register_blueprint(academia_bp)
 app.register_blueprint(mercado_pago_oauth_bp)
+app.register_blueprint(gmail_oauth_bp)
 
 
 @app.context_processor

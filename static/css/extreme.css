@@ -224,10 +224,10 @@ body.admin-shell {
    carregamento. Só sobrou o que o modal de login da landing ainda usa. */
 
 .modal-signup a {
-  color:var(--text); text-decoration:underline;
+  color:var(--et-gold); text-decoration:underline;
   text-decoration-color:var(--gold); text-decoration-thickness:2px; text-underline-offset:3px;
 }
-.modal-signup a:hover { text-decoration-color:var(--text); }
+.modal-signup a:hover { color:var(--et-text-on-dark); text-decoration-color:var(--et-text-on-dark); }
 
 /* -------------------------------------------- áreas internas do sistema -- */
 

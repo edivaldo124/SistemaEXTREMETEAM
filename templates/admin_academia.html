@@ -134,6 +134,31 @@
                     </div>
                 {% endif %}
             </section>
+            <section class="mp-conexao" aria-labelledby="gmail-titulo">
+                <div class="mp-cabecalho">
+                    <div>
+                        <p class="eyebrow">Envio de notificações</p>
+                        <h2 id="gmail-titulo">Gmail</h2>
+                    </div>
+                    {% if gmail.conectada %}<span class="mp-selo mp-selo-ok">Conectado</span>
+                    {% else %}<span class="mp-selo mp-selo-neutro">Não conectado</span>{% endif %}
+                </div>
+                {% if gmail.conectada %}
+                    <p class="mp-texto">Os avisos são enviados pela conta <strong>{{ gmail.email }}</strong>.</p>
+                    <div class="mp-acoes">
+                        <a class="button-secondary" href="{{ url_for('gmail_oauth.conectar') }}">Trocar conta Gmail</a>
+                        <form method="POST" action="{{ url_for('gmail_oauth.desconectar') }}">
+                            {% include 'components/csrf_field.html' %}
+                            <button type="submit" class="button-secondary">Desconectar Gmail</button>
+                        </form>
+                    </div>
+                {% elif gmail.oauth_disponivel %}
+                    <p class="mp-texto">Conecte o Gmail do administrador para enviar notificações. O Google pedirá autorização uma única vez.</p>
+                    <a class="button-primary" href="{{ url_for('gmail_oauth.conectar') }}">Conectar Gmail</a>
+                {% else %}
+                    <p class="mp-texto">Configure GMAIL_CLIENT_ID e GMAIL_CLIENT_SECRET no ambiente do servidor para habilitar a conexão.</p>
+                {% endif %}
+            </section>
         </main>
         {% include 'components/confirm_modal.html' %}
         <script src="{{ url_for('static', filename='js/modal.js') }}"></script>

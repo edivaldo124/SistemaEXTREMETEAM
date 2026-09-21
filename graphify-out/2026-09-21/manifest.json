@@ -272,7 +272,7 @@
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
     "seen": 1789964585.376181,
-    "ast_hash": "",
+    "ast_hash": "415656dfbf722b4ee0b494c18bfc8682",
     "semantic_hash": ""
   },
   "app.py": {
@@ -554,7 +554,7 @@
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
     "seen": 1789964585.3761687,
-    "ast_hash": "",
+    "ast_hash": "324d1aabfdaabef57d9ffa0805a7c9c6",
     "semantic_hash": ""
   },
   "servicos/senhas.py": {
