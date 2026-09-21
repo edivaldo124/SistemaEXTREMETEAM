@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#000000">
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
+        <title>Termos de Serviço | Extreme Team</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/cadastro.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
+    </head>
+    <body class="auth-page">
+        <a class="skip-link" href="#termos-servico">Ir para os termos</a>
+        <header class="account-header">
+            <a class="site-brand" href="/" aria-label="Extreme Team, início">
+                <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team">
+                <span>Centro de treinamento<br><strong>Extreme Team</strong></span>
+            </a>
+            <a href="{{ url_for('auth.pagina_login') }}">Entrar</a>
+        </header>
+        <main class="termos-page-shell">
+            <article id="termos-servico" class="termos-documento" aria-labelledby="termos-servico-titulo">
+                <p class="eyebrow">Atualizados em 21/09/2026</p>
+                <h1 id="termos-servico-titulo" class="page-title">Termos de Serviço</h1>
+                <p class="page-subtitle">Estes termos definem as regras de uso do sistema de gestão da Extreme Team.</p>
+                <section>
+                    <h2>1. Uso do sistema</h2>
+                    <p>O sistema deve ser usado por alunos, professores e administradores autorizados para finalidades relacionadas às atividades da academia. Cada pessoa deve manter suas credenciais em sigilo e comunicar acessos suspeitos.</p>
+                </section>
+                <section>
+                    <h2>2. Informações fornecidas</h2>
+                    <p>As informações cadastradas devem ser verdadeiras, atualizadas e pertencer à pessoa que as fornece ou à pessoa legalmente autorizada a representá-la.</p>
+                </section>
+                <section>
+                    <h2>3. Pagamentos e comunicações</h2>
+                    <p>Valores, vencimentos, planos e condições de pagamento são definidos pela academia. O sistema pode enviar avisos operacionais e financeiros pelos canais disponíveis, inclusive por e-mail.</p>
+                </section>
+                <section>
+                    <h2>4. Conexão com o Gmail</h2>
+                    <p>O administrador pode conectar uma conta Gmail para enviar comunicações pelo sistema. A autorização é feita na página oficial do Google e pode ser revogada pelo administrador. O sistema usa essa conexão somente para o envio autorizado.</p>
+                </section>
+                <section>
+                    <h2>5. Disponibilidade e segurança</h2>
+                    <p>Adotamos medidas razoáveis para manter o serviço disponível e protegido, mas podem ocorrer interrupções por manutenção, falhas de terceiros ou eventos fora do nosso controle. É proibido tentar contornar controles de segurança ou acessar dados de outra pessoa.</p>
+                </section>
+                <section>
+                    <h2>6. Alterações e contato</h2>
+                    <p>Podemos atualizar estes termos para refletir mudanças no serviço ou na legislação. A versão vigente será publicada nesta página. Dúvidas devem ser encaminhadas à administração da academia.</p>
+                </section>
+                <p class="termos-nota">Ao utilizar o sistema, você declara que leu e concorda com estes termos.</p>
+            </article>
+        </main>
+    </body>
+</html>

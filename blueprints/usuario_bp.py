@@ -383,6 +383,16 @@ def pagina_termos_responsabilidade():
     )
 
 
+@auth_bp.route('/politica-privacidade')
+def politica_privacidade():
+    return render_template('politica_privacidade.html')
+
+
+@auth_bp.route('/termos-de-servico')
+def termos_de_servico():
+    return render_template('termos_de_servico.html')
+
+
 # Cada código devolvido por PagamentoDAO.contratar_plano vira uma frase para o aluno.
 # Nenhuma delas sugere pagar de novo quando já existe pagamento feito ou em decisão.
 MENSAGENS_CONTRATACAO = {

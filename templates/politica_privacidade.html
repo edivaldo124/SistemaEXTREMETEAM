@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#000000">
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
+        <title>Política de Privacidade | Extreme Team</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/cadastro.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
+    </head>
+    <body class="auth-page">
+        <a class="skip-link" href="#politica">Ir para a política</a>
+        <header class="account-header">
+            <a class="site-brand" href="/" aria-label="Extreme Team, início">
+                <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team">
+                <span>Centro de treinamento<br><strong>Extreme Team</strong></span>
+            </a>
+            <a href="{{ url_for('auth.pagina_login') }}">Entrar</a>
+        </header>
+        <main class="termos-page-shell">
+            <article id="politica" class="termos-documento" aria-labelledby="politica-titulo">
+                <p class="eyebrow">Atualizada em 21/09/2026</p>
+                <h1 id="politica-titulo" class="page-title">Política de Privacidade</h1>
+                <p class="page-subtitle">Esta política explica como a Extreme Team trata os dados usados no sistema de gestão da academia.</p>
+                <section>
+                    <h2>1. Dados tratados</h2>
+                    <p>Podemos tratar nome, CPF, data de nascimento, dados de contato, informações de matrícula, presença, plano e pagamentos, além dos dados necessários para autenticação e segurança da conta.</p>
+                </section>
+                <section>
+                    <h2>2. Integração com o Gmail</h2>
+                    <p>Quando o administrador conecta uma conta Gmail, o sistema solicita somente a permissão necessária para enviar e-mails em nome dessa conta. O sistema não lê, lista ou altera mensagens da caixa de entrada.</p>
+                    <p>O Google informa ao sistema o endereço da conta autorizada e um token de atualização. Esse token é armazenado cifrado no banco de dados, não é exibido na tela e não é incluído em logs. A conexão pode ser removida pelo administrador a qualquer momento.</p>
+                </section>
+                <section>
+                    <h2>3. Finalidades</h2>
+                    <p>Os dados são usados para administrar matrículas, planos, presença, pagamentos, comunicação com alunos, recuperação de acesso, segurança e cumprimento de obrigações legais.</p>
+                </section>
+                <section>
+                    <h2>4. Compartilhamento</h2>
+                    <p>Não vendemos dados pessoais. Os dados podem ser enviados a prestadores necessários ao funcionamento do serviço, como provedores de hospedagem, banco de dados, pagamentos e envio de e-mails, sempre conforme a finalidade da operação.</p>
+                </section>
+                <section>
+                    <h2>5. Segurança e retenção</h2>
+                    <p>Aplicamos controle de acesso, proteção de sessão, criptografia de credenciais e registro de eventos necessários à segurança. Mantemos os dados pelo período necessário às finalidades do serviço e às obrigações legais, excluindo-os quando não houver motivo legítimo para conservação.</p>
+                </section>
+                <section>
+                    <h2>6. Direitos e contato</h2>
+                    <p>Para solicitar acesso, correção, exclusão ou esclarecimentos sobre seus dados, entre em contato com a administração da academia pelo endereço informado no sistema.</p>
+                </section>
+                <p class="termos-nota">Esta página pode ser atualizada quando houver mudança relevante no tratamento de dados.</p>
+            </article>
+        </main>
+    </body>
+</html>

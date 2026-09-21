@@ -113,3 +113,23 @@ def test_termos_responsabilidade_page(client):
 
     assert 'Termo de Responsabilidade' in html
     assert 'Versão 2026-09' in html
+
+
+def test_politica_privacidade_page(client):
+    resposta = client.get('/politica-privacidade')
+    assert resposta.status_code == 200
+    html = resposta.get_data(as_text=True)
+
+    assert 'Política de Privacidade' in html
+    assert 'Gmail' in html
+    assert 'Extreme Team' in html
+
+
+def test_termos_servico_page(client):
+    resposta = client.get('/termos-de-servico')
+    assert resposta.status_code == 200
+    html = resposta.get_data(as_text=True)
+
+    assert 'Termos de Serviço' in html
+    assert 'Conexão com o Gmail' in html
+    assert 'Ao utilizar o sistema' in html
