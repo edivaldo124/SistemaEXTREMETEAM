@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "static/js/index.js": {
-    "mtime": 1789825783.6127484,
-    "seen": 1789844665.405721,
-    "ast_hash": "2e6495215155f23c714f0886aaf66009",
+    "mtime": 1789926516.112652,
+    "seen": 1789929593.2203197,
+    "ast_hash": "cea39c7f8d874c8d8c2b122bdc6fa99e",
     "semantic_hash": ""
   },
   "static/js/masks.js": {
@@ -138,10 +138,10 @@
     "semantic_hash": "9975830ed163416c0d9cdba0208aebd4"
   },
   "static/js/modal.js": {
-    "mtime": 1787435592.8731284,
-    "seen": 1787439581.3498044,
-    "ast_hash": "fadf945aa0543865f686e119d20b8ea2",
-    "semantic_hash": "fadf945aa0543865f686e119d20b8ea2"
+    "mtime": 1789927020.0579097,
+    "seen": 1789929593.2204504,
+    "ast_hash": "ca3282a10d62570e8422aa6e0eca3cbc",
+    "semantic_hash": ""
   },
   "static/js/pgAdm.js": {
     "mtime": 1789190816.4759223,
@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1789846893.5538108,
-    "seen": 1789846902.3737974,
-    "ast_hash": "6871f6ed14637854ca370df831bdc6ea",
+    "mtime": 1789929769.9523168,
+    "seen": 1789929942.5763097,
+    "ast_hash": "d876f4847cbbaa9e5f26e808d5bf22b6",
     "semantic_hash": ""
   },
   "compose.yaml": {
@@ -192,9 +192,9 @@
     "semantic_hash": ""
   },
   "templates/index.html": {
-    "mtime": 1789845052.8111079,
-    "seen": 1789845896.729433,
-    "ast_hash": "911f8ef89be8db3e14cead54d5d20f57",
+    "mtime": 1789929554.6825364,
+    "seen": 1789929593.225194,
+    "ast_hash": "061df0387113b757cd6cac3a44039370",
     "semantic_hash": ""
   },
   "templates/login.html": {
@@ -240,9 +240,9 @@
     "semantic_hash": ""
   },
   "servicos/email.py": {
-    "mtime": 1789091526.2731109,
-    "seen": 1789121130.162774,
-    "ast_hash": "f47a0904cde42087b5ae902b4d247727",
+    "mtime": 1789929902.242996,
+    "seen": 1789929942.5725179,
+    "ast_hash": "1fc53f5a985e8b0a50344c97b0fd5479",
     "semantic_hash": ""
   },
   "templates/admin_avisos.html": {
@@ -264,14 +264,14 @@
     "semantic_hash": ""
   },
   "static/imagens/logo-icon.png": {
-    "mtime": 1789825944.4347832,
-    "seen": 1789844665.410383,
-    "ast_hash": "998818466241b3b15c30db150aa3322e",
+    "mtime": 1789929517.9281743,
+    "seen": 1789929593.22593,
+    "ast_hash": "f95c97e035ca56718f9f6e995d283710",
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1789228233.254841,
+    "seen": 1789924109.5755146,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -553,7 +553,7 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1789228233.254835,
+    "seen": 1789924109.5755026,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -972,27 +972,27 @@
     "semantic_hash": ""
   },
   "static/imagens/favicon-180.png": {
-    "mtime": 1789825944.485783,
-    "seen": 1789844665.410355,
-    "ast_hash": "48aea7fe2aae908978cc2687461612f1",
+    "mtime": 1789929518.702745,
+    "seen": 1789929593.2258453,
+    "ast_hash": "6c963fefbc9a8995fbdfdb01bf5348ce",
     "semantic_hash": ""
   },
   "static/imagens/favicon-192.png": {
-    "mtime": 1789825944.5196314,
-    "seen": 1789844665.4103572,
-    "ast_hash": "7732b6bd31de206b3c0c943a3041929b",
+    "mtime": 1789929518.6313024,
+    "seen": 1789929593.225849,
+    "ast_hash": "6014f7a1c0e907c556262d68f0c54838",
     "semantic_hash": ""
   },
   "static/imagens/favicon-32.png": {
-    "mtime": 1789825944.4507995,
-    "seen": 1789844665.4103594,
-    "ast_hash": "3603b80f2869fd52633b0754a04e7f94",
+    "mtime": 1789929518.7598555,
+    "seen": 1789929593.225852,
+    "ast_hash": "89ef6d2ee0ad8f35125a96dc7503f4b8",
     "semantic_hash": ""
   },
   "static/imagens/favicon-512.png": {
-    "mtime": 1789825944.7247815,
-    "seen": 1789844665.4103613,
-    "ast_hash": "998818466241b3b15c30db150aa3322e",
+    "mtime": 1789929518.5523124,
+    "seen": 1789929593.2258544,
+    "ast_hash": "f95c97e035ca56718f9f6e995d283710",
     "semantic_hash": ""
   },
   "static/imagens/hero-emblema.webp": {
@@ -1020,21 +1020,21 @@
     "semantic_hash": ""
   },
   "static/imagens/logo-horizontal-1200.png": {
-    "mtime": 1789844961.7574,
-    "seen": 1789845896.7303457,
-    "ast_hash": "c5847e72c0eef1edeee70b5eb5a40685",
+    "mtime": 1789927091.030862,
+    "seen": 1789929593.2259223,
+    "ast_hash": "cf5ddd3cdfa1f9e2c3828fac7a765ae2",
     "semantic_hash": ""
   },
   "static/imagens/logo-horizontal-400.png": {
-    "mtime": 1789844960.9364204,
-    "seen": 1789845896.730354,
-    "ast_hash": "7e597dc4b95d847de1b9c609d6d4130f",
+    "mtime": 1789927091.5219452,
+    "seen": 1789929593.225925,
+    "ast_hash": "0a553be07f461d9876a8208ae3f8f425",
     "semantic_hash": ""
   },
   "static/imagens/logo-horizontal-800.png": {
-    "mtime": 1789844961.1905444,
-    "seen": 1789845896.730357,
-    "ast_hash": "f51a5fcfbb6411fa0edf1b52a0f086be",
+    "mtime": 1789927091.3518915,
+    "seen": 1789929593.2259276,
+    "ast_hash": "b252fd5da7ed821243704110ca22d849",
     "semantic_hash": ""
   },
   "migrations/versions/b5d9c3e71a26_sessoes_revogadas.py": {
@@ -1059,6 +1059,12 @@
     "mtime": 1789847032.871999,
     "seen": 1789847142.4651468,
     "ast_hash": "bc9bc0390af50a2b6cb13698994a2705",
+    "semantic_hash": ""
+  },
+  "tests/test_email_gmail.py": {
+    "mtime": 1789929915.922473,
+    "seen": 1789929942.574802,
+    "ast_hash": "bf55d360c8c61b67bf8790491dbba884",
     "semantic_hash": ""
   }
 }

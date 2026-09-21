@@ -1,6 +1,6 @@
 """Instância descartável para conferir o redesign no navegador (porta 4002).
 
-SQLite em pasta temporária, nunca o banco real. BREVO_API_KEY e o token do Mercado
+SQLite em pasta temporária, nunca o banco real. As credenciais de e-mail e o token do Mercado
 Pago ficam falsos/vazios de propósito: nada aqui deve sair pela rede. load_dotenv não
 sobrescreve variável já definida, então definir vazio impede o .env de preencher.
 """
@@ -29,7 +29,10 @@ os.environ.update(
     ADMIN_PASSWORD_HASH=generate_password_hash('admin-visual-123'),
     CRIAR_SCHEMA_NA_IMPORTACAO='true',
     FILA_EMAIL_SINCRONA='true',
-    BREVO_API_KEY='',
+    GMAIL_CLIENT_ID='',
+    GMAIL_CLIENT_SECRET='',
+    GMAIL_REFRESH_TOKEN='',
+    GMAIL_SENDER_EMAIL='',
     MERCADO_PAGO_ACCESS_TOKEN='TEST-falso',
     MERCADO_PAGO_WEBHOOK_SECRET='falso',
     MERCADO_PAGO_CLIENT_ID='',

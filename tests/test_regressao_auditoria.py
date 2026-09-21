@@ -2,7 +2,7 @@
 
 Cada caso aqui reproduz um problema que foi confirmado no código antes da correção.
 Nenhum toca banco real, provedor de e-mail real ou arquivo de produção: o banco é o
-SQLite descartável do conftest e o Brevo é sempre substituído por um duplo.
+SQLite descartável do conftest e o provedor é sempre substituído por um duplo.
 """
 from datetime import date, timedelta
 

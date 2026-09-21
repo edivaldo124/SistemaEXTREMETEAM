@@ -121,6 +121,27 @@ Os testes forçam um banco SQLite temporário isolado (configurado em `tests/con
 
 A regressão de concorrência do Pix exige PostgreSQL, pois SQLite não aplica `SELECT FOR UPDATE`. Para executá-la, informe `TEST_POSTGRES_URL` de um PostgreSQL **local de teste** e rode `pytest tests/test_pix_concorrencia_postgres.py`. Cada caso cria e remove seu próprio schema temporário, usa duas conexões simultâneas e simula o Mercado Pago. Sem essa variável, esses casos aparecem como ignorados (`skipped`).
 
+## Configuração de e-mail
+
+O envio é feito pela fila persistida no banco e pelo consumidor em segundo plano usando
+a Gmail API:
+
+```env
+GMAIL_CLIENT_ID=...
+GMAIL_CLIENT_SECRET=...
+GMAIL_REFRESH_TOKEN=...
+GMAIL_SENDER_EMAIL=conta-do-sistema@gmail.com
+```
+
+Crie um cliente OAuth 2.0 do tipo **Web application** no Google Cloud, autorize o escopo
+`https://www.googleapis.com/auth/gmail.send` uma vez e guarde o refresh token somente
+no ambiente de produção.
+
+O código troca o refresh token por access tokens curtos, mantém o access token apenas
+em memória do worker e nunca grava credenciais na fila ou no banco. Não use Gmail para
+o cenário de conectar contas individuais de usuários: esse fluxo exigiria uma tabela
+própria para tokens criptografados, consentimento por usuário e rotas OAuth separadas.
+
 ## Configuração de segurança
 
 - `APP_BASE_URL` define a origem usada em links de recuperação, confirmação de e-mail e retornos de pagamento. Ela não é derivada do cabeçalho `Host`.
@@ -395,4 +416,5 @@ A migração `e4b7c2a91d35` torna `login`, `email` e `senha_hash` opcionais e ac
 flask --app servidor db upgrade
 ```
 
-Nenhuma variável de ambiente nova. O envio do convite usa a configuração de e-mail que já existe (`BREVO_API_KEY`, `BREVO_SENDER_EMAIL`) e `APP_BASE_URL` para montar o link; sem elas o convite não é gravado e o painel avisa que o envio falhou.
+O envio do convite usa a configuração Gmail e `APP_BASE_URL` para montar o link; sem as
+credenciais Gmail o convite não é enviado e o painel avisa que o envio falhou.

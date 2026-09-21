@@ -557,22 +557,46 @@
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* O conteúdo continua reconhecível atrás do diálogo. Desfoque forte transforma
+     a página em uma mancha e compete com a leitura do formulário. */
+  background: rgba(0, 0, 0, 0.64);
 }
 
 .modal-conteudo {
   position: relative;
-  width: min(460px, 100%);
+  width: min(480px, 100%);
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
   padding: var(--sp-8);
-  border: 1px solid var(--et-line-dark);
+  border: 1px solid rgba(245, 185, 20, 0.48);
   border-radius: var(--et-radius-card);
   background: var(--et-surface-dark);
   color: var(--et-text-on-dark);
-  box-shadow: var(--et-shadow-dark), var(--et-glow-gold);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.54);
+  animation: login-modal-in var(--dur-media) var(--ease);
+}
+
+/* Faixa de marca: dá acabamento ao painel sem recorrer a brilho difuso. */
+.modal-conteudo::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: var(--sp-7);
+  left: var(--sp-7);
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: var(--et-gold);
+}
+
+@keyframes login-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .fechar-modal {
@@ -723,7 +747,18 @@
   font-size: var(--fs-md);
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(245, 185, 20, 0.25);
+  box-shadow: none;
+  transition: transform 160ms var(--ease), background 160ms ease;
+}
+
+.modal .button-primary:hover {
+  background: #f8c62f;
+  transform: translateY(-1px);
+}
+
+.modal .button-primary:focus-visible {
+  outline: 2px solid var(--et-text-on-dark);
+  outline-offset: 3px;
 }
 
 .modal-signup {
@@ -745,6 +780,12 @@
 
 body.modal-open {
   overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-conteudo {
+    animation: none;
+  }
 }
 
 /* --------------------------------------------------- Movimento Único Hero */

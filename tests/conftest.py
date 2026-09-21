@@ -99,8 +99,8 @@ def contexto_app(app):
 def sem_email(monkeypatch):
     """Substitui o provedor de e-mail em todos os módulos que o chamam.
 
-    A suíte nunca deve alcançar a rede: sem a chave do Brevo `enviar_email` já sai
-    antes do POST, mas o duplo torna isso explícito e devolve os envios ao teste.
+    A suíte nunca deve alcançar a rede; o duplo torna isso explícito e devolve os
+    envios ao teste.
     """
     import blueprints.adm_bp as adm_bp
     import blueprints.usuario_bp as usuario_bp
