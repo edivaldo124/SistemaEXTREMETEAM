@@ -53,6 +53,8 @@ from servicos.armazenamento import (
 from servicos import convites, fila_email
 from servicos import planos as regras_plano
 from servicos.formatacao import (
+    cpf_valido,
+    data_nascimento_valida,
     formatar_competencia,
     formatar_cpf,
     formatar_telefone,
@@ -270,6 +272,12 @@ def pagina_cadastro():
         if len(somente_digitos(request.form.get("cpfusuario"))) != 11:
             return render_template("cadastro.html", erro="Erro: Informe um CPF com 11 dígitos!", dados=dados_formulario)
 
+        if not cpf_valido(cpf):
+            return render_template("cadastro.html", erro="Erro: Informe um CPF válido.", dados=dados_formulario)
+
+        if not data_nascimento_valida(datanascimento):
+            return render_template("cadastro.html", erro="Erro: Informe uma data de nascimento válida.", dados=dados_formulario)
+
         if (not email_valido(email) or len(login) > 50 or len(nome) > 150
                 or len(telefone) > 20 or len(descricao) > 255):
             return render_template("cadastro.html", erro="Erro: Verifique o e-mail e o tamanho dos campos informados.", dados=dados_formulario)
@@ -419,6 +427,14 @@ def _plano_do_formulario():
     return PlanoDAO.buscar_por_id(plano_id) if plano_id else None
 
 
+def _turma_do_formulario():
+    try:
+        turma_id = int(request.form.get('turma_id') or 0)
+    except (TypeError, ValueError):
+        return None
+    return db.session.get(Turma, turma_id) if turma_id else None
+
+
 @auth_bp.route("/perfil", methods=["GET", "POST"])
 def pagina_perfil():
     # A sessão não basta: desativação, reprovação e troca de senha valem já na próxima
@@ -433,6 +449,10 @@ def pagina_perfil():
             flash('Plano inválido ou indisponível.', 'erro')
             return redirect(url_for('auth.pagina_perfil', _anchor='planos'))
 
+        turma = _turma_do_formulario()
+        if request.form.get('turma_id') and not turma:
+            flash('Turma inválida ou indisponível.', 'erro')
+            return redirect(url_for('auth.pagina_perfil', _anchor='planos'))
         # A ação declarada pelo formulário é só uma intenção: o DAO revalida tudo contra
         # o banco, então um `acao` forjado não consegue gerar cobrança onde a regra não
         # permite (período pago, comprovante em análise, mudança conflitante...).
@@ -443,6 +463,7 @@ def pagina_perfil():
         try:
             resultado = PagamentoDAO.contratar_plano(
                 aluno=aluno_dados, plano=plano, acao=acao, ator=aluno_dados.login,
+                turma_id=turma.id if turma else None,
             )
         except Exception:
             db.session.rollback()
@@ -464,6 +485,7 @@ def pagina_perfil():
     PagamentoDAO.efetivar_mudancas_por_prazo(aluno_dados)
 
     lista_planos = PlanoDAO.listar_todos()
+    turmas_disponiveis = Turma.query.order_by(Turma.nome, Turma.horario).all()
     pagamentos = PagamentoDAO.listar_por_aluno(aluno_dados.id)
     solicitacao = SolicitacaoPlanoDAO.pendente_do_aluno(aluno_dados.id)
     situacao = regras_plano.situacao_plano(
@@ -483,6 +505,7 @@ def pagina_perfil():
         "pgUsuario.html",
         usuario=aluno_dados,
         planos=lista_planos,
+        turmas_disponiveis=turmas_disponiveis,
         pagamentos=pagamentos,
         situacao=situacao,
         # O card destaca o que exige atenção; sem nada em aberto, mostra a mensalidade
@@ -495,6 +518,19 @@ def pagina_perfil():
         formatar_competencia=formatar_competencia,
         abrir_pix_id=abrir_pix_id,
     )
+
+
+@auth_bp.route('/perfil/presencas/<int:presenca_id>/confirmar', methods=['POST'])
+def confirmar_presenca(presenca_id):
+    aluno = _aluno_da_sessao()
+    if not aluno:
+        return redirect('/login')
+
+    if PresencaDAO.confirmar_por_aluno(presenca_id, aluno.id):
+        flash('Frequência confirmada.', 'sucesso')
+    else:
+        flash('Essa frequência não está disponível para confirmação.', 'erro')
+    return redirect(url_for('auth.pagina_perfil', _anchor='turmas'))
 
 
 @auth_bp.route("/perfil/plano/mudanca/<int:solicitacao_id>/cancelar", methods=["POST"])

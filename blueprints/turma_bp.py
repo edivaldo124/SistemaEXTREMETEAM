@@ -263,16 +263,17 @@ def matricular_aluno(turma_id):
         flash('Selecione um aluno para matricular.', 'erro')
         return redirect(f'/turmas/{turma_id}')
 
-    aluno = AlunoDAO.buscar_por_id(int(aluno_id))
+    try:
+        aluno_id = int(aluno_id)
+    except (TypeError, ValueError):
+        flash('Aluno inválido.', 'erro')
+        return redirect(f'/turmas/{turma_id}')
+    aluno = AlunoDAO.buscar_por_id(aluno_id)
     if not aluno or not aluno.esta_ativo:
         flash('Este aluno não pode ser matriculado (cadastro pendente, recusado ou desativado).', 'erro')
         return redirect(f'/turmas/{turma_id}')
 
-    if MatriculaDAO.contar_por_turma(turma_id) >= turma.limite_alunos:
-        flash('A turma já atingiu o limite de alunos.', 'erro')
-        return redirect(f'/turmas/{turma_id}')
-
-    if MatriculaDAO.matricular(int(aluno_id), turma_id):
+    if MatriculaDAO.matricular(aluno_id, turma_id):
         flash('Aluno matriculado com sucesso.', 'sucesso')
     else:
         flash('Este aluno já está matriculado nessa turma.', 'erro')
@@ -282,7 +283,7 @@ def matricular_aluno(turma_id):
 @turma_bp.route('/turmas/<int:turma_id>/desmatricular/<int:aluno_id>', methods=['POST'])
 @admin_requerido
 def desmatricular_aluno(turma_id, aluno_id):
-    _turma_ou_404(turma_id)
+    turma = _turma_ou_404(turma_id)
     MatriculaDAO.desmatricular(aluno_id, turma_id)
     flash('Aluno removido da turma.', 'sucesso')
     return redirect(f'/turmas/{turma_id}')

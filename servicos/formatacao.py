@@ -1,8 +1,34 @@
 import re
+from datetime import date
 
 
 def somente_digitos(valor):
     return re.sub(r'\D', '', valor or '')
+
+
+def cpf_valido(valor):
+    """Valida os 11 dígitos do CPF, incluindo os dois verificadores."""
+    cpf = somente_digitos(valor)
+    if len(cpf) != 11 or len(set(cpf)) == 1:
+        return False
+
+    for tamanho in (9, 10):
+        soma = sum(int(digito) * (tamanho + 1 - indice) for indice, digito in enumerate(cpf[:tamanho]))
+        verificador = (soma * 10) % 11
+        if verificador == 10:
+            verificador = 0
+        if verificador != int(cpf[tamanho]):
+            return False
+    return True
+
+
+def data_nascimento_valida(valor):
+    """Aceita somente data ISO real e que já tenha ocorrido."""
+    try:
+        nascimento = date.fromisoformat((valor or '').strip())
+    except (TypeError, ValueError):
+        return False
+    return nascimento <= date.today()
 
 
 def formatar_cpf(valor):

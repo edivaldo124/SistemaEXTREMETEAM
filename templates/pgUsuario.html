@@ -316,6 +316,14 @@
                                             <span class="status {{ 'status-pago' if p.presente else 'status-atrasado' }}">
                                                 {{ 'Presente' if p.presente else 'Faltou' }}
                                             </span>
+                                            {% if p.presente and not p.confirmada_aluno %}
+                                                <form action="{{ url_for('auth.confirmar_presenca', presenca_id=p.id) }}" method="POST">
+                    {% include "components/csrf_field.html" %}
+                                                    <button type="submit" class="button-secondary">Confirmar frequência</button>
+                                                </form>
+                                            {% elif p.confirmada_aluno %}
+                                                <small>Confirmada por você</small>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -568,6 +576,15 @@
                     {% include "components/csrf_field.html" %}
                                     <input type="hidden" name="plano" value="{{ plano.id }}">
                                     <input type="hidden" name="acao" value="contratar">
+                                    <label for="turma-plano-{{ plano.id }}">Turma</label>
+                                    <select id="turma-plano-{{ plano.id }}" name="turma_id" required>
+                                        <option value="">Escolha sua turma</option>
+                                        {% for turma in turmas_disponiveis %}
+                                            <option value="{{ turma.id }}" {% if turma.matriculas|length >= turma.limite_alunos %}disabled{% endif %}>
+                                                {{ turma.nome }} · {{ turma.dias_semana|replace(',', ', ') }} · {{ turma.horario }}{% if turma.matriculas|length >= turma.limite_alunos %} (lotada){% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
                                     <button type="submit" class="btn-escolher">
                                         {{ 'Continuar pagamento' if e_cobranca_aberta else 'Escolher plano' }}
                                     </button>

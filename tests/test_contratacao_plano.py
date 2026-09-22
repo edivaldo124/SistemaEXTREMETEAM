@@ -2,6 +2,11 @@ from datetime import date
 from decimal import Decimal
 
 from dao.financeiroDAO import PagamentoDAO
+from dao.matriculaDAO import MatriculaDAO
+from dao.professorDAO import ProfessorDAO
+from dao.turmaDAO import TurmaDAO
+from modelos.professor import Professor
+from modelos.turma import Turma
 
 
 def test_escolher_plano_cria_mensalidade_e_redireciona_para_pix(
@@ -21,6 +26,30 @@ def test_escolher_plano_cria_mensalidade_e_redireciona_para_pix(
     assert pagamento.competencia == date.today().strftime('%Y-%m')
 
 
+def test_escolher_plano_com_turma_cria_matricula(
+    client, plano, criar_aluno, logar_como_aluno, contexto_app,
+):
+    professor = Professor(nome='Professor da turma', login='prof-turma', senha='senha123456')
+    ProfessorDAO.salvar(professor)
+    turma = Turma('Turma escolhida', 'Seg', '19:00', professor.id, 20)
+    TurmaDAO.salvar(turma)
+    aluno = criar_aluno()
+    logar_como_aluno(aluno)
+
+    resposta = client.post('/perfil', data={'plano': str(plano.id), 'turma_id': str(turma.id)})
+
+    assert resposta.status_code == 302
+    pagamento = PagamentoDAO.listar_por_aluno(aluno.id)[0]
+    assert pagamento.turma_id == turma.id
+    assert MatriculaDAO.listar_por_aluno(aluno.id) == []
+
+    PagamentoDAO.marcar_pago_via_webhook(pagamento, data_pagamento=date.today())
+
+    matriculas = MatriculaDAO.listar_por_aluno(aluno.id)
+    assert len(matriculas) == 1
+    assert matriculas[0].turma_id == turma.id
+
+
 def test_valor_enviado_pelo_navegador_e_ignorado(client, plano, criar_aluno, logar_como_aluno):
     aluno = criar_aluno()
     logar_como_aluno(aluno)
@@ -29,6 +58,25 @@ def test_valor_enviado_pelo_navegador_e_ignorado(client, plano, criar_aluno, log
 
     pagamento = PagamentoDAO.listar_por_aluno(aluno.id)[0]
     assert pagamento.valor == Decimal('150.00')
+
+
+def test_turma_lotada_nao_vira_matricula_apos_pagamento(
+    client, plano, criar_aluno, logar_como_aluno, contexto_app,
+):
+    professor = Professor(nome='Professor lotado', login='prof-lotado', senha='senha123456')
+    ProfessorDAO.salvar(professor)
+    turma = Turma('Turma lotada', 'Seg', '19:00', professor.id, 1)
+    TurmaDAO.salvar(turma)
+    outro = criar_aluno(login='outro-lotado')
+    MatriculaDAO.matricular(outro.id, turma.id)
+    aluno = criar_aluno(login='aluno-lotado')
+    logar_como_aluno(aluno)
+
+    client.post('/perfil', data={'plano': str(plano.id), 'turma_id': str(turma.id)})
+    pagamento = PagamentoDAO.listar_por_aluno(aluno.id)[0]
+    PagamentoDAO.marcar_pago_via_webhook(pagamento, data_pagamento=date.today())
+
+    assert MatriculaDAO.listar_por_aluno(aluno.id) == []
 
 
 def test_reenvio_da_contratacao_reutiliza_mensalidade(client, plano, criar_aluno, logar_como_aluno):

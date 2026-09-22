@@ -13,7 +13,15 @@ pip install -r requirements-dev.txt   # inclui requirements.txt + pytest
 cp .env.example .env
 ```
 
+As imagens de produção instalam `requirements.lock`, gerado a partir de
+`requirements.txt` com hashes das dependências transitivas. Ao atualizar dependências,
+regenere o lockfile com `pip-compile --generate-hashes --output-file=requirements.lock requirements.txt`
+e rode `pip-audit -r requirements.lock`.
+
 Edite o `.env` e preencha pelo menos: `DATABASE_URL`, `SECRET_KEY`, `ADMIN_USER`, `ADMIN_PASSWORD_HASH`. O arquivo `.env` nunca deve ser commitado (já está no `.gitignore`).
+`SECRET_KEY` deve ter pelo menos 32 caracteres aleatórios. Em produção, mantenha
+`RATELIMIT_STORAGE_URI` apontando para Redis ou outro armazenamento compartilhado;
+`memory://` é reservado para testes locais.
 
 ## Banco de dados e migrations
 

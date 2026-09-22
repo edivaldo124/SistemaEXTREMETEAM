@@ -10,6 +10,8 @@ class Presenca(db.Model):
     turma_id = db.Column(db.Integer, db.ForeignKey('turmas.id'), nullable=False)
     data_aula = db.Column(db.Date, nullable=False)
     presente = db.Column(db.Boolean, nullable=False, default=False)
+    confirmada_aluno = db.Column(db.Boolean, nullable=False, default=False)
+    confirmada_em = db.Column(db.DateTime, nullable=True)
 
     aluno = db.relationship('Aluno', backref='presencas', lazy=True)
     turma = db.relationship('Turma', backref='presencas', lazy=True)

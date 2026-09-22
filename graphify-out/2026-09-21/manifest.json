@@ -6,15 +6,15 @@
     "semantic_hash": ""
   },
   "blueprints/turma_bp.py": {
-    "mtime": 1789845347.0660884,
-    "seen": 1789845896.722176,
-    "ast_hash": "9a79bc4de4b98fc61dcb976fd5a40959",
+    "mtime": 1790016272.1512804,
+    "seen": 1790016337.595497,
+    "ast_hash": "238360b1f67b660bc9760846e3ea5de6",
     "semantic_hash": ""
   },
   "blueprints/usuario_bp.py": {
-    "mtime": 1789846733.5797057,
-    "seen": 1789846902.3678334,
-    "ast_hash": "06e0ad21eb126c0d33597c4b6feed642",
+    "mtime": 1790016317.6159117,
+    "seen": 1790016337.5955021,
+    "ast_hash": "a53072f4f72d22b9269f46a962914498",
     "semantic_hash": ""
   },
   "config.py": {
@@ -42,10 +42,10 @@
     "semantic_hash": "0c1718a3da1aa1272df46e9235bb823c"
   },
   "dao/presencaDAO.py": {
-    "mtime": 1787435828.5919201,
-    "seen": 1787439581.3497667,
-    "ast_hash": "8b573b085ef6a38af4ea7b720e131ec8",
-    "semantic_hash": "8b573b085ef6a38af4ea7b720e131ec8"
+    "mtime": 1790016272.0757244,
+    "seen": 1790016337.5956936,
+    "ast_hash": "1f19e87f3e21b4e8e40fe1d0a0e71abb",
+    "semantic_hash": ""
   },
   "dao/professorDAO.py": {
     "mtime": 1788624306.6774583,
@@ -84,10 +84,10 @@
     "semantic_hash": ""
   },
   "modelos/presenca.py": {
-    "mtime": 1788554796.320766,
-    "seen": 1788577577.8360791,
-    "ast_hash": "f167e50a4d28f07333e6f0e28240e23d",
-    "semantic_hash": "f167e50a4d28f07333e6f0e28240e23d"
+    "mtime": 1790016272.0024664,
+    "seen": 1790016337.5969198,
+    "ast_hash": "19ba9ca4198410c4a1a24e39fb38c639",
+    "semantic_hash": ""
   },
   "modelos/professor.py": {
     "mtime": 1788631677.5375233,
@@ -114,15 +114,15 @@
     "semantic_hash": ""
   },
   "servicos/formatacao.py": {
-    "mtime": 1789089573.3702292,
-    "seen": 1789090652.5442476,
-    "ast_hash": "ee8b76f4848d1ea12a6f395bd008b802",
+    "mtime": 1790015866.2613673,
+    "seen": 1790016337.5975955,
+    "ast_hash": "5c41260b47577dd3a50171282180ea21",
     "semantic_hash": ""
   },
   "servidor.py": {
-    "mtime": 1789846514.5590844,
-    "seen": 1789846902.3707628,
-    "ast_hash": "64036fddc06a7a891f6f014930323fe4",
+    "mtime": 1789965654.0172594,
+    "seen": 1789966072.6632652,
+    "ast_hash": "ff1068ddaa171658130c0aa640f30f17",
     "semantic_hash": ""
   },
   "static/js/index.js": {
@@ -216,9 +216,9 @@
     "semantic_hash": ""
   },
   "templates/pgUsuario.html": {
-    "mtime": 1788668656.044218,
-    "seen": 1788670113.6064346,
-    "ast_hash": "1c1ef6ef9267210e925807a1cc8bef35",
+    "mtime": 1790016272.1666145,
+    "seen": 1790016337.602566,
+    "ast_hash": "b333003113308050d570675197003719",
     "semantic_hash": ""
   },
   "templates/recuperar.html": {
@@ -240,9 +240,9 @@
     "semantic_hash": ""
   },
   "servicos/email.py": {
-    "mtime": 1789930163.6677358,
-    "seen": 1789959591.820943,
-    "ast_hash": "a52a8757222aae335f3ac26d6ac4c486",
+    "mtime": 1789965654.0046878,
+    "seen": 1789966072.6632283,
+    "ast_hash": "c0e59f834963d9caeee967cad58cd7ed",
     "semantic_hash": ""
   },
   "templates/admin_avisos.html": {
@@ -271,8 +271,8 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1789964585.376181,
-    "ast_hash": "415656dfbf722b4ee0b494c18bfc8682",
+    "seen": 1789965584.7860794,
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "app.py": {
@@ -553,8 +553,8 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1789964585.3761687,
-    "ast_hash": "324d1aabfdaabef57d9ffa0805a7c9c6",
+    "seen": 1789965584.7860703,
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "servicos/senhas.py": {
@@ -582,9 +582,9 @@
     "semantic_hash": ""
   },
   "tests/test_seguranca.py": {
-    "mtime": 1789846755.0967233,
-    "seen": 1789846902.373571,
-    "ast_hash": "ddec056ca7f1a61adc87c306bb9a9646",
+    "mtime": 1790015866.2651763,
+    "seen": 1790016337.6004603,
+    "ast_hash": "36dbf5db9a3c47c160feacefbc1be104",
     "semantic_hash": ""
   },
   "security_best_practices_report.md": {
@@ -600,9 +600,9 @@
     "semantic_hash": ""
   },
   "blueprints/academia_bp.py": {
-    "mtime": 1789824301.358559,
-    "seen": 1789825239.203574,
-    "ast_hash": "c7dfde58cf597a0ac26285740bec7fe2",
+    "mtime": 1789965654.0177267,
+    "seen": 1789966072.6630332,
+    "ast_hash": "891aedc8e3073e31646433da047a6f06",
     "semantic_hash": ""
   },
   "migrations/versions/d9e2f6a14c80_contatos_academia_perfis_professores.py": {
@@ -642,9 +642,9 @@
     "semantic_hash": ""
   },
   "templates/admin_academia.html": {
-    "mtime": 1789825025.757296,
-    "seen": 1789825239.210171,
-    "ast_hash": "a29bffb269c957c2ceff486600a6b7df",
+    "mtime": 1789965654.0187411,
+    "seen": 1789966072.6635056,
+    "ast_hash": "50d546049953a149497a3c9d8c2d3bc7",
     "semantic_hash": ""
   },
   "templates/components/contatos_academia.html": {
@@ -942,9 +942,9 @@
     "semantic_hash": ""
   },
   "tests/test_publicas_redesign.py": {
-    "mtime": 1789845519.6140532,
-    "seen": 1789845896.7273881,
-    "ast_hash": "d3b2e2e56e3f5baa3e582fe26fea792e",
+    "mtime": 1789985795.8399043,
+    "seen": 1789986223.3073745,
+    "ast_hash": "05266ccd7c6d913bbdd91ef44a6797d9",
     "semantic_hash": ""
   },
   "tools/redesign/servir_visual.py": {
@@ -1065,6 +1065,48 @@
     "mtime": 1789930163.6739867,
     "seen": 1789959591.8232772,
     "ast_hash": "bf55d360c8c61b67bf8790491dbba884",
+    "semantic_hash": ""
+  },
+  "blueprints/gmail_oauth_bp.py": {
+    "mtime": 1789965654.016938,
+    "seen": 1789966072.6630468,
+    "ast_hash": "4b7c2d16ac29d5fe9e6412df11683274",
+    "semantic_hash": ""
+  },
+  "migrations/versions/c1d4e5f6a7b8_conexao_oauth_gmail.py": {
+    "mtime": 1789966100.2431767,
+    "seen": 1789986223.307105,
+    "ast_hash": "a0cb0dffe77e2519efc4788476c7a7f7",
+    "semantic_hash": ""
+  },
+  "modelos/gmail_conexao.py": {
+    "mtime": 1789965654.0160003,
+    "seen": 1789966072.663152,
+    "ast_hash": "e4cf915e3fd8adce0003e195459182c2",
+    "semantic_hash": ""
+  },
+  "servicos/gmail_conta.py": {
+    "mtime": 1789965654.0160003,
+    "seen": 1789966072.6632383,
+    "ast_hash": "d60a80a07b4a61a2fa53dc3e5486e0f2",
+    "semantic_hash": ""
+  },
+  "templates/politica_privacidade.html": {
+    "mtime": 1789986224.2874699,
+    "seen": 1790015795.354106,
+    "ast_hash": "78d2f7acf8e3d2d691a16167f833a8cf",
+    "semantic_hash": ""
+  },
+  "templates/termos_de_servico.html": {
+    "mtime": 1789986224.2905421,
+    "seen": 1790015795.354237,
+    "ast_hash": "e8872a7be916b17c8cfac3f9bcf498e7",
+    "semantic_hash": ""
+  },
+  "migrations/versions/d7e8f9a0b1c2_confirmacao_de_frequencia.py": {
+    "mtime": 1790016321.0281048,
+    "seen": 1790016337.596405,
+    "ast_hash": "aeb39ca700f8e2e4c1f3edbaa2d75202",
     "semantic_hash": ""
   }
 }

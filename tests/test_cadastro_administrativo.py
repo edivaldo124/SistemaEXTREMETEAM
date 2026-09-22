@@ -105,6 +105,43 @@ def test_admin_lanca_e_baixa_mensalidade_de_aluno_sem_acesso(client, logar_como_
     assert db.session.get(Aluno, aluno.id).mensalidade == 'Em Dia'
 
 
+@pytest.mark.parametrize('valor', ['-1', 'NaN', 'invalido'])
+def test_admin_rejeita_valor_financeiro_invalido(client, logar_como_admin, plano, valor):
+    logar_como_admin()
+    _matricular(client, plano_id=str(plano.id))
+    aluno = AlunoDAO.buscar_por_cpf('529.982.247-25')
+
+    resposta = client.post(
+        f'/admin/usuario/{aluno.cpf}/pagamentos',
+        data={
+            'plano_id': str(plano.id), 'valor': valor,
+            'vencimento': datetime.today().date().isoformat(),
+            'status': 'pago', 'forma_pagamento': 'dinheiro',
+        },
+    )
+
+    assert resposta.status_code == 302
+    assert PagamentoDAO.listar_por_aluno(aluno.id) == []
+
+
+def test_admin_rejeita_status_financeiro_desconhecido(client, logar_como_admin, plano):
+    logar_como_admin()
+    _matricular(client, plano_id=str(plano.id))
+    aluno = AlunoDAO.buscar_por_cpf('529.982.247-25')
+
+    resposta = client.post(
+        f'/admin/usuario/{aluno.cpf}/pagamentos',
+        data={
+            'plano_id': str(plano.id), 'valor': '150.00',
+            'vencimento': datetime.today().date().isoformat(),
+            'status': 'inventado', 'forma_pagamento': 'dinheiro',
+        },
+    )
+
+    assert resposta.status_code == 302
+    assert PagamentoDAO.listar_por_aluno(aluno.id) == []
+
+
 def test_primeira_mensalidade_opcional_nao_duplica_cobranca(client, logar_como_admin, plano, contexto_app):
     logar_como_admin()
 

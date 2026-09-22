@@ -12,6 +12,14 @@ from servicos import gmail_conta
 logger = logging.getLogger(__name__)
 
 
+def _destinatario_log(destinatario):
+    endereco = (destinatario or '').strip()
+    if '@' not in endereco:
+        return '<invalido>'
+    usuario, dominio = endereco.split('@', 1)
+    return f'{usuario[:2]}***@{dominio}'
+
+
 
 def email_valido(endereco):
     """Validação sintática básica, compartilhada pelos formulários do cadastro."""
@@ -28,7 +36,7 @@ def enviar_email(destinatario, nome_destinatario, assunto, titulo, paragrafos, l
         return False
 
     if not gmail_conta.estado()['conectada']:
-        logger.warning('Nenhuma conta Gmail conectada; e-mail "%s" para %s não enviado.', assunto, destinatario)
+        logger.warning('Nenhuma conta Gmail conectada; e-mail "%s" para %s não enviado.', assunto, _destinatario_log(destinatario))
         return False
 
     try:
@@ -36,12 +44,12 @@ def enviar_email(destinatario, nome_destinatario, assunto, titulo, paragrafos, l
             'email/base.html', titulo=titulo, paragrafos=paragrafos, link_url=link_url, link_texto=link_texto,
         )
     except Exception:
-        logger.exception('Falha ao montar o corpo do e-mail "%s" para %s.', assunto, destinatario)
+        logger.exception('Falha ao montar o corpo do e-mail "%s" para %s.', assunto, _destinatario_log(destinatario))
         return False
 
     try:
         gmail_conta.enviar(destinatario, nome_destinatario, assunto, corpo_html)
         return True
     except requests.RequestException:
-        logger.exception('Falha ao enviar e-mail "%s" para %s.', assunto, destinatario)
+        logger.exception('Falha ao enviar e-mail "%s" para %s.', assunto, _destinatario_log(destinatario))
         return False

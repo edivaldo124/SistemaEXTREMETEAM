@@ -31,6 +31,7 @@ class Pagamento(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False)
     plano_id = db.Column(db.Integer, db.ForeignKey('planos.id'), nullable=False)
+    turma_id = db.Column(db.Integer, db.ForeignKey('turmas.id'), nullable=True)
     valor = db.Column(db.Numeric(10, 2), nullable=False)
     vencimento = db.Column(db.Date, nullable=False)
     data_pagamento = db.Column(db.Date, nullable=True)
@@ -90,6 +91,7 @@ class Pagamento(db.Model):
 
     aluno = db.relationship('Aluno', backref='pagamentos', lazy=True)
     plano = db.relationship('Plano', backref='pagamentos', lazy=True)
+    turma = db.relationship('Turma', backref='pagamentos', lazy=True)
 
     @property
     def status_efetivo(self):
@@ -108,9 +110,11 @@ class Pagamento(db.Model):
     def __init__(self, aluno_id, plano_id, valor, vencimento, status='pendente', data_pagamento=None,
                  forma_pagamento=None, provider=None, provider_payment_id=None, external_reference=None,
                  idempotency_key=None, pix_copia_cola=None, ticket_url=None, data_criacao_pix=None,
-                 data_expiracao=None, competencia=None, vigencia_inicio=None, vigencia_fim=None):
+                 data_expiracao=None, competencia=None, vigencia_inicio=None, vigencia_fim=None,
+                 turma_id=None):
         self.aluno_id = aluno_id
         self.plano_id = plano_id
+        self.turma_id = turma_id
         self.valor = _para_decimal(valor)
         self.vencimento = vencimento
         self.status = status

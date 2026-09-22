@@ -22,7 +22,7 @@ _HASH_ADMIN_TESTE = generate_password_hash('senha-de-teste-nao-usar-em-producao'
 _CHAVES_CONTROLADAS = (
     'COOKIE_SECURE', 'TRUSTED_HOSTS', 'APP_BASE_URL', 'SECRET_KEY', 'DATABASE_URL',
     'ADMIN_USER', 'ADMIN_PASSWORD_HASH', 'ADMIN_PASSWORD', 'TRUST_PROXY_COUNT',
-    'CRIAR_SCHEMA_NA_IMPORTACAO',
+    'CRIAR_SCHEMA_NA_IMPORTACAO', 'RATELIMIT_STORAGE_URI',
 )
 
 
@@ -44,6 +44,8 @@ def _env_arranque(tmp_path, **overrides):
         # daqui, o valor real do .env do projeto vaza para o subprocesso de teste.
         'COOKIE_SECURE': '',
         'APP_BASE_URL': '',
+        'RATELIMIT_STORAGE_URI': 'memory://',
+        'CRIAR_SCHEMA_NA_IMPORTACAO': 'true',
     })
     base.update(overrides)
     return base

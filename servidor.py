@@ -30,8 +30,8 @@ from servicos.autorizacao import revogar_sessao_atual
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
-if not app.secret_key:
-    raise RuntimeError('A variavel de ambiente SECRET_KEY e obrigatoria.')
+if not app.secret_key or len(app.secret_key) < 32:
+    raise RuntimeError('A variavel de ambiente SECRET_KEY e obrigatoria e deve ter pelo menos 32 caracteres.')
 
 valor_cookie_secure = (os.environ.get('COOKIE_SECURE') or '').strip().lower()
 if not valor_cookie_secure:
@@ -45,6 +45,11 @@ else:
 
 app_base_url = (os.environ.get('APP_BASE_URL') or '').strip()
 url_base_publica = urlsplit(app_base_url)
+rate_limit_storage = (os.environ.get('RATELIMIT_STORAGE_URI') or 'memory://').strip()
+if (url_base_publica.scheme.lower() == 'https'
+        and rate_limit_storage.startswith('memory://')
+        and os.environ.get('CRIAR_SCHEMA_NA_IMPORTACAO', '').lower() != 'true'):
+    raise RuntimeError('RATELIMIT_STORAGE_URI deve usar armazenamento compartilhado em produção.')
 if not cookie_secure and url_base_publica.scheme.lower() == 'https':
     raise RuntimeError('COOKIE_SECURE=false não é permitido quando APP_BASE_URL usa HTTPS.')
 
@@ -250,4 +255,4 @@ keep_alive.iniciar()
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=4001)
+    app.run(host='0.0.0.0', port=4001)  # nosec B104 - somente desenvolvimento local

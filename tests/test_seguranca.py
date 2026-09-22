@@ -328,6 +328,22 @@ def test_cadastro_publico_nao_revela_cpf_nem_email_ja_cadastrados(client, criar_
     assert _mensagem_da_resposta(novo) == _mensagem_da_resposta(cpf_repetido) == _mensagem_da_resposta(email_repetido)
 
 
+def test_cadastro_publico_rejeita_cpf_invalido(client):
+    resposta = _cadastro_publico(client, cpfusuario='529.982.247-26')
+
+    assert resposta.status_code == 200
+    assert 'CPF válido' in resposta.get_data(as_text=True)
+    assert Aluno.query.filter_by(email='nova@example.com').first() is None
+
+
+def test_cadastro_publico_rejeita_data_de_nascimento_invalida_ou_futura(client):
+    invalida = _cadastro_publico(client, dataNascimento='2000-02-31')
+    futura = _cadastro_publico(client, dataNascimento='2999-01-01', loginusuario='pessoa-futura', emailusuario='futura@example.com')
+
+    assert 'data de nascimento válida' in invalida.get_data(as_text=True)
+    assert 'data de nascimento válida' in futura.get_data(as_text=True)
+
+
 def test_cadastro_com_email_existente_nao_cria_conta_e_avisa_o_dono(client, criar_aluno, sem_email):
     existente = criar_aluno(cpf='111.444.777-35', email='existente@example.com', login='existente')
     total = Aluno.query.count()

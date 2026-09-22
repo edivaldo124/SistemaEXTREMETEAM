@@ -87,6 +87,63 @@ def test_presenca_com_data_valida_continua_disponivel(client, criar_aluno, turma
     assert presenca.presente is True
 
 
+def test_aluno_confirma_sua_frequencia(client, criar_aluno, logar_como_aluno, turma):
+    aluno = criar_aluno()
+    MatriculaDAO.matricular(aluno.id, turma.id)
+    with client.session_transaction() as sessao:
+        sessao['tipo_usuario'] = 'admin'
+        from servicos.credenciais import referencia_credencial_admin
+        sessao['credencial'] = impressao_credencial(referencia_credencial_admin())
+    client.post(f'/turmas/{turma.id}/presenca', data={
+        'data_aula': '2026-09-07', f'presente_{aluno.id}': 'on',
+    })
+    presenca = Presenca.query.one()
+    logar_como_aluno(aluno)
+
+    resposta = client.post(f'/perfil/presencas/{presenca.id}/confirmar')
+
+    assert resposta.status_code == 302
+    assert Presenca.query.one().confirmada_aluno is True
+
+
+def test_corrigir_falta_remove_confirmacao_anterior(client, criar_aluno, turma):
+    aluno = criar_aluno()
+    MatriculaDAO.matricular(aluno.id, turma.id)
+    with client.session_transaction() as sessao:
+        sessao['tipo_usuario'] = 'admin'
+        from servicos.credenciais import referencia_credencial_admin
+        sessao['credencial'] = impressao_credencial(referencia_credencial_admin())
+
+    client.post(f'/turmas/{turma.id}/presenca', data={
+        'data_aula': '2026-09-07', f'presente_{aluno.id}': 'on',
+    })
+    presenca = Presenca.query.one()
+    presenca.confirmada_aluno = True
+    from config import db
+    db.session.commit()
+
+    client.post(f'/turmas/{turma.id}/presenca', data={'data_aula': '2026-09-07'})
+
+    presenca = Presenca.query.one()
+    assert presenca.presente is False
+    assert presenca.confirmada_aluno is False
+    assert presenca.confirmada_em is None
+
+
+def test_professor_nao_pode_matricular_aluno(client, criar_aluno, turma):
+    aluno = criar_aluno()
+    with client.session_transaction() as sessao:
+        sessao['tipo_usuario'] = 'professor'
+        sessao['professor_id'] = turma.professor_id
+        sessao['credencial'] = impressao_credencial(turma.professor.senha_hash)
+
+    resposta = client.post(f'/turmas/{turma.id}/matricular', data={'aluno_id': aluno.id})
+
+    assert resposta.status_code == 302
+    assert resposta.headers['Location'] == '/login'
+    assert MatriculaDAO.listar_por_turma(turma.id) == []
+
+
 @pytest.mark.parametrize(
     'papel,codigo',
     [(None, 302), ('aluno', 302), ('professor', 403), ('professor_inexistente', 302)],

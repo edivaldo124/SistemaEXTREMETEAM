@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import secrets
 from datetime import date
+from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, session
 from sqlalchemy.exc import IntegrityError
@@ -11,7 +12,10 @@ from modelos.usuario import Aluno
 from dao.usuarioDAO import AlunoDAO
 from dao.planoDAO import PlanoDAO
 from dao.turmaDAO import TurmaDAO
-from dao.financeiroDAO import ACAO_CONTRATAR, PagamentoDAO, SolicitacaoPlanoDAO, rotulo_status
+from dao.financeiroDAO import (
+    ACAO_CONTRATAR, FORMAS_PAGAMENTO_VALIDAS, PagamentoDAO, STATUS_VALIDOS,
+    SolicitacaoPlanoDAO, rotulo_status,
+)
 from modelos.pagamento import Pagamento
 from servicos.armazenamento import ArquivoInvalido, remover_arquivo, salvar_foto_perfil
 from servicos.autorizacao import sessao_administrativa_valida
@@ -140,9 +144,17 @@ def cadastrar_plano():
     preco_plano = request.form.get("preco_plano")
     duracao_dias = request.form.get("duracao_dias")  # Captura os dias
 
-    if nome_plano and preco_plano and duracao_dias:
-        novo_plano = Plano(nome_plano=nome_plano, preco_plano=float(preco_plano),duracao_dias=int(duracao_dias))
-        PlanoDAO.salvar(novo_plano)
+    try:
+        preco = Decimal((preco_plano or '').strip())
+        duracao = int(duracao_dias or 0)
+    except (InvalidOperation, TypeError, ValueError):
+        flash('Preço ou duração inválidos.', 'erro')
+        return redirect('/admin')
+    if not nome_plano or not preco.is_finite() or preco <= 0 or preco > Decimal('99999999.99') or not 1 <= duracao <= 3650:
+        flash('Informe um plano com nome, preço positivo e duração entre 1 e 3650 dias.', 'erro')
+        return redirect('/admin')
+    novo_plano = Plano(nome_plano=nome_plano.strip(), preco_plano=preco, duracao_dias=duracao)
+    PlanoDAO.salvar(novo_plano)
 
     return redirect('/admin')
 
@@ -483,15 +495,30 @@ def cadastrar_pagamento(cpf):
     competencia = (request.form.get('competencia') or '').strip() or None
     observacao = (request.form.get('observacao') or '').strip() or None
 
-    if aluno and plano and valor and vencimento:
+    try:
+        valor_decimal = Decimal((valor or '').strip())
+        data_vencimento = date.fromisoformat(vencimento or '')
+        data_paga = date.fromisoformat(data_pagamento) if data_pagamento else None
+    except (InvalidOperation, TypeError, ValueError):
+        flash('Valor ou data inválidos.', 'erro')
+        return redirect(f'/admin/usuario/{cpf}')
+
+    if status not in STATUS_VALIDOS or (forma_pagamento and forma_pagamento not in FORMAS_PAGAMENTO_VALIDAS):
+        flash('Status ou forma de pagamento inválidos.', 'erro')
+        return redirect(f'/admin/usuario/{cpf}')
+    if not valor_decimal.is_finite() or valor_decimal <= 0 or valor_decimal > Decimal('99999999.99'):
+        flash('O valor deve ser positivo e estar dentro do limite permitido.', 'erro')
+        return redirect(f'/admin/usuario/{cpf}')
+
+    if aluno and plano and vencimento:
         novo_pagamento = Pagamento(
             aluno_id=aluno.id,
             plano_id=plano.id,
-            valor=float(valor),
-            vencimento=date.fromisoformat(vencimento),
+            valor=valor_decimal,
+            vencimento=data_vencimento,
             status=status,
             forma_pagamento=forma_pagamento if forma_pagamento else None,
-            data_pagamento=date.fromisoformat(data_pagamento) if data_pagamento else None,
+            data_pagamento=data_paga,
             competencia=competencia,
         )
         if status != 'pendente':
@@ -507,6 +534,7 @@ def cadastrar_pagamento(cpf):
             PagamentoDAO.garantir_vigencia(
                 novo_pagamento, referencia=novo_pagamento.data_pagamento or novo_pagamento.vencimento,
             )
+            PagamentoDAO.efetivar_turma_da_cobranca(novo_pagamento)
         PagamentoDAO.registrar_evento(
             novo_pagamento.id, 'manual_registrado',
             detalhe=observacao or f'Mensalidade lançada manualmente pelo admin ({forma_pagamento or "sem forma informada"}).',
@@ -531,6 +559,9 @@ def atualizar_status_pagamento(pagamento_id):
 
     status = request.form.get('status')
     forma_pagamento = request.form.get('forma_pagamento')
+    if status not in STATUS_VALIDOS or (forma_pagamento and forma_pagamento not in FORMAS_PAGAMENTO_VALIDAS):
+        flash('Status ou forma de pagamento inválidos.', 'erro')
+        return redirect('/admin/financeiro')
     status_antes = pagamento.status
 
     PagamentoDAO.atualizar_status(pagamento_id, status, forma_pagamento)

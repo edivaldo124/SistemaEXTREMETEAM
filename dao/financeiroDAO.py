@@ -5,6 +5,7 @@ from sqlalchemy import case, func, or_
 from sqlalchemy.orm import joinedload
 
 from config import db
+from dao.matriculaDAO import MatriculaDAO
 from modelos.matricula import Matricula
 from modelos.pagamento import Pagamento
 from modelos.pagamento_evento import PagamentoEvento
@@ -103,6 +104,8 @@ STATUS_FECHADOS = ('pago', 'cancelado', 'reembolsado')
 
 # Estados "em aberto": ainda pedem alguma ação (do aluno ou de uma decisão pendente).
 STATUS_ABERTOS = ('pendente', 'atrasado', 'em_processamento', 'em_analise', 'recusado')
+STATUS_VALIDOS = STATUS_FECHADOS + STATUS_ABERTOS
+FORMAS_PAGAMENTO_VALIDAS = ('pix', 'dinheiro', 'transferencia', 'boleto', 'cartao', 'account_money')
 
 # Rótulo humano de cada status interno - usado nos badges (nunca só a cor comunica o estado).
 ROTULO_STATUS = {
@@ -260,7 +263,7 @@ class PagamentoDAO:
         return Pagamento.query.filter_by(aluno_id=aluno_id).all()
 
     @staticmethod
-    def _nova_cobranca(*, aluno, plano, pagamentos, hoje, ator, tipo_evento, detalhe):
+    def _nova_cobranca(*, aluno, plano, pagamentos, hoje, ator, tipo_evento, detalhe, turma_id=None):
         inicio, fim = regras_plano.periodo_para_nova_cobranca(pagamentos, plano, hoje=hoje)
         pagamento = Pagamento(
             aluno_id=aluno.id,
@@ -274,6 +277,7 @@ class PagamentoDAO:
             competencia=inicio.strftime('%Y-%m'),
             vigencia_inicio=inicio,
             vigencia_fim=fim,
+            turma_id=turma_id,
         )
         db.session.add(pagamento)
         db.session.flush()
@@ -313,6 +317,11 @@ class PagamentoDAO:
             solicitacao.pagamento_efetivacao_id = pagamento.id
         if aluno is not None:
             aluno.plano_id = solicitacao.plano_destino_id
+        solicitacao.efetivado_em = datetime.utcnow()
+        if pagamento is not None:
+            solicitacao.pagamento_efetivacao_id = pagamento.id
+        if aluno is not None:
+            aluno.plano_id = solicitacao.plano_destino_id
 
     @staticmethod
     def efetivar_mudancas_por_prazo(aluno, *, hoje=None):
@@ -324,6 +333,10 @@ class PagamentoDAO:
         """
         hoje = hoje or date.today()
         solicitacao = SolicitacaoPlanoDAO.pendente_do_aluno(aluno.id)
+        if not solicitacao or not solicitacao.vigencia_a_partir_de:
+            return None
+        if solicitacao.vigencia_a_partir_de > hoje:
+            return None
         if not solicitacao or not solicitacao.vigencia_a_partir_de:
             return None
         if solicitacao.vigencia_a_partir_de > hoje:
@@ -343,7 +356,7 @@ class PagamentoDAO:
         return solicitacao
 
     @staticmethod
-    def contratar_plano(*, aluno, plano, acao=ACAO_CONTRATAR, hoje=None, ator=None):
+    def contratar_plano(*, aluno, plano, acao=ACAO_CONTRATAR, hoje=None, ator=None, turma_id=None):
         """Único caminho pelo qual o aluno contrata, renova ou agenda a troca de plano.
 
         Todas as regras são reavaliadas aqui a partir do banco, com trava de linha no
@@ -387,6 +400,9 @@ class PagamentoDAO:
             if PagamentoDAO._conflita_com_agendamento(plano, solicitacao, situacao, cobranca):
                 return ResultadoContratacao(CONTRATACAO_MUDANCA_CONFLITANTE, solicitacao=solicitacao)
             if cobranca.plano_id == plano_alvo.id:
+                if turma_id is not None:
+                    cobranca.turma_id = turma_id
+                    db.session.commit()
                 return ResultadoContratacao(
                     CONTRATACAO_COBRANCA_REUTILIZADA, pagamento=cobranca, solicitacao=solicitacao,
                 )
@@ -397,6 +413,8 @@ class PagamentoDAO:
             PagamentoDAO._replanejar_cobranca(
                 cobranca, plano=plano_alvo, pagamentos=pagamentos, hoje=hoje, ator=ator,
             )
+            if turma_id is not None:
+                cobranca.turma_id = turma_id
             if solicitacao_aplicavel:
                 PagamentoDAO._efetivar_solicitacao(solicitacao_aplicavel, pagamento=cobranca, aluno=aluno)
             aluno.plano_id = plano_alvo.id
@@ -426,6 +444,7 @@ class PagamentoDAO:
                 tipo_evento='renovacao_antecipada',
                 detalhe=(f'Cobrança do próximo período ({plano_alvo.nome_plano}) criada '
                          f'antes do fim da vigência atual.'),
+                turma_id=turma_id,
             )
             if solicitacao_aplicavel:
                 PagamentoDAO._efetivar_solicitacao(solicitacao_aplicavel, pagamento=pagamento, aluno=aluno)
@@ -449,6 +468,7 @@ class PagamentoDAO:
             aluno=aluno, plano=plano_alvo, pagamentos=pagamentos, hoje=hoje, ator=ator,
             tipo_evento='plano_contratado',
             detalhe=f'Cobrança criada para contratação do plano {plano_alvo.nome_plano}.',
+            turma_id=turma_id,
         )
         if solicitacao_aplicavel:
             PagamentoDAO._efetivar_solicitacao(solicitacao_aplicavel, pagamento=pagamento, aluno=aluno)
@@ -685,12 +705,17 @@ class PagamentoDAO:
         pagamento = Pagamento.query.filter_by(id=pagamento_id).first()
 
         if pagamento:
+            if status not in STATUS_VALIDOS:
+                return False
+            if forma_pagamento and forma_pagamento not in FORMAS_PAGAMENTO_VALIDAS:
+                return False
             pagamento.status = status
             pagamento.forma_pagamento = forma_pagamento
 
             if status == 'pago':
                 pagamento.data_pagamento = date.today()
                 PagamentoDAO.abrir_vigencia(pagamento, referencia=pagamento.data_pagamento)
+                PagamentoDAO.efetivar_turma_da_cobranca(pagamento)
             else:
                 pagamento.data_pagamento = None
 
@@ -698,6 +723,22 @@ class PagamentoDAO:
             db.session.commit()
             return True
 
+        return False
+
+    @staticmethod
+    def efetivar_turma_da_cobranca(pagamento):
+        if pagamento.status != 'pago' or not pagamento.turma_id:
+            return True
+        if Matricula.query.filter_by(aluno_id=pagamento.aluno_id, turma_id=pagamento.turma_id).first():
+            return True
+        if MatriculaDAO.matricular_com_lotacao(pagamento.aluno_id, pagamento.turma_id, commit=False):
+            return True
+        db.session.add(PagamentoEvento(
+            pagamento_id=pagamento.id,
+            tipo='matricula_sem_vaga',
+            detalhe='Pagamento aprovado, mas a turma escolhida estava lotada; matrícula requer resolução administrativa.',
+            ator='sistema',
+        ))
         return False
 
     @staticmethod
@@ -846,6 +887,7 @@ class PagamentoDAO:
         # O período só passa a valer agora: é a confirmação do pagamento que abre a
         # vigência, nunca a criação da cobrança.
         PagamentoDAO.abrir_vigencia(pagamento, referencia=data_pagamento)
+        PagamentoDAO.efetivar_turma_da_cobranca(pagamento)
         PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='webhook_aprovado',
@@ -919,6 +961,7 @@ class PagamentoDAO:
         pagamento.comprovante_manual_analisado_em = datetime.utcnow()
         pagamento.comprovante_manual_observacao = observacao
         PagamentoDAO.abrir_vigencia(pagamento, referencia=pagamento.data_pagamento)
+        PagamentoDAO.efetivar_turma_da_cobranca(pagamento)
         PagamentoDAO._sincronizar_situacao(pagamento.aluno)
         db.session.add(PagamentoEvento(
             pagamento_id=pagamento.id, tipo='comprovante_aprovado',

@@ -56,8 +56,8 @@
                              role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
                     {% endfor %}
                 {% endwith %}
-                {% if eh_admin %}
-                    <section class="detail-section">
+                <section class="detail-section">
+                    {% if eh_admin %}
                         <div class="section-title">
                             <h2>Matrícula</h2>
                             <p>Vincule alunos a essa turma.</p>
@@ -79,6 +79,7 @@
                                 <button type="submit" class="btn-salvar">Matricular aluno</button>
                             </div>
                         </form>
+                    {% endif %}
                         <div class="table-container table-stack tabela-matriculados">
                             <table>
                                 <thead>
@@ -105,11 +106,15 @@
                                                 </span>
                                             </td>
                                             <td data-label="Ação">
+                                                {% if eh_admin %}
                                                 <form action="/turmas/{{ turma.id }}/desmatricular/{{ aluno.id }}"
                                                       method="POST">
                     {% include "components/csrf_field.html" %}
                                                     <button type="submit" class="btn btn-remover">Remover</button>
                                                 </form>
+                                                {% else %}
+                                                    <span class="sr-only">Sem ações administrativas</span>
+                                                {% endif %}
                                             </td>
                                         </tr>
                                     {% else %}
@@ -120,8 +125,7 @@
                                 </tbody>
                             </table>
                         </div>
-                    </section>
-                {% endif %}
+                </section>
                 <section class="secao-pagamentos">
                     <div class="section-title">
                         <h2>Presença</h2>
