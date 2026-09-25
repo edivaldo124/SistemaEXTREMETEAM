@@ -383,3 +383,14 @@ def test_confirmar_troca_de_email_descarta_link_de_recuperacao_do_endereco_antig
     db.session.refresh(aluno)
     assert aluno.email == 'novo@example.com'
     assert aluno.token_recuperacao_hash is None and aluno.token_recuperacao_expira is None
+
+
+def test_csrf_expirado_no_login_devolve_a_tela_de_login(app, client):
+    app.config['WTF_CSRF_ENABLED'] = True
+    try:
+        resposta = client.post('/login', data={'loginusuario': 'x', 'senhausuario': 'y'})
+        assert resposta.status_code == 400
+        assert b'name="csrf_token"' in resposta.data
+        assert 'sessão de segurança expirou'.encode() in resposta.data
+    finally:
+        app.config['WTF_CSRF_ENABLED'] = False

@@ -12,11 +12,40 @@
   border:0; border-radius:var(--radius-lg);
   color:var(--text); background:var(--surface);
   box-shadow:var(--shadow-dialogo); overflow:visible;
+  /* Saída no desktop: fade e desliza 8px para baixo */
+  opacity:0; translate:0 8px;
+  transition:
+    opacity 200ms var(--ease-saida),
+    translate 200ms var(--ease-saida),
+    overlay 200ms var(--ease-saida) allow-discrete,
+    display 200ms var(--ease-saida) allow-discrete;
 }
-.pix-dialog[open],.modal-dialog[open] { animation:dialog-in .22s var(--ease); }
+.pix-dialog[open],.modal-dialog[open] {
+  opacity:1; translate:0 0;
+  transition:
+    opacity 280ms var(--ease),
+    translate 280ms var(--ease),
+    overlay 280ms var(--ease) allow-discrete,
+    display 280ms var(--ease) allow-discrete;
+}
+@starting-style {
+  .pix-dialog[open],.modal-dialog[open] { opacity:0; translate:0 16px; }
+  .pix-dialog[open]::backdrop,.modal-dialog[open]::backdrop { opacity:0; }
+}
 .pix-dialog::backdrop,.modal-dialog::backdrop {
   background:rgba(0,0,0,.74); backdrop-filter:blur(4px);
-  animation:backdrop-in .18s ease;
+  opacity:0;
+  transition:
+    opacity 200ms var(--ease-saida),
+    overlay 200ms var(--ease-saida) allow-discrete,
+    display 200ms var(--ease-saida) allow-discrete;
+}
+.pix-dialog[open]::backdrop,.modal-dialog[open]::backdrop {
+  opacity:1;
+  transition:
+    opacity 280ms var(--ease),
+    overlay 280ms var(--ease) allow-discrete,
+    display 280ms var(--ease) allow-discrete;
 }
 .pix-accent,.modal-accent { display:none; }
 
@@ -89,12 +118,57 @@
 .pix-status .icone { width:17px; height:17px; }
 .pix-status-aprovado { border-color:var(--green); color:var(--green-ink); background:var(--green-bg); }
 
+/* Celular: bottom sheet colado embaixo */
+@media (max-width:640px) {
+  .pix-dialog,.modal-dialog {
+    width:100%; max-width:100%;
+    margin:auto 0 0;
+    border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+    padding:var(--sp-6) var(--sp-5);
+    padding-bottom:calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
+    max-height:88dvh; overflow-y:auto;
+    opacity:1; translate:0 100%;
+  }
+  .pix-dialog[open],.modal-dialog[open] {
+    opacity:1; translate:0 0;
+  }
+  @starting-style {
+    .pix-dialog[open],.modal-dialog[open] {
+      opacity:1; translate:0 100%;
+    }
+  }
+  .pix-dialog::before,.modal-dialog::before {
+    content:""; display:block;
+    width:36px; height:4px; margin:0 auto var(--sp-4);
+    border-radius:var(--radius-pill); background:var(--line);
+    pointer-events:none;
+  }
+}
+
 @media (max-width:480px) {
-  .pix-dialog,.modal-dialog { padding:var(--sp-6) var(--sp-5); border-radius:var(--radius-card); }
   .pix-copia-linha { flex-direction:column; }
   .pix-copia-linha button { width:100%; }
 }
+
 @media (prefers-reduced-motion:reduce) {
-  .pix-dialog[open],.pix-dialog::backdrop,
-  .modal-dialog[open],.modal-dialog::backdrop { animation:none; }
+  .pix-dialog,.modal-dialog,
+  .pix-dialog[open],.modal-dialog[open] {
+    translate:none;
+    transition:
+      opacity 120ms ease,
+      overlay 120ms allow-discrete,
+      display 120ms allow-discrete;
+  }
+  @starting-style {
+    .pix-dialog[open],.modal-dialog[open] {
+      opacity:0; translate:none;
+    }
+  }
+  .pix-dialog::backdrop,.modal-dialog::backdrop,
+  .pix-dialog[open]::backdrop,.modal-dialog[open]::backdrop {
+    transition:
+      opacity 120ms ease,
+      overlay 120ms allow-discrete,
+      display 120ms allow-discrete;
+  }
 }

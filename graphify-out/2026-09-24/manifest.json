@@ -1050,9 +1050,9 @@
     "semantic_hash": ""
   },
   "blueprints/gmail_oauth_bp.py": {
-    "mtime": 1790081963.9530864,
-    "seen": 1790083727.1202607,
-    "ast_hash": "4b7c2d16ac29d5fe9e6412df11683274",
+    "mtime": 1790084976.9821415,
+    "seen": 1790085473.1363595,
+    "ast_hash": "eb1a7aa3e2d8979086a4d2d7eb653034",
     "semantic_hash": ""
   },
   "migrations/versions/c1d4e5f6a7b8_conexao_oauth_gmail.py": {
@@ -1098,9 +1098,9 @@
     "semantic_hash": ""
   },
   "security-review/RELATORIO.md": {
-    "mtime": 1790083721.7037578,
-    "seen": 1790083727.1239552,
-    "ast_hash": "be0627c9bbe5b5ed7556d5d26e90638b",
+    "mtime": 1790085454.8310049,
+    "seen": 1790085473.1421857,
+    "ast_hash": "4a9dd9cb6739fd4de3fc78d9ca2385e2",
     "semantic_hash": ""
   },
   "skills_disponiveis.md": {

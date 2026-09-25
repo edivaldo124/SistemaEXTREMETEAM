@@ -32,8 +32,11 @@ if (gradePlanos) {
     const links = Array.from(document.querySelectorAll('[data-menu-screen]'));
     if (!telas.length || !links.length) return;
 
+    let telaAtual = null;
+
     function mostrarTela(id, moverFoco = false) {
         if (!idsTelas.includes(id)) id = 'visao-geral';
+        telaAtual = id;
         telas.forEach((tela) => {
             const ativa = tela.id === id;
             tela.hidden = !ativa;
@@ -54,11 +57,26 @@ if (gradePlanos) {
             evento.preventDefault();
             const id = link.dataset.menuScreen;
             history.pushState(null, '', `#${id}`);
-            mostrarTela(id, true);
+            trocarTela(id, true);
         });
     });
 
-    window.addEventListener('popstate', () => mostrarTela(location.hash.slice(1)));
-    window.addEventListener('hashchange', () => mostrarTela(location.hash.slice(1)));
+    // A tela nova entra pelo lado em que está no menu. deslizarTela vem de
+    // components/deslize.html; sem ele a troca é seca, como antes.
+    function trocarTela(id, moverFoco = false) {
+        if (!idsTelas.includes(id)) id = 'visao-geral';
+        if (id === telaAtual) return;
+        const sentido = idsTelas.indexOf(id) > idsTelas.indexOf(telaAtual) ? 'avanca' : 'volta';
+        // popstate e hashchange chegam juntos no "voltar"; a tela conta como
+        // trocada já aqui, antes da transição rodar a atualização.
+        telaAtual = id;
+        document.body.classList.add('telas-trocadas');
+        const atualizar = () => mostrarTela(id, moverFoco);
+        if (window.deslizarTela) window.deslizarTela(sentido, atualizar);
+        else atualizar();
+    }
+
+    window.addEventListener('popstate', () => trocarTela(location.hash.slice(1)));
+    window.addEventListener('hashchange', () => trocarTela(location.hash.slice(1)));
     mostrarTela(location.hash.slice(1) || 'visao-geral');
 })();

@@ -376,9 +376,10 @@
 /* O painel recebe foco por script só para levar o leitor de tela ao conteúdo
    da tela escolhida. O anel de foco pertence ao item de menu, não ao painel. */
 .menu-screen:focus,.menu-screen:focus-visible { outline:none; box-shadow:none; }
-.menu-screen-overview,.content-section.menu-screen { animation:screen-enter .18s var(--ease); }
 .content-section.menu-screen { margin-top:0; }
-@keyframes screen-enter { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+/* A troca de tela já desliza (components/deslize.html); a entrada da abertura não se repete
+   a cada volta para a visão geral. */
+.telas-trocadas .menu-screen :is(.entra,.entra-1,.entra-2,.entra-3,.entra-4,.entra-5) { animation:none; }
 
 /* ---------------------------------------- diálogos de turma e presença -- */
 
@@ -424,9 +425,6 @@ dialog.presenca-dialog { width:min(700px,calc(100% - 32px)); }
   .filtros-mensalidades select,.filtros-mensalidades input,
   .filtros-mensalidades .button-secondary { min-height:44px; }
   .app-footer { margin-inline:var(--sp-3); padding:var(--sp-5); border-radius:var(--radius-card); }
-}
-@media (prefers-reduced-motion:reduce) {
-  .menu-screen-overview,.content-section.menu-screen { animation:none; }
 }
 
 /* Título de bloco dentro de "Meus dados": três formulários diferentes no mesmo

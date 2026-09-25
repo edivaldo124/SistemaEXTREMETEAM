@@ -1,0 +1,79 @@
+{#- Deslize entre telas (as animações ficam em theme.css). Incluir no <head>,
+    antes das folhas de estilo. Tudo aqui é inline de propósito:
+    - a adesão @view-transition: numa folha externa o Chrome às vezes a consulta
+      antes de aplicar a folha e descarta a transição entre páginas;
+    - o script: o `pagereveal` precisa estar escutando antes da primeira pintura. -#}
+<style>
+    @view-transition { navigation:auto; }
+    @media (prefers-reduced-motion:reduce) { @view-transition { navigation:none; } }
+</style>
+<script nonce="{{ csp_nonce() }}">
+// O conteúdo entra pelo lado de onde a pessoa foi. Seção à direita no menu (ou
+// uma tela de detalhe) entra pela direita; voltar entra pela esquerda. Sem
+// suporte a View Transitions o navegador troca de página como sempre.
+(() => {
+    const raiz = document.documentElement;
+    const movimentoReduzido = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Ordem dos menus, da esquerda para a direita. Página fora da lista e dentro
+    // da área logada conta como detalhe de alguma seção.
+    const SECOES = ['/admin', '/admin/turmas', '/admin/financeiro', '/admin/avisos', '/admin/academia'];
+    const AREA_LOGADA = /^\/(admin|perfil|turmas|professor)(\/|$)/;
+
+    function profundidade(caminho) {
+        return caminho.split('/').filter(Boolean).length;
+    }
+
+    function sentidoEntre(de, para) {
+        if (!AREA_LOGADA.test(de) || !AREA_LOGADA.test(para)) return null;
+        const i = SECOES.indexOf(de);
+        const j = SECOES.indexOf(para);
+        if (i >= 0 && j >= 0) return j > i ? 'avanca' : 'volta';
+        if (i >= 0) return 'avanca';
+        if (j >= 0) return 'volta';
+        const p = profundidade(para) - profundidade(de);
+        if (p === 0) return null;
+        return p > 0 ? 'avanca' : 'volta';
+    }
+
+    // O sentido vira atributo no <html> enquanto a transição dura; o CSS escolhe
+    // o deslize por ele. Atributo em vez de `types` porque funciona igual na
+    // troca de página e na troca de tela da área do aluno.
+    function marcar(transicao, sentido) {
+        raiz.dataset.deslize = sentido;
+        transicao.finished.finally(() => {
+            delete raiz.dataset.deslize;
+        });
+    }
+
+    window.addEventListener('pagereveal', (evento) => {
+        const transicao = evento.viewTransition;
+        if (!transicao) return;
+        const ativacao = window.navigation && navigation.activation;
+        const origem = ativacao && ativacao.from;
+        if (!origem || !ativacao.entry || ativacao.navigationType === 'reload') {
+            transicao.skipTransition();
+            return;
+        }
+        const de = new URL(origem.url).pathname;
+        const para = new URL(ativacao.entry.url).pathname;
+        // Salvar um formulário e voltar para a mesma página não é mudar de tela.
+        if (de === para) {
+            transicao.skipTransition();
+            return;
+        }
+        const sentido = sentidoEntre(de, para);
+        if (sentido) marcar(transicao, sentido);
+    });
+
+    // Para telas dentro da mesma página (área do aluno): roda `atualizar` dentro
+    // de uma transição, ou direto quando não há suporte ou há movimento reduzido.
+    window.deslizarTela = (sentido, atualizar) => {
+        if (!document.startViewTransition || movimentoReduzido() || !sentido) {
+            atualizar();
+            return;
+        }
+        marcar(document.startViewTransition(atualizar), sentido);
+    };
+})();
+</script>

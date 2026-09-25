@@ -184,6 +184,10 @@ def erro_csrf(_erro):
     mensagem = 'Sua sessão de segurança expirou. Atualize a página e tente novamente.'
     if request.path.startswith('/api/'):
         return {'erro': mensagem}, 400
+    # Aba de login aberta há muito tempo (ou de antes de um deploy): em vez de uma página
+    # em branco, devolve o próprio login com um token novo para a pessoa só reenviar.
+    if request.endpoint == 'auth.pagina_login':
+        return render_template('login.html', msg=mensagem), 400
     return mensagem, 400
 
 

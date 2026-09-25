@@ -17,7 +17,7 @@ os.chdir(RAIZ)
 
 pasta = tempfile.mkdtemp(prefix='et-visual-')
 os.environ.update(
-    SECRET_KEY='chave-visual-descartavel',
+    SECRET_KEY='chave-visual-descartavel-so-para-testes-locais',
     DATABASE_URL=f'sqlite:///{pasta}/visual.db',
     COOKIE_SECURE='false',
     APP_BASE_URL='http://localhost:4002',

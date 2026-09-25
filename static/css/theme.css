@@ -489,11 +489,6 @@ td .student-avatar { vertical-align:middle; }
 /* O navegador já desenha o anel; não precisa também do realce de hover. */
 :focus:not(:focus-visible) { outline:none; }
 
-@keyframes reveal { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
-/* Entrada de diálogo: usada por modal.css e pix.css, que nem sempre carregam juntos. */
-@keyframes dialog-in { from { opacity:0; transform:translateY(10px) scale(.99); } to { opacity:1; transform:none; } }
-@keyframes backdrop-in { from { opacity:0; } to { opacity:1; } }
-
 /* --------------------------------------------------------- movimento --- */
 /* Regra da casa: cada tela tem UMA entrada, no bloco que abre a página. O
    resto só se mexe quando a pessoa age. Sem laço, sem brilho, sem flutuação. */
@@ -537,6 +532,60 @@ td .student-avatar { vertical-align:middle; }
 
 /* Mensagens de erro e sucesso chegam de cima, curto. */
 .msg,.alert { animation:entra var(--dur-media) var(--ease) both; }
+
+/* ------------------------------------------------- deslize entre telas -- */
+/* Trocar de seção é a outra exceção à regra da entrada única: o conteúdo desliza
+   do lado para onde a pessoa foi (components/deslize.html decide e marca data-deslize no
+   <html>). Cabeçalho e menu ficam parados; só a pílula da seção ativa corre
+   até o item novo. Sem data-deslize (login, página pública) fica o esmaecer
+   padrão do navegador. */
+
+/* A adesão (@view-transition) fica inline em components/deslize.html: numa folha
+   externa o Chrome às vezes consulta a regra antes de aplicá-la e descarta a
+   transição. */
+
+main#conteudo { view-transition-name:conteudo; }
+.admin-header,.app-header,.detail-header { view-transition-name:cabecalho; }
+.bottom-nav { view-transition-name:menu-inferior; }
+.admin-nav-scroll a[aria-current="page"],.bottom-nav a.is-active { view-transition-name:secao-ativa; }
+/* No celular a pílula que conta é a da barra de baixo; duas com o mesmo nome
+   cancelariam a transição. */
+@media (min-width:721px) { .app-header nav a.is-active { view-transition-name:secao-ativa; } }
+
+/* A pílula corre como bloco amarelo liso; o rótulo novo só aparece perto da
+   chegada e no tamanho natural. Esticar o retrato do item entre larguras
+   diferentes espreme o texto, e cruzar os dois rótulos deixa texto fantasma. */
+::view-transition-group(secao-ativa) {
+  animation-duration:var(--dur-media); animation-timing-function:var(--ease);
+  border-radius:var(--radius); background:var(--yellow);
+}
+@media (min-width:721px) {
+  html:has(.app-header nav a.is-active)::view-transition-group(secao-ativa) { border-radius:var(--radius-pill); }
+}
+::view-transition-old(secao-ativa) { display:none; }
+::view-transition-new(secao-ativa) {
+  inline-size:auto; left:50%; translate:-50% 0;
+  animation:rotulo-chega var(--dur-media) var(--ease) both;
+}
+@keyframes rotulo-chega { 0%,45% { opacity:0; } }
+
+html[data-deslize="avanca"] { --lado:1; }
+html[data-deslize="volta"] { --lado:-1; }
+@keyframes desliza-entra { from { opacity:0; translate:calc(var(--lado) * 56px) 0; } }
+@keyframes desliza-sai { 70%,to { opacity:0; } to { translate:calc(var(--lado) * -56px) 0; } }
+
+/* A caixa não viaja de uma posição de rolagem para a outra: só o deslize lateral. */
+html[data-deslize]::view-transition-group(conteudo) { animation:none; }
+html[data-deslize]::view-transition-old(conteudo) {
+  animation:desliza-sai var(--dur-rapida) var(--ease-saida) both;
+}
+html[data-deslize]::view-transition-new(conteudo) {
+  animation:desliza-entra var(--dur-media) var(--ease) 40ms both;
+}
+
+@media (prefers-reduced-motion:reduce) {
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*) { animation:none !important; }
+}
 
 /* Selo de situação e linha de tabela mudam de cor sem salto. */
 .status { transition:background var(--dur-rapida) ease, color var(--dur-rapida) ease; }

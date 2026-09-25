@@ -3,6 +3,7 @@ import logging
 import time
 
 from flask import Blueprint, flash, redirect, request, session, url_for
+from config import limiter
 from servicos.autorizacao import admin_requerido
 from servicos import gmail_conta
 
@@ -16,6 +17,7 @@ def _voltar():
 
 
 @gmail_oauth_bp.route('/admin/gmail/conectar')
+@limiter.limit('10 per 15 minutes')
 @admin_requerido
 def conectar():
     if not gmail_conta.oauth_configurado():
@@ -27,6 +29,7 @@ def conectar():
 
 
 @gmail_oauth_bp.route('/admin/gmail/callback')
+@limiter.limit('20 per 15 minutes')
 @admin_requerido
 def callback():
     guardada = session.pop(CHAVE_SESSAO, None)
