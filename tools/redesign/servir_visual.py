@@ -176,6 +176,13 @@ def vitrine_enviar():
     return redirect('/_vitrine#carregando')
 
 
+# Várias capturas (e vários agentes) entram como admin/aluno na mesma instância em
+# poucos minutos: o limite de tentativas de login da produção devolvia 429 e as capturas
+# caíam na tela de login. Só aqui, nesta cópia descartável, o limitador fica desligado.
+from config import limiter  # noqa: E402
+
+limiter.enabled = False
+
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 app.run(host='127.0.0.1', port=4002, use_reloader=False, threaded=True)

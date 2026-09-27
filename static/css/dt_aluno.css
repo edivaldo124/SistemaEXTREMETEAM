@@ -41,11 +41,8 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 .aluno-cabecalho { justify-content:flex-start; flex-wrap:nowrap; }
 /* A fila de abas logo abaixo já separa o cabeçalho do conteúdo. */
 .detail-intro.aluno-cabecalho { padding-bottom:0; border-bottom:0; }
-/* extreme.css pinta ".detail-intro > span" de amarelo (marca antiga); o avatar segue o componente. */
-.aluno-cabecalho > .et-avatar {
-  width:var(--et-avatar-t); height:var(--et-avatar-t);
-  color:var(--et-gold); background:var(--et-black);
-}
+/* O avatar do cabeçalho mantém o tamanho do componente mesmo dentro do flex. */
+.aluno-cabecalho > .et-avatar { width:var(--et-avatar-t); height:var(--et-avatar-t); }
 .aluno-cabecalho > div { min-width:0; }
 .aluno-abas { margin-top:var(--sp-6); }
 .aluno-abas > .et-tabs-painel { padding-top:0; font-size:var(--fs-md); }

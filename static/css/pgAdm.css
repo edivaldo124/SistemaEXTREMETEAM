@@ -6,8 +6,11 @@
 
 /* ------------------------------------------------------------ layout ---- */
 
+/* width:100% porque, como item da grade do body.admin-shell, a margem automática
+   faria o main encolher ao conteúdo: uma tabela larga (et-tabela, min-width 620px)
+   o esticava além da tela no celular, e o excesso ficava cortado pelo clip do body. */
 .container-admin {
-  max-width:1240px; margin:0 auto;
+  width:100%; max-width:1240px; margin:0 auto;
   padding:var(--sp-2) 0 var(--sp-9);
 }
 @media (max-width:1023px) {
@@ -140,10 +143,15 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
   .form-plano { grid-template-columns:1fr; }
   .form-plano .field:first-child { grid-column:auto; }
   .form-plano button { width:100%; }
-  /* Três números lado a lado: empilhados, os cartões escuros empurravam a tela para baixo. */
-  .admin-metricas { grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:var(--sp-2); }
-  .admin-metricas .et-metrica { gap:var(--sp-1); padding:var(--sp-4); }
-  .admin-metricas .et-metrica-rotulo,.admin-metricas .et-metrica-detalhe { font-size:var(--fs-micro); line-height:1.35; }
+  /* No celular cada número vira uma linha baixa (rótulo à esquerda, valor à direita):
+     três colunas de 100 px quebravam o rótulo e deixavam os cartões altos. */
+  .admin-metricas { grid-template-columns:1fr; gap:var(--sp-2); }
+  .admin-metricas .et-metrica {
+    flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    gap:0 var(--sp-3); padding:var(--sp-3) var(--sp-4);
+  }
+  .admin-metricas .et-metrica-valor { font-size:34px; }
+  .admin-metricas .et-metrica-detalhe { flex-basis:100%; }
   .secao { margin-top:var(--sp-5); padding:var(--sp-4); border-radius:var(--radius-card); }
 }
 

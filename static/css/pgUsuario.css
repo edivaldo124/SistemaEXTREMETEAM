@@ -333,7 +333,6 @@
 /* O aviso de falha do checkout é inserido dentro do formulário: precisa de ar
    e de largura própria, tanto no cartão escuro quanto na linha da tabela. */
 .form-outras-formas [data-checkout-erro] { margin-top:var(--sp-3); font-size:var(--fs-xs); }
-.form-outras-formas [data-checkout-erro][hidden] { display:none; }
 
 /* Na linha da tabela as duas ações são compactas: o Pix mantém a borda escura
    e o peso maior. */

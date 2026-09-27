@@ -231,8 +231,8 @@ body.admin-shell {
 /* Cabeçalho de página das telas internas. */
 .admin-intro,.detail-intro { padding-bottom:var(--sp-6); border-bottom:1px solid var(--line-strong); }
 
-/* Marca do aluno: redonda como o avatar da tabela. */
-.profile-mark,.detail-intro > span {
+/* Marca do aluno (inicial) nas telas de detalhe; o avatar novo (.et-avatar) tem estilo próprio. */
+.detail-intro > span:not(.et-avatar) {
   border-radius:var(--radius-pill); color:var(--ink); background:var(--yellow);
   transform:none;
 }
@@ -242,13 +242,12 @@ body.admin-shell {
   border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface-2);
 }
 
-/* Cards de plano: a borda muda no hover, sem levantar o card. */
-.plan-list article,.card-plano {
+/* Fichas de plano do admin: a borda muda no hover, sem levantar a ficha. */
+.plan-list article {
   border-color:var(--line); background:var(--surface);
   transition:border-color .16s ease, box-shadow .16s ease;
 }
-.plan-list article:hover,.card-plano:hover { border-color:var(--text); transform:none; }
-.card-plano.plano-atual { border-color:var(--green); }
+.plan-list article:hover { border-color:var(--text); transform:none; }
 
 .student-avatar { color:var(--yellow); background:var(--ink); }
 /* Sobre o cabeçalho preto o avatar precisa de contorno para não sumir. */
@@ -289,5 +288,5 @@ td.empty-state,tr .empty-state { padding-top:var(--sp-8); }
   .app-header .site-brand span,
   .detail-header .site-brand span,
   .account-header .site-brand span { display:none; }
-  .profile-mark,.detail-intro > span { width:58px; height:58px; }
+  .detail-intro > span:not(.et-avatar) { width:58px; height:58px; }
 }

@@ -122,3 +122,15 @@ Branch `redesign-et`. Suíte: **594 passed, 8 skipped** (linha de base 589 + 5 t
 **Copilot:** o plugin está quebrado (falta `@github/copilot-sdk`; o `setup` reporta "pronto" mesmo assim). Nada foi executado por ele.
 
 **Reatribuição (19/09/2026):** com o Copilot indisponível, a fatia "painel admin" (seção 4) passou ao Antigravity (2º job), e o enunciado detalhado está em `tools/redesign/TAREFA_ADMIN.md`. Nessa fatia entram também `components/admin_nav.html`, `js/admin_nav.js` e, em `extreme.css`, SOMENTE o bloco "administração: barra lateral" (sidebar preta com o emblema; itens Painel, Alunos, Turmas, Financeiro, Planos, Avisos, Relatórios, Academia, Sair). O resto do `extreme.css`/`theme.css` continua do orquestrador. Área do aluno, Pix, turmas/presença e a landing continuam com o orquestrador.
+
+**Biblioteca de componentes (branch `componentes-front`, 26–27/09/2026).** Todas as 24 telas estendem um layout de
+`templates/layouts/` (`base` → `publico`/`aluno`/`admin`/`professor`); o `<head>` comum, os favicons, o deslize e os
+toasts vêm do `base`. Componentes: macros em `templates/components/` (`avatar`, `linha_tempo`, `breadcrumb`,
+`cartao_plano`, `toasts`, `ui`), estilo em `componentes.css`, comportamento em `static/js/componentes.js` (tabs, menu de
+ações, tooltip, tabela com busca/ordenação, upload, botão com carregamento, accordion por âncora). Vitrine só na
+instância descartável: `/_vitrine` (`tools/redesign/vitrine/`). Página de erro `templates/erro.html` + handlers 404/403/500/CSRF
+em `servidor.py`. Plano em destaque na home escolhido pelo admin (coluna `planos.destaque`, migration `b4d6f8a0c2e1`;
+sem marcação vale o de menor preço por mês; cálculo em `servicos/planos.vitrine_planos`). E-mails: componentes inline em
+`templates/email/componentes.html` e logo oficial via `logo_url`. Enunciados de cada etapa em `tools/redesign/TAREFA_ETAPA*.md`.
+Suíte: 5 failed (linha de base: gmail ×2, cifra MP, webhook Pix, CPF do cadastro) / 686+ passed.
+A instância descartável desliga o limitador de login (várias capturas logadas em paralelo davam 429).

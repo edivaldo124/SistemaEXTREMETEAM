@@ -157,7 +157,7 @@ td,th,.tabular,.metric-value,.summary-grid strong,.stat-value { font-variant-num
   box-shadow:var(--shadow-raised);
   transform:translateY(-200%); transition:transform .2s var(--ease);
 }
-.skip-link:focus { transform:none; }
+.skip-link:focus-visible { transform:none; }
 
 .sr-only {
   position:absolute; width:1px; height:1px; padding:0;
@@ -385,6 +385,8 @@ input[type="checkbox"],input[type="radio"] { width:20px; height:20px; accent-col
 
 /* -------------------------------------------------- avisos e mensagens -- */
 
+/* Aviso escondido pelo JS com `hidden` não pode ser reaberto pelo display:flex abaixo. */
+.alert[hidden],.msg[hidden] { display:none; }
 .alert,.msg {
   display:flex; align-items:flex-start; gap:var(--sp-3);
   padding:var(--sp-4) var(--sp-5);

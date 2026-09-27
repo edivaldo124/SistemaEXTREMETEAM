@@ -4,6 +4,7 @@ Cada caso aqui reproduz um problema que foi confirmado no código antes da corre
 Nenhum toca banco real, provedor de e-mail real ou arquivo de produção: o banco é o
 SQLite descartável do conftest e o provedor é sempre substituído por um duplo.
 """
+import re
 from datetime import date, timedelta
 
 import pytest
@@ -1062,7 +1063,7 @@ def test_card_de_alunos_nao_muda_com_a_busca(client, criar_aluno, logar_como_adm
 
     # O card do topo é uma métrica da academia; ele fica ao lado de "Cadastros
     # pendentes", que é global.
-    assert '<strong>7</strong>' in com_busca
+    assert re.search(r'Alunos cadastrados</p>\s*<p class="et-metrica-valor">7<', com_busca)
     assert '1 de 7 aluno' in com_busca
 
 

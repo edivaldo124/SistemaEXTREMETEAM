@@ -1,5 +1,7 @@
 /* Formulário editorial, com os mesmos tokens do painel administrativo. */
-.academia-editor { max-width:1000px; }
+/* Largura fixa (width:100%): item de grade com margem automática encolhe ao conteúdo,
+   e a página mudaria de largura a cada aba. Alinhada à esquerda como as demais telas. */
+.academia-editor { width:100%; max-width:1000px; margin-inline:0; }
 .academia-editor .admin-intro > div { max-width:65ch; }
 
 /* Um grupo de configuração por aba (et-tabs); o cartão do grupo encosta na fila de abas. */

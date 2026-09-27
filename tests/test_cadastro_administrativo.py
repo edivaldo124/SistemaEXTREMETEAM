@@ -591,8 +591,9 @@ def test_painel_de_avisos_separa_quem_deve_de_quem_da_para_avisar(
     pagina = client.get('/admin/avisos').get_data(as_text=True)
 
     # Os dois devem; só um tem canal de e-mail. O botão promete o que dá para cumprir.
-    assert re.search(r'>2</strong>\s*<span>Com mensalidade pendente', pagina)
-    assert re.search(r'>1</strong>\s*<span>Sem e-mail', pagina)
+    # Métricas no componente metrica() de components/ui.html: rótulo e depois o valor.
+    assert re.search(r'Com mensalidade pendente</p>\s*<p class="et-metrica-valor">2<', pagina)
+    assert re.search(r'Sem e-mail</p>\s*<p class="et-metrica-valor">1<', pagina)
     assert 'Enviar cobrança para 1 aluno<' in pagina
 
 

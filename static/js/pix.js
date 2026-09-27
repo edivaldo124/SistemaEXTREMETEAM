@@ -306,6 +306,13 @@
             copiado = document.execCommand && document.execCommand('copy');
         }
 
+        // Mesmo aviso da página de pagamento: toast de componentes.js (o botão não muda de
+        // texto, então o ícone dele não some). Sem componentes.js, cai no texto do botão.
+        if (typeof window.etToast === 'function') {
+            if (copiado) window.etToast('Código Pix copiado.', 'sucesso');
+            else window.etToast('Não foi possível copiar. Selecione o código e copie manualmente.', 'erro');
+            return;
+        }
         const textoOriginal = btnCopiar.textContent;
         btnCopiar.textContent = copiado ? 'Copiado!' : 'Não foi possível copiar';
         setTimeout(() => { btnCopiar.textContent = textoOriginal; }, 2000);

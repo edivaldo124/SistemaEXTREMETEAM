@@ -99,7 +99,6 @@ class Aluno(db.Model):
         self.senha_hash = generate_password_hash(senha_texto_puro)
 
     def verificar_senha(self, senha_texto_puro):
-        # Cadastro sem conta de acesso não tem hash para comparar: nenhuma senha serve.
         if not self.senha_hash:
             return False
         return check_password_hash(self.senha_hash, senha_texto_puro)

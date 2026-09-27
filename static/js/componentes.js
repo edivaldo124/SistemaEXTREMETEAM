@@ -131,9 +131,23 @@
       botao.setAttribute('aria-expanded', 'true');
       lista.hidden = false;
       menuAberto = { botao, lista };
-      // Abre alinhada à direita do botão; se assim sairia da tela, alinha à esquerda.
-      lista.classList.remove('et-menu-lista--esquerda');
-      if (lista.getBoundingClientRect().left < 8) lista.classList.add('et-menu-lista--esquerda');
+      // Dentro de um contêiner com rolagem própria (tabela), a lista absoluta seria
+      // cortada pela borda dele: nesse caso ela flutua presa ao botão (position:fixed).
+      lista.style.position = lista.style.top = lista.style.left = lista.style.right = '';
+      if (botao.closest('.et-tabela-rolagem')) {
+        const caixa = botao.getBoundingClientRect();
+        lista.style.position = 'fixed';
+        lista.style.right = 'auto';
+        const largura = lista.offsetWidth;
+        const altura = lista.offsetHeight;
+        const abaixo = caixa.bottom + 4 + altura <= window.innerHeight;
+        lista.style.top = `${abaixo ? caixa.bottom + 4 : Math.max(8, caixa.top - 4 - altura)}px`;
+        lista.style.left = `${Math.max(8, Math.min(caixa.right - largura, window.innerWidth - largura - 8))}px`;
+      } else {
+        // Abre alinhada à direita do botão; se assim sairia da tela, alinha à esquerda.
+        lista.classList.remove('et-menu-lista--esquerda');
+        if (lista.getBoundingClientRect().left < 8) lista.classList.add('et-menu-lista--esquerda');
+      }
       const lista_ = itens();
       if (lista_.length) (focarUltimo ? lista_[lista_.length - 1] : lista_[0]).focus();
     }
@@ -208,6 +222,10 @@
     alvo.addEventListener('blur', esconderTooltip);
   });
   window.addEventListener('scroll', () => { if (alvoTooltip) esconderTooltip(); }, { passive: true });
+  // Menu flutuante (position:fixed) não acompanha a rolagem: fecha em vez de descolar do botão.
+  document.addEventListener('scroll', () => {
+    if (menuAberto && menuAberto.lista.style.position === 'fixed') fecharMenu(false);
+  }, { passive: true, capture: true });
 
   // ------------------------------------------------ botão com carregamento --
   // Escuta no document: os handlers do próprio form (ex.: a confirmação do

@@ -158,11 +158,9 @@
 .retorno-acoes p { max-width:60ch; margin:0 0 var(--sp-4); color:var(--text-2); font-size:var(--fs-sm); line-height:1.6; }
 .retorno-botoes { display:flex; flex-wrap:wrap; gap:var(--sp-3); }
 .retorno-botoes .form-outras-formas { margin:0; width:100%; }
-/* checkout.js acrescenta ao formulário um aviso .alert que só aparece na falha.
-   Sem esta regra o display do .alert vencia o [hidden] e sobrava uma caixa
-   vermelha vazia abaixo do botão. */
+/* checkout.js acrescenta ao formulário um aviso .alert que só aparece na falha
+   (escondido com [hidden]: regra .alert[hidden] em theme.css). */
 .form-outras-formas [data-checkout-erro] { margin:var(--sp-3) 0 0; font-size:var(--fs-xs); }
-.form-outras-formas [data-checkout-erro][hidden] { display:none; }
 
 /* Linha de ação com ícone à esquerda e seta à direita. */
 .linha-acao {

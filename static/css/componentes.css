@@ -1012,3 +1012,10 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 /* Menu perto da borda esquerda da tela: componentes.js troca o alinhamento. */
 .et-menu-lista.et-menu-lista--esquerda { right:auto; left:0; }
 
+/* O input de arquivo do upload fica escondido (o rótulo é o alvo). Regras de formulário
+   como `.field input:not([type="checkbox"]):not([type="radio"])` são mais específicas que
+   .sr-only e o esticavam para fora da tela, criando rolagem horizontal. */
+.et-upload .et-upload-alvo input[type="file"].sr-only {
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
