@@ -1,0 +1,8 @@
+{#- Painel administrativo: barra lateral + conteúdo. A página diz qual item do menu
+    fica ativo com `{% set secao_ativa = '...' %}` fora de qualquer bloco. -#}
+{% extends "layouts/base.html" %}
+{% block atributos_body %} class="admin-shell"{% endblock %}
+{% block corpo %}
+    {% include "components/admin_nav.html" %}
+    {% block conteudo %}{% endblock %}
+{% endblock %}

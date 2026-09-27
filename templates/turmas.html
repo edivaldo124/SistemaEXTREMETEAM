@@ -1,186 +1,230 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="viewport" content="width=device-width,initial-scale=1.0">
-        <title>Turmas | Centro de Treinamento Extreme Team</title>
-        <link rel="icon"
-              type="image/png"
-              href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
-        {% include "components/deslize.html" %}
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/theme.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/pgAdm.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/turmas.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/modal.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/extreme.css') }}">
-    </head>
-    <body class="admin-shell">
-        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-        {% set secao_ativa = 'turmas' %}
-        {% include 'components/admin_nav.html' %}
-        <main id="conteudo" class="container-admin">
-            <section class="admin-intro">
-                <div class="entra">
-                    <p class="eyebrow">Administração</p>
-                    <h1>Turmas</h1>
-                    <p>Cadastre professores e turmas, defina horários e gerencie matrículas.</p>
+{% extends "layouts/admin.html" %}
+{% set secao_ativa = 'turmas' %}
+{% from "components/avatar.html" import avatar %}
+{% block titulo %}Turmas | Centro de Treinamento Extreme Team{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/turmas.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+{% endblock %}
+{% block conteudo %}
+    <main id="conteudo" class="container-admin">
+        <section class="admin-intro">
+            <div>
+                <h1>Turmas</h1>
+                <p>Cadastre professores e turmas, defina horários e gerencie matrículas.</p>
+            </div>
+        </section>
+        <section class="secao">
+            <div class="section-heading">
+                <div>
+                    <h2>Professores</h2>
                 </div>
-            </section>
-            {% with mensagens=get_flashed_messages(with_categories=true) %}
-                {% for categoria,mensagem in mensagens %}
-                    <div class="msg msg-{{ categoria }}"
-                             role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
-                {% endfor %}
-            {% endwith %}
-            <section class="secao">
-                <div class="section-heading">
-                    <div>
-                        <p class="eyebrow">Equipe</p>
-                        <h2>Professores</h2>
-                    </div>
-                    <p>Crie o acesso e edite a apresentação pública de cada professor.</p>
+                <p>Crie o acesso e edite a apresentação pública de cada professor.</p>
+            </div>
+            <form action="/admin/professores" method="POST" class="form-plano" data-enviando>
+                {% include "components/csrf_field.html" %}
+                <div class="field">
+                    <label for="prof-nome">Nome</label>
+                    <input id="prof-nome" type="text" name="nome" required>
                 </div>
-                <form action="/admin/professores" method="POST" class="form-plano">
-                    {% include "components/csrf_field.html" %}
-                    <div class="field">
-                        <label for="prof-nome">Nome</label>
-                        <input id="prof-nome" type="text" name="nome" required>
-                    </div>
-                    <div class="field">
-                        <label for="prof-login">Login</label>
-                        <input id="prof-login" type="text" name="login" required>
-                    </div>
-                    <div class="field">
-                        <label for="prof-senha">Senha</label>
-                        <input id="prof-senha"
-                               type="password"
-                               name="senha"
-                               minlength="8"
-                               autocomplete="new-password"
-                               required>
-                    </div>
-                    <button type="submit" class="btn-cadastrar">Cadastrar professor</button>
-                </form>
-                <div class="plan-list">
-                    {% for p in professores %}
-                        <article>
-                            <div>
-                                <span>Professor</span>
-                                <strong>{{ p.nome_exibicao }}</strong>
-                                <p>Login {{ p.login }} · {{ p.turmas|length }} turma{{ "" if p.turmas|length == 1 else "s" }}</p>
-                                <p>{{ 'Perfil publicado no site' if p.perfil_publico else 'Perfil ainda não publicado' }}</p>
-                            </div>
-                            <div class="acoes-turma">
-                                <a class="btn btn-status" href="{{ url_for('turma_blueprint.editar_professor', professor_id=p.id) }}">Editar perfil<span class="sr-only"> de {{ p.nome_exibicao }}</span></a>
-                                <form action="{{ url_for('turma_blueprint.remover_professor', professor_id=p.id) }}"
-                                      method="POST"
-                                      class="form-inline"
-                                      data-confirm-modal
-                                      data-modal-variant="danger"
-                                      data-modal-eyebrow="Remover professor"
-                                      data-modal-title="Remover o professor {{ p.nome }}?"
-                                      data-modal-message="O acesso desse professor será removido. Isso só é possível se não houver turmas vinculadas."
-                                      data-modal-confirm="Remover">
-                                    {% include "components/csrf_field.html" %}
-                                    <button type="submit" class="btn btn-remover">Remover</button>
-                                </form>
-                            </div>
-                        </article>
-                    {% else %}
-                        <p class="empty-state">Nenhum professor cadastrado. Use o formulário acima para criar o primeiro acesso.</p>
-                    {% endfor %}
+                <div class="field">
+                    <label for="prof-login">Login</label>
+                    <input id="prof-login" type="text" name="login" required>
                 </div>
-            </section>
-            <section class="secao">
-                <div class="section-heading">
-                    <div>
-                        <p class="eyebrow">Turmas</p>
-                        <h2>Turmas da academia</h2>
-                    </div>
-                    <p>Defina dias, horário, professor e limite de alunos.</p>
+                <div class="field">
+                    <label for="prof-senha">Senha</label>
+                    <input id="prof-senha"
+                           type="password"
+                           name="senha"
+                           minlength="8"
+                           autocomplete="new-password"
+                           required>
                 </div>
-                <form action="/admin/turmas/cadastrar" method="POST" class="form-turma">
-                    {% include "components/csrf_field.html" %}
-                    <div class="field">
-                        <label for="turma-nome">Nome da turma</label>
-                        <input id="turma-nome"
-                               type="text"
-                               name="nome"
-                               placeholder="Ex.: Muay Thai iniciante"
-                               required>
-                    </div>
-                    <fieldset class="field field-wide">
-                        <legend>Dias da semana</legend>
-                        <div class="dias-semana">
-                            {% for dia in ['Seg','Ter','Qua','Qui','Sex','Sab','Dom'] %}
-                                <label class="dia-opcao">
-                                    <input type="checkbox" name="dias_semana" value="{{ dia }}">
-                                    {{ dia }}
-                                </label>
-                            {% endfor %}
-                        </div>
-                    </fieldset>
-                    <div class="field">
-                        <label for="turma-horario">Horário</label>
-                        <input id="turma-horario" type="time" name="horario" required>
-                    </div>
-                    <div class="field">
-                        <label for="turma-professor">Professor</label>
-                        <select id="turma-professor" name="professor_id" required>
-                            <option value="">Selecione</option>
+                <button type="submit" class="button-primary btn-cadastrar" data-texto-enviando="Cadastrando...">Cadastrar professor</button>
+            </form>
+            <div class="et-tabela">
+                <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Professores cadastrados">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Professor</th>
+                                <th scope="col">Login</th>
+                                <th scope="col">Turmas</th>
+                                <th scope="col">Status no site</th>
+                                <th scope="col">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             {% for p in professores %}
-                                <option value="{{ p.id }}">{{ p.nome }}</option>
+                                <tr>
+                                    <td>
+                                        <span class="pessoa">
+                                            {{ avatar(p.nome_exibicao, url_for('turma_blueprint.foto_professor', professor_id=p.id) if p.foto_arquivo else '', 'sm') }}
+                                            <strong>{{ p.nome_exibicao }}</strong>
+                                        </span>
+                                    </td>
+                                    <td>{{ p.login }}</td>
+                                    <td>{{ p.turmas|length }} turma{{ "" if p.turmas|length == 1 else "s" }}</td>
+                                    <td>{{ 'Perfil publicado no site' if p.perfil_publico else 'Perfil ainda não publicado' }}</td>
+                                    <td>
+                                        <div class="et-menu" data-menu>
+                                            <button type="button"
+                                                    class="et-menu-botao"
+                                                    aria-haspopup="menu"
+                                                    aria-expanded="false"
+                                                    aria-controls="menu-prof-{{ p.id }}"
+                                                    aria-label="Ações de {{ p.nome_exibicao }}">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                    <circle cx="12" cy="5" r="2"/>
+                                                    <circle cx="12" cy="12" r="2"/>
+                                                    <circle cx="12" cy="19" r="2"/>
+                                                </svg>
+                                            </button>
+                                            <div class="et-menu-lista" role="menu" id="menu-prof-{{ p.id }}" hidden>
+                                                <a role="menuitem" href="{{ url_for('turma_blueprint.editar_professor', professor_id=p.id) }}">Editar perfil<span class="sr-only"> de {{ p.nome_exibicao }}</span></a>
+                                                <form action="{{ url_for('turma_blueprint.remover_professor', professor_id=p.id) }}"
+                                                      method="POST"
+                                                      role="none"
+                                                      data-confirm-modal
+                                                      data-modal-variant="danger"
+                                                      data-modal-eyebrow="Remover professor"
+                                                      data-modal-title="Remover o professor {{ p.nome }}?"
+                                                      data-modal-message="O acesso desse professor será removido. Isso só é possível se não houver turmas vinculadas."
+                                                      data-modal-confirm="Remover">
+                                                    {% include "components/csrf_field.html" %}
+                                                    <button type="submit" role="menuitem" class="et-menu-perigo">Remover</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="empty-state">Nenhum professor cadastrado. Use o formulário acima para criar o primeiro acesso.</td>
+                                </tr>
                             {% endfor %}
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="turma-limite">Limite de alunos</label>
-                        <input id="turma-limite"
-                               type="number"
-                               name="limite_alunos"
-                               min="1"
-                               value="20"
-                               required>
-                    </div>
-                    <button type="submit" class="btn-cadastrar">Cadastrar turma</button>
-                </form>
-                <div class="plan-list">
-                    {% for t in turmas %}
-                        <article>
-                            <div>
-                                <span>{{ t.dias_semana|replace(',', ', ') }} · {{ t.horario }}</span>
-                                <strong>{{ t.nome }}</strong>
-                                <p>Prof. {{ t.professor.nome }} · {{ t.matriculas|length }}/{{ t.limite_alunos }} alunos</p>
-                            </div>
-                            <div class="acoes-turma">
-                                <a href="/turmas/{{ t.id }}" class="btn btn-status">Gerenciar</a>
-                                <form action="{{ url_for('turma_blueprint.remover_turma', turma_id=t.id) }}"
-                                      method="POST"
-                                      class="form-inline"
-                                      data-confirm-modal
-                                      data-modal-variant="danger"
-                                      data-modal-eyebrow="Excluir turma"
-                                      data-modal-title="Excluir a turma {{ t.nome }}?"
-                                      data-modal-message="Matrículas e presenças vinculadas impedem a exclusão."
-                                      data-modal-confirm="Excluir">
-                    {% include "components/csrf_field.html" %}
-                                    <button type="submit" class="btn btn-remover">Excluir</button>
-                                </form>
-                            </div>
-                        </article>
-                    {% else %}
-                        <p class="empty-state">Nenhuma turma cadastrada. Cadastre um professor e depois crie a primeira turma.</p>
-                    {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-            </section>
-        </main>
-        {% include 'components/confirm_modal.html' %}
-        <script src="{{ url_for('static',filename='js/modal.js') }}"></script>
-    </body>
-</html>
+            </div>
+        </section>
+        <section class="secao">
+            <div class="section-heading">
+                <div>
+                    <h2>Turmas da academia</h2>
+                </div>
+                <p>Defina dias, horário, professor e limite de alunos.</p>
+            </div>
+            <form action="/admin/turmas/cadastrar" method="POST" class="form-turma" data-enviando>
+                {% include "components/csrf_field.html" %}
+                <div class="field">
+                    <label for="turma-nome">Nome da turma</label>
+                    <input id="turma-nome"
+                           type="text"
+                           name="nome"
+                           placeholder="Ex.: Muay Thai iniciante"
+                           required>
+                </div>
+                <fieldset class="field field-wide">
+                    <legend>Dias da semana</legend>
+                    <div class="dias-semana">
+                        {% for dia in ['Seg','Ter','Qua','Qui','Sex','Sab','Dom'] %}
+                            <label class="dia-opcao">
+                                <input type="checkbox" name="dias_semana" value="{{ dia }}">
+                                {{ dia }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+                <div class="field">
+                    <label for="turma-horario">Horário</label>
+                    <input id="turma-horario" type="time" name="horario" required>
+                </div>
+                <div class="field">
+                    <label for="turma-professor">Professor</label>
+                    <select id="turma-professor" name="professor_id" required>
+                        <option value="">Selecione</option>
+                        {% for p in professores %}
+                            <option value="{{ p.id }}">{{ p.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="turma-limite">Limite de alunos</label>
+                    <input id="turma-limite"
+                           type="number"
+                           name="limite_alunos"
+                           min="1"
+                           value="20"
+                           required>
+                </div>
+                <button type="submit" class="button-primary btn-cadastrar" data-texto-enviando="Cadastrando...">Cadastrar turma</button>
+            </form>
+            <div class="et-tabela">
+                <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Turmas da academia">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Turma</th>
+                                <th scope="col">Dias e horário</th>
+                                <th scope="col">Professor</th>
+                                <th scope="col">Alunos</th>
+                                <th scope="col">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in turmas %}
+                                <tr>
+                                    <td><strong>{{ t.nome }}</strong></td>
+                                    <td>{{ t.dias_semana|replace(',', ', ') }} · {{ t.horario }}</td>
+                                    <td>Prof. {{ t.professor.nome }}</td>
+                                    <td>{{ t.matriculas|length }}/{{ t.limite_alunos }} alunos</td>
+                                    <td>
+                                        <div class="et-menu" data-menu>
+                                            <button type="button"
+                                                    class="et-menu-botao"
+                                                    aria-haspopup="menu"
+                                                    aria-expanded="false"
+                                                    aria-controls="menu-turma-{{ t.id }}"
+                                                    aria-label="Ações de {{ t.nome }}">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                    <circle cx="12" cy="5" r="2"/>
+                                                    <circle cx="12" cy="12" r="2"/>
+                                                    <circle cx="12" cy="19" r="2"/>
+                                                </svg>
+                                            </button>
+                                            <div class="et-menu-lista" role="menu" id="menu-turma-{{ t.id }}" hidden>
+                                                <a role="menuitem" href="/turmas/{{ t.id }}">Gerenciar</a>
+                                                <form action="{{ url_for('turma_blueprint.remover_turma', turma_id=t.id) }}"
+                                                      method="POST"
+                                                      role="none"
+                                                      data-confirm-modal
+                                                      data-modal-variant="danger"
+                                                      data-modal-eyebrow="Excluir turma"
+                                                      data-modal-title="Excluir a turma {{ t.nome }}?"
+                                                      data-modal-message="Matrículas e presenças vinculadas impedem a exclusão."
+                                                      data-modal-confirm="Excluir">
+                                                    {% include "components/csrf_field.html" %}
+                                                    <button type="submit" role="menuitem" class="et-menu-perigo">Excluir</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="empty-state">Nenhuma turma cadastrada. Cadastre um professor e depois crie a primeira turma.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}
+{% block fim_corpo %}
+    {% include 'components/confirm_modal.html' %}
+    <script src="{{ url_for('static',filename='js/modal.js') }}"></script>
+{% endblock %}

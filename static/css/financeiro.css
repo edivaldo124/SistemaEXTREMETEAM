@@ -147,28 +147,16 @@
 }
 
 /* ------------------------------------------------ tabela de mensalidades -- */
-/* Nove colunas de dado mais três ações não cabem lado a lado em 1440px com a
-   barra lateral. As ações viram uma pilha estreita e a tabela passa a caber
-   inteira, sem rolagem horizontal. */
+-/* A tabela paginada utiliza .et-tabela (componentes.css). */
+-.secao-pagamentos .et-tabela {
+-  margin-top: var(--sp-4);
+-}
+-.et-tabela .pessoa {
+-  display: inline-flex;
+-  align-items: center;
+-  gap: var(--sp-3);
+-}
+-.et-tabela td[data-label="Ações"] {
+-  text-align: right;
+-}
 
-@media (min-width:641px) {
-  .tabela-financeiro > table { min-width:0; }
-  .tabela-financeiro td.acao-cell,
-  .secao-pagamentos .tabela-financeiro td.acao-cell {
-    display:flex; flex-direction:column; align-items:stretch; gap:var(--sp-2);
-    white-space:normal;
-  }
-  .tabela-financeiro td.acao-cell > * + * { margin-left:0; }
-  .tabela-financeiro td.acao-cell .form-inline { display:flex; }
-  .tabela-financeiro td.acao-cell .btn { width:100%; }
-  /* Colunas apertadas ao mínimo legível para as nove caberem sem rolagem. */
-  .tabela-financeiro th,.tabela-financeiro td { padding:var(--sp-3); }
-  .tabela-financeiro td.celula-pessoa,.tabela-financeiro th.coluna-pessoa { min-width:152px; }
-  /* Nome longo quebra em duas linhas em vez de empurrar a tabela. */
-  .tabela-financeiro .pessoa > span:last-child { white-space:normal; }
-  .tabela-financeiro td.acao-cell { min-width:138px; }
-  .tabela-financeiro th { letter-spacing:.04em; }
-  /* "Setembro de 2026" pode quebrar em duas linhas; o valor e as datas, não. */
-  .tabela-financeiro td:nth-child(3) { white-space:normal; }
-  .secao-pagamentos:has(.tabela-financeiro) { padding-inline:var(--sp-5); }
-}

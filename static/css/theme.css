@@ -106,7 +106,8 @@
 /* Blocos de fundo escuro invertem o anel de foco para continuar visível. */
 .home-header,.app-header,.admin-header,.detail-header,.account-header,
 .auth-shell,.hero,.bottom-nav,
-.home-footer,.app-footer,.aluno-hero,.mensalidade-card,.plano-situacao-card {
+.home-footer,.app-footer,.aluno-hero,.mensalidade-card,.plano-situacao-card,
+.et-plano--destaque,.et-toasts,.erro-cartao {
   --focus-ink:var(--yellow);
   --focus-halo:rgba(253,207,23,.3);
 }

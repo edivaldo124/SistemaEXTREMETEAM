@@ -1,109 +1,98 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="viewport" content="width=device-width,initial-scale=1.0">
-        <title>Comprovante | Centro de Treinamento Extreme Team</title>
-        <script src="{{ url_for('static', filename='js/comprovante.js') }}" defer></script>
-        <link rel="icon"
-              type="image/png"
-              href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
-        {% include "components/deslize.html" %}
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/theme.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/comprovante.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/extreme.css') }}">
-    </head>
-    <body>
-        {% include 'components/detail_back_header.html' %}
-        <main class="comprovante-page">
-            <div class="comprovante-folha entra">
-                <div class="comprovante-cabecalho">
+{% extends "layouts/aluno.html" %}
+{% from 'components/linha_tempo.html' import linha_tempo_pagamento %}
+{% block titulo %}Comprovante | Centro de Treinamento Extreme Team{% endblock %}
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/comprovante.js') }}" defer></script>
+{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/comprovante.css') }}">
+{% endblock %}
+{% block conteudo %}
+    <main id="conteudo" class="comprovante-page">
+        <div class="comprovante-folha entra">
+            <div class="comprovante-cabecalho">
+                <span class="comprovante-marca">
                     <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
                          alt=""
-                         class="comprovante-logo">
-                    <div>
-                        <strong>Extreme Team</strong>
-                        <span>Centro de Treinamento de Muay Thai</span>
-                    </div>
+                         width="40"
+                         height="40">
+                </span>
+                <div>
+                    <strong>Extreme Team</strong>
+                    <span>Centro de Treinamento de Muay Thai</span>
                 </div>
-                <h1>Comprovante de pagamento</h1>
-                <p class="comprovante-situacao">
-                    <span class="status status-{{ pagamento.status }}">Pago</span>
-                </p>
-                <dl class="comprovante-dados">
-                    <div>
-                        <dt>Aluno</dt>
-                        <dd>
-                            {{ pagamento.aluno.nome }}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt>Plano</dt>
-                        <dd>
-                            {{ pagamento.plano.nome_plano if pagamento.plano else '—' }}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt>Competência</dt>
-                        <dd>
-                            {{ formatar_competencia(pagamento.competencia) }}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt>Valor pago</dt>
-                        <dd class="comprovante-valor">
-                            {{ pagamento.valor|moeda }}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt>Data e hora</dt>
-                        <dd>
-                            {% if data_hora_confirmacao %}
-                                {{ data_hora_confirmacao.strftime('%d/%m/%Y %H:%M') }}
-                            {% elif pagamento.data_pagamento %}
-                                {{ pagamento.data_pagamento.strftime('%d/%m/%Y') }}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt>Método de pagamento</dt>
-                        <dd>
-                            {{ pagamento.forma_pagamento|forma_pagamento }}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt>Identificador interno</dt>
-                        <dd>
-                            #{{ pagamento.id }}
-                        </dd>
-                    </div>
-                    {% if pagamento.provider == 'mercado_pago' and pagamento.provider_payment_id %}
-                        <div>
-                            <dt>Identificador da transação</dt>
-                            <dd>
-                                {{ pagamento.provider_payment_id }}
-                            </dd>
-                        </div>
-                    {% endif %}
-                </dl>
-                <p class="comprovante-confirmacao">
-                    {% if pagamento.provider == 'mercado_pago' %}
-                        Pagamento confirmado eletronicamente pelo Mercado Pago.
-                    {% else %}
-                        Recebimento confirmado manualmente pela administração da Extreme Team.
-                    {% endif %}
-                </p>
-                <p class="comprovante-aviso">Este comprovante interno não substitui nota fiscal.</p>
-                <button type="button"
-                        class="button-primary no-print"
-                        data-imprimir-comprovante>Imprimir ou salvar em PDF</button>
             </div>
-        </main>
-    </body>
-</html>
+            <h1>Comprovante de pagamento</h1>
+            {{ linha_tempo_pagamento(pagamento.status) }}
+            <dl class="comprovante-dados">
+                <div>
+                    <dt>Aluno</dt>
+                    <dd>
+                        {{ pagamento.aluno.nome }}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Plano</dt>
+                    <dd>
+                        {{ pagamento.plano.nome_plano if pagamento.plano else '—' }}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Competência</dt>
+                    <dd>
+                        {{ formatar_competencia(pagamento.competencia) }}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Valor pago</dt>
+                    <dd class="comprovante-valor">
+                        {{ pagamento.valor|moeda }}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Data e hora</dt>
+                    <dd>
+                        {% if data_hora_confirmacao %}
+                            {{ data_hora_confirmacao.strftime('%d/%m/%Y %H:%M') }}
+                        {% elif pagamento.data_pagamento %}
+                            {{ pagamento.data_pagamento.strftime('%d/%m/%Y') }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Método de pagamento</dt>
+                    <dd>
+                        {{ pagamento.forma_pagamento|forma_pagamento }}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Identificador interno</dt>
+                    <dd>
+                        #{{ pagamento.id }}
+                    </dd>
+                </div>
+                {% if pagamento.provider == 'mercado_pago' and pagamento.provider_payment_id %}
+                    <div>
+                        <dt>Identificador da transação</dt>
+                        <dd>
+                            {{ pagamento.provider_payment_id }}
+                        </dd>
+                    </div>
+                {% endif %}
+            </dl>
+            <p class="comprovante-confirmacao">
+                {% if pagamento.provider == 'mercado_pago' %}
+                    Pagamento confirmado eletronicamente pelo Mercado Pago.
+                {% else %}
+                    Recebimento confirmado manualmente pela administração da Extreme Team.
+                {% endif %}
+            </p>
+            <p class="comprovante-aviso">Este comprovante interno não substitui nota fiscal.</p>
+            <button type="button"
+                    class="button-primary no-print"
+                    data-imprimir-comprovante>Imprimir ou salvar em PDF</button>
+        </div>
+    </main>
+{% endblock %}

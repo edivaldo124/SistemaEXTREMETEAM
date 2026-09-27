@@ -337,3 +337,63 @@ def esta_inadimplente(situacao):
     """Quem deve receber cobrança por e-mail: nem quem está com o plano ativo, nem quem
     já pagou e espera uma decisão - avisar essas pessoas seria cobrar duas vezes."""
     return not situacao.ativo and not situacao.aguardando_decisao
+
+
+# ------------------------------------------------------ vitrine da página inicial --
+
+DIAS_POR_MES = 30
+
+
+def _meses(plano):
+    """Duração em meses cheios para exibir e dividir o preço: 30→1, 90→3, 365→12."""
+    return max(round(duracao_dias(plano) / DIAS_POR_MES), 1)
+
+
+def _duracao_por_extenso(plano):
+    dias = duracao_dias(plano)
+    if dias % 365 == 0:
+        anos = dias // 365
+        return '1 ano' if anos == 1 else f'{anos} anos'
+    if dias < DIAS_POR_MES:
+        return '1 dia' if dias == 1 else f'{dias} dias'
+    meses = _meses(plano)
+    return '1 mês' if meses == 1 else f'{meses} meses'
+
+
+def vitrine_planos(planos, url_matricula):
+    """Planos da página inicial, prontos para `components/cartao_plano.html`.
+
+    O preço por mês e a economia são calculados aqui, a partir de `preco_plano` e
+    `duracao_dias` - o template não faz conta. A economia compara com o plano de 30 dias
+    (se existir): quanto se pagaria renovando ele mês a mês pelo mesmo período.
+    O destaque é o plano que o admin marcou; sem marcação, o de menor preço por mês.
+    """
+    planos = sorted(planos, key=lambda p: (duracao_dias(p), preco(p)))
+    if not planos:
+        return []
+    mensal = next((p for p in planos if duracao_dias(p) == DIAS_POR_MES), None)
+
+    itens = []
+    for plano in planos:
+        meses = _meses(plano)
+        total = preco(plano)
+        economia = None
+        if mensal is not None and plano is not mensal:
+            diferenca = preco(mensal) * meses - total
+            economia = diferenca if diferenca > 0 else None
+        itens.append({
+            'id': plano.id,
+            'nome': plano.nome_plano,
+            'preco_total': total,
+            'preco_mes': (total / meses).quantize(Decimal('0.01')),
+            'meses': meses,
+            'duracao_texto': _duracao_por_extenso(plano),
+            'economia': economia,
+            'recomendado': bool(getattr(plano, 'destaque', False)),
+            'url_matricula': url_matricula,
+            'texto_botao': 'Matricular agora',
+        })
+
+    if not any(item['recomendado'] for item in itens):
+        min(itens, key=lambda item: (item['preco_mes'], -item['meses']))['recomendado'] = True
+    return itens

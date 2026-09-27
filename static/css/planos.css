@@ -1,68 +1,47 @@
 /* =========================================================================
-   Escolha de plano (área do aluno).
-   Cada card diz o que aquele plano significa AGORA para este aluno: o que está
-   ativo, o que foi agendado e o que não pode ser escolhido. Nunca só pela cor.
+   Escolha de plano (área do aluno). Os cartões são os mesmos da home
+   (components/cartao_plano.html, .et-plano em componentes.css); aqui só entra
+   o que é próprio do aluno: selo do plano atual/agendado, notas e formulários.
+   Cada card diz o que aquele plano significa AGORA — nunca só pela cor.
    ========================================================================= */
 
-.grid-planos {
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-  gap:var(--sp-4);
+/* Na área do aluno as ações têm alturas diferentes (nota, turma, dois botões):
+   os cartões esticam juntos em vez de centralizar como na vitrine da home. */
+.planos-aluno { align-items:stretch; }
+.planos-aluno > .et-plano,
+.planos-aluno > .et-plano:not(.et-plano--destaque) { align-self:stretch; }
+@media (min-width:1024px) {
+  .planos-aluno > .et-plano--destaque { padding:var(--sp-6); }
 }
-.grid-planos .empty-state { grid-column:1/-1; }
-
-.card-plano {
-  position:relative; display:flex; flex-direction:column;
-  padding:var(--sp-6);
-  border:1px solid var(--line); border-radius:var(--radius-card);
-  background:var(--surface); box-shadow:var(--shadow-card);
-  transition:border-color .16s ease;
-}
-.card-plano:hover { border-color:var(--text); }
 
 /* Plano em vigência e plano de destino: borda mais forte, com selo em texto. */
-.card-plano.plano-atual   { border-color:var(--green); border-width:2px; padding:calc(var(--sp-6) - 1px); }
-.card-plano.plano-destino { border-color:var(--gold);  border-width:2px; padding:calc(var(--sp-6) - 1px); }
+.et-plano.plano-atual   { border:2px solid var(--et-ok-ink); padding:calc(var(--sp-6) - 1px); }
+.et-plano.plano-destino { border:2px solid var(--et-gold-dark); padding:calc(var(--sp-6) - 1px); }
 
-.card-plano h3 {
-  margin:0 0 var(--sp-2); overflow-wrap:anywhere;
-  font:700 23px/1.15 var(--display); text-transform:uppercase;
-}
-.card-plano .preco {
-  margin:0; color:var(--text);
-  font:800 36px/1 var(--display); font-variant-numeric:tabular-nums; letter-spacing:-.01em;
-}
-.card-plano .duracao {
-  margin:var(--sp-2) 0 var(--sp-5);
-  color:var(--text-2); font-size:var(--fs-sm);
-}
+/* Selos de contexto, sobre fundo claro. */
+.et-plano-selo--atual   { border-color:transparent; color:var(--et-ok-ink); background:var(--et-ok-bg); }
+.et-plano-selo--destino { border-color:transparent; color:var(--et-warn-ink); background:var(--et-warn-bg); }
 
-/* Selo de contexto acima do nome do plano. */
-.plano-selo {
-  align-self:flex-start; order:-1;
-  margin-bottom:var(--sp-3); padding:5px var(--sp-3);
-  border-radius:var(--radius-pill);
-  font-size:var(--fs-micro); font-weight:700;
-  letter-spacing:.06em; text-transform:uppercase;
+/* Bloco de ação: nota + formulários, colado no pé do cartão. */
+.et-plano-acao {
+  display:flex; flex-direction:column; gap:var(--sp-3);
+  align-self:stretch; margin-top:auto;
 }
-.plano-selo-atual   { color:var(--green-ink); background:var(--green-bg); }
-.plano-selo-destino { color:var(--amber-ink); background:var(--amber-bg); }
-
+.et-plano-acao form { display:flex; flex-direction:column; gap:var(--sp-2); margin:0; }
+.et-plano-acao label { font-size:var(--fs-xs); font-weight:600; color:var(--et-text-muted); }
+.et-plano-acao select { width:100%; min-height:44px; }
 .plano-nota {
-  margin:0 0 var(--sp-4); padding-top:var(--sp-4);
+  margin:0; padding-top:var(--sp-4);
   border-top:1px solid var(--line);
-  color:var(--text-2); font-size:var(--fs-xs); line-height:1.6;
+  color:var(--et-text-muted); font-size:var(--fs-xs); line-height:1.6;
 }
-
-/* A ação fica sempre colada no rodapé do card, alinhada entre colunas. */
-.card-plano form,
-.card-plano > .btn-escolher,
-.plano-acoes { margin-top:auto; }
-.plano-acoes { display:flex; flex-direction:column; gap:var(--sp-2); }
-.plano-acoes form { margin:0; }
-
 .btn-escolher { width:100%; box-shadow:none; }
 
+/* Cartão em destaque (escuro): nota e rótulos claros. */
+.et-plano--destaque .plano-nota { border-top-color:var(--et-line-dark); color:var(--et-text-on-dark-muted); }
+.et-plano--destaque .et-plano-acao label { color:var(--et-text-on-dark-muted); }
+
 @media (max-width:720px) {
-  .card-plano { padding:var(--sp-5); }
-  .card-plano.plano-atual,.card-plano.plano-destino { padding:calc(var(--sp-5) - 1px); }
+  .et-plano.plano-atual,.et-plano.plano-destino { padding:calc(var(--sp-5) - 1px); }
+  .planos-aluno > .et-plano { padding:var(--sp-5); }
 }

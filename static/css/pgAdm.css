@@ -30,27 +30,12 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
   color:var(--text-2); font-size:var(--fs-sm);
 }
 
-/* Métricas da tela: cartão branco, ícone, número grande, rótulo pequeno.
-   Só entram números que o backend já calcula. */
-.admin-metrics {
+/* Métricas da tela (et-metrica, componentes.css). Só entram números que o
+   backend já calcula. */
+.admin-metricas {
   flex-basis:100%;
   display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:var(--sp-3);
   margin-top:var(--sp-2);
-}
-.admin-metrics article {
-  display:flex; align-items:center; gap:var(--sp-4);
-  min-width:0; padding:var(--sp-4) var(--sp-5);
-  border:1px solid var(--line); border-radius:var(--radius-card);
-  background:var(--surface); box-shadow:var(--shadow-card);
-}
-.admin-metrics strong {
-  display:block; color:var(--text);
-  font:700 34px/1 var(--display); font-variant-numeric:tabular-nums;
-}
-.admin-metrics article > div > span {
-  display:block; margin-top:var(--sp-1);
-  color:var(--text-2); font-size:var(--fs-micro); font-weight:700;
-  letter-spacing:.06em; text-transform:uppercase;
 }
 
 .container-admin > .msg { margin-top:var(--sp-6); }
@@ -90,6 +75,9 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 }
 .form-plano .field-full,.form-plano .field-wide { grid-column:1/-1; }
 .form-plano .btn-cadastrar { box-shadow:none; }
+/* "Destacar na página inicial": linha própria embaixo, para o botão continuar ao lado
+   dos campos no desktop. */
+.form-plano .plano-destaque-opcao { grid-column:1/-1; grid-row:2; min-height:44px; }
 
 /* --------------------------------------------------- listas de fichas --- */
 
@@ -108,6 +96,7 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 .plan-list article > div { min-width:0; }
 .plan-list article > form,
 .plan-list article > a,
+.plan-list article > .plano-acoes,
 .plan-list article > .acoes-turma { margin-top:auto; }
 .plan-list article span {
   display:block; color:var(--text-2);
@@ -127,29 +116,6 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 
 .acoes-turma { display:flex; flex-wrap:wrap; gap:var(--sp-2); }
 
-/* ---------------------------------------------------- barra de filtro --- */
-
-.ferramentas-alunos {
-  position:relative; display:flex; flex-wrap:wrap; align-items:center;
-  gap:var(--sp-3); margin-bottom:var(--sp-5);
-}
-.ferramentas-alunos > a { flex:0 0 auto; }
-@media (max-width:520px) {
-  /* Numa tela estreita a busca e a matrícula ocupam a linha inteira cada uma,
-     em vez de espremerem o alvo de toque das duas. */
-  .ferramentas-alunos > * { width:100%; }
-  .ferramentas-alunos > a { justify-content:center; }
-}
-.ferramentas-alunos input {
-  flex:1 1 260px; width:min(100%,420px); min-height:var(--control-h); padding:0 var(--sp-4);
-  border:1px solid var(--line-strong); border-radius:var(--radius-pill);
-  background:var(--surface); font-size:var(--fs-md);
-  transition:border-color .16s ease, box-shadow .16s ease;
-}
-.ferramentas-alunos input::placeholder { color:var(--text-3); }
-.ferramentas-alunos input:focus { border-color:var(--text); outline:none; box-shadow:0 0 0 3px rgba(253,207,23,.5); }
-.ferramentas-alunos input:focus-visible { outline:2px solid var(--focus-ink); outline-offset:2px; box-shadow:0 0 0 5px var(--focus-halo); }
-
 /* Atalho que preenche o formulário de aviso. */
 .atalhos-aviso { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-4); }
 .atalhos-aviso span { color:var(--text-2); font-size:var(--fs-xs); font-weight:600; }
@@ -162,6 +128,7 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 
 @media (max-width:900px) {
   .form-plano { grid-template-columns:1fr 1fr; }
+  .form-plano .plano-destaque-opcao { grid-row:auto; }
   .form-plano .field:first-child { grid-column:1/-1; }
   .secao { padding:var(--sp-5); }
 }
@@ -173,23 +140,78 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
   .form-plano { grid-template-columns:1fr; }
   .form-plano .field:first-child { grid-column:auto; }
   .form-plano button { width:100%; }
-  .admin-metrics { grid-template-columns:1fr; }
+  /* Três números lado a lado: empilhados, os cartões escuros empurravam a tela para baixo. */
+  .admin-metricas { grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:var(--sp-2); }
+  .admin-metricas .et-metrica { gap:var(--sp-1); padding:var(--sp-4); }
+  .admin-metricas .et-metrica-rotulo,.admin-metricas .et-metrica-detalhe { font-size:var(--fs-micro); line-height:1.35; }
   .secao { margin-top:var(--sp-5); padding:var(--sp-4); border-radius:var(--radius-card); }
 }
 
 /* Ação de um formulário que ocupa a largura toda do painel. */
 .form-plano .form-actions,.form-turma .form-actions { grid-column:1/-1; margin-top:0; }
 
-/* A busca virou formulário (envio ao servidor) para alcançar os alunos de todas
-   as páginas. O campo mantém a mesma aparência: o form só carrega o arranjo. */
+/* Ações de um plano: destaque e exclusão lado a lado, embaixo do cartão. */
+.plano-acoes { display:flex; flex-wrap:wrap; gap:var(--sp-2); }
+
+/* ------------------------------------------ tabelas da administração --- */
+/* .tabela-admin acompanha .et-tabela nas tabelas que têm menu de ações por
+   linha. O menu abre em position:absolute: dentro do contêiner rolável da
+   et-tabela ele seria cortado nas últimas linhas. Estas tabelas cabem na
+   largura sem rolar, então o contêiner fica sem rolagem; no celular cada
+   linha vira um cartão (.table-stack de theme.css). */
+.tabela-admin,
+.tabela-admin .et-tabela-rolagem { overflow:visible; max-height:none; }
+.tabela-admin .et-tabela-rolagem table { min-width:0; }
+.tabela-admin thead th:first-child { border-top-left-radius:calc(var(--et-radius-card) - 1px); }
+.tabela-admin thead th:last-child { border-top-right-radius:calc(var(--et-radius-card) - 1px); }
+.tabela-admin .et-tabela-ferramentas + .et-tabela-rolagem thead th { border-radius:0; }
+/* Sem a rolagem própria, o cabeçalho fixo não tem onde grudar. */
+.tabela-admin th { position:static; }
+.tabela-admin td.celula-menu { width:1%; text-align:right; }
+.tabela-admin .acao-cell { white-space:nowrap; }
+.tabela-admin .acao-cell > .form-inline + .form-inline { margin-left:var(--sp-2); }
+
+/* Pessoa na linha: avatar + nome. No painel, o nome leva à ficha do aluno. */
+.pessoa-linha { display:inline-flex; align-items:center; gap:var(--sp-3); min-width:0; color:inherit; }
+.pessoa-linha strong { font-weight:600; overflow-wrap:anywhere; }
+a.pessoa-linha { text-decoration:none; }
+a.pessoa-linha:hover strong { text-decoration:underline; text-underline-offset:3px; }
+a.pessoa-linha:focus-visible { outline:2px solid var(--focus-ink); outline-offset:2px; border-radius:var(--et-radius-control); }
+.celula-contato span { display:block; overflow-wrap:anywhere; }
+.table-stack td.celula-contato { flex-direction:column; align-items:flex-end; gap:0; }
+.table-stack td.celula-contato::before { align-self:flex-start; }
+
+/* Busca do servidor na faixa de ferramentas da tabela, com a matrícula ao lado. */
+.tabela-admin .et-tabela-ferramentas { flex-wrap:wrap; border-radius:var(--et-radius-card) var(--et-radius-card) 0 0; }
 .form-busca-aluno {
-  flex:1 1 260px; display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3);
+  flex:1 1 320px; display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2);
 }
-.form-busca-aluno input { flex:1 1 200px; }
-@media (max-width:520px) {
-  .form-busca-aluno { width:100%; }
-  /* O campo fica com a linha inteira: dividindo espaço com o botão, o texto de
-     apoio ("...ou CPF") era cortado justamente onde a tela é mais estreita. */
-  .form-busca-aluno input { flex:1 1 100%; width:100%; }
+.form-busca-aluno input {
+  flex:1 1 200px; min-width:0; min-height:44px; padding:0 var(--sp-4);
+  border:1px solid var(--line-strong); border-radius:var(--et-radius-control);
+  background:var(--surface); font-size:var(--fs-sm);
+}
+.form-busca-aluno input::placeholder { color:var(--text-3); }
+.form-busca-aluno input:focus-visible { outline:2px solid var(--focus-ink); outline-offset:2px; }
+.form-busca-aluno .btn { min-height:44px; }
+
+@media (max-width:640px) {
+  /* Linhas em cartão: a moldura da tabela sai e cada cartão traz a sua. */
+  .tabela-admin { border:0; background:transparent; }
+  .tabela-admin .et-tabela-ferramentas { padding:0 0 var(--sp-4); border:0; background:transparent; }
+  .tabela-admin .et-tabela-ferramentas > .button-primary { width:100%; justify-content:center; }
+  .tabela-admin .paginacao { padding-inline:0; border-top:0; }
+  .tabela-admin td.celula-menu { width:auto; }
+  .table-stack.et-tabela-rolagem td.celula-menu { margin-top:var(--sp-2); padding-top:var(--sp-3); }
+  .form-busca-aluno input { flex:1 1 100%; }
   .form-busca-aluno .btn { flex:1 1 auto; justify-content:center; }
+  .tabela-admin .acao-cell > .form-inline + .form-inline { margin-left:0; }
+  .tabela-admin .acao-cell { white-space:normal; }
+}
+@media (min-width:641px) {
+  /* Sem overflow:hidden na moldura, o fundo da tabela e das linhas cobriria os cantos arredondados. */
+  .tabela-admin .et-tabela-rolagem table { background:transparent; }
+  .tabela-admin tbody tr:last-child td:first-child { border-bottom-left-radius:calc(var(--et-radius-card) - 1px); }
+  .tabela-admin tbody tr:last-child td:last-child { border-bottom-right-radius:calc(var(--et-radius-card) - 1px); }
+  .tabela-admin:has(.paginacao) tbody tr:last-child td { border-radius:0; }
 }

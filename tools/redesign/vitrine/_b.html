@@ -1,0 +1,328 @@
+<section class="vitrine-secao">
+  <h2>Tabs</h2>
+  <div class="et-tabs" data-tabs>
+    <div class="et-tabs-lista" role="tablist" aria-label="Seções do aluno">
+      <button type="button" role="tab" id="aba-dados" aria-controls="painel-dados" aria-selected="true">Dados</button>
+      <button type="button" role="tab" id="aba-pag" aria-controls="painel-pag" aria-selected="false" tabindex="-1">Pagamentos</button>
+      <button type="button" role="tab" id="aba-freq" aria-controls="painel-freq" aria-selected="false" tabindex="-1">Frequência</button>
+    </div>
+    <div class="et-tabs-painel" role="tabpanel" id="painel-dados" aria-labelledby="aba-dados" tabindex="0">
+      <p>Painel com informações cadastrais do aluno, dados da matrícula, graduação na modalidade e contatos registrados.</p>
+    </div>
+    <div class="et-tabs-painel" role="tabpanel" id="painel-pag" aria-labelledby="aba-pag" tabindex="0" hidden>
+      <p>Histórico completo de pagamentos, mensalidades pendentes e recibos gerados pelo sistema.</p>
+    </div>
+    <div class="et-tabs-painel" role="tabpanel" id="painel-freq" aria-labelledby="aba-freq" tabindex="0" hidden>
+      <p>Registro de presenças nas aulas da turma e frequência percentual nos últimos 30 dias.</p>
+    </div>
+  </div>
+</section>
+
+<section class="vitrine-secao">
+  <h2>Menu de ações</h2>
+  <div style="display: flex; flex-direction: column; gap: var(--sp-4);">
+    <div>
+      <p style="margin: 0 0 var(--sp-2) 0; font-size: var(--fs-xs); color: var(--text-2);">Estado fechado (padrão interativo):</p>
+      <div class="et-menu" data-menu>
+        <button type="button" class="et-menu-botao" aria-haspopup="menu" aria-expanded="false" aria-controls="menu-7" aria-label="Ações de Marina Souza">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="12" r="2"/>
+            <circle cx="12" cy="19" r="2"/>
+          </svg>
+        </button>
+        <div class="et-menu-lista" role="menu" id="menu-7" hidden>
+          <a role="menuitem" href="#">Ver detalhes</a>
+          <form method="post" action="#" role="none">{% include "components/csrf_field.html" %}<button type="submit" role="menuitem" class="et-menu-perigo">Remover</button></form>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p style="margin: 0 0 var(--sp-2) 0; font-size: var(--fs-xs); color: var(--text-2);">Estado aberto para visualização do menu:</p>
+      <div class="et-menu" data-menu style="margin-bottom: 120px;">
+        <button type="button" class="et-menu-botao" aria-haspopup="menu" aria-expanded="true" aria-controls="menu-aberto-demo" aria-label="Ações de Marina Souza (aberto)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="12" r="2"/>
+            <circle cx="12" cy="19" r="2"/>
+          </svg>
+        </button>
+        <div class="et-menu-lista" role="menu" id="menu-aberto-demo">
+          <a role="menuitem" href="#">Ver detalhes</a>
+          <a role="menuitem" href="#">Editar matrícula</a>
+          <form method="post" action="#" role="none">{% include "components/csrf_field.html" %}<button type="submit" role="menuitem" class="et-menu-perigo">Remover</button></form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="vitrine-secao">
+  <h2>Tooltip</h2>
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4);">
+    <button type="button" class="btn" aria-label="Copiar código Pix" data-tooltip>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      <span>Copiar código</span>
+    </button>
+
+    <a href="#" class="btn" aria-label="Baixar comprovante" data-tooltip>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <span>Download</span>
+    </a>
+
+    <div style="display: inline-flex; align-items: center; gap: var(--sp-2);">
+      <span style="font-size: var(--fs-xs); color: var(--text-2);">Aparência da dica flutuante:</span>
+      <span class="et-tooltip et-tooltip--visivel" role="tooltip" style="position: static; display: inline-block;">Copiar código</span>
+    </div>
+  </div>
+</section>
+
+<section class="vitrine-secao">
+  <h2>Accordion</h2>
+  <details class="et-acordeao">
+    <summary>Como funciona a renovação da matrícula?</summary>
+    <div class="et-acordeao-corpo">
+      A renovação pode ser feita diretamente pelo painel do aluno ou na recepção da academia. Os pagamentos são processados via Pix ou cartão com confirmação imediata.
+    </div>
+  </details>
+  <details class="et-acordeao" open>
+    <summary>Quais são os horários das turmas de Muay Thai?</summary>
+    <div class="et-acordeao-corpo">
+      Temos turmas pela manhã (07h e 09h), à tarde (15h e 17h) e à noite (19h e 20h30), de segunda a sexta-feira, com treinos livres aos sábados às 10h.
+    </div>
+  </details>
+  <details class="et-acordeao">
+    <summary>Como solicitar o trancamento temporário do plano?</summary>
+    <div class="et-acordeao-corpo">
+      O plano pode ser trancado por até 30 dias mediante solicitação prévia de 5 dias úteis na secretaria ou pelo canal de suporte oficial.
+    </div>
+  </details>
+</section>
+
+<section class="vitrine-secao">
+  <h2>Botão com carregamento</h2>
+  <div style="display: flex; flex-direction: column; gap: var(--sp-4);">
+    <form method="post" action="#" data-enviando>
+      {% include "components/csrf_field.html" %}
+      <button type="submit" class="button-primary" data-texto-enviando="Enviando...">Salvar alterações</button>
+    </form>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3);">
+      <button type="button" class="button-primary et-carregando" disabled aria-busy="true">Enviando...</button>
+      <button type="button" class="button-secondary et-carregando" disabled aria-busy="true">Processando...</button>
+      <button type="button" class="btn btn-principal et-carregando" disabled aria-busy="true">Aprovando...</button>
+    </div>
+  </div>
+</section>
+
+<section class="vitrine-secao">
+  <h2>Tabela de dados</h2>
+  <div class="et-tabela" data-tabela>
+    <div class="et-tabela-ferramentas">
+      <label class="et-tabela-busca"><span class="sr-only">Buscar alunos</span>
+        <input type="search" placeholder="Buscar" data-tabela-busca></label>
+    </div>
+    <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Alunos da turma">
+      <table>
+        <thead><tr>
+          <th scope="col" aria-sort="ascending"><button type="button" data-ordenar="texto">Aluno</button></th>
+          <th scope="col" aria-sort="none"><button type="button" data-ordenar="data">Vencimento</button></th>
+          <th scope="col" aria-sort="none"><button type="button" data-ordenar="numero">Valor</button></th>
+          <th scope="col">Ações</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td>Marina Souza</td>
+            <td data-valor="2026-10-04">04/10/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Lucas Mendes</td>
+            <td data-valor="2026-10-05">05/10/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Camila Rodrigues</td>
+            <td data-valor="2026-10-08">08/10/2026</td>
+            <td data-valor="180.00">R$ 180,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Rafael Costa</td>
+            <td data-valor="2026-10-10">10/10/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Beatriz Lima</td>
+            <td data-valor="2026-10-12">12/10/2026</td>
+            <td data-valor="200.00">R$ 200,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Gabriel Santos</td>
+            <td data-valor="2026-10-14">14/10/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Juliana Prado</td>
+            <td data-valor="2026-10-15">15/10/2026</td>
+            <td data-valor="180.00">R$ 180,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Thiago Oliveira</td>
+            <td data-valor="2026-10-18">18/10/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Larissa Ferreira</td>
+            <td data-valor="2026-10-20">20/10/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Felipe Barbosa</td>
+            <td data-valor="2026-10-22">22/10/2026</td>
+            <td data-valor="220.00">R$ 220,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Aline Martins</td>
+            <td data-valor="2026-10-25">25/10/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Rodrigo Alves</td>
+            <td data-valor="2026-10-28">28/10/2026</td>
+            <td data-valor="180.00">R$ 180,00</td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="et-tabela-vazio" data-tabela-vazio hidden>Nenhum resultado para a busca.</p>
+  </div>
+</section>
+
+<section class="vitrine-secao">
+  <h2>Tabela paginada</h2>
+  <div class="et-tabela">
+    <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Histórico paginado de mensalidades">
+      <table>
+        <thead><tr>
+          <th scope="col">Aluno</th>
+          <th scope="col">Vencimento</th>
+          <th scope="col">Valor</th>
+          <th scope="col">Situação</th>
+          <th scope="col">Ações</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td>Lucas Mendes</td>
+            <td data-valor="2026-10-01">01/10/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><span class="status status-pago">Pago</span></td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Beatriz Lima</td>
+            <td data-valor="2026-10-02">02/10/2026</td>
+            <td data-valor="180.00">R$ 180,00</td>
+            <td><span class="status status-pendente">Pendente</span></td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Rafael Costa</td>
+            <td data-valor="2026-09-28">28/09/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><span class="status status-atrasado">Vencido</span></td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+          <tr>
+            <td>Juliana Prado</td>
+            <td data-valor="2026-09-25">25/09/2026</td>
+            <td data-valor="150.00">R$ 150,00</td>
+            <td><span class="status status-pago">Pago</span></td>
+            <td><a href="#" class="btn">Ver</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <nav class="paginacao" aria-label="Navegação de páginas">
+      <p class="paginacao-intervalo" aria-live="polite">
+        Mostrando <strong>1–4</strong> de <strong>48</strong>
+      </p>
+      <div class="paginacao-controles">
+        <span class="btn" aria-disabled="true">Página anterior</span>
+        <span class="paginacao-posicao">Página 1 de 12</span>
+        <a class="btn" rel="next" href="#">Próxima página</a>
+      </div>
+    </nav>
+  </div>
+</section>
+
+<section class="vitrine-secao">
+  <h2>Upload com pré-visualização</h2>
+
+  <div>
+    <p style="margin: 0 0 var(--sp-2) 0; font-size: var(--fs-xs); color: var(--text-2);">Estado inicial (aguardando seleção de arquivo):</p>
+    <div class="et-upload" data-upload data-tipos="image/jpeg,image/png,image/webp,application/pdf" data-max-mb="5">
+      <label class="et-upload-alvo">
+        <input type="file" name="comprovante" accept="image/jpeg,image/png,image/webp,application/pdf" class="sr-only">
+        <span class="et-upload-titulo">Escolha o arquivo</span>
+        <span class="et-upload-ajuda">JPG, PNG, WEBP ou PDF, até 5 MB.</span>
+      </label>
+      <div class="et-upload-previa" data-upload-previa hidden></div>
+      <p class="et-upload-erro" data-upload-erro role="alert" hidden></p>
+    </div>
+  </div>
+
+  <div style="margin-top: var(--sp-5);">
+    <p style="margin: 0 0 var(--sp-2) 0; font-size: var(--fs-xs); color: var(--text-2);">Estado com arquivo selecionado e pré-visualização:</p>
+    <div class="et-upload et-upload--com-arquivo" data-upload data-tipos="image/jpeg,image/png,image/webp,application/pdf" data-max-mb="5">
+      <label class="et-upload-alvo">
+        <input type="file" name="comprovante_selecionado" accept="image/jpeg,image/png,image/webp,application/pdf" class="sr-only">
+        <span class="et-upload-titulo">Escolha o arquivo</span>
+        <span class="et-upload-ajuda">JPG, PNG, WEBP ou PDF, até 5 MB.</span>
+      </label>
+      <div class="et-upload-previa" data-upload-previa>
+        <p class="et-upload-arquivo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          comprovante_setembro_marina.pdf · 1,2 MB
+        </p>
+        <button type="button" class="btn">Trocar arquivo</button>
+      </div>
+      <p class="et-upload-erro" data-upload-erro role="alert" hidden></p>
+    </div>
+  </div>
+
+  <div style="margin-top: var(--sp-5);">
+    <p style="margin: 0 0 var(--sp-2) 0; font-size: var(--fs-xs); color: var(--text-2);">Estado com mensagem de erro de validação:</p>
+    <div class="et-upload" data-upload data-tipos="image/jpeg,image/png,image/webp,application/pdf" data-max-mb="5">
+      <label class="et-upload-alvo">
+        <input type="file" name="comprovante_invalido" accept="image/jpeg,image/png,image/webp,application/pdf" class="sr-only">
+        <span class="et-upload-titulo">Escolha o arquivo</span>
+        <span class="et-upload-ajuda">JPG, PNG, WEBP ou PDF, até 5 MB.</span>
+      </label>
+      <div class="et-upload-previa" data-upload-previa hidden></div>
+      <p class="et-upload-erro" data-upload-erro role="alert">O arquivo selecionado excede o limite máximo de 5 MB.</p>
+    </div>
+  </div>
+</section>

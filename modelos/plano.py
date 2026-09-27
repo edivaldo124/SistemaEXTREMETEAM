@@ -11,6 +11,10 @@ class Plano(db.Model):
 
     duracao_dias = db.Column(db.Integer, nullable=False, default=30)
 
+    # Plano que a página inicial mostra em destaque. O admin marca no painel; no máximo
+    # um fica marcado (PlanoDAO.definir_destaque garante isso).
+    destaque = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())
+
     def __init__(self, nome_plano, preco_plano, duracao_dias):
         self.nome_plano = nome_plano
         self.preco_plano = preco_plano if isinstance(preco_plano, Decimal) else Decimal(str(preco_plano))

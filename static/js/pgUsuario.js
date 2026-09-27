@@ -1,30 +1,3 @@
-const gradePlanos = document.querySelector('.grid-planos');
-
-const formatadorDePreco = new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-});
-
-document.querySelectorAll('[data-preco]').forEach(function (preco) {
-    const valor = Number(preco.dataset.preco);
-
-    if (!Number.isNaN(valor)) {
-        preco.textContent = formatadorDePreco.format(valor);
-    }
-});
-
-if (gradePlanos) {
-    // O rótulo e a ação de cada plano vêm prontos do servidor, que é quem conhece a
-    // vigência paga, a cobrança em aberto e a mudança agendada. O JS não reescreve mais
-    // o botão: era ele que oferecia "Pagar plano atual" para quem já tinha pago.
-    const planoAtual = gradePlanos.dataset.planoAtual;
-
-    if (planoAtual) {
-        const cardAtual = document.querySelector(`.card-plano[data-plano-id="${planoAtual}"]`);
-        if (cardAtual) cardAtual.classList.add('plano-atual');
-    }
-}
-
 // ---------- Navegação da área do aluno: uma tela por item do menu ----------
 (() => {
     const idsTelas = ['visao-geral', 'turmas', 'mensalidades', 'planos', 'meus-dados'];

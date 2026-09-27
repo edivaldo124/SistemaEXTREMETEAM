@@ -110,10 +110,7 @@ body.admin-shell {
 }
 .admin-header .site-brand img { width:56px; height:56px; }
 
-.admin-header nav.admin-nav {
-  display:flex; flex-direction:column; justify-content:space-between;
-  flex:1; gap:var(--sp-6); min-width:0;
-}
+.admin-header nav.admin-nav { display:flex; flex-direction:column; flex:1; min-width:0; }
 .admin-nav-scroll {
   display:flex; flex-direction:column; align-items:stretch; gap:var(--sp-1);
 }
@@ -152,12 +149,11 @@ body.admin-shell {
     padding-bottom:0; border-bottom:0;
   }
   .admin-header .site-brand img { width:38px; height:38px; }
-  .admin-header nav.admin-nav {
-    flex-direction:row; align-items:center; flex-basis:100%;
-    justify-content:space-between; gap:var(--sp-4);
-  }
+  /* Marca e "Sair" na primeira linha; a fila de seções ocupa a segunda inteira. */
+  .admin-header nav.admin-nav { order:3; flex-basis:100%; flex-direction:row; }
+  .admin-header .logout-form { order:2; margin-left:auto; }
   .admin-nav-scroll {
-    flex-direction:row; gap:var(--sp-2);
+    flex:1; min-width:0; flex-direction:row; gap:var(--sp-2);
     overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
   }
   .admin-nav-scroll a.link-turmas { min-height:44px; padding-inline:var(--sp-4); white-space:nowrap; }
@@ -177,7 +173,6 @@ body.admin-shell {
    escreve data-rolagem="inicio|meio|fim|nenhuma" conforme a posição. Sem JS o
    atributo não existe e a fila continua rolável, apenas sem o aviso. */
 @media (max-width:600px) {
-  .admin-header nav.admin-nav { gap:var(--sp-3); }
   .admin-nav-scroll {
     position:relative;
     scroll-snap-type:x proximity;

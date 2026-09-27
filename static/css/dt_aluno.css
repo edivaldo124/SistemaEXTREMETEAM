@@ -26,13 +26,32 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
   color:var(--text-2); font-size:var(--fs-sm);
 }
 /* Contador ou iniciais do aluno, à direita do título. */
-.detail-intro > span {
+.detail-intro > span:not(.et-avatar) {
   display:grid; place-items:center; flex:0 0 auto;
   width:76px; height:76px; overflow:hidden;
   color:var(--ink); background:var(--yellow);
   font:700 30px/1 var(--display); font-variant-numeric:tabular-nums;
 }
 .container-detalhes > .msg { margin-top:var(--sp-6); }
+
+/* Trilha (components/breadcrumb.html) acima do título. */
+.container-detalhes > .et-breadcrumb { margin-bottom:var(--sp-4); color:var(--text-2); }
+
+/* Ficha do aluno: avatar ao lado do nome, blocos agrupados em abas. */
+.aluno-cabecalho { justify-content:flex-start; flex-wrap:nowrap; }
+/* A fila de abas logo abaixo já separa o cabeçalho do conteúdo. */
+.detail-intro.aluno-cabecalho { padding-bottom:0; border-bottom:0; }
+/* extreme.css pinta ".detail-intro > span" de amarelo (marca antiga); o avatar segue o componente. */
+.aluno-cabecalho > .et-avatar {
+  width:var(--et-avatar-t); height:var(--et-avatar-t);
+  color:var(--et-gold); background:var(--et-black);
+}
+.aluno-cabecalho > div { min-width:0; }
+.aluno-abas { margin-top:var(--sp-6); }
+.aluno-abas > .et-tabs-painel { padding-top:0; font-size:var(--fs-md); }
+.aluno-abas > .et-tabs-painel > :first-child { margin-top:var(--sp-5); }
+/* Na coluna de ação da mensalidade, o menu (Pix, sincronizar) fica depois da troca de situação. */
+.tabela-mensalidades-aluno td.acao-cell .et-menu { order:2; align-self:flex-end; }
 
 /* ------------------------------------------------- painéis de conteúdo -- */
 
@@ -77,7 +96,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 .form-pagamento .btn-salvar { margin:0; box-shadow:none; }
 .form-pagamento .form-actions { grid-column:1/-1; margin-top:0; }
 
-.tabela-pagamentos { margin-top:var(--sp-6); }
+.tabela-pagamentos,.tabela-mensalidades-aluno { margin-top:var(--sp-6); }
 
 /* Alteração rápida de situação, dentro da linha da tabela: os três controles
    ficam numa linha só para a coluna não crescer em altura. */
@@ -102,7 +121,6 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 /* --------------------------------------------------------- foto ------- */
 
 .foto-perfil-area { display:flex; align-items:center; gap:var(--sp-6); }
-.student-avatar-grande { width:96px; height:96px; margin-right:0; font-size:38px; }
 .foto-perfil-acoes { display:flex; flex-wrap:wrap; gap:var(--sp-3); }
 .form-foto { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); }
 .form-foto input[type=file] { max-width:250px; }
@@ -169,7 +187,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
   .form-revisao input,.form-revisao select,.form-revisao button { min-height:44px; }
 }
 @media (max-width:540px) {
-  .detail-intro > span { width:58px; height:58px; font-size:23px; }
+  .detail-intro > span:not(.et-avatar) { width:58px; height:58px; font-size:23px; }
   .form-pagamento { grid-template-columns:1fr; }
   .detail-section,.secao-pagamentos { padding:var(--sp-4); border-radius:var(--radius-card); }
   .foto-perfil-area { flex-direction:column; align-items:flex-start; }
@@ -192,7 +210,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
    largura útil ao lado da barra lateral. */
 
 @media (min-width:641px) {
-  .tabela-mensalidades-aluno > table { min-width:0; }
+  .tabela-mensalidades-aluno table { min-width:0; }
   .tabela-mensalidades-aluno th,.tabela-mensalidades-aluno td { padding:var(--sp-3); }
   .tabela-mensalidades-aluno th { letter-spacing:.04em; }
   .secao-pagamentos .tabela-mensalidades-aluno td.acao-cell {

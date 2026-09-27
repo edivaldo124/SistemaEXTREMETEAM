@@ -1,0 +1,223 @@
+/* =========================================================================
+   Extreme Team - Termos de Serviço, Política e Responsabilidade
+   Tipografia de leitura (max-width: 68ch, line-height: 1.7), sumário com
+   links âncora e seções em acordeões abertos (<details class="et-acordeao">).
+   Usa exclusivamente tokens de tokens.css e theme.css (nenhum valor hex).
+   ========================================================================= */
+
+.account-header {
+  max-width: calc(68ch + 2 * clamp(var(--sp-6), 5vw, var(--sp-9)));
+}
+
+.account-header a:last-child {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.termos-page-shell {
+  max-width: calc(68ch + 2 * clamp(var(--sp-6), 5vw, var(--sp-9)));
+  margin: var(--sp-6) auto var(--sp-9);
+  padding: clamp(var(--sp-6), 5vw, var(--sp-9));
+  border: 1px solid var(--et-line-dark);
+  border-radius: var(--et-radius-card);
+  background: var(--et-surface-dark);
+  color: var(--et-text-on-dark);
+  box-shadow: var(--et-shadow-dark);
+}
+
+.termos-documento {
+  max-width: 68ch;
+  margin-inline: auto;
+  font-family: var(--et-font-body);
+  line-height: 1.7;
+}
+
+.termos-documento .eyebrow {
+  color: var(--et-text-on-dark-muted);
+}
+
+.termos-documento .eyebrow::before {
+  background: var(--et-gold);
+}
+
+.termos-documento .page-title {
+  margin: 0;
+  font-family: var(--et-font-display);
+  font-size: var(--h1);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--et-gold);
+}
+
+.termos-documento .page-subtitle {
+  margin: var(--sp-2) 0 0;
+  color: var(--et-text-on-dark-muted);
+  font-family: var(--et-font-body);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------- Sumário de seções -- */
+.termos-sumario {
+  margin: var(--sp-6) 0 var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--et-line-dark);
+  border-radius: var(--et-radius-btn);
+  background: var(--et-surface-dark-2);
+}
+
+.termos-sumario ol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.termos-sumario li {
+  margin: 0;
+  padding: 0;
+}
+
+.termos-sumario a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--sp-1) var(--sp-2);
+  color: var(--et-gold);
+  font-family: var(--et-font-body);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  border-radius: var(--et-radius-control);
+  transition: color var(--dur-rapida) var(--ease), text-underline-offset var(--dur-rapida) var(--ease);
+}
+
+.termos-sumario a:hover {
+  color: var(--et-gold-light);
+  text-decoration-thickness: 2px;
+}
+
+.termos-sumario a:focus-visible {
+  outline: 2px solid var(--et-focus-on-dark);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------- Acordeões de seção -- */
+.termos-documento .et-acordeao {
+  margin-top: var(--sp-3);
+  border: 1px solid var(--et-line-dark);
+  border-radius: var(--et-radius-btn);
+  background: var(--et-surface-dark-2);
+  overflow: hidden;
+  transition: border-color var(--dur-rapida) var(--ease), box-shadow var(--dur-rapida) var(--ease);
+}
+
+.termos-documento .et-acordeao:first-of-type {
+  margin-top: var(--sp-5);
+}
+
+.termos-documento .et-acordeao[open] {
+  border-color: var(--et-line-dark-strong);
+  box-shadow: var(--et-shadow-dark);
+}
+
+.termos-documento .et-acordeao > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--et-text-on-dark);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  transition: background var(--dur-rapida) var(--ease);
+}
+
+.termos-documento .et-acordeao > summary::-webkit-details-marker {
+  display: none;
+}
+
+.termos-documento .et-acordeao > summary:hover {
+  background: var(--et-surface-dark);
+}
+
+.termos-documento .et-acordeao > summary:focus-visible {
+  outline: 2px solid var(--et-focus-on-dark);
+  outline-offset: -2px;
+}
+
+.termos-documento .et-acordeao > summary h2 {
+  margin: 0;
+  font-family: var(--et-font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--et-gold);
+}
+
+.termos-documento .et-acordeao > summary::after {
+  border-right-color: var(--et-text-on-dark-muted);
+  border-bottom-color: var(--et-text-on-dark-muted);
+}
+
+.termos-documento .et-acordeao[open] > summary::after {
+  border-right-color: var(--et-gold);
+  border-bottom-color: var(--et-gold);
+}
+
+.termos-documento .et-acordeao-corpo {
+  padding: var(--sp-4);
+  border-top: 1px solid var(--et-line-dark);
+  color: var(--et-text-on-dark-muted);
+  font-family: var(--et-font-body);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+}
+
+.termos-documento .et-acordeao-corpo p {
+  margin: 0;
+  color: var(--et-text-on-dark-muted);
+  font-family: var(--et-font-body);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+}
+
+.termos-documento .et-acordeao-corpo p + p {
+  margin-top: var(--sp-3);
+}
+
+/* ----------------------------------------------------------- Nota final -- */
+.termos-documento .termos-nota {
+  margin: var(--sp-6) 0 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--et-line-dark);
+  border-radius: var(--et-radius-control);
+  color: var(--et-ok-ink-dark);
+  background: var(--et-ok-bg-dark);
+  font-family: var(--et-font-body);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .termos-sumario a,
+  .termos-documento .et-acordeao,
+  .termos-documento .et-acordeao > summary {
+    transition: none;
+  }
+}
+
+/* O cabeçalho é preto: o "Centro de treinamento" herdava a tinta escura de cadastro.css
+   e sumia. */
+.account-header .site-brand { color:var(--et-text-on-dark-muted); }

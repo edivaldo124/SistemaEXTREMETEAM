@@ -155,8 +155,27 @@ def cadastrar_plano():
         return redirect('/admin')
     novo_plano = Plano(nome_plano=nome_plano.strip(), preco_plano=preco, duracao_dias=duracao)
     PlanoDAO.salvar(novo_plano)
+    if request.form.get('destaque') == 'sim':
+        PlanoDAO.definir_destaque(novo_plano.id)
 
     return redirect('/admin')
+
+
+@admin_bp.route('/admin/planos/<int:plano_id>/destaque', methods=['POST'])
+def destacar_plano(plano_id):
+    """Escolhe o plano que a página inicial mostra em destaque (só um por vez)."""
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    destacar = request.form.get('acao') != 'remover'
+    plano = PlanoDAO.definir_destaque(plano_id, destacar=destacar)
+    if not plano:
+        flash('Plano não encontrado.', 'erro')
+    elif destacar:
+        flash(f'{plano.nome_plano} agora aparece em destaque na página inicial.', 'sucesso')
+    else:
+        flash(f'{plano.nome_plano} saiu do destaque. A página inicial destaca o de menor preço por mês.', 'sucesso')
+    return redirect('/admin#planos')
 
 #
 

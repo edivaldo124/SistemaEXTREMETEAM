@@ -1,0 +1,11 @@
+{#- Telas públicas: página inicial, entrar/cadastrar/recuperar e documentos legais.
+    Sem o deslize da área logada (ele só age em /admin, /perfil, /turmas e /professor).
+    O cabeçalho e o rodapé públicos vêm por padrão; as telas de acesso, que são um
+    cartão sozinho na tela, esvaziam os dois blocos. -#}
+{% extends "layouts/base.html" %}
+{% block deslize %}{% endblock %}
+{% block corpo %}
+    {% block cabecalho %}{% include "components/cabecalho_publico.html" %}{% endblock %}
+    {% block conteudo %}{% endblock %}
+    {% block rodape %}{% include "components/rodape_publico.html" %}{% endblock %}
+{% endblock %}

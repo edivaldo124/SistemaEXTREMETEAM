@@ -1,0 +1,102 @@
+{#- Vitrine - parte do Agente A: avatar, linha do tempo, breadcrumb, cabeçalho com
+    "Voltar" e cartões de plano. Só conteúdo: o layout e o CSS vêm de vitrine.html.
+    Os planos e nomes daqui são fictícios e existem só nesta vitrine. -#}
+{% from "components/avatar.html" import avatar %}
+{% from "components/linha_tempo.html" import linha_tempo_pagamento %}
+{% from "components/breadcrumb.html" import breadcrumb %}
+{% from "components/cartao_plano.html" import cartao_plano, secao_planos with context %}
+
+{#- "Foto" de exemplo em SVG inline (a CSP aceita data: em img-src). -#}
+{% set _foto = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' fill='dimgray'/><circle cx='40' cy='31' r='15' fill='silver'/><ellipse cx='40' cy='76' rx='27' ry='22' fill='silver'/></svg>" %}
+
+<section class="vitrine-secao" id="avatar">
+    <h2>Avatar</h2>
+    <div class="vitrine-linha">
+        {{ avatar('Marina Souza Lima', tamanho='sm') }} <span>Marina Souza Lima (sm)</span>
+    </div>
+    <div class="vitrine-linha">
+        {{ avatar('Rafael Nunes') }} <span>Rafael Nunes (md, padrão)</span>
+        {{ avatar('Joana', tamanho='md') }} <span>Joana (nome de uma palavra)</span>
+        {{ avatar('Carlos Pereira', _foto) }} <span>Carlos Pereira (com foto)</span>
+    </div>
+    <div class="vitrine-linha">
+        {{ avatar('Bianca Torres', tamanho='lg') }} <span>Bianca Torres (lg)</span>
+        {{ avatar('Pedro Alves', _foto, 'lg') }} <span>Pedro Alves (lg, com foto)</span>
+    </div>
+</section>
+
+<section class="vitrine-secao vitrine-escuro" id="avatar-escuro">
+    <h2>Avatar sobre o escuro</h2>
+    <div class="vitrine-linha">
+        {{ avatar('Marina Souza', tamanho='sm') }} <span>Marina Souza</span>
+        {{ avatar('Rafael Nunes') }} <span>Rafael Nunes</span>
+        {{ avatar('Bianca Torres', tamanho='lg') }} <span>Bianca Torres</span>
+    </div>
+</section>
+
+<section class="vitrine-secao" id="linha-tempo">
+    <h2>Linha do tempo do pagamento</h2>
+    {% for _status, _titulo in [
+        ('pendente', 'Pendente'),
+        ('atrasado', 'Atrasado'),
+        ('em_processamento', 'Em processamento'),
+        ('em_analise', 'Em análise'),
+        ('pago', 'Pago'),
+        ('recusado', 'Recusado'),
+        ('cancelado', 'Cancelado'),
+        ('reembolsado', 'Reembolsado'),
+    ] %}
+    <div>
+        <p><strong>{{ _titulo }}</strong> <code>{{ _status }}</code></p>
+        {{ linha_tempo_pagamento(_status) }}
+    </div>
+    {% endfor %}
+</section>
+
+<section class="vitrine-secao" id="breadcrumb">
+    <h2>Breadcrumb</h2>
+    {{ breadcrumb([('Painel', '/admin'), ('Alunos', None)]) }}
+    {{ breadcrumb([('Painel', '/admin'), ('Turmas', '/turmas'), ('Jiu-jitsu adulto noite', '/turma/1'), ('Marina Souza Lima', None)]) }}
+</section>
+
+<section class="vitrine-secao vitrine-escuro" id="breadcrumb-escuro">
+    <h2>Breadcrumb sobre o escuro</h2>
+    {{ breadcrumb([('Painel', '/admin'), ('Financeiro', '/financeiro'), ('Pagamento de outubro', None)]) }}
+</section>
+
+<section class="vitrine-secao" id="cabecalho-voltar">
+    <h2>Cabeçalho com "Voltar"</h2>
+    <p>Padrão (área do aluno):</p>
+    {% include "components/detail_back_header.html" %}
+    <p>Com <code>voltar_href</code> e <code>voltar_texto</code>:</p>
+    {% with voltar_href='/admin', voltar_texto='Voltar ao painel' %}
+        {% include "components/detail_back_header.html" %}
+    {% endwith %}
+</section>
+
+{% set _planos = [
+    {'nome': 'Mensal', 'meses': 1, 'duracao_texto': '1 mês', 'preco_total': 120.00, 'preco_mes': 120.00,
+     'economia': none, 'url_matricula': '#planos', 'texto_botao': 'Escolher mensal'},
+    {'nome': 'Trimestral', 'meses': 3, 'duracao_texto': '3 meses', 'preco_total': 320.00, 'preco_mes': 106.67,
+     'economia': 40.00, 'url_matricula': '#planos', 'texto_botao': 'Escolher trimestral', 'recomendado': true},
+    {'nome': 'Semestral', 'meses': 6, 'duracao_texto': '6 meses', 'preco_total': 600.00, 'preco_mes': 100.00,
+     'economia': 120.00, 'url_matricula': '#planos', 'texto_botao': 'Escolher semestral'},
+] %}
+
+<section class="vitrine-secao" id="planos">
+    <h2>Planos</h2>
+    {{ secao_planos(_planos) }}
+</section>
+
+<section class="vitrine-secao" id="planos-avulsos">
+    <h2>Cartão de plano avulso</h2>
+    <div class="vitrine-linha">
+        {{ cartao_plano(_planos[2]) }}
+        {{ cartao_plano(_planos[1], destaque=true) }}
+    </div>
+</section>
+
+<section class="vitrine-secao" id="planos-vazio">
+    <h2>Planos sem nada publicado</h2>
+    {{ secao_planos([]) }}
+</section>

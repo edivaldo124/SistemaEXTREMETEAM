@@ -187,10 +187,11 @@
             copiado = document.execCommand && document.execCommand('copy');
         }
 
-        const textoOriginal = btnCopiar.textContent;
-        btnCopiar.textContent = copiado ? 'Copiado!' : 'Não foi possível copiar';
+        // A confirmação é o aviso (toast); a falha continua explicada ao lado do
+        // campo, que fica selecionado para a cópia manual.
         if (elFalhaCopiar) elFalhaCopiar.hidden = copiado;
-        setTimeout(() => { btnCopiar.textContent = textoOriginal; }, 2000);
+        if (copiado) window.etToast?.('Código Pix copiado.', 'sucesso');
+        else elCopiaCola.select();
     });
 
     botoesTentarNovamente.forEach((botao) => botao.addEventListener('click', () => gerarOuAtualizarPix(botao)));

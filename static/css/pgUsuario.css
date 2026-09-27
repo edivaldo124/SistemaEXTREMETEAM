@@ -13,7 +13,6 @@
 .profile-page > .msg { margin-bottom:var(--sp-5); }
 
 .nav-avatar-link { display:inline-flex !important; padding:0 !important; background:none !important; }
-.nav-avatar-link .student-avatar { margin-right:0; }
 
 .app-footer {
   display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--sp-4);
@@ -51,18 +50,12 @@
 }
 .profile-hero h1 {
   margin:0; color:var(--text-on-ink);
-  font:700 var(--h1)/1.02 var(--display);
+  font:400 var(--h1)/1.02 var(--display);
   letter-spacing:-.01em; text-transform:uppercase;
 }
 .profile-hero .eyebrow { color:var(--yellow); }
 .profile-hero .eyebrow::before { background:var(--yellow); }
 .profile-hero > div > p:last-child { margin:var(--sp-2) 0 0; color:var(--text-on-ink-2); font-size:var(--fs-sm); }
-.profile-mark {
-  display:grid; place-items:center; flex:0 0 auto;
-  width:76px; height:76px; overflow:hidden;
-  color:var(--ink); background:var(--yellow);
-  font:700 30px/1 var(--display);
-}
 
 /* Três indicadores dentro do painel escuro. */
 .summary-grid {
@@ -82,7 +75,7 @@
 .summary-grid > article > span .icone { width:16px; height:16px; color:var(--yellow); }
 .summary-grid strong {
   display:block; overflow-wrap:anywhere;
-  color:var(--text-on-ink); font:700 21px/1.2 var(--display);
+  color:var(--text-on-ink); font:400 21px/1.2 var(--display);
   letter-spacing:.01em; text-transform:uppercase;
 }
 .financial-status-ativo { color:#6FD3A4; }
@@ -121,7 +114,7 @@
   gap:var(--sp-5); margin-bottom:var(--sp-5);
   padding-bottom:var(--sp-4); border-bottom:1px solid var(--line-strong);
 }
-.section-heading h2 { margin:0; font:700 var(--h2)/1.1 var(--display); text-transform:uppercase; }
+.section-heading h2 { margin:0; font:400 var(--h2)/1.1 var(--display); text-transform:uppercase; }
 .section-heading > p { max-width:46ch; margin:0; color:var(--text-2); font-size:var(--fs-xs); line-height:1.6; }
 
 /* ------------------------------------------------- cartão "Meu plano" --- */
@@ -150,7 +143,7 @@
 .plano-situacao-topo h2,
 .mensalidade-card-topo h2 {
   margin:0; color:var(--text);
-  font:700 clamp(21px,1.1rem + .6vw,27px)/1.15 var(--display);
+  font:400 clamp(21px,1.1rem + .6vw,27px)/1.15 var(--display);
   letter-spacing:.01em; text-transform:uppercase; overflow-wrap:anywhere;
 }
 .plano-situacao-topo > div,
@@ -255,7 +248,7 @@
 .mensalidade-card[data-status="pendente"] .mensalidade-card-dados strong,
 .mensalidade-card[data-status="atrasado"] .mensalidade-card-dados strong,
 .mensalidade-card[data-status="recusado"] .mensalidade-card-dados strong {
-  color:var(--text-on-ink); font:700 24px/1.15 var(--display); letter-spacing:.01em;
+  color:var(--text-on-ink); font:400 24px/1.15 var(--display); letter-spacing:.01em;
 }
 .mensalidade-card[data-status="pendente"] .mensalidade-acao-extra,
 .mensalidade-card[data-status="atrasado"] .mensalidade-acao-extra,
@@ -273,6 +266,26 @@
   padding-top:var(--sp-5); border-top:1px solid var(--line);
 }
 .mensalidade-card-nota { margin:0; color:var(--text-2); font-size:var(--fs-sm); line-height:1.6; }
+
+/* Andamento da cobrança (components/linha_tempo.html). O componente é pensado
+   para o claro; no cartão preto da cobrança em aberto os tons viram os do escuro. */
+.mensalidade-card .et-linha-tempo { padding-top:var(--sp-5); border-top:1px solid var(--line); }
+.mensalidade-card:is([data-status="pendente"],[data-status="atrasado"],[data-status="recusado"]) .et-linha-tempo {
+  border-top-color:var(--ink-3); color:var(--et-text-on-dark);
+}
+.mensalidade-card:is([data-status="pendente"],[data-status="atrasado"],[data-status="recusado"]) :is(.et-passo-estado,.et-passo--futuro .et-passo-rotulo) {
+  color:var(--et-text-on-dark-muted);
+}
+.mensalidade-card:is([data-status="pendente"],[data-status="atrasado"],[data-status="recusado"]) .et-passo--atual .et-passo-estado { color:var(--et-text-on-dark); }
+.mensalidade-card:is([data-status="pendente"],[data-status="atrasado"],[data-status="recusado"]) .et-passo--futuro .et-passo-marca {
+  border-color:var(--et-line-dark-strong); background:transparent;
+}
+.mensalidade-card:is([data-status="pendente"],[data-status="atrasado"],[data-status="recusado"]) .et-passo:not(:last-child)::after { background:var(--et-line-dark); }
+.mensalidade-card[data-status="atrasado"] .et-passo--alerta .et-passo-marca { border-color:var(--et-warn-ink-dark); color:var(--et-warn-ink-dark); background:var(--et-warn-bg-dark); }
+.mensalidade-card[data-status="atrasado"] .et-passo--alerta .et-passo-estado { color:var(--et-warn-ink-dark); }
+.mensalidade-card[data-status="recusado"] .et-passo--erro .et-passo-estado { color:var(--et-bad-ink-dark); }
+.mensalidade-card[data-status="recusado"] .et-passo--feito .et-passo-marca { border-color:var(--et-ok-ink-dark); color:var(--et-black); background:var(--et-ok-ink-dark); }
+.mensalidade-card[data-status="recusado"] .et-passo--feito:not(:last-child)::after { background:var(--et-ok-ink-dark); }
 
 /* Bloco de ação de uma mensalidade: uma ação principal e as alternativas abaixo. */
 .mensalidade-acao { display:flex; flex-direction:column; align-items:flex-start; gap:var(--sp-3); }
@@ -330,18 +343,30 @@
 
 /* ------------------------------------------------------------ filtros --- */
 
-.filtros-mensalidades {
-  display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2);
-  margin-bottom:var(--sp-4); padding:var(--sp-3) var(--sp-4);
-  border:1px solid var(--line); border-radius:var(--radius-card);
-  background:var(--surface);
-}
+/* Os filtros de situação e competência (mensalidades_filtro.js) ocupam a barra
+   de ferramentas da tabela; a ordenação vem do componente (.et-tabela). */
+.filtros-mensalidades { flex-wrap:wrap; justify-content:flex-start; gap:var(--sp-2); }
 .filtros-mensalidades select,.filtros-mensalidades input {
-  min-height:var(--control-h-sm); padding:0 var(--sp-3);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
+  min-height:44px; padding:0 var(--sp-3);
+  border:1px solid var(--line-strong); border-radius:var(--et-radius-control);
   background:var(--surface); font-size:var(--fs-sm);
 }
-.filtros-mensalidades .button-secondary { min-height:var(--control-h-sm); padding:0 var(--sp-4); font-size:var(--fs-xs); }
+.filtros-mensalidades .button-secondary { min-height:44px; padding:0 var(--sp-4); font-size:var(--fs-xs); }
+/* O histórico pode ser longo: a tabela rola dentro do cartão com o cabeçalho fixo. */
+.tabela-mensalidades .et-tabela-rolagem { max-height:560px; }
+.tabela-mensalidades td { vertical-align:middle; }
+
+/* No celular cada mensalidade vira um cartão (.table-stack de theme.css): o
+   contêiner do componente some e a rolagem horizontal deixa de existir. */
+@media (max-width:640px) {
+  .tabela-mensalidades { overflow:visible; border:0; border-radius:0; background:transparent; }
+  .tabela-mensalidades .et-tabela-ferramentas {
+    margin-bottom:var(--sp-3); border:1px solid var(--line); border-radius:var(--et-radius-card);
+  }
+  .tabela-mensalidades .et-tabela-rolagem { max-height:none; overflow:visible; }
+  .tabela-mensalidades .et-tabela-rolagem table { min-width:0; }
+  .tabela-mensalidades .et-tabela-vazio { border:1px dashed var(--line-strong); border-radius:var(--et-radius-card); }
+}
 
 .tabela-presencas-recente { margin-top:var(--sp-4); }
 .btn-ver-historico-presencas { margin-top:var(--sp-4); }
@@ -350,7 +375,6 @@
 
 .form-foto-perfil { gap:var(--sp-4); }
 .foto-perfil-area { display:flex; align-items:center; gap:var(--sp-5); }
-.student-avatar-grande { width:88px; height:88px; margin-right:0; font-size:34px; }
 .foto-perfil-acoes { display:flex; flex-direction:column; gap:var(--sp-3); }
 .form-foto { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); }
 .form-foto input[type=file] { max-width:100%; }
@@ -391,7 +415,7 @@ dialog.presenca-dialog { width:min(700px,calc(100% - 32px)); }
   border:1px solid var(--line); border-left:5px solid var(--gold); border-radius:var(--radius-card);
   background:var(--surface-2);
 }
-.presenca-resumo strong { color:var(--text); font:700 24px/1.2 var(--display); font-variant-numeric:tabular-nums; }
+.presenca-resumo strong { color:var(--text); font:400 24px/1.2 var(--display); font-variant-numeric:tabular-nums; }
 .presenca-tabela-scroll { max-height:340px; overflow-y:auto; }
 .presenca-tabela-scroll th { top:0; }
 
@@ -412,7 +436,6 @@ dialog.presenca-dialog { width:min(700px,calc(100% - 32px)); }
 }
 @media (max-width:720px) {
   .profile-page { padding-top:var(--sp-5); }
-  .profile-mark { width:60px; height:60px; font-size:25px; }
   .profile-hero h1 { font-size:32px; }
   .profile-note { grid-template-columns:1fr; gap:var(--sp-2); }
   .section-heading { flex-direction:column; align-items:flex-start; gap:var(--sp-2); }
@@ -422,8 +445,6 @@ dialog.presenca-dialog { width:min(700px,calc(100% - 32px)); }
   .foto-perfil-area { flex-direction:column; align-items:flex-start; }
   .form-detalhes { padding:var(--sp-5); }
   .filtros-mensalidades > * { flex:1 1 100%; }
-  .filtros-mensalidades select,.filtros-mensalidades input,
-  .filtros-mensalidades .button-secondary { min-height:44px; }
   .app-footer { margin-inline:var(--sp-3); padding:var(--sp-5); border-radius:var(--radius-card); }
 }
 
@@ -442,6 +463,5 @@ dialog.presenca-dialog { width:min(700px,calc(100% - 32px)); }
   display:inline-flex; align-items:center; min-height:44px;
 }
 @media (max-width:1023px) {
-  .nav-avatar-link .student-avatar { width:44px; height:44px; font-size:19px; }
   .app-footer a { display:inline-flex; align-items:center; min-height:44px; }
 }

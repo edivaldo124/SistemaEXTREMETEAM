@@ -1,0 +1,23 @@
+<header class="home-header">
+    <a class="site-brand" href="/" aria-label="Extreme Team, página inicial">
+        <img src="{{ url_for('static', filename='imagens/logo-horizontal-400.png') }}"
+             srcset="{{ url_for('static', filename='imagens/logo-horizontal-400.png') }} 400w, {{ url_for('static', filename='imagens/logo-horizontal-800.png') }} 800w, {{ url_for('static', filename='imagens/logo-horizontal-1200.png') }} 1200w"
+             sizes="(max-width: 760px) 134px, 196px"
+             alt="Extreme Team"
+             class="brand-header-img"
+             width="196"
+             height="86">
+    </a>
+    <nav aria-label="Navegação principal">
+        <div class="home-nav-links">
+            <a href="#estrutura">A academia</a>
+            <a href="#metodo">Nosso método</a>
+            {% if professores_publicos %}<a href="#equipe">Professores</a>{% endif %}
+            {% if academia and academia.tem_contato %}<a href="#contato">Contato</a>{% endif %}
+        </div>
+        <button type="button" class="nav-login button-secondary" data-abrir-login>
+            <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /></svg>
+            Área do aluno
+        </button>
+    </nav>
+</header>

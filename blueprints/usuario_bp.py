@@ -954,9 +954,10 @@ def redefinir_senha(token):
 
         aluno.set_senha(nova_senha)
         # Quem redefine por link não tem sessão aqui: todas as sessões abertas com a
-        # senha antiga deixam de valer, que é o ponto de recuperar uma conta invadida.
+        # senha antiga deixam de valer, que é o ponto de  recuperar uma conta invadida.
         _revogar_tokens_de_conta(aluno)
         db.session.commit()
+
 
         fila_email.enfileirar_transacional(
             f'senha-redefinida:{aluno.id}',

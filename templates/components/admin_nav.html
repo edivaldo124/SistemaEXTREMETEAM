@@ -26,18 +26,20 @@
                 </a>
             {% endfor %}
         </div>
-        <form action="/logout" method="POST" class="logout-form"
-              data-confirm-modal
-              data-modal-eyebrow="Encerrar sessão"
-              data-modal-title="Sair do painel?"
-              data-modal-message="Você precisará entrar novamente para acessar a administração."
-              data-modal-confirm="Sim, sair">
-            {% include "components/csrf_field.html" %}
-            <button type="submit" class="link-logout">
-                <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 17l5-5-5-5M20 12H9M12 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6" /></svg>
-                <span>Sair</span>
-            </button>
-        </form>
     </nav>
+    {# Fora do <nav>: no celular "Sair" sobe para a linha da marca e a fila de
+       seções fica com a largura toda (antes "Financeiro" sumia atrás dele). #}
+    <form action="/logout" method="POST" class="logout-form"
+          data-confirm-modal
+          data-modal-eyebrow="Encerrar sessão"
+          data-modal-title="Sair do painel?"
+          data-modal-message="Você precisará entrar novamente para acessar a administração."
+          data-modal-confirm="Sim, sair">
+        {% include "components/csrf_field.html" %}
+        <button type="submit" class="link-logout">
+            <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 17l5-5-5-5M20 12H9M12 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6" /></svg>
+            <span>Sair</span>
+        </button>
+    </form>
 </header>
 <script src="{{ url_for('static', filename='js/admin_nav.js') }}" defer></script>

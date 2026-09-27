@@ -1,0 +1,31 @@
+{#- Página de erro (404, 403, 500 e sessão de segurança expirada). Registrada pelos
+    handlers de servidor.py. Cartão sozinho, como as telas de acesso: serve a visitante,
+    aluno, professor e admin sem depender do menu de nenhuma área.
+    Recebe `codigo`, `titulo`, `texto` e, opcionalmente, `acao_href`/`acao_texto`
+    (sem eles, o próximo passo é voltar à área de quem está logado, ou ao início). -#}
+{% extends "layouts/publico.html" %}
+{% from "components/ui.html" import estado_vazio with context %}
+{% set _areas = {'admin': ('/admin', 'Ir para o painel'), 'aluno': ('/perfil', 'Ir para minha área'), 'professor': ('/professor', 'Ir para minhas turmas')} %}
+{% set _area = _areas.get(session.get('tipo_usuario'), ('/', 'Voltar ao início')) %}
+{% block titulo %}{{ titulo }} | Extreme Team{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/erro.css') }}">
+{% endblock %}
+{% block atributos_body %} class="erro-page"{% endblock %}
+{% block cabecalho %}{% endblock %}
+{% block rodape %}{% endblock %}
+{% block conteudo %}
+    <main id="conteudo" class="erro-shell">
+        <section class="erro-cartao" aria-labelledby="erro-titulo">
+            <a class="erro-emblema" href="/" aria-label="Extreme Team, página inicial">
+                <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team" width="88" height="88">
+            </a>
+            <p class="erro-codigo" aria-hidden="true">{{ codigo }}</p>
+            <h1 id="erro-titulo" class="erro-titulo">{{ titulo }}</h1>
+            {{ estado_vazio(texto, '', acao_href or _area[0], acao_texto or _area[1]) }}
+            {% if acao_href and acao_href != _area[0] %}
+                <a class="erro-link-secundario" href="{{ _area[0] }}">{{ _area[1] }}</a>
+            {% endif %}
+        </section>
+    </main>
+{% endblock %}

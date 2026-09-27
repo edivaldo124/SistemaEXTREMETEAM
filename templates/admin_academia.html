@@ -1,167 +1,170 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Informações da academia | Extreme Team</title>
-        <link rel="icon" href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
-        {% include "components/deslize.html" %}
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_academia.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
-    </head>
-    <body class="admin-shell">
-        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-        {% set secao_ativa = 'academia' %}
-        {% include 'components/admin_nav.html' %}
-        <main id="conteudo" class="container-admin academia-editor">
-            <header class="admin-intro">
-                <div class="entra">
-                    <p class="eyebrow">Presença da academia</p>
-                    <h1>Contato e localização</h1>
-                    <p>Estas informações aparecem no site. Deixe em branco os canais que não deseja divulgar.</p>
-                </div>
-                <a href="{{ url_for('home') }}#contato" class="button-secondary">Ver no site</a>
-            </header>
-            {% for categoria, mensagem in get_flashed_messages(with_categories=true) %}
-                <div class="msg msg-{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
-            {% endfor %}
-            <form class="academia-form" method="POST" action="{{ url_for('academia.configuracoes') }}">
-                {% include 'components/csrf_field.html' %}
-                <fieldset class="academia-grupo">
-                    <legend>Canais oficiais</legend>
-                    <p class="academia-ajuda">Use os contatos de atendimento da academia.</p>
-                    <div class="academia-campos">
-                        <div class="field">
-                            <label for="instagram">Instagram</label>
-                            <input id="instagram" name="instagram" type="text" maxlength="200" value="{{ dados.instagram or '' if dados else '' }}" placeholder="@usuario" aria-describedby="instagram-ajuda">
-                            <small id="instagram-ajuda">Informe o @ ou o link do perfil.</small>
+{% extends "layouts/admin.html" %}
+{% set secao_ativa = 'academia' %}
+{% block titulo %}Informações da academia | Extreme Team{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_academia.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+{% endblock %}
+{% block conteudo %}
+    <main id="conteudo" class="container-admin academia-editor">
+        <header class="admin-intro">
+            <div>
+                <h1>Configurações da academia</h1>
+                <p>O contato exibido no site e as contas que recebem as mensalidades e enviam os avisos.</p>
+            </div>
+            <a href="{{ url_for('home') }}#contato" class="button-secondary">Ver no site</a>
+        </header>
+        {# Abas por grupo de configuração. data-tabs-lembrar (admin_nav.js) volta à
+           última aba aberta: conectar o Mercado Pago ou o Gmail sai do site e o
+           retorno cai nesta mesma página. #}
+        <div class="et-tabs academia-abas" data-tabs data-tabs-lembrar="academia">
+            <div class="et-tabs-lista" role="tablist" aria-label="Configurações da academia">
+                <button type="button" role="tab" id="aba-contato" aria-controls="painel-contato" aria-selected="true">Contato e localização</button>
+                <button type="button" role="tab" id="aba-mp" aria-controls="painel-mp" aria-selected="false" tabindex="-1">Mercado Pago</button>
+                <button type="button" role="tab" id="aba-gmail" aria-controls="painel-gmail" aria-selected="false" tabindex="-1">Gmail</button>
+            </div>
+            <div class="et-tabs-painel" role="tabpanel" id="painel-contato" aria-labelledby="aba-contato" tabindex="0">
+                <form class="academia-form" method="POST" action="{{ url_for('academia.configuracoes') }}" data-enviando>
+                    {% include 'components/csrf_field.html' %}
+                    <fieldset class="academia-grupo">
+                        <legend>Canais oficiais</legend>
+                        <p class="academia-ajuda">Use os contatos de atendimento da academia.</p>
+                        <div class="academia-campos">
+                            <div class="field">
+                                <label for="instagram">Instagram</label>
+                                <input id="instagram" name="instagram" type="text" maxlength="200" value="{{ dados.instagram or '' if dados else '' }}" placeholder="@usuario" aria-describedby="instagram-ajuda">
+                                <small id="instagram-ajuda">Informe o @ ou o link do perfil.</small>
+                            </div>
+                            <div class="field">
+                                <label for="whatsapp">WhatsApp de atendimento</label>
+                                <input id="whatsapp" name="whatsapp" type="tel" maxlength="30" value="{{ ('+' if dados is not mapping else '') ~ dados.whatsapp if dados and dados.whatsapp else '' }}" placeholder="(81) 99999-9999" aria-describedby="whatsapp-ajuda">
+                                <small id="whatsapp-ajuda">Inclua o DDD. Para outro país, use + e o código do país.</small>
+                            </div>
+                            <div class="field academia-linha">
+                                <label for="email">E-mail de contato</label>
+                                <input id="email" name="email" type="email" maxlength="150" value="{{ dados.email or '' if dados else '' }}" autocomplete="email">
+                            </div>
                         </div>
-                        <div class="field">
-                            <label for="whatsapp">WhatsApp de atendimento</label>
-                            <input id="whatsapp" name="whatsapp" type="tel" maxlength="30" value="{{ ('+' if dados is not mapping else '') ~ dados.whatsapp if dados and dados.whatsapp else '' }}" placeholder="(81) 99999-9999" aria-describedby="whatsapp-ajuda">
-                            <small id="whatsapp-ajuda">Inclua o DDD. Para outro país, use + e o código do país.</small>
+                    </fieldset>
+                    <fieldset class="academia-grupo">
+                        <legend>Onde e quando treinar</legend>
+                        <div class="academia-campos">
+                            <div class="field academia-linha">
+                                <label for="endereco">Endereço completo</label>
+                                <input id="endereco" name="endereco" type="text" maxlength="300" value="{{ dados.endereco or '' if dados else '' }}" aria-describedby="endereco-ajuda">
+                                <small id="endereco-ajuda">Rua, número, bairro, cidade, estado e CEP. O botão “Como chegar” abre este endereço no mapa.</small>
+                            </div>
+                            <div class="field academia-linha">
+                                <label for="complemento">Complemento ou ponto de referência</label>
+                                <input id="complemento" name="complemento" type="text" maxlength="150" value="{{ dados.complemento or '' if dados else '' }}">
+                            </div>
+                            <div class="field academia-linha">
+                                <label for="horarios">Horários de funcionamento</label>
+                                <textarea id="horarios" name="horarios" rows="4" maxlength="1000" aria-describedby="horarios-ajuda">{{ dados.horarios or '' if dados else '' }}</textarea>
+                                <small id="horarios-ajuda">Você pode usar uma linha para cada dia ou intervalo de dias.</small>
+                            </div>
                         </div>
-                        <div class="field academia-linha">
-                            <label for="email">E-mail de contato</label>
-                            <input id="email" name="email" type="email" maxlength="150" value="{{ dados.email or '' if dados else '' }}" autocomplete="email">
-                        </div>
+                    </fieldset>
+                    <div class="academia-acoes">
+                        <button type="submit" class="button-primary" data-texto-enviando="Salvando...">Salvar informações</button>
+                        <span>As alterações ficam visíveis no site após salvar. Deixe em branco os canais que não deseja divulgar.</span>
                     </div>
-                </fieldset>
-                <fieldset class="academia-grupo">
-                    <legend>Onde e quando treinar</legend>
-                    <div class="academia-campos">
-                        <div class="field academia-linha">
-                            <label for="endereco">Endereço completo</label>
-                            <input id="endereco" name="endereco" type="text" maxlength="300" value="{{ dados.endereco or '' if dados else '' }}" aria-describedby="endereco-ajuda">
-                            <small id="endereco-ajuda">Rua, número, bairro, cidade, estado e CEP. O botão “Como chegar” abre este endereço no mapa.</small>
-                        </div>
-                        <div class="field academia-linha">
-                            <label for="complemento">Complemento ou ponto de referência</label>
-                            <input id="complemento" name="complemento" type="text" maxlength="150" value="{{ dados.complemento or '' if dados else '' }}">
-                        </div>
-                        <div class="field academia-linha">
-                            <label for="horarios">Horários de funcionamento</label>
-                            <textarea id="horarios" name="horarios" rows="4" maxlength="1000" aria-describedby="horarios-ajuda">{{ dados.horarios or '' if dados else '' }}</textarea>
-                            <small id="horarios-ajuda">Você pode usar uma linha para cada dia ou intervalo de dias.</small>
-                        </div>
-                    </div>
-                </fieldset>
-                <div class="academia-acoes">
-                    <button type="submit" class="button-primary">Salvar informações</button>
-                    <span>As alterações ficam visíveis no site após salvar.</span>
-                </div>
-            </form>
-            <section class="mp-conexao" aria-labelledby="mp-titulo">
-                <div class="mp-cabecalho">
-                    <div>
-                        <p class="eyebrow">Recebimento de mensalidades</p>
-                        <h2 id="mp-titulo">Mercado Pago</h2>
-                    </div>
-                    {% if mp.conectada and mp.precisa_reconectar %}
-                        <span class="mp-selo mp-selo-atencao">Reconexão necessária</span>
-                    {% elif mp.conectada %}
-                        <span class="mp-selo mp-selo-ok">Conectada</span>
-                    {% elif mp.usa_credencial_do_servidor %}
-                        <span class="mp-selo mp-selo-info">Credencial do servidor</span>
-                    {% else %}
-                        <span class="mp-selo mp-selo-neutro">Não conectada</span>
-                    {% endif %}
-                </div>
-
-                {% if mp.conectada %}
-                    <dl class="mp-detalhes">
-                        <div><dt>Conta</dt><dd>{{ mp.mp_user_id }}</dd></div>
-                        <div><dt>Modo</dt><dd>{{ 'Produção' if mp.live_mode else 'Teste' }}</dd></div>
-                        <div><dt>Conectada em</dt><dd>{{ mp.conectado_em.strftime('%d/%m/%Y') }}</dd></div>
-                    </dl>
-                    {% if mp.precisa_reconectar %}
-                        <p class="mp-texto">A autorização desta conta expirou ou foi revogada. Enquanto ela não for renovada, o pagamento online das mensalidades fica indisponível. Reconecte para voltar a receber.</p>
-                    {% else %}
-                        <p class="mp-texto">As mensalidades pagas online caem direto nesta conta. A autorização é renovada automaticamente, sem você precisar fazer nada.</p>
-                    {% endif %}
-                {% elif mp.oauth_disponivel %}
-                    <p class="mp-texto">Conecte a conta do Mercado Pago que vai receber as mensalidades. Você será levado ao Mercado Pago para autorizar e volta para esta página. Não é preciso criar aplicativo nem copiar chave nenhuma.</p>
-                    {% if mp.usa_credencial_do_servidor %}
-                        <p class="mp-texto mp-nota">Enquanto você não conectar, o sistema usa a credencial configurada no servidor.</p>
-                    {% endif %}
-                {% elif mp.usa_credencial_do_servidor %}
-                    <p class="mp-texto">O sistema está usando a credencial do Mercado Pago configurada no servidor. A conexão pelo painel ainda não foi habilitada.</p>
-                {% else %}
-                    <p class="mp-texto">Nenhuma conta do Mercado Pago está configurada, então o pagamento online das mensalidades está indisponível. A conexão pelo painel ainda não foi habilitada neste servidor; avise quem administra a plataforma.</p>
-                {% endif %}
-
-                {% if mp.oauth_disponivel or mp.conectada %}
-                    <div class="mp-acoes">
-                        {% if mp.oauth_disponivel %}
-                            <a class="{{ 'button-secondary' if mp.conectada and not mp.precisa_reconectar else 'button-primary' }}"
-                               href="{{ url_for('mercado_pago_oauth.conectar') }}">
-                                {{ 'Conectar Mercado Pago' if not mp.conectada else 'Reconectar' }}
-                            </a>
+                </form>
+            </div>
+            <div class="et-tabs-painel" role="tabpanel" id="painel-mp" aria-labelledby="aba-mp" tabindex="0" hidden>
+                <section class="mp-conexao" aria-labelledby="mp-titulo">
+                    <div class="mp-cabecalho">
+                        <h2 id="mp-titulo">Recebimento de mensalidades</h2>
+                        {% if mp.conectada and mp.precisa_reconectar %}
+                            <span class="mp-selo mp-selo-atencao">Reconexão necessária</span>
+                        {% elif mp.conectada %}
+                            <span class="mp-selo mp-selo-ok">Conectada</span>
+                        {% elif mp.usa_credencial_do_servidor %}
+                            <span class="mp-selo mp-selo-info">Credencial do servidor</span>
+                        {% else %}
+                            <span class="mp-selo mp-selo-neutro">Não conectada</span>
                         {% endif %}
-                        {% if mp.conectada %}
-                            <form method="POST" action="{{ url_for('mercado_pago_oauth.desconectar') }}"
+                    </div>
+
+                    {% if mp.conectada %}
+                        <dl class="mp-detalhes">
+                            <div><dt>Conta</dt><dd>{{ mp.mp_user_id }}</dd></div>
+                            <div><dt>Modo</dt><dd>{{ 'Produção' if mp.live_mode else 'Teste' }}</dd></div>
+                            <div><dt>Conectada em</dt><dd>{{ mp.conectado_em.strftime('%d/%m/%Y') }}</dd></div>
+                        </dl>
+                        {% if mp.precisa_reconectar %}
+                            <p class="mp-texto">A autorização desta conta expirou ou foi revogada. Enquanto ela não for renovada, o pagamento online das mensalidades fica indisponível. Reconecte para voltar a receber.</p>
+                        {% else %}
+                            <p class="mp-texto">As mensalidades pagas online caem direto nesta conta. A autorização é renovada automaticamente, sem você precisar fazer nada.</p>
+                        {% endif %}
+                    {% elif mp.oauth_disponivel %}
+                        <p class="mp-texto">Conecte a conta do Mercado Pago que vai receber as mensalidades. Você será levado ao Mercado Pago para autorizar e volta para esta página. Não é preciso criar aplicativo nem copiar chave nenhuma.</p>
+                        {% if mp.usa_credencial_do_servidor %}
+                            <p class="mp-texto mp-nota">Enquanto você não conectar, o sistema usa a credencial configurada no servidor.</p>
+                        {% endif %}
+                    {% elif mp.usa_credencial_do_servidor %}
+                        <p class="mp-texto">O sistema está usando a credencial do Mercado Pago configurada no servidor. A conexão pelo painel ainda não foi habilitada.</p>
+                    {% else %}
+                        <p class="mp-texto">Nenhuma conta do Mercado Pago está configurada, então o pagamento online das mensalidades está indisponível. A conexão pelo painel ainda não foi habilitada neste servidor; avise quem administra a plataforma.</p>
+                    {% endif %}
+
+                    {% if mp.oauth_disponivel or mp.conectada %}
+                        <div class="mp-acoes">
+                            {% if mp.oauth_disponivel %}
+                                <a class="{{ 'button-secondary' if mp.conectada and not mp.precisa_reconectar else 'button-primary' }}"
+                                   href="{{ url_for('mercado_pago_oauth.conectar') }}">
+                                    {{ 'Conectar Mercado Pago' if not mp.conectada else 'Reconectar' }}
+                                </a>
+                            {% endif %}
+                            {% if mp.conectada %}
+                                <form method="POST" action="{{ url_for('mercado_pago_oauth.desconectar') }}"
+                                      data-confirm-modal
+                                      data-modal-eyebrow="Mercado Pago"
+                                      data-modal-title="Desconectar a conta?"
+                                      data-modal-message="O pagamento online das mensalidades deixa de funcionar até você conectar uma conta de novo. Cobranças já abertas não serão confirmadas automaticamente."
+                                      data-modal-confirm="Sim, desconectar">
+                                    {% include 'components/csrf_field.html' %}
+                                    <button type="submit" class="button-secondary">Desconectar</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </section>
+            </div>
+            <div class="et-tabs-painel" role="tabpanel" id="painel-gmail" aria-labelledby="aba-gmail" tabindex="0" hidden>
+                <section class="mp-conexao" aria-labelledby="gmail-titulo">
+                    <div class="mp-cabecalho">
+                        <h2 id="gmail-titulo">Envio de avisos por e-mail</h2>
+                        {% if gmail.conectada %}<span class="mp-selo mp-selo-ok">Conectado</span>
+                        {% else %}<span class="mp-selo mp-selo-neutro">Não conectado</span>{% endif %}
+                    </div>
+                    {% if gmail.conectada %}
+                        <p class="mp-texto">Os avisos são enviados pela conta <strong>{{ gmail.email }}</strong>.</p>
+                        <div class="mp-acoes">
+                            <a class="button-secondary" href="{{ url_for('gmail_oauth.conectar') }}">Trocar conta Gmail</a>
+                            <form method="POST" action="{{ url_for('gmail_oauth.desconectar') }}"
                                   data-confirm-modal
-                                  data-modal-eyebrow="Mercado Pago"
-                                  data-modal-title="Desconectar a conta?"
-                                  data-modal-message="O pagamento online das mensalidades deixa de funcionar até você conectar uma conta de novo. Cobranças já abertas não serão confirmadas automaticamente."
+                                  data-modal-eyebrow="Gmail"
+                                  data-modal-title="Desconectar o Gmail?"
+                                  data-modal-message="Os avisos e as cobranças por e-mail deixam de ser enviados até você conectar uma conta de novo."
                                   data-modal-confirm="Sim, desconectar">
                                 {% include 'components/csrf_field.html' %}
-                                <button type="submit" class="button-secondary">Desconectar</button>
+                                <button type="submit" class="button-secondary">Desconectar Gmail</button>
                             </form>
-                        {% endif %}
-                    </div>
-                {% endif %}
-            </section>
-            <section class="mp-conexao" aria-labelledby="gmail-titulo">
-                <div class="mp-cabecalho">
-                    <div>
-                        <p class="eyebrow">Envio de notificações</p>
-                        <h2 id="gmail-titulo">Gmail</h2>
-                    </div>
-                    {% if gmail.conectada %}<span class="mp-selo mp-selo-ok">Conectado</span>
-                    {% else %}<span class="mp-selo mp-selo-neutro">Não conectado</span>{% endif %}
-                </div>
-                {% if gmail.conectada %}
-                    <p class="mp-texto">Os avisos são enviados pela conta <strong>{{ gmail.email }}</strong>.</p>
-                    <div class="mp-acoes">
-                        <a class="button-secondary" href="{{ url_for('gmail_oauth.conectar') }}">Trocar conta Gmail</a>
-                        <form method="POST" action="{{ url_for('gmail_oauth.desconectar') }}">
-                            {% include 'components/csrf_field.html' %}
-                            <button type="submit" class="button-secondary">Desconectar Gmail</button>
-                        </form>
-                    </div>
-                {% elif gmail.oauth_disponivel %}
-                    <p class="mp-texto">Conecte o Gmail do administrador para enviar notificações. O Google pedirá autorização uma única vez.</p>
-                    <a class="button-primary" href="{{ url_for('gmail_oauth.conectar') }}">Conectar Gmail</a>
-                {% else %}
-                    <p class="mp-texto">Configure GMAIL_CLIENT_ID e GMAIL_CLIENT_SECRET no ambiente do servidor para habilitar a conexão.</p>
-                {% endif %}
-            </section>
-        </main>
-        {% include 'components/confirm_modal.html' %}
-        <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
-    </body>
-</html>
+                        </div>
+                    {% elif gmail.oauth_disponivel %}
+                        <p class="mp-texto">Conecte o Gmail do administrador para enviar notificações. O Google pedirá autorização uma única vez.</p>
+                        <a class="button-primary" href="{{ url_for('gmail_oauth.conectar') }}">Conectar Gmail</a>
+                    {% else %}
+                        <p class="mp-texto">Configure GMAIL_CLIENT_ID e GMAIL_CLIENT_SECRET no ambiente do servidor para habilitar a conexão.</p>
+                    {% endif %}
+                </section>
+            </div>
+        </div>
+    </main>
+{% endblock %}
+{% block fim_corpo %}
+    {% include 'components/confirm_modal.html' %}
+    <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+{% endblock %}

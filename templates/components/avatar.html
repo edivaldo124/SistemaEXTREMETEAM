@@ -1,0 +1,29 @@
+{#
+  Avatar de pessoa. Importe com:
+    {% from "components/avatar.html" import avatar %}
+
+  Sempre usado AO LADO do nome, por isso é decorativo: a foto leva alt="" e as
+  iniciais ficam fora da árvore de acessibilidade (o nome já foi lido).
+  Estilo em .et-avatar (componentes.css).
+#}
+
+{# `nome`: nome completo; `foto_url`: URL pronta da foto ('' mostra as iniciais);
+   `tamanho`: 'sm' (32 px) | 'md' (44 px) | 'lg' (72 px).
+   Iniciais = primeira letra do primeiro e do último nome ("Marina Souza Lima" -> "ML");
+   nome de uma palavra só usa as duas primeiras letras ("Marina" -> "MA"). #}
+{% macro avatar(nome, foto_url='', tamanho='md') -%}
+{%- set _tam = tamanho if tamanho in ('sm', 'md', 'lg') else 'md' -%}
+{%- set _partes = (nome or '').split() -%}
+{%- if _partes|length > 1 -%}
+    {%- set _iniciais = _partes[0][:1] ~ _partes[-1][:1] -%}
+{%- elif _partes -%}
+    {%- set _iniciais = _partes[0][:2] -%}
+{%- else -%}
+    {%- set _iniciais = '?' -%}
+{%- endif -%}
+<span class="et-avatar et-avatar--{{ _tam }}">
+    {%- if foto_url %}<img src="{{ foto_url }}" alt="" loading="lazy" decoding="async">
+    {%- else %}<span class="et-avatar-iniciais" aria-hidden="true">{{ _iniciais|upper }}</span>
+    {%- endif -%}
+</span>
+{%- endmacro %}

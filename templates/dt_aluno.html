@@ -1,656 +1,656 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="icon"
-              type="image/png"
-              href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
-        <title>{{ u.nome }} | Administração</title>
-        {% include "components/deslize.html" %}
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/theme.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/pgAdm.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/dt_aluno.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/pix.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/modal.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/extreme.css') }}">
-    </head>
-    <body class="admin-shell">
-        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-        {% set secao_ativa = 'painel' %}
-        {% include 'components/admin_nav.html' %}
-        <main id="conteudo">
-            <div class="container-detalhes">
-                <div class="detail-intro entra">
-                    <div>
-                        <p class="eyebrow">Cadastro do aluno</p>
-                        <h1>{{ u.nome }}</h1>
-                        <p>Atualize dados pessoais, plano e situação financeira.</p>
-                    </div>
-                    <span aria-hidden="true">
-                        {% if u.foto_arquivo %}
-                            <img class="avatar-img"
-                                 src="{{ url_for('auth.foto_perfil', aluno_id=u.id) }}"
-                                 alt="">
-                        {% else %}
-                            {{ u.iniciais }}
-                        {% endif %}
-                    </span>
+{% extends "layouts/admin.html" %}
+{% set secao_ativa = 'painel' %}
+{% block titulo %}{{ u.nome }} | Administração{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pix.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+{% endblock %}
+{% block conteudo %}
+    <main id="conteudo">
+        <div class="container-detalhes">
+            {% from "components/breadcrumb.html" import breadcrumb %}
+            {% from "components/avatar.html" import avatar %}
+            {% set foto_aluno = url_for('auth.foto_perfil', aluno_id=u.id) if u.foto_arquivo else '' %}
+            {{ breadcrumb([('Painel', url_for('admin_blueprint.painel_adm')), (u.nome, None)]) }}
+            <div class="detail-intro aluno-cabecalho">
+                {{ avatar(u.nome, foto_aluno, 'lg') }}
+                <div>
+                    <h1>{{ u.nome }}</h1>
+                    <p>Atualize dados pessoais, plano e situação financeira.</p>
                 </div>
-                {% with mensagens = get_flashed_messages(with_categories=true) %}
-                    {% for categoria, mensagem in mensagens %}
-                        <div class="msg msg-{{ categoria }}"
-                             role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
-                    {% endfor %}
-                {% endwith %}
-                <section class="detail-section">
-                    <div class="section-title">
-                        <h2>Foto do aluno</h2>
-                        <p>JPEG, PNG ou WebP, até 5 MB. A imagem é recortada em formato quadrado.</p>
-                    </div>
-                    <div class="foto-perfil-area">
-                        <span class="student-avatar student-avatar-grande">
-                            {% if u.foto_arquivo %}
-                                <img class="avatar-img"
-                                     src="{{ url_for('auth.foto_perfil', aluno_id=u.id) }}"
-                                     alt="">
-                            {% else %}
-                                {{ u.iniciais }}
-                            {% endif %}
-                        </span>
-                        <div class="foto-perfil-acoes">
-                            <form action="{{ url_for('admin_blueprint.enviar_foto_aluno', cpf=u.cpf) }}"
+            </div>
+            {# Abas sobre os blocos da ficha. A aba aberta é lembrada por aluno
+               (data-tabs-lembrar, admin_nav.js): salvar ou lançar uma mensalidade
+               recarrega a página e volta para ela. #}
+            <div class="et-tabs aluno-abas" data-tabs data-tabs-lembrar="aluno">
+                <div class="et-tabs-lista" role="tablist" aria-label="Ficha do aluno">
+                    <button type="button" role="tab" id="aba-dados" aria-controls="painel-dados" aria-selected="true">Dados</button>
+                    <button type="button" role="tab" id="aba-pagamentos" aria-controls="painel-pagamentos" aria-selected="false" tabindex="-1">Pagamentos</button>
+                    <button type="button" role="tab" id="aba-turmas" aria-controls="painel-turmas" aria-selected="false" tabindex="-1">Turmas</button>
+                </div>
+                <div class="et-tabs-painel" role="tabpanel" id="painel-dados" aria-labelledby="aba-dados" tabindex="0">
+            <section class="detail-section">
+                <div class="section-title">
+                    <h2>Foto do aluno</h2>
+                    <p>JPEG, PNG ou WebP, até 5 MB. A imagem é recortada em formato quadrado.</p>
+                </div>
+                <div class="foto-perfil-area">
+                    {{ avatar(u.nome, foto_aluno, 'lg') }}
+                    <div class="foto-perfil-acoes">
+                        <form action="{{ url_for('admin_blueprint.enviar_foto_aluno', cpf=u.cpf) }}"
+                              method="POST"
+                              enctype="multipart/form-data"
+                              class="form-foto">
+                {% include "components/csrf_field.html" %}
+                            <label class="sr-only" for="foto-aluno">Escolher arquivo de foto</label>
+                            <input id="foto-aluno"
+                                   type="file"
+                                   name="foto"
+                                   accept="image/jpeg,image/png,image/webp"
+                                   required>
+                            <button type="submit" class="button-secondary">{{ 'Substituir foto' if u.foto_arquivo else 'Enviar foto' }}</button>
+                        </form>
+                        {% if u.foto_arquivo %}
+                            <form action="{{ url_for('admin_blueprint.remover_foto_aluno', cpf=u.cpf) }}"
                                   method="POST"
-                                  enctype="multipart/form-data"
-                                  class="form-foto">
-                    {% include "components/csrf_field.html" %}
-                                <label class="sr-only" for="foto-aluno">Escolher arquivo de foto</label>
-                                <input id="foto-aluno"
-                                       type="file"
-                                       name="foto"
-                                       accept="image/jpeg,image/png,image/webp"
-                                       required>
-                                <button type="submit" class="button-secondary">{{ 'Substituir foto' if u.foto_arquivo else 'Enviar foto' }}</button>
+                                  data-confirm-modal
+                                  data-modal-variant="danger"
+                                  data-modal-eyebrow="Remover foto"
+                                  data-modal-title="Remover a foto de {{ u.nome }}?"
+                                  data-modal-message="O perfil voltará a mostrar as iniciais do aluno."
+                                  data-modal-confirm="Remover foto">
+                {% include "components/csrf_field.html" %}
+                                <button type="submit" class="button-secondary">Remover foto</button>
                             </form>
-                            {% if u.foto_arquivo %}
-                                <form action="{{ url_for('admin_blueprint.remover_foto_aluno', cpf=u.cpf) }}"
-                                      method="POST"
-                                      data-confirm-modal
-                                      data-modal-variant="danger"
-                                      data-modal-eyebrow="Remover foto"
-                                      data-modal-title="Remover a foto de {{ u.nome }}?"
-                                      data-modal-message="O perfil voltará a mostrar as iniciais do aluno."
-                                      data-modal-confirm="Remover foto">
-                    {% include "components/csrf_field.html" %}
-                                    <button type="submit" class="button-secondary">Remover foto</button>
-                                </form>
-                            {% endif %}
-                        </div>
+                        {% endif %}
                     </div>
-                </section>
-                <section class="detail-section">
-                    <div class="section-title">
-                        <h2>Dados do perfil</h2>
-                        <p>Informações cadastrais e vínculo com a academia.</p>
+                </div>
+            </section>
+            <section class="detail-section">
+                <div class="section-title">
+                    <h2>Dados do perfil</h2>
+                    <p>Informações cadastrais e vínculo com a academia.</p>
+                </div>
+                <form action="/admin/usuario/{{ u.cpf }}"
+                      method="POST"
+                      class="form-detalhes"
+                      data-enviando>
+                {% include "components/csrf_field.html" %}
+                    <div class="grupo-input">
+                        <label for="dt-nome">Nome completo</label>
+                        <input id="dt-nome" type="text" name="nome" value="{{ u.nome }}" required>
                     </div>
-                    <form action="/admin/usuario/{{ u.cpf }}"
-                          method="POST"
-                          class="form-detalhes">
-                    {% include "components/csrf_field.html" %}
-                        <div class="grupo-input">
-                            <label for="dt-nome">Nome completo</label>
-                            <input id="dt-nome" type="text" name="nome" value="{{ u.nome }}" required>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-login">
-                                Nome de usuário
-                                {% if not u.acesso_ativado %}<small>Opcional</small>{% endif %}
-                            </label>
-                            <input id="dt-login"
-                                   type="text"
-                                   name="login"
-                                   value="{{ u.login or '' }}"
-                                   maxlength="50"
-                                   {% if u.acesso_ativado %}required{% else %}aria-describedby="dt-login-ajuda"{% endif %}>
-                            {% if not u.acesso_ativado %}
-                                <small id="dt-login-ajuda">Quem não usa o sistema não precisa de usuário. O aluno escolhe o dele ao ativar o acesso.</small>
-                            {% endif %}
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-nascimento">Data de nascimento</label>
-                            <input id="dt-nascimento"
-                                   type="text"
-                                   name="datanascimento"
-                                   value="{{ u.datanascimento }}"
-                                   required>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-cpf">CPF</label>
-                            <input id="dt-cpf"
-                                   type="text"
-                                   name="cpf"
-                                   value="{{ u.cpf }}"
-                                   maxlength="14"
-                                   data-mask="cpf"
-                                   readonly
-                                   class="input-bloqueado"
-                                   aria-describedby="dt-cpf-ajuda">
-                            <small id="dt-cpf-ajuda">O CPF não pode ser alterado.</small>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-email">
-                                E-mail
-                                {% if not u.acesso_ativado %}<small>Opcional</small>{% endif %}
-                            </label>
-                            <input id="dt-email"
-                                   type="email"
-                                   name="email"
-                                   value="{{ u.email or '' }}"
-                                   maxlength="150"
-                                   {% if u.acesso_ativado %}required{% else %}aria-describedby="dt-email-ajuda"{% endif %}>
-                            {% if not u.acesso_ativado %}
-                                <small id="dt-email-ajuda">Usado para avisos de cobrança e para o convite de acesso.</small>
-                            {% endif %}
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-telefone">Telefone</label>
-                            <input id="dt-telefone"
-                                   type="tel"
-                                   name="telefone"
-                                   value="{{ u.telefone }}"
-                                   maxlength="15"
-                                   inputmode="tel"
-                                   placeholder="(00) 00000-0000"
-                                   data-mask="phone"
-                                   required>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-descricao">Observações de saúde (opcional)</label>
-                            <input id="dt-descricao"
-                                   type="text"
-                                   name="descricao"
-                                   value="{{ u.descricao or '' }}"
-                                   maxlength="255"
-                                   placeholder="Preencha somente se houver algo a informar">
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-graduacao">Graduação ou nível</label>
-                            <input id="dt-graduacao"
-                                   type="text"
-                                   name="graduacao"
-                                   value="{{ u.graduacao or '' }}"
-                                   maxlength="80"
-                                   placeholder="Ex.: Kruang branco">
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-mensalidade">Situação financeira</label>
-                            <input id="dt-mensalidade"
-                                   type="text"
-                                   value="{{ situacao.rotulo }}{% if situacao.valido_ate %} (válido até {{ situacao.valido_ate.strftime('%d/%m/%Y') }}){% endif %}"
-                                   readonly
-                                   class="input-bloqueado"
-                                   aria-describedby="dt-mensalidade-ajuda">
-                            <small id="dt-mensalidade-ajuda">
-                                Calculada a partir das mensalidades pagas. Para alterá-la, lance ou atualize uma mensalidade em "Controle de mensalidades".
-                            </small>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-plano">Plano contratado</label>
-                            <select id="dt-plano" name="plano_id" aria-describedby="dt-plano-ajuda">
-                                <option value="Nenhum">Sem Plano</option>
-                                {% for p in planos %}
-                                    <option value="{{ p.id }}" {% if u.plano_id == p.id %}selected{% endif %}>{{ p.nome_plano }}</option>
-                                {% endfor %}
-                            </select>
-                            <small id="dt-plano-ajuda">
-                                Plano de referência do cadastro. Quem define o plano em vigência é a última mensalidade paga.
-                            </small>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-salvar">Salvar alterações</button>
-                            <a href="/admin" class="btn-voltar">Voltar ao painel</a>
-                        </div>
-                    </form>
-                </section>
-                <section class="detail-section">
-                    <div class="section-title">
-                        <h2>Acesso ao sistema</h2>
-                        <p>Se o aluno entra na área do aluno. Não tem relação com a matrícula nem com as mensalidades.</p>
+                    <div class="grupo-input">
+                        <label for="dt-login">
+                            Nome de usuário
+                            {% if not u.acesso_ativado %}<small>Opcional</small>{% endif %}
+                        </label>
+                        <input id="dt-login"
+                               type="text"
+                               name="login"
+                               value="{{ u.login or '' }}"
+                               maxlength="50"
+                               {% if u.acesso_ativado %}required{% else %}aria-describedby="dt-login-ajuda"{% endif %}>
+                        {% if not u.acesso_ativado %}
+                            <small id="dt-login-ajuda">Quem não usa o sistema não precisa de usuário. O aluno escolhe o dele ao ativar o acesso.</small>
+                        {% endif %}
                     </div>
-                    <div class="situacao-plano-admin">
-                        <p>
-                            <span class="status status-acesso-{{ u.estado_acesso }}">{{ u.rotulo_acesso }}</span>
-                            {% if u.acesso_ativado %}
-                                <strong>{{ u.login }}</strong>
-                            {% elif u.convite_pendente and u.convite_enviado_em %}
-                                convite enviado em
-                                <time datetime="{{ u.convite_enviado_em.isoformat() }}">
-                                    {{ u.convite_enviado_em.strftime('%d/%m/%Y') }}
-                                </time>
-                            {% endif %}
-                        </p>
+                    <div class="grupo-input">
+                        <label for="dt-nascimento">Data de nascimento</label>
+                        <input id="dt-nascimento"
+                               type="text"
+                               name="datanascimento"
+                               value="{{ u.datanascimento }}"
+                               required>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-cpf">CPF</label>
+                        <input id="dt-cpf"
+                               type="text"
+                               name="cpf"
+                               value="{{ u.cpf }}"
+                               maxlength="14"
+                               data-mask="cpf"
+                               readonly
+                               class="input-bloqueado"
+                               aria-describedby="dt-cpf-ajuda">
+                        <small id="dt-cpf-ajuda">O CPF não pode ser alterado.</small>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-email">
+                            E-mail
+                            {% if not u.acesso_ativado %}<small>Opcional</small>{% endif %}
+                        </label>
+                        <input id="dt-email"
+                               type="email"
+                               name="email"
+                               value="{{ u.email or '' }}"
+                               maxlength="150"
+                               {% if u.acesso_ativado %}required{% else %}aria-describedby="dt-email-ajuda"{% endif %}>
+                        {% if not u.acesso_ativado %}
+                            <small id="dt-email-ajuda">Usado para avisos de cobrança e para o convite de acesso.</small>
+                        {% endif %}
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-telefone">Telefone</label>
+                        <input id="dt-telefone"
+                               type="tel"
+                               name="telefone"
+                               value="{{ u.telefone }}"
+                               maxlength="15"
+                               inputmode="tel"
+                               placeholder="(00) 00000-0000"
+                               data-mask="phone"
+                               required>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-descricao">Observações de saúde (opcional)</label>
+                        <input id="dt-descricao"
+                               type="text"
+                               name="descricao"
+                               value="{{ u.descricao or '' }}"
+                               maxlength="255"
+                               placeholder="Preencha somente se houver algo a informar">
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-graduacao">Graduação ou nível</label>
+                        <input id="dt-graduacao"
+                               type="text"
+                               name="graduacao"
+                               value="{{ u.graduacao or '' }}"
+                               maxlength="80"
+                               placeholder="Ex.: Kruang branco">
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-mensalidade">Situação financeira</label>
+                        <input id="dt-mensalidade"
+                               type="text"
+                               value="{{ situacao.rotulo }}{% if situacao.valido_ate %} (válido até {{ situacao.valido_ate.strftime('%d/%m/%Y') }}){% endif %}"
+                               readonly
+                               class="input-bloqueado"
+                               aria-describedby="dt-mensalidade-ajuda">
+                        <small id="dt-mensalidade-ajuda">
+                            Calculada a partir das mensalidades pagas. Para alterá-la, lance ou atualize uma mensalidade em "Controle de mensalidades".
+                        </small>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-plano">Plano contratado</label>
+                        <select id="dt-plano" name="plano_id" aria-describedby="dt-plano-ajuda">
+                            <option value="Nenhum">Sem Plano</option>
+                            {% for p in planos %}
+                                <option value="{{ p.id }}" {% if u.plano_id == p.id %}selected{% endif %}>{{ p.nome_plano }}</option>
+                            {% endfor %}
+                        </select>
+                        <small id="dt-plano-ajuda">
+                            Plano de referência do cadastro. Quem define o plano em vigência é a última mensalidade paga.
+                        </small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-salvar" data-texto-enviando="Salvando...">Salvar alterações</button>
+                        <a href="/admin" class="btn-voltar">Voltar ao painel</a>
+                    </div>
+                </form>
+            </section>
+            <section class="detail-section">
+                <div class="section-title">
+                    <h2>Acesso ao sistema</h2>
+                    <p>Se o aluno entra na área do aluno. Não tem relação com a matrícula nem com as mensalidades.</p>
+                </div>
+                <div class="situacao-plano-admin">
+                    <p>
+                        <span class="status status-acesso-{{ u.estado_acesso }}">{{ u.rotulo_acesso }}</span>
                         {% if u.acesso_ativado %}
-                            <p class="nota-admin">
-                                O aluno entra com este usuário e a senha dele. A senha não pode ser vista nem definida por aqui:
-                                para trocá-la, ele usa "Esqueci minha senha" na tela de login.
-                            </p>
-                        {% elif u.convite_pendente %}
-                            <p class="nota-admin">
-                                O convite vale por 7 dias e serve uma vez só. Enquanto o aluno não usar o link, ele continua sem
-                                acesso — e você segue lançando as mensalidades dele normalmente.
-                            </p>
-                        {% else %}
-                            <p class="nota-admin">
-                                Este aluno é gerenciado só pela administração. Isso é o normal para quem não usa o sistema: a
-                                matrícula, o plano e as mensalidades funcionam sem conta nenhuma.
-                            </p>
+                            <strong>{{ u.login }}</strong>
+                        {% elif u.convite_pendente and u.convite_enviado_em %}
+                            convite enviado em
+                            <time datetime="{{ u.convite_enviado_em.isoformat() }}">
+                                {{ u.convite_enviado_em.strftime('%d/%m/%Y') }}
+                            </time>
                         {% endif %}
-                    </div>
-                    {% if not u.acesso_ativado %}
-                        <form action="{{ url_for('admin_blueprint.enviar_convite_acesso', cpf=u.cpf) }}"
-                              method="POST"
-                              class="form-revisao">
-                    {% include "components/csrf_field.html" %}
-                            <label class="sr-only" for="convite-email">E-mail para enviar o convite</label>
-                            <input id="convite-email"
-                                   type="email"
-                                   name="email"
-                                   value="{{ u.email or '' }}"
-                                   maxlength="150"
-                                   placeholder="E-mail do aluno"
-                                   required>
-                            <button type="submit" class="btn btn-principal">
-                                {{ 'Reenviar convite' if u.convite_pendente else 'Enviar convite de acesso' }}
-                            </button>
-                        </form>
-                        {% if u.convite_pendente %}
-                            <form action="{{ url_for('admin_blueprint.revogar_convite_acesso', cpf=u.cpf) }}"
-                                  method="POST"
-                                  class="form-revisao"
-                                  data-confirm-modal
-                                  data-modal-variant="danger"
-                                  data-modal-eyebrow="Convite de acesso"
-                                  data-modal-title="Cancelar o convite de {{ u.nome }}?"
-                                  data-modal-message="O link enviado deixa de funcionar. O cadastro e as mensalidades não mudam."
-                                  data-modal-confirm="Cancelar convite">
-                    {% include "components/csrf_field.html" %}
-                                <button type="submit" class="btn btn-remover">Cancelar convite</button>
-                            </form>
-                        {% endif %}
-                    {% endif %}
-                </section>
-                <section class="detail-section">
-                    <div class="section-title">
-                        <h2>Turmas</h2>
-                        <p>Turmas em que este aluno está matriculado.</p>
-                    </div>
-                    <div class="table-container table-stack">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th scope="col">Turma</th>
-                                    <th scope="col">Dias</th>
-                                    <th scope="col">Horário</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for m in u.matriculas %}
-                                    <tr>
-                                        <td data-label="Turma">{{ m.turma.nome }}</td>
-                                        <td data-label="Dias">{{ m.turma.dias_semana|replace(',', ', ') }}</td>
-                                        <td data-label="Horário">{{ m.turma.horario }}</td>
-                                    </tr>
-                                {% else %}
-                                    <tr>
-                                        <td colspan="3" class="empty-state">Este aluno não está matriculado em nenhuma turma.</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-                <section class="detail-section">
-                    <div class="section-title">
-                        <h2>Situação do plano</h2>
-                        <p>Período pago em curso e mudanças agendadas para a próxima renovação.</p>
-                    </div>
-                    <div class="situacao-plano-admin">
-                        <p>
-                            <span class="status status-plano-{{ situacao.estado }}">{{ situacao.rotulo }}</span>
-                            {% if situacao.plano %}
-                                <strong>{{ situacao.plano.nome_plano }}</strong>
-                            {% else %}
-                                <strong>Sem plano</strong>
-                            {% endif %}
-                            {% if situacao.valido_ate %}
-                                · válido até
-                                <time datetime="{{ situacao.valido_ate.isoformat() }}">
-                                    {{ situacao.valido_ate.strftime('%d/%m/%Y') }}
-                                </time>
-                                ({{ situacao.dias_restantes }} dia{{ '' if situacao.dias_restantes == 1 else 's' }})
-                            {% endif %}
+                    </p>
+                    {% if u.acesso_ativado %}
+                        <p class="nota-admin">
+                            O aluno entra com este usuário e a senha dele. A senha não pode ser vista nem definida por aqui:
+                            para trocá-la, ele usa "Esqueci minha senha" na tela de login.
                         </p>
-                        {% if situacao.renovacao_antecipada %}
-                            <p class="nota-admin">
-                                A cobrança em aberto é de
-                                <strong>renovação antecipada</strong>
-                                e cobre o próximo período, não o atual.
-                            </p>
-                        {% endif %}
-                        {% if situacao.aguardando_decisao %}
-                            <p class="nota-admin">
-                                Há um pagamento aguardando decisão. O aluno não recebe cobrança nem consegue abrir outra mensalidade enquanto isso.
-                            </p>
-                        {% endif %}
-                    </div>
-                    {% set pendente = solicitacoes | selectattr('esta_pendente') | first %}
-                    {% if pendente %}
-                        <div class="mudanca-plano-admin">
-                            <p>
-                                <strong>Mudança de plano agendada:</strong>
-                                de {{ pendente.plano_origem.nome_plano if pendente.plano_origem else 'sem plano' }} para {{ pendente.plano_destino.nome_plano }}
-                                ({{ pendente.valor_destino|moeda }}),
-                                a partir de
-                                {% if pendente.vigencia_a_partir_de %}
-                                    <time datetime="{{ pendente.vigencia_a_partir_de.isoformat() }}">
-                                        {{ pendente.vigencia_a_partir_de.strftime('%d/%m/%Y') }}
-                                    </time>
-                                {% else %}
-                                    da próxima renovação{% endif %}.
-                                Pedida por {{ pendente.criado_por or '—' }} em {{ pendente.criado_em.strftime('%d/%m/%Y') }}.
-                            </p>
-                            <p class="nota-admin">
-                                Nenhuma cobrança foi gerada por este pedido. A próxima mensalidade nasce já no plano de destino.
-                            </p>
-                            <form action="{{ url_for('admin_blueprint.cancelar_mudanca_plano_admin', aluno_id=u.id, solicitacao_id=pendente.id) }}"
-                                  method="POST"
-                                  class="form-revisao"
-                                  data-confirm-modal
-                                  data-modal-variant="danger"
-                                  data-modal-eyebrow="Mudança de plano"
-                                  data-modal-title="Cancelar a mudança agendada?"
-                                  data-modal-message="A próxima renovação do aluno voltará a ser no plano atual."
-                                  data-modal-confirm="Cancelar mudança">
-                    {% include "components/csrf_field.html" %}
-                                <input type="text"
-                                       name="observacao"
-                                       maxlength="255"
-                                       aria-label="Motivo do cancelamento"
-                                       placeholder="Motivo (opcional)">
-                                <button type="submit" class="btn btn-remover">Cancelar mudança</button>
-                            </form>
-                        </div>
+                    {% elif u.convite_pendente %}
+                        <p class="nota-admin">
+                            O convite vale por 7 dias e serve uma vez só. Enquanto o aluno não usar o link, ele continua sem
+                            acesso — e você segue lançando as mensalidades dele normalmente.
+                        </p>
+                    {% else %}
+                        <p class="nota-admin">
+                            Este aluno é gerenciado só pela administração. Isso é o normal para quem não usa o sistema: a
+                            matrícula, o plano e as mensalidades funcionam sem conta nenhuma.
+                        </p>
                     {% endif %}
-                    {% set historico = solicitacoes | rejectattr('esta_pendente') | list %}
-                    {% if historico %}
-                        <div class="table-container table-stack">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th scope="col">De</th>
-                                        <th scope="col">Para</th>
-                                        <th scope="col">Novo valor</th>
-                                        <th scope="col">A partir de</th>
-                                        <th scope="col">Situação</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for s in historico %}
-                                        <tr>
-                                            <td data-label="De">{{ s.plano_origem.nome_plano if s.plano_origem else '—' }}</td>
-                                            <td data-label="Para">{{ s.plano_destino.nome_plano }}</td>
-                                            <td data-label="Novo valor" class="celula-numero">{{ s.valor_destino|moeda }}</td>
-                                            <td data-label="A partir de" class="celula-numero">{{ s.vigencia_a_partir_de.strftime('%d/%m/%Y') if s.vigencia_a_partir_de else '—' }}</td>
-                                            <td data-label="Situação">
-                                                <span class="status {{ 'status-pago' if s.status == 'efetivada' else 'status-cancelado' }}">
-                                                    {{ 'Efetivada' if s.status == 'efetivada' else 'Cancelada' }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% endif %}
-                </section>
-                <section class="secao-pagamentos">
-                    <div class="section-title">
-                        <h2>Controle de mensalidades</h2>
-                        <p>Lance cobranças e atualize pagamentos do aluno.</p>
-                    </div>
-                    {% if not situacao.ativo and not situacao.aguardando_decisao %}
-                        <form action="/admin/usuario/{{ u.cpf }}/cobrar"
+                </div>
+                {% if not u.acesso_ativado %}
+                    <form action="{{ url_for('admin_blueprint.enviar_convite_acesso', cpf=u.cpf) }}"
+                          method="POST"
+                          class="form-revisao">
+                {% include "components/csrf_field.html" %}
+                        <label class="sr-only" for="convite-email">E-mail para enviar o convite</label>
+                        <input id="convite-email"
+                               type="email"
+                               name="email"
+                               value="{{ u.email or '' }}"
+                               maxlength="150"
+                               placeholder="E-mail do aluno"
+                               required>
+                        <button type="submit" class="btn btn-principal">
+                            {{ 'Reenviar convite' if u.convite_pendente else 'Enviar convite de acesso' }}
+                        </button>
+                    </form>
+                    {% if u.convite_pendente %}
+                        <form action="{{ url_for('admin_blueprint.revogar_convite_acesso', cpf=u.cpf) }}"
                               method="POST"
-                              class="form-inline">
-                    {% include "components/csrf_field.html" %}
-                            <button type="submit" class="btn btn-status">Enviar cobrança por e-mail</button>
+                              class="form-revisao"
+                              data-confirm-modal
+                              data-modal-variant="danger"
+                              data-modal-eyebrow="Convite de acesso"
+                              data-modal-title="Cancelar o convite de {{ u.nome }}?"
+                              data-modal-message="O link enviado deixa de funcionar. O cadastro e as mensalidades não mudam."
+                              data-modal-confirm="Cancelar convite">
+                {% include "components/csrf_field.html" %}
+                            <button type="submit" class="btn btn-remover">Cancelar convite</button>
                         </form>
                     {% endif %}
-                    <form action="/admin/usuario/{{ u.cpf }}/pagamentos"
-                          method="POST"
-                          class="form-pagamento">
-                    {% include "components/csrf_field.html" %}
-                        <div class="grupo-input">
-                            <label for="plano-pagamento">Plano</label>
-                            <select name="plano_id" id="plano-pagamento" required>
-                                <option value="">Selecione</option>
-                                {% for p in planos %}
-                                    <option value="{{ p.id }}"
-                                            data-valor="{{ p.preco_plano }}"
-                                            {% if u.plano_id == p.id %}selected{% endif %}>{{ p.nome_plano }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="valor-pagamento">Valor</label>
-                            <input type="number"
-                                   name="valor"
-                                   id="valor-pagamento"
-                                   min="0.01"
-                                   step="0.01"
-                                   required>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-vencimento">Vencimento</label>
-                            <input id="dt-vencimento" type="date" name="vencimento" required>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-competencia">Competência</label>
-                            <input id="dt-competencia"
-                                   type="month"
-                                   name="competencia"
-                                   placeholder="AAAA-MM">
-                        </div>
-                        <div class="grupo-input">
-                            <label for="status-pagamento">Situação</label>
-                            <select name="status" id="status-pagamento">
-                                <option value="pendente">Pendente</option>
-                                <option value="pago">Pago</option>
-                                <option value="atrasado">Atrasado</option>
-                                <option value="cancelado">Cancelado</option>
-                            </select>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-data-pagamento">Data do pagamento</label>
-                            <input id="dt-data-pagamento" type="date" name="data_pagamento">
-                        </div>
-                        <div class="grupo-input">
-                            <label for="dt-forma-pagamento">Forma de pagamento</label>
-                            <select id="dt-forma-pagamento" name="forma_pagamento">
-                                <option value="">Não informada</option>
-                                <option value="pix">Pix</option>
-                                <option value="dinheiro">Dinheiro</option>
-                                <option value="cartao_credito">Cartão de crédito</option>
-                                <option value="cartao_debito">Cartão de débito</option>
-                                <option value="boleto">Boleto</option>
-                            </select>
-                        </div>
-                        <div class="grupo-input campo-largo">
-                            <label for="dt-observacao">Observação <small>Opcional</small></label>
-                            <input id="dt-observacao"
-                                   type="text"
+                {% endif %}
+            </section>
+                </div>
+                <div class="et-tabs-painel" role="tabpanel" id="painel-pagamentos" aria-labelledby="aba-pagamentos" tabindex="0" hidden>
+            <section class="detail-section">
+                <div class="section-title">
+                    <h2>Situação do plano</h2>
+                    <p>Período pago em curso e mudanças agendadas para a próxima renovação.</p>
+                </div>
+                <div class="situacao-plano-admin">
+                    <p>
+                        <span class="status status-plano-{{ situacao.estado }}">{{ situacao.rotulo }}</span>
+                        {% if situacao.plano %}
+                            <strong>{{ situacao.plano.nome_plano }}</strong>
+                        {% else %}
+                            <strong>Sem plano</strong>
+                        {% endif %}
+                        {% if situacao.valido_ate %}
+                            · válido até
+                            <time datetime="{{ situacao.valido_ate.isoformat() }}">
+                                {{ situacao.valido_ate.strftime('%d/%m/%Y') }}
+                            </time>
+                            ({{ situacao.dias_restantes }} dia{{ '' if situacao.dias_restantes == 1 else 's' }})
+                        {% endif %}
+                    </p>
+                    {% if situacao.renovacao_antecipada %}
+                        <p class="nota-admin">
+                            A cobrança em aberto é de
+                            <strong>renovação antecipada</strong>
+                            e cobre o próximo período, não o atual.
+                        </p>
+                    {% endif %}
+                    {% if situacao.aguardando_decisao %}
+                        <p class="nota-admin">
+                            Há um pagamento aguardando decisão. O aluno não recebe cobrança nem consegue abrir outra mensalidade enquanto isso.
+                        </p>
+                    {% endif %}
+                </div>
+                {% set pendente = solicitacoes | selectattr('esta_pendente') | first %}
+                {% if pendente %}
+                    <div class="mudanca-plano-admin">
+                        <p>
+                            <strong>Mudança de plano agendada:</strong>
+                            de {{ pendente.plano_origem.nome_plano if pendente.plano_origem else 'sem plano' }} para {{ pendente.plano_destino.nome_plano }}
+                            ({{ pendente.valor_destino|moeda }}),
+                            a partir de
+                            {% if pendente.vigencia_a_partir_de %}
+                                <time datetime="{{ pendente.vigencia_a_partir_de.isoformat() }}">
+                                    {{ pendente.vigencia_a_partir_de.strftime('%d/%m/%Y') }}
+                                </time>
+                            {% else %}
+                                da próxima renovação{% endif %}.
+                            Pedida por {{ pendente.criado_por or '—' }} em {{ pendente.criado_em.strftime('%d/%m/%Y') }}.
+                        </p>
+                        <p class="nota-admin">
+                            Nenhuma cobrança foi gerada por este pedido. A próxima mensalidade nasce já no plano de destino.
+                        </p>
+                        <form action="{{ url_for('admin_blueprint.cancelar_mudanca_plano_admin', aluno_id=u.id, solicitacao_id=pendente.id) }}"
+                              method="POST"
+                              class="form-revisao"
+                              data-confirm-modal
+                              data-modal-variant="danger"
+                              data-modal-eyebrow="Mudança de plano"
+                              data-modal-title="Cancelar a mudança agendada?"
+                              data-modal-message="A próxima renovação do aluno voltará a ser no plano atual."
+                              data-modal-confirm="Cancelar mudança">
+                {% include "components/csrf_field.html" %}
+                            <input type="text"
                                    name="observacao"
                                    maxlength="255"
-                                   placeholder="Ex.: recebido em espécie na recepção">
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-salvar">Lançar mensalidade</button>
-                        </div>
-                    </form>
-                    <div class="tabela-pagamentos tabela-mensalidades-aluno table-stack">
+                                   aria-label="Motivo do cancelamento"
+                                   placeholder="Motivo (opcional)">
+                            <button type="submit" class="btn btn-remover">Cancelar mudança</button>
+                        </form>
+                    </div>
+                {% endif %}
+                {% set historico = solicitacoes | rejectattr('esta_pendente') | list %}
+                {% if historico %}
+                    <div class="et-tabela tabela-admin">
+                        <div class="et-tabela-rolagem table-stack" role="region" aria-label="Mudanças de plano">
                         <table>
                             <thead>
                                 <tr>
-                                    <th scope="col">Plano</th>
-                                    <th scope="col">Competência</th>
-                                    <th scope="col">Valor</th>
-                                    <th scope="col">Vencimento</th>
-                                    <th scope="col">Pagamento</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">Forma</th>
-                                    <th scope="col">Origem</th>
-                                    <th scope="col">Ação</th>
+                                    <th scope="col">De</th>
+                                    <th scope="col">Para</th>
+                                    <th scope="col">Novo valor</th>
+                                    <th scope="col">A partir de</th>
+                                    <th scope="col">Situação</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for pagamento in pagamentos %}
+                                {% for s in historico %}
                                     <tr>
-                                        <td data-label="Plano">{{ pagamento.plano.nome_plano }}</td>
-                                        <td data-label="Competência" class="celula-numero">{{ formatar_competencia(pagamento.competencia) }}</td>
-                                        <td data-label="Valor" class="celula-numero">{{ pagamento.valor|moeda }}</td>
-                                        <td data-label="Vencimento" class="celula-numero">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
-                                        <td data-label="Pagamento" class="celula-numero">
-                                            {{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}
+                                        <td data-label="De">{{ s.plano_origem.nome_plano if s.plano_origem else '—' }}</td>
+                                        <td data-label="Para">{{ s.plano_destino.nome_plano }}</td>
+                                        <td data-label="Novo valor" class="celula-numero">{{ s.valor_destino|moeda }}</td>
+                                        <td data-label="A partir de" class="celula-numero">{{ s.vigencia_a_partir_de.strftime('%d/%m/%Y') if s.vigencia_a_partir_de else '—' }}</td>
+                                        <td data-label="Situação">
+                                            <span class="status {{ 'status-pago' if s.status == 'efetivada' else 'status-cancelado' }}">
+                                                {{ 'Efetivada' if s.status == 'efetivada' else 'Cancelada' }}
+                                            </span>
                                         </td>
-                                        <td data-label="Status">
-                                            <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
-                                        </td>
-                                        <td data-label="Forma">{{ pagamento.forma_pagamento|forma_pagamento }}</td>
-                                        <td data-label="Origem">
-                                            {% if pagamento.provider == 'mercado_pago' %}
-                                                <span title="ID Mercado Pago: {{ pagamento.provider_payment_id }}">Pix</span>
-                                            {% else %}
-                                                Manual
-                                            {% endif %}
-                                        </td>
-                                        <td data-label="Ação" class="acao-cell">
-                                            {% if pagamento.status in ('pendente', 'atrasado') %}
-                                                <button type="button"
-                                                        class="btn btn-status btn-pagar-pix"
-                                                        data-pix-pagar
-                                                        data-pagamento-id="{{ pagamento.id }}">Pagar com Pix</button>
-                                            {% endif %}
-                                            {% if pagamento.provider_payment_id %}
-                                                <form action="{{ url_for('pix.sincronizar_pagamento', pagamento_id=pagamento.id) }}"
-                                                      method="POST"
-                                                      class="form-inline">
-                    {% include "components/csrf_field.html" %}
-                                                    <button type="submit" class="btn btn-status">Sincronizar</button>
-                                                </form>
-                                            {% endif %}
-                                            <form action="/admin/pagamentos/{{ pagamento.id }}/status"
-                                                  method="POST"
-                                                  class="form-status">
-                    {% include "components/csrf_field.html" %}
-                                                <select name="status"
-                                                        aria-label="Situação da mensalidade de {{ formatar_competencia(pagamento.competencia) }}">
-                                                    {% for status in ['pendente', 'pago', 'atrasado', 'em_processamento', 'em_analise', 'recusado', 'cancelado', 'reembolsado'] %}
-                                                        <option value="{{ status }}"
-                                                                {% if pagamento.status == status %}selected{% endif %}>
-                                                            {{ rotulo_status(status) }}
-                                                        </option>
-                                                    {% endfor %}
-                                                </select>
-                                                <select name="forma_pagamento"
-                                                        aria-label="Forma de pagamento da mensalidade de {{ formatar_competencia(pagamento.competencia) }}">
-                                                    <option value="">Forma</option>
-                                                    {% for forma, rotulo in [('pix', 'Pix'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Crédito'), ('cartao_debito', 'Débito'), ('boleto', 'Boleto')] %}
-                                                        <option value="{{ forma }}"
-                                                                {% if pagamento.forma_pagamento == forma %}selected{% endif %}>
-                                                            {{ rotulo }}
-                                                        </option>
-                                                    {% endfor %}
-                                                </select>
-                                                <button type="submit">Atualizar</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    {% if pagamento.status == 'em_analise' %}
-                                        <tr class="linha-comprovante-manual">
-                                            <td colspan="9">
-                                                <div class="revisao-comprovante">
-                                                    <p>
-                                                        <strong>Comprovante manual enviado</strong>
-                                                        em {{ pagamento.comprovante_manual_enviado_em.strftime('%d/%m/%Y %H:%M') if pagamento.comprovante_manual_enviado_em else '—' }}.
-                                                        <a href="{{ url_for('auth.ver_comprovante_manual', pagamento_id=pagamento.id) }}"
-                                                           target="_blank"
-                                                           rel="noopener">Ver arquivo enviado</a>
-                                                    </p>
-                                                    <form action="{{ url_for('admin_blueprint.aprovar_comprovante_manual', pagamento_id=pagamento.id) }}"
-                                                          method="POST"
-                                                          class="form-revisao">
-                    {% include "components/csrf_field.html" %}
-                                                        <input type="date"
-                                                               name="data_pagamento"
-                                                               aria-label="Data do pagamento">
-                                                        <select name="forma_pagamento" aria-label="Forma de pagamento">
-                                                            <option value="transferencia">Transferência</option>
-                                                            <option value="dinheiro">Dinheiro</option>
-                                                        </select>
-                                                        <input type="text"
-                                                               name="observacao"
-                                                               maxlength="255"
-                                                               aria-label="Observação sobre a aprovação"
-                                                               placeholder="Observação (opcional)">
-                                                        <button type="submit" class="btn btn-principal">Aprovar</button>
-                                                    </form>
-                                                    <form action="{{ url_for('admin_blueprint.rejeitar_comprovante_manual', pagamento_id=pagamento.id) }}"
-                                                          method="POST"
-                                                          class="form-revisao">
-                    {% include "components/csrf_field.html" %}
-                                                        <input type="text"
-                                                               name="observacao"
-                                                               maxlength="255"
-                                                               aria-label="Motivo da rejeição"
-                                                               placeholder="Motivo da rejeição">
-                                                        <button type="submit" class="btn btn-remover">Rejeitar</button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endif %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="9" class="empty-state">Nenhuma mensalidade lançada para este aluno.</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
+                        </div>
                     </div>
-                </section>
+                {% endif %}
+            </section>
+            <section class="secao-pagamentos">
+                <div class="section-title">
+                    <h2>Controle de mensalidades</h2>
+                    <p>Lance cobranças e atualize pagamentos do aluno.</p>
+                </div>
+                {% if not situacao.ativo and not situacao.aguardando_decisao %}
+                    <form action="/admin/usuario/{{ u.cpf }}/cobrar"
+                          method="POST"
+                          class="form-inline">
+                {% include "components/csrf_field.html" %}
+                        <button type="submit" class="btn btn-status">Enviar cobrança por e-mail</button>
+                    </form>
+                {% endif %}
+                <form action="/admin/usuario/{{ u.cpf }}/pagamentos"
+                      method="POST"
+                      class="form-pagamento"
+                      data-enviando>
+                {% include "components/csrf_field.html" %}
+                    <div class="grupo-input">
+                        <label for="plano-pagamento">Plano</label>
+                        <select name="plano_id" id="plano-pagamento" required>
+                            <option value="">Selecione</option>
+                            {% for p in planos %}
+                                <option value="{{ p.id }}"
+                                        data-valor="{{ p.preco_plano }}"
+                                        {% if u.plano_id == p.id %}selected{% endif %}>{{ p.nome_plano }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="valor-pagamento">Valor</label>
+                        <input type="number"
+                               name="valor"
+                               id="valor-pagamento"
+                               min="0.01"
+                               step="0.01"
+                               required>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-vencimento">Vencimento</label>
+                        <input id="dt-vencimento" type="date" name="vencimento" required>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-competencia">Competência</label>
+                        <input id="dt-competencia"
+                               type="month"
+                               name="competencia"
+                               placeholder="AAAA-MM">
+                    </div>
+                    <div class="grupo-input">
+                        <label for="status-pagamento">Situação</label>
+                        <select name="status" id="status-pagamento">
+                            <option value="pendente">Pendente</option>
+                            <option value="pago">Pago</option>
+                            <option value="atrasado">Atrasado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-data-pagamento">Data do pagamento</label>
+                        <input id="dt-data-pagamento" type="date" name="data_pagamento">
+                    </div>
+                    <div class="grupo-input">
+                        <label for="dt-forma-pagamento">Forma de pagamento</label>
+                        <select id="dt-forma-pagamento" name="forma_pagamento">
+                            <option value="">Não informada</option>
+                            <option value="pix">Pix</option>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="cartao_credito">Cartão de crédito</option>
+                            <option value="cartao_debito">Cartão de débito</option>
+                            <option value="boleto">Boleto</option>
+                        </select>
+                    </div>
+                    <div class="grupo-input campo-largo">
+                        <label for="dt-observacao">Observação <small>Opcional</small></label>
+                        <input id="dt-observacao"
+                               type="text"
+                               name="observacao"
+                               maxlength="255"
+                               placeholder="Ex.: recebido em espécie na recepção">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-salvar" data-texto-enviando="Lançando...">Lançar mensalidade</button>
+                    </div>
+                </form>
+                <div class="et-tabela tabela-admin tabela-mensalidades-aluno">
+                    <div class="et-tabela-rolagem table-stack" role="region" aria-label="Mensalidades do aluno">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Plano</th>
+                                <th scope="col">Competência</th>
+                                <th scope="col">Valor</th>
+                                <th scope="col">Vencimento</th>
+                                <th scope="col">Pagamento</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Forma</th>
+                                <th scope="col">Origem</th>
+                                <th scope="col">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pagamento in pagamentos %}
+                                <tr>
+                                    <td data-label="Plano">{{ pagamento.plano.nome_plano }}</td>
+                                    <td data-label="Competência" class="celula-numero">{{ formatar_competencia(pagamento.competencia) }}</td>
+                                    <td data-label="Valor" class="celula-numero">{{ pagamento.valor|moeda }}</td>
+                                    <td data-label="Vencimento" class="celula-numero">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
+                                    <td data-label="Pagamento" class="celula-numero">
+                                        {{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}
+                                    </td>
+                                    <td data-label="Status">
+                                        <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
+                                    </td>
+                                    <td data-label="Forma">{{ pagamento.forma_pagamento|forma_pagamento }}</td>
+                                    <td data-label="Origem">
+                                        {% if pagamento.provider == 'mercado_pago' %}
+                                            <span title="ID Mercado Pago: {{ pagamento.provider_payment_id }}">Pix</span>
+                                        {% else %}
+                                            Manual
+                                        {% endif %}
+                                    </td>
+                                    <td data-label="Ação" class="acao-cell">
+                                        {% set pode_pix = pagamento.status in ('pendente', 'atrasado') %}
+                                        {% if pode_pix or pagamento.provider_payment_id %}
+                                            <div class="et-menu" data-menu>
+                                                <button type="button" class="et-menu-botao" aria-haspopup="menu" aria-expanded="false"
+                                                        aria-controls="menu-pagamento-{{ pagamento.id }}"
+                                                        aria-label="Mais ações da mensalidade de {{ formatar_competencia(pagamento.competencia) }}">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
+                                                </button>
+                                                <div class="et-menu-lista" role="menu" id="menu-pagamento-{{ pagamento.id }}" hidden>
+                                                    {% if pode_pix %}
+                                                        <button type="button"
+                                                                role="menuitem"
+                                                                data-pix-pagar
+                                                                data-pagamento-id="{{ pagamento.id }}">Pagar com Pix</button>
+                                                    {% endif %}
+                                                    {% if pagamento.provider_payment_id %}
+                                                        <form action="{{ url_for('pix.sincronizar_pagamento', pagamento_id=pagamento.id) }}"
+                                                              method="POST"
+                                                              role="none">
+                                                            {% include "components/csrf_field.html" %}
+                                                            <button type="submit" role="menuitem">Sincronizar com o Mercado Pago</button>
+                                                        </form>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        <form action="/admin/pagamentos/{{ pagamento.id }}/status"
+                                              method="POST"
+                                              class="form-status">
+                {% include "components/csrf_field.html" %}
+                                            <select name="status"
+                                                    aria-label="Situação da mensalidade de {{ formatar_competencia(pagamento.competencia) }}">
+                                                {% for status in ['pendente', 'pago', 'atrasado', 'em_processamento', 'em_analise', 'recusado', 'cancelado', 'reembolsado'] %}
+                                                    <option value="{{ status }}"
+                                                            {% if pagamento.status == status %}selected{% endif %}>
+                                                        {{ rotulo_status(status) }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            <select name="forma_pagamento"
+                                                    aria-label="Forma de pagamento da mensalidade de {{ formatar_competencia(pagamento.competencia) }}">
+                                                <option value="">Forma</option>
+                                                {% for forma, rotulo in [('pix', 'Pix'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Crédito'), ('cartao_debito', 'Débito'), ('boleto', 'Boleto')] %}
+                                                    <option value="{{ forma }}"
+                                                            {% if pagamento.forma_pagamento == forma %}selected{% endif %}>
+                                                        {{ rotulo }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit">Atualizar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% if pagamento.status == 'em_analise' %}
+                                    <tr class="linha-comprovante-manual">
+                                        <td colspan="9">
+                                            <div class="revisao-comprovante">
+                                                <p>
+                                                    <strong>Comprovante manual enviado</strong>
+                                                    em {{ pagamento.comprovante_manual_enviado_em.strftime('%d/%m/%Y %H:%M') if pagamento.comprovante_manual_enviado_em else '—' }}.
+                                                    <a href="{{ url_for('auth.ver_comprovante_manual', pagamento_id=pagamento.id) }}"
+                                                       target="_blank"
+                                                       rel="noopener">Ver arquivo enviado</a>
+                                                </p>
+                                                <form action="{{ url_for('admin_blueprint.aprovar_comprovante_manual', pagamento_id=pagamento.id) }}"
+                                                      method="POST"
+                                                      class="form-revisao">
+                {% include "components/csrf_field.html" %}
+                                                    <input type="date"
+                                                           name="data_pagamento"
+                                                           aria-label="Data do pagamento">
+                                                    <select name="forma_pagamento" aria-label="Forma de pagamento">
+                                                        <option value="transferencia">Transferência</option>
+                                                        <option value="dinheiro">Dinheiro</option>
+                                                    </select>
+                                                    <input type="text"
+                                                           name="observacao"
+                                                           maxlength="255"
+                                                           aria-label="Observação sobre a aprovação"
+                                                           placeholder="Observação (opcional)">
+                                                    <button type="submit" class="btn btn-principal">Aprovar</button>
+                                                </form>
+                                                <form action="{{ url_for('admin_blueprint.rejeitar_comprovante_manual', pagamento_id=pagamento.id) }}"
+                                                      method="POST"
+                                                      class="form-revisao">
+                {% include "components/csrf_field.html" %}
+                                                    <input type="text"
+                                                           name="observacao"
+                                                           maxlength="255"
+                                                           aria-label="Motivo da rejeição"
+                                                           placeholder="Motivo da rejeição">
+                                                    <button type="submit" class="btn btn-remover">Rejeitar</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="9" class="empty-state">Nenhuma mensalidade lançada para este aluno.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </section>
+                </div>
+                <div class="et-tabs-painel" role="tabpanel" id="painel-turmas" aria-labelledby="aba-turmas" tabindex="0" hidden>
+            <section class="detail-section">
+                <div class="section-title">
+                    <h2>Turmas</h2>
+                    <p>Turmas em que este aluno está matriculado.</p>
+                </div>
+                <div class="et-tabela tabela-admin">
+                    <div class="et-tabela-rolagem table-stack" role="region" aria-label="Turmas do aluno">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Turma</th>
+                                <th scope="col">Dias</th>
+                                <th scope="col">Horário</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in u.matriculas %}
+                                <tr>
+                                    <td data-label="Turma">{{ m.turma.nome }}</td>
+                                    <td data-label="Dias">{{ m.turma.dias_semana|replace(',', ', ') }}</td>
+                                    <td data-label="Horário">{{ m.turma.horario }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="empty-state">Este aluno não está matriculado em nenhuma turma.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </section>
+                </div>
             </div>
-        </main>
-        <script src="{{ url_for('static', filename='js/masks.js') }}"></script>
-        <script nonce="{{ csp_nonce() }}">
-        const plano = document.getElementById('plano-pagamento');
-        const valor = document.getElementById('valor-pagamento');
-        function preencherValor() {
-            const opcao = plano.options[plano.selectedIndex];
-            if (opcao && opcao.dataset.valor) valor.value = Number(opcao.dataset.valor).toFixed(2);
-        }
-        plano.addEventListener('change', preencherValor);
-        preencherValor();
-    </script>
-        {% include 'components/pix_dialog.html' %}
-        <script src="{{ url_for('static', filename='js/pix.js') }}" defer></script>
-        {% include 'components/confirm_modal.html' %}
-        <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
-    </body>
-</html>
+        </div>
+    </main>
+{% endblock %}
+{% block fim_corpo %}
+    <script src="{{ url_for('static', filename='js/masks.js') }}"></script>
+    <script nonce="{{ csp_nonce() }}">
+    const plano = document.getElementById('plano-pagamento');
+    const valor = document.getElementById('valor-pagamento');
+    function preencherValor() {
+        const opcao = plano.options[plano.selectedIndex];
+        if (opcao && opcao.dataset.valor) valor.value = Number(opcao.dataset.valor).toFixed(2);
+    }
+    plano.addEventListener('change', preencherValor);
+    preencherValor();
+</script>
+    {% include 'components/pix_dialog.html' %}
+    <script src="{{ url_for('static', filename='js/pix.js') }}" defer></script>
+    {% include 'components/confirm_modal.html' %}
+    <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+{% endblock %}

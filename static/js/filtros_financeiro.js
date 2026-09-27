@@ -3,6 +3,7 @@
 // filtros aplicados continua sempre visível, então nada some sem aviso.
 // Sem JS o botão fica oculto e o formulário permanece aberto.
 (() => {
+    'use strict';
     const botao = document.querySelector('[data-filtros-alternar]');
     const formulario = document.getElementById('filtros-financeiro');
     if (!botao || !formulario) return;

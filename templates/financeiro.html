@@ -1,244 +1,221 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="viewport" content="width=device-width,initial-scale=1.0">
-        <title>Financeiro | Administração</title>
-        <link rel="icon"
-              type="image/png"
-              href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
-        {% include "components/deslize.html" %}
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/theme.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/pgAdm.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/dt_aluno.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/financeiro.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/pix.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/modal.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/extreme.css') }}">
-    </head>
-    <body class="admin-shell">
-        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-        {% set secao_ativa = 'financeiro' %}
-        {% include 'components/admin_nav.html' %}
-        <main id="conteudo">
-            <div class="container-detalhes">
-                <div class="detail-intro entra">
-                    <div>
-                        <p class="eyebrow">Administração</p>
-                        <h1>Financeiro</h1>
-                        <p>Totais calculados a partir das mensalidades registradas no período filtrado.</p>
-                    </div>
+{% extends "layouts/admin.html" %}
+{% set secao_ativa = 'financeiro' %}
+{% from "components/avatar.html" import avatar %}
+{% from "components/ui.html" import badge %}
+{% block titulo %}Financeiro | Administração{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/financeiro.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pix.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+{% endblock %}
+{% block conteudo %}
+    <main id="conteudo">
+        <div class="container-detalhes">
+            <div class="detail-intro">
+                <div>
+                    <h1>Financeiro</h1>
+                    <p>Totais calculados a partir das mensalidades registradas no período filtrado.</p>
                 </div>
-                {% with mensagens = get_flashed_messages(with_categories=true) %}
-                    {% for categoria, mensagem in mensagens %}
-                        <div class="msg msg-{{ categoria }}"
-                             role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
-                    {% endfor %}
-                {% endwith %}
-                <section class="financeiro-totais entra-1">
-                    <article class="total-card total-recebido">
-                        <span class="icon-tile" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
-                        </span>
-                        <div>
-                            <span>Recebido no período</span>
-                            <strong>{{ totais.total_recebido|moeda }}</strong>
-                            <small>{{ totais.qtd_pago }} pagamento{{ "" if totais.qtd_pago == 1 else "s" }}</small>
-                        </div>
-                    </article>
-                    <article class="total-card total-pendente">
-                        <span class="icon-tile" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M12 7v5l3.5 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                        </span>
-                        <div>
-                            <span>Pendente</span>
-                            <strong>{{ totais.total_pendente|moeda }}</strong>
-                            <small>{{ totais.qtd_pendente }} mensalidade{{ "" if totais.qtd_pendente == 1 else "s" }}</small>
-                        </div>
-                    </article>
-                    <article class="total-card total-vencido">
-                        <span class="icon-tile" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M12 8.5v4m0 3v.01M4.2 18.5 11 5.6a1.1 1.1 0 0 1 2 0l6.8 12.9a1.1 1.1 0 0 1-1 1.6H5.2a1.1 1.1 0 0 1-1-1.6Z" /></svg>
-                        </span>
-                        <div>
-                            <span>Vencido</span>
-                            <strong>{{ totais.total_vencido|moeda }}</strong>
-                            <small>{{ totais.qtd_vencido }} mensalidade{{ "" if totais.qtd_vencido == 1 else "s" }}</small>
-                        </div>
-                    </article>
-                    <article class="total-card total-analise">
-                        <span class="icon-tile" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Zm7 0v4h4M10 12h5M10 16h3" /></svg>
-                        </span>
-                        <div>
-                            <span>Em análise</span>
-                            <strong>{{ totais.total_em_analise|moeda }}</strong>
-                            <small>{{ totais.qtd_em_analise }} comprovante{{ "" if totais.qtd_em_analise == 1 else "s" }}</small>
-                        </div>
-                    </article>
-                    <article class="total-card total-inadimplentes">
-                        <span class="icon-tile" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6m2-9h5" /></svg>
-                        </span>
-                        <div>
-                            <span>Alunos inadimplentes</span>
-                            <strong>{{ totais.alunos_inadimplentes }}</strong>
-                            <small>com mensalidade vencida</small>
-                        </div>
-                    </article>
-                </section>
-                {% set rotulos_forma = {'pix': 'Pix', 'dinheiro': 'Dinheiro', 'transferencia': 'Transferência', 'cartao_credito': 'Cartão de crédito', 'cartao_debito': 'Cartão de débito', 'boleto': 'Boleto'} %}
-                {% set filtros_ativos = [] %}
-                {% if filtros.get('inicio') and filtros.get('fim') %}
-                    {{ filtros_ativos.append(('Período', filtros['inicio'][8:10] ~ '/' ~ filtros['inicio'][5:7] ~ '/' ~ filtros['inicio'][0:4] ~ ' a ' ~ filtros['fim'][8:10] ~ '/' ~ filtros['fim'][5:7] ~ '/' ~ filtros['fim'][0:4])) or '' }}
-                {% elif filtros.get('inicio') %}
-                    {{ filtros_ativos.append(('A partir de', filtros['inicio'][8:10] ~ '/' ~ filtros['inicio'][5:7] ~ '/' ~ filtros['inicio'][0:4])) or '' }}
-                {% elif filtros.get('fim') %}
-                    {{ filtros_ativos.append(('Até', filtros['fim'][8:10] ~ '/' ~ filtros['fim'][5:7] ~ '/' ~ filtros['fim'][0:4])) or '' }}
-                {% endif %}
-                {% if filtros.get('turma_id') %}
-                    {% set turma_filtrada = turmas | selectattr('id', 'equalto', filtros['turma_id'] | int) | first %}
-                    {{ filtros_ativos.append(('Turma', turma_filtrada.nome if turma_filtrada else filtros['turma_id'])) or '' }}
-                {% endif %}
-                {% if filtros.get('plano_id') %}
-                    {% set plano_filtrado = planos | selectattr('id', 'equalto', filtros['plano_id'] | int) | first %}
-                    {{ filtros_ativos.append(('Plano', plano_filtrado.nome_plano if plano_filtrado else filtros['plano_id'])) or '' }}
-                {% endif %}
-                {% if filtros.get('forma_pagamento') %}
-                    {{ filtros_ativos.append(('Método', rotulos_forma.get(filtros['forma_pagamento'], filtros['forma_pagamento']))) or '' }}
-                {% endif %}
-                {% if filtros.get('status') %}
-                    {{ filtros_ativos.append(('Situação', rotulo_status(filtros['status']))) or '' }}
-                {% endif %}
-                {% if filtros.get('busca_aluno') %}
-                    {{ filtros_ativos.append(('Aluno', filtros['busca_aluno'])) or '' }}
-                {% endif %}
-                <section class="detail-section secao-filtros">
-                    <div class="section-title">
-                        <h2>Filtros</h2>
-                        <p>Refine por período, turma, plano, método, situação ou nome do aluno.</p>
-                        <button type="button"
-                                class="btn filtros-alternar"
-                                data-filtros-alternar
-                                aria-expanded="true"
-                                aria-controls="filtros-financeiro"
-                                hidden>
-                            <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10m-7 6h4" /></svg>
-                            <span data-filtros-alternar-texto>Ocultar filtros</span>
-                        </button>
+            </div>
+            <section class="financeiro-totais">
+                <article class="total-card total-recebido">
+                    <span class="icon-tile" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+                    </span>
+                    <div>
+                        <span>Recebido no período</span>
+                        <strong>{{ totais.total_recebido|moeda }}</strong>
+                        <small>{{ totais.qtd_pago }} pagamento{{ "" if totais.qtd_pago == 1 else "s" }}</small>
                     </div>
-                    {% if filtros_ativos %}
-                        <div class="filtros-ativos">
-                            <span class="filtros-ativos-titulo">Aplicados agora</span>
-                            <ul>
-                                {% for rotulo, valor in filtros_ativos %}
-                                    <li>
-                                        <span>{{ rotulo }}</span>
-                                        <strong>{{ valor }}</strong>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                            <a href="/admin/financeiro" class="btn filtros-ativos-limpar">Limpar</a>
-                        </div>
-                    {% endif %}
-                    <form method="GET"
-                          action="/admin/financeiro"
-                          id="filtros-financeiro"
-                          class="form-filtros-financeiro">
-                        <div class="grupo-input">
-                            <label for="f-inicio">De</label>
-                            <input id="f-inicio"
-                                   type="date"
-                                   name="inicio"
-                                   value="{{ filtros.get('inicio', '') }}">
-                        </div>
-                        <div class="grupo-input">
-                            <label for="f-fim">Até</label>
-                            <input id="f-fim"
-                                   type="date"
-                                   name="fim"
-                                   value="{{ filtros.get('fim', '') }}">
-                        </div>
-                        <div class="grupo-input">
-                            <label for="f-turma">Turma</label>
-                            <select id="f-turma" name="turma_id">
-                                <option value="">Todas</option>
-                                {% for t in turmas %}
-                                    <option value="{{ t.id }}"
-                                            {% if filtros.get('turma_id') == t.id|string %}selected{% endif %}>
-                                        {{ t.nome }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="f-plano">Plano</label>
-                            <select id="f-plano" name="plano_id">
-                                <option value="">Todos</option>
-                                {% for p in planos %}
-                                    <option value="{{ p.id }}"
-                                            {% if filtros.get('plano_id') == p.id|string %}selected{% endif %}>
-                                        {{ p.nome_plano }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="f-forma">Método</label>
-                            <select id="f-forma" name="forma_pagamento">
-                                <option value="">Todos</option>
-                                {% for forma, rotulo in [('pix', 'Pix'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Cartão de crédito'), ('cartao_debito', 'Cartão de débito'), ('boleto', 'Boleto')] %}
-                                    <option value="{{ forma }}"
-                                            {% if filtros.get('forma_pagamento') == forma %}selected{% endif %}>
-                                        {{ rotulo }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="grupo-input">
-                            <label for="f-status">Situação</label>
-                            <select id="f-status" name="status">
-                                <option value="">Todas</option>
-                                {% for status in ['pendente', 'atrasado', 'em_processamento', 'em_analise', 'pago', 'recusado', 'reembolsado', 'cancelado'] %}
-                                    <option value="{{ status }}"
-                                            {% if filtros.get('status') == status %}selected{% endif %}>
-                                        {{ rotulo_status(status) }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="grupo-input campo-largo">
-                            <label for="f-busca">Aluno</label>
-                            <input id="f-busca"
-                                   type="search"
-                                   name="busca_aluno"
-                                   value="{{ filtros.get('busca_aluno', '') }}"
-                                   placeholder="Buscar por nome…">
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-salvar">Aplicar filtros</button>
-                            <a href="/admin/financeiro" class="btn-voltar">Limpar filtros</a>
-                        </div>
-                    </form>
-                </section>
-                <section class="secao-pagamentos">
-                    <div class="section-title">
-                        <h2>Mensalidades</h2>
-                        <p>{{ pagina.total }} resultado{{ "" if pagina.total == 1 else "s" }} com os filtros atuais.</p>
+                </article>
+                <article class="total-card total-pendente">
+                    <span class="icon-tile" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 7v5l3.5 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </span>
+                    <div>
+                        <span>Pendente</span>
+                        <strong>{{ totais.total_pendente|moeda }}</strong>
+                        <small>{{ totais.qtd_pendente }} mensalidade{{ "" if totais.qtd_pendente == 1 else "s" }}</small>
                     </div>
-                    <div class="tabela-pagamentos tabela-financeiro table-stack">
+                </article>
+                <article class="total-card total-vencido">
+                    <span class="icon-tile" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 8.5v4m0 3v.01M4.2 18.5 11 5.6a1.1 1.1 0 0 1 2 0l6.8 12.9a1.1 1.1 0 0 1-1 1.6H5.2a1.1 1.1 0 0 1-1-1.6Z" /></svg>
+                    </span>
+                    <div>
+                        <span>Vencido</span>
+                        <strong>{{ totais.total_vencido|moeda }}</strong>
+                        <small>{{ totais.qtd_vencido }} mensalidade{{ "" if totais.qtd_vencido == 1 else "s" }}</small>
+                    </div>
+                </article>
+                <article class="total-card total-analise">
+                    <span class="icon-tile" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Zm7 0v4h4M10 12h5M10 16h3" /></svg>
+                    </span>
+                    <div>
+                        <span>Em análise</span>
+                        <strong>{{ totais.total_em_analise|moeda }}</strong>
+                        <small>{{ totais.qtd_em_analise }} comprovante{{ "" if totais.qtd_em_analise == 1 else "s" }}</small>
+                    </div>
+                </article>
+                <article class="total-card total-inadimplentes">
+                    <span class="icon-tile" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6m2-9h5" /></svg>
+                    </span>
+                    <div>
+                        <span>Alunos inadimplentes</span>
+                        <strong>{{ totais.alunos_inadimplentes }}</strong>
+                        <small>com mensalidade vencida</small>
+                    </div>
+                </article>
+            </section>
+            {% set rotulos_forma = {'pix': 'Pix', 'dinheiro': 'Dinheiro', 'transferencia': 'Transferência', 'cartao_credito': 'Cartão de crédito', 'cartao_debito': 'Cartão de débito', 'boleto': 'Boleto'} %}
+            {% set filtros_ativos = [] %}
+            {% if filtros.get('inicio') and filtros.get('fim') %}
+                {{ filtros_ativos.append(('Período', filtros['inicio'][8:10] ~ '/' ~ filtros['inicio'][5:7] ~ '/' ~ filtros['inicio'][0:4] ~ ' a ' ~ filtros['fim'][8:10] ~ '/' ~ filtros['fim'][5:7] ~ '/' ~ filtros['fim'][0:4])) or '' }}
+            {% elif filtros.get('inicio') %}
+                {{ filtros_ativos.append(('A partir de', filtros['inicio'][8:10] ~ '/' ~ filtros['inicio'][5:7] ~ '/' ~ filtros['inicio'][0:4])) or '' }}
+            {% elif filtros.get('fim') %}
+                {{ filtros_ativos.append(('Até', filtros['fim'][8:10] ~ '/' ~ filtros['fim'][5:7] ~ '/' ~ filtros['fim'][0:4])) or '' }}
+            {% endif %}
+            {% if filtros.get('turma_id') %}
+                {% set turma_filtrada = turmas | selectattr('id', 'equalto', filtros['turma_id'] | int) | first %}
+                {{ filtros_ativos.append(('Turma', turma_filtrada.nome if turma_filtrada else filtros['turma_id'])) or '' }}
+            {% endif %}
+            {% if filtros.get('plano_id') %}
+                {% set plano_filtrado = planos | selectattr('id', 'equalto', filtros['plano_id'] | int) | first %}
+                {{ filtros_ativos.append(('Plano', plano_filtrado.nome_plano if plano_filtrado else filtros['plano_id'])) or '' }}
+            {% endif %}
+            {% if filtros.get('forma_pagamento') %}
+                {{ filtros_ativos.append(('Método', rotulos_forma.get(filtros['forma_pagamento'], filtros['forma_pagamento']))) or '' }}
+            {% endif %}
+            {% if filtros.get('status') %}
+                {{ filtros_ativos.append(('Situação', rotulo_status(filtros['status']))) or '' }}
+            {% endif %}
+            {% if filtros.get('busca_aluno') %}
+                {{ filtros_ativos.append(('Aluno', filtros['busca_aluno'])) or '' }}
+            {% endif %}
+            <section class="detail-section secao-filtros">
+                <div class="section-title">
+                    <h2>Filtros</h2>
+                    <p>Refine por período, turma, plano, método, situação ou nome do aluno.</p>
+                    <button type="button"
+                            class="btn filtros-alternar"
+                            data-filtros-alternar
+                            aria-expanded="true"
+                            aria-controls="filtros-financeiro"
+                            hidden>
+                        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10m-7 6h4" /></svg>
+                        <span data-filtros-alternar-texto>Ocultar filtros</span>
+                    </button>
+                </div>
+                {% if filtros_ativos %}
+                    <div class="filtros-ativos">
+                        <span class="filtros-ativos-titulo">Aplicados agora</span>
+                        <ul>
+                            {% for rotulo, valor in filtros_ativos %}
+                                <li>
+                                    <span>{{ rotulo }}</span>
+                                    <strong>{{ valor }}</strong>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <a href="/admin/financeiro" class="btn filtros-ativos-limpar">Limpar</a>
+                    </div>
+                {% endif %}
+                <form method="GET"
+                      action="/admin/financeiro"
+                      id="filtros-financeiro"
+                      class="form-filtros-financeiro">
+                    <div class="grupo-input">
+                        <label for="f-inicio">De</label>
+                        <input id="f-inicio"
+                               type="date"
+                               name="inicio"
+                               value="{{ filtros.get('inicio', '') }}">
+                    </div>
+                    <div class="grupo-input">
+                        <label for="f-fim">Até</label>
+                        <input id="f-fim"
+                               type="date"
+                               name="fim"
+                               value="{{ filtros.get('fim', '') }}">
+                    </div>
+                    <div class="grupo-input">
+                        <label for="f-turma">Turma</label>
+                        <select id="f-turma" name="turma_id">
+                            <option value="">Todas</option>
+                            {% for t in turmas %}
+                                <option value="{{ t.id }}"
+                                        {% if filtros.get('turma_id') == t.id|string %}selected{% endif %}>
+                                    {{ t.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="f-plano">Plano</label>
+                        <select id="f-plano" name="plano_id">
+                            <option value="">Todos</option>
+                            {% for p in planos %}
+                                <option value="{{ p.id }}"
+                                        {% if filtros.get('plano_id') == p.id|string %}selected{% endif %}>
+                                    {{ p.nome_plano }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="f-forma">Método</label>
+                        <select id="f-forma" name="forma_pagamento">
+                            <option value="">Todos</option>
+                            {% for forma, rotulo in [('pix', 'Pix'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Cartão de crédito'), ('cartao_debito', 'Cartão de débito'), ('boleto', 'Boleto')] %}
+                                <option value="{{ forma }}"
+                                        {% if filtros.get('forma_pagamento') == forma %}selected{% endif %}>
+                                    {{ rotulo }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="grupo-input">
+                        <label for="f-status">Situação</label>
+                        <select id="f-status" name="status">
+                            <option value="">Todas</option>
+                            {% for status in ['pendente', 'atrasado', 'em_processamento', 'em_analise', 'pago', 'recusado', 'reembolsado', 'cancelado'] %}
+                                <option value="{{ status }}"
+                                        {% if filtros.get('status') == status %}selected{% endif %}>
+                                    {{ rotulo_status(status) }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="grupo-input campo-largo">
+                        <label for="f-busca">Aluno</label>
+                        <input id="f-busca"
+                               type="search"
+                               name="busca_aluno"
+                               value="{{ filtros.get('busca_aluno', '') }}"
+                               placeholder="Buscar por nome…">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="button-primary btn-salvar">Aplicar filtros</button>
+                        <a href="/admin/financeiro" class="btn-voltar">Limpar filtros</a>
+                    </div>
+                </form>
+            </section>
+            <section class="secao-pagamentos">
+                <div class="section-title">
+                    <h2>Mensalidades</h2>
+                    <p>{{ pagina.total }} resultado{{ "" if pagina.total == 1 else "s" }} com os filtros atuais.</p>
+                </div>
+                <div class="et-tabela">
+                    <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Mensalidades">
                         <table>
                             <thead>
                                 <tr>
-                                    <th scope="col" class="coluna-pessoa">Aluno</th>
+                                    <th scope="col">Aluno</th>
                                     <th scope="col">Plano</th>
                                     <th scope="col">Competência</th>
                                     <th scope="col">Valor</th>
@@ -246,32 +223,24 @@
                                     <th scope="col">Status</th>
                                     <th scope="col">Forma</th>
                                     <th scope="col">Origem</th>
-                                    <th scope="col">Ação</th>
+                                    <th scope="col">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for pagamento in pagamentos %}
                                     <tr>
-                                        <td data-label="Aluno" class="celula-pessoa">
+                                        <td data-label="Aluno">
                                             <span class="pessoa">
-                                                <span class="student-avatar">
-                                                    {% if pagamento.aluno.foto_arquivo %}
-                                                        <img class="avatar-img"
-                                                             src="{{ url_for('auth.foto_perfil', aluno_id=pagamento.aluno.id) }}"
-                                                             alt="">
-                                                    {% else %}
-                                                        {{ pagamento.aluno.iniciais }}
-                                                    {% endif %}
-                                                </span>
+                                                {{ avatar(pagamento.aluno.nome, url_for('auth.foto_perfil', aluno_id=pagamento.aluno.id) if pagamento.aluno.foto_arquivo else '', 'sm') }}
                                                 <span>{{ pagamento.aluno.nome }}</span>
                                             </span>
                                         </td>
                                         <td data-label="Plano">{{ pagamento.plano.nome_plano if pagamento.plano else '—' }}</td>
-                                        <td data-label="Competência" class="celula-numero">{{ formatar_competencia(pagamento.competencia) }}</td>
-                                        <td data-label="Valor" class="celula-numero">{{ pagamento.valor|moeda }}</td>
-                                        <td data-label="Vencimento" class="celula-numero">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
+                                        <td data-label="Competência">{{ formatar_competencia(pagamento.competencia) }}</td>
+                                        <td data-label="Valor" data-valor="{{ pagamento.valor }}">{{ pagamento.valor|moeda }}</td>
+                                        <td data-label="Vencimento" data-valor="{{ pagamento.vencimento.strftime('%d/%m/%Y') }}">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
                                         <td data-label="Status">
-                                            <span class="status status-{{ pagamento.status_efetivo }}">{{ rotulo_status(pagamento.status_efetivo) }}</span>
+                                            {{ badge(pagamento.status_efetivo, rotulo_status(pagamento.status_efetivo)) }}
                                         </td>
                                         <td data-label="Forma">{{ pagamento.forma_pagamento|forma_pagamento }}</td>
                                         <td data-label="Origem">
@@ -283,32 +252,48 @@
                                                 —
                                             {% endif %}
                                         </td>
-                                        <td data-label="Ação" class="acao-cell">
-                                            <a href="{{ url_for('admin_blueprint.detalhes_usuario', cpf=pagamento.aluno.cpf) }}"
-                                               class="btn btn-status">Ver aluno</a>
-                                            {% if pagamento.provider_payment_id %}
-                                                <form action="{{ url_for('pix.sincronizar_pagamento', pagamento_id=pagamento.id) }}"
-                                                      method="POST"
-                                                      class="form-inline">
-                    {% include "components/csrf_field.html" %}
-                                                    <button type="submit" class="btn btn-status">Sincronizar</button>
-                                                </form>
-                                            {% endif %}
-                                            {% if pagamento.status == 'em_analise' %}
+                                        <td data-label="Ações">
+                                            <div class="et-menu" data-menu>
                                                 <button type="button"
-                                                        class="btn btn-destaque"
-                                                        data-abrir-comprovante
-                                                        data-pagamento-id="{{ pagamento.id }}"
-                                                        data-aluno-nome="{{ pagamento.aluno.nome }}"
-                                                        data-valor="{{ pagamento.valor|moeda }}"
-                                                        data-competencia="{{ formatar_competencia(pagamento.competencia) }}"
-                                                        data-enviado-em="{{ pagamento.comprovante_manual_enviado_em.strftime('%d/%m/%Y %H:%M') if pagamento.comprovante_manual_enviado_em else '—' }}"
-                                                        data-arquivo-url="{{ url_for('auth.ver_comprovante_manual', pagamento_id=pagamento.id) }}"
-                                                        data-aprovar-action="{{ url_for('admin_blueprint.aprovar_comprovante_manual', pagamento_id=pagamento.id) }}"
-                                                        data-rejeitar-action="{{ url_for('admin_blueprint.rejeitar_comprovante_manual', pagamento_id=pagamento.id) }}">
-                                                    Revisar comprovante
+                                                        class="et-menu-botao"
+                                                        aria-haspopup="menu"
+                                                        aria-expanded="false"
+                                                        aria-controls="menu-pagamento-{{ pagamento.id }}"
+                                                        aria-label="Ações de {{ pagamento.aluno.nome }}">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                        <circle cx="12" cy="5" r="2"/>
+                                                        <circle cx="12" cy="12" r="2"/>
+                                                        <circle cx="12" cy="19" r="2"/>
+                                                    </svg>
                                                 </button>
-                                            {% endif %}
+                                                <div class="et-menu-lista" role="menu" id="menu-pagamento-{{ pagamento.id }}" hidden>
+                                                    <a role="menuitem" href="{{ url_for('admin_blueprint.detalhes_usuario', cpf=pagamento.aluno.cpf) }}">Ver aluno</a>
+                                                    {% if pagamento.provider_payment_id %}
+                                                        <form action="{{ url_for('pix.sincronizar_pagamento', pagamento_id=pagamento.id) }}"
+                                                              method="POST"
+                                                              role="none"
+                                                              data-enviando>
+                                                            {% include "components/csrf_field.html" %}
+                                                            <button type="submit" role="menuitem" data-texto-enviando="Sincronizando...">Sincronizar</button>
+                                                        </form>
+                                                    {% endif %}
+                                                    {% if pagamento.status == 'em_analise' %}
+                                                        <button type="button"
+                                                                role="menuitem"
+                                                                data-abrir-comprovante
+                                                                data-pagamento-id="{{ pagamento.id }}"
+                                                                data-aluno-nome="{{ pagamento.aluno.nome }}"
+                                                                data-valor="{{ pagamento.valor|moeda }}"
+                                                                data-competencia="{{ formatar_competencia(pagamento.competencia) }}"
+                                                                data-enviado-em="{{ pagamento.comprovante_manual_enviado_em.strftime('%d/%m/%Y %H:%M') if pagamento.comprovante_manual_enviado_em else '—' }}"
+                                                                data-arquivo-url="{{ url_for('auth.ver_comprovante_manual', pagamento_id=pagamento.id) }}"
+                                                                data-aprovar-action="{{ url_for('admin_blueprint.aprovar_comprovante_manual', pagamento_id=pagamento.id) }}"
+                                                                data-rejeitar-action="{{ url_for('admin_blueprint.rejeitar_comprovante_manual', pagamento_id=pagamento.id) }}">
+                                                            Revisar comprovante
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 {% else %}
@@ -320,13 +305,16 @@
                         </table>
                     </div>
                     {% include 'components/paginacao.html' %}
-                </section>
-            </div>
-        </main>
-        {% include 'components/confirm_modal.html' %}
-        <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/filtros_financeiro.js') }}" defer></script>
-        {% include 'components/comprovante_modal.html' %}
-        <script src="{{ url_for('static', filename='js/comprovante_modal.js') }}" defer></script>
-    </body>
-</html>
+                </div>
+            </section>
+        </div>
+    </main>
+{% endblock %}
+{% block fim_corpo %}
+    {% include 'components/confirm_modal.html' %}
+    <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/filtros_financeiro.js') }}" defer></script>
+    {% include 'components/comprovante_modal.html' %}
+    <script src="{{ url_for('static', filename='js/comprovante_modal.js') }}" defer></script>
+{% endblock %}
+

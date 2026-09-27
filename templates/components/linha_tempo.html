@@ -1,0 +1,87 @@
+{#
+  Linha do tempo de um pagamento. Importe com:
+    {% from "components/linha_tempo.html" import linha_tempo_pagamento %}
+
+  É uma sequência de verdade, então vai numa <ol>. Cada passo diz o próprio estado
+  em texto ("Concluído", "Etapa atual", "Vencido"...): a cor só reforça. O passo
+  atual leva aria-current="step". Estilo em .et-linha-tempo (componentes.css),
+  pensado para superfície clara.
+#}
+
+{# `status`: o status do pagamento como está no banco (pendente, atrasado,
+   em_processamento, em_analise, pago, recusado, reembolsado, cancelado).
+   Status desconhecido cai no desenho de "pendente" em vez de sumir.
+
+   Cada passo é (rótulo, estado, tom, texto do estado):
+     estado: feito | atual | futuro | pulado
+     tom:    '' | ok | alerta | erro | neutro | info  (cor do passo atual) #}
+{% macro linha_tempo_pagamento(status) -%}
+{%- set _aguardando_feito = ('Aguardando pagamento', 'feito', '', 'Concluído') -%}
+{%- set _analise_feita = ('Em análise', 'feito', '', 'Concluído') -%}
+{%- set _passos = {
+    'pendente': [
+        ('Aguardando pagamento', 'atual', '', 'Etapa atual'),
+        ('Em análise', 'futuro', '', 'A seguir'),
+        ('Pago', 'futuro', '', 'A seguir'),
+    ],
+    'atrasado': [
+        ('Aguardando pagamento', 'atual', 'alerta', 'Vencido'),
+        ('Em análise', 'futuro', '', 'A seguir'),
+        ('Pago', 'futuro', '', 'A seguir'),
+    ],
+    'em_analise': [
+        _aguardando_feito,
+        ('Em análise', 'atual', '', 'Etapa atual'),
+        ('Pago', 'futuro', '', 'A seguir'),
+    ],
+    'em_processamento': [
+        _aguardando_feito,
+        ('Processando', 'atual', '', 'Etapa atual'),
+        ('Pago', 'futuro', '', 'A seguir'),
+    ],
+    'pago': [
+        _aguardando_feito,
+        _analise_feita,
+        ('Pago', 'atual', 'ok', 'Confirmado'),
+    ],
+    'recusado': [
+        _aguardando_feito,
+        _analise_feita,
+        ('Recusado', 'atual', 'erro', 'Encerrado'),
+    ],
+    'cancelado': [
+        _aguardando_feito,
+        ('Em análise', 'pulado', '', 'Não realizada'),
+        ('Cancelado', 'atual', 'neutro', 'Encerrado'),
+    ],
+    'reembolsado': [
+        _aguardando_feito,
+        _analise_feita,
+        ('Pago', 'feito', '', 'Concluído'),
+        ('Reembolsado', 'atual', 'info', 'Valor devolvido'),
+    ],
+} -%}
+<ol class="et-linha-tempo" aria-label="Andamento do pagamento">
+    {%- for rotulo, estado, tom, texto in _passos.get(status, _passos['pendente']) %}
+    <li class="et-passo et-passo--{{ estado }}{{ ' et-passo--' ~ tom if tom }}"{% if estado == 'atual' %} aria-current="step"{% endif %}>
+        <span class="et-passo-marca" aria-hidden="true">
+            {%- if tom in ('erro', 'neutro') -%}
+            <svg viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>
+            {%- elif tom == 'alerta' -%}
+            <svg viewBox="0 0 16 16"><path d="M8 3.5v5.5M8 11.8v.7"/></svg>
+            {%- elif tom == 'info' -%}
+            <svg viewBox="0 0 16 16"><path d="M6 4L3 7l3 3M3.5 7h6a3 3 0 0 1 0 6H8"/></svg>
+            {%- elif estado == 'feito' or tom == 'ok' -%}
+            <svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5"/></svg>
+            {%- elif estado == 'pulado' -%}
+            <svg viewBox="0 0 16 16"><path d="M4.5 8h7"/></svg>
+            {%- endif -%}
+        </span>
+        <span class="et-passo-texto">
+            <span class="et-passo-rotulo">{{ rotulo }}</span>
+            <span class="et-passo-estado">{{ texto }}</span>
+        </span>
+    </li>
+    {%- endfor %}
+</ol>
+{%- endmacro %}

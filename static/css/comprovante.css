@@ -15,20 +15,22 @@
   margin-bottom:var(--sp-6); padding-bottom:var(--sp-5);
   border-bottom:2px solid var(--ink);
 }
-/* A arte da marca tem fundo preto: sobre a folha branca ela vira uma placa
-   escura deliberada em vez de um retângulo acidental. */
-.comprovante-logo {
-  flex:0 0 auto; width:48px; height:48px; padding:var(--sp-1);
-  border-radius:var(--radius); background:var(--ink); object-fit:contain;
+/* A arte da marca tem fundo preto: sobre a folha branca ela fica numa placa
+   preta deliberada (o contêiner, nunca a imagem, leva fundo e raio). */
+.comprovante-marca {
+  flex:0 0 auto; display:grid; place-items:center;
+  width:48px; height:48px;
+  border-radius:var(--et-radius-control); background:var(--et-black);
 }
-.comprovante-cabecalho strong { display:block; font:700 18px/1.1 var(--display); text-transform:uppercase; }
+.comprovante-marca img { display:block; width:40px; height:40px; }
+.comprovante-cabecalho strong { display:block; font:400 18px/1.1 var(--display); text-transform:uppercase; }
 .comprovante-cabecalho span { color:var(--text-2); font-size:var(--fs-xs); }
 
 .comprovante-folha h1 {
   margin:0 0 var(--sp-3);
-  font:700 var(--h2)/1.1 var(--display); text-transform:uppercase; letter-spacing:.01em;
+  font:400 var(--h2)/1.1 var(--display); text-transform:uppercase; letter-spacing:.01em;
 }
-.comprovante-situacao { margin:0 0 var(--sp-6); }
+.comprovante-folha .et-linha-tempo { margin:0 0 var(--sp-6); }
 
 .comprovante-dados {
   display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-5) var(--sp-6);
@@ -65,6 +67,6 @@
   body::before { display:none; }
   .comprovante-folha { padding:0; border:0; box-shadow:none; }
   .comprovante-dados { gap:var(--sp-5) var(--sp-8); }
-  /* Fundos claros nem sempre saem na impressão: a borda garante o selo legível. */
-  .status { border:1px solid currentColor; }
+  /* Os círculos da linha do tempo são desenhados com fundo: pede que saiam no papel. */
+  .et-linha-tempo { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }

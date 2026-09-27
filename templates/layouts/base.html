@@ -1,0 +1,33 @@
+{#- Esqueleto comum de todas as páginas. Cada área tem o seu layout por cima deste
+    (publico, aluno, admin, professor); uma página estende o da sua área, nunca este.
+
+    Ordem no <head>, a mesma que as páginas usavam uma a uma:
+    deslize (inline, antes das folhas: ver components/deslize.html) → scripts com
+    defer → theme.css (que já importa tokens.css e componentes.css; não linkar de
+    novo) → folhas da página → extreme.css → folhas que precisam vir depois dele. -#}
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#000000">
+        <title>{% block titulo %}Centro de Treinamento Extreme Team{% endblock %}</title>
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='imagens/favicon-32.png') }}">
+        <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='imagens/favicon-192.png') }}">
+        <link rel="apple-touch-icon" href="{{ url_for('static', filename='imagens/favicon-180.png') }}">
+        {% block deslize %}{% include "components/deslize.html" %}{% endblock %}
+        <script src="{{ url_for('static', filename='js/componentes.js') }}" defer></script>
+        {% block scripts %}{% endblock %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+        {% block estilos %}{% endblock %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
+        {% block estilos_finais %}{% endblock %}
+    </head>
+    <body{% block atributos_body %}{% endblock %}>
+        {% block pular %}<a class="skip-link" href="#{% block alvo_pular %}conteudo{% endblock %}">{% block texto_pular %}Ir para o conteúdo{% endblock %}</a>{% endblock %}
+        {% block corpo %}{% endblock %}
+        {% include "components/toasts.html" %}
+        {% block fim_corpo %}{% endblock %}
+    </body>
+</html>

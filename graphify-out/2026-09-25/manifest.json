@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "servidor.py": {
-    "mtime": 1790083721.7055404,
-    "seen": 1790083727.1219597,
-    "ast_hash": "188f25dad8acf41942c0fb16ef9fd23b",
+    "mtime": 1790305223.947379,
+    "seen": 1790305238.6446464,
+    "ast_hash": "5d3272f61fe61561a3055cb43fcd7cd8",
     "semantic_hash": ""
   },
   "static/js/index.js": {
@@ -150,8 +150,8 @@
     "semantic_hash": ""
   },
   "static/js/pgUsuario.js": {
-    "mtime": 1790296479.5687654,
-    "seen": 1790298238.8112752,
+    "mtime": 1790305223.9506917,
+    "seen": 1790305238.6453717,
     "ast_hash": "0a996b29416612ec7e3e05904311329b",
     "semantic_hash": ""
   },
@@ -186,8 +186,8 @@
     "semantic_hash": ""
   },
   "templates/dt_aluno.html": {
-    "mtime": 1790296439.5767798,
-    "seen": 1790298238.8150284,
+    "mtime": 1790305223.9545498,
+    "seen": 1790305238.6491416,
     "ast_hash": "c43722a7cb873cf97e309ac0a7966a41",
     "semantic_hash": ""
   },
@@ -204,20 +204,20 @@
     "semantic_hash": ""
   },
   "templates/pgAdm.html": {
-    "mtime": 1790296439.5753617,
-    "seen": 1790298238.815218,
+    "mtime": 1790305223.9563925,
+    "seen": 1790305238.6493185,
     "ast_hash": "ac4d2a0a31376ca2757c7c6088c1a21d",
     "semantic_hash": ""
   },
   "templates/pgProfessor.html": {
-    "mtime": 1790296439.5747108,
-    "seen": 1790298238.81522,
+    "mtime": 1790305223.9570446,
+    "seen": 1790305238.6493204,
     "ast_hash": "54b72413e2264e53b1bddbad9b426df3",
     "semantic_hash": ""
   },
   "templates/pgUsuario.html": {
-    "mtime": 1790296439.5826182,
-    "seen": 1790298238.8152227,
+    "mtime": 1790305223.957998,
+    "seen": 1790305238.649323,
     "ast_hash": "1c892e3a93f16dda3e489239e30243d2",
     "semantic_hash": ""
   },
@@ -228,14 +228,14 @@
     "semantic_hash": ""
   },
   "templates/turma.html": {
-    "mtime": 1790296439.5833526,
-    "seen": 1790298238.8154855,
+    "mtime": 1790305223.9591174,
+    "seen": 1790305238.6496282,
     "ast_hash": "f16e9c907af2aa8a8f5a7386b8707c34",
     "semantic_hash": ""
   },
   "templates/turmas.html": {
-    "mtime": 1790296439.5758405,
-    "seen": 1790298238.815488,
+    "mtime": 1790305223.9593792,
+    "seen": 1790305238.649631,
     "ast_hash": "922485183f4b1511a49fb1aeb002fefc",
     "semantic_hash": ""
   },
@@ -246,8 +246,8 @@
     "semantic_hash": ""
   },
   "templates/admin_avisos.html": {
-    "mtime": 1790296439.5778415,
-    "seen": 1790298238.8141618,
+    "mtime": 1790305223.9522457,
+    "seen": 1790305238.648192,
     "ast_hash": "2dfa1380c124a85d8b31bb00339349f3",
     "semantic_hash": ""
   },
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "templates/checkout_retorno.html": {
-    "mtime": 1790296439.573214,
-    "seen": 1790298238.81427,
+    "mtime": 1790305223.9532065,
+    "seen": 1790305238.6483068,
     "ast_hash": "2b46e39e4414bd895068d560e752b3dc",
     "semantic_hash": ""
   },
@@ -498,20 +498,20 @@
     "semantic_hash": ""
   },
   "templates/comprovante.html": {
-    "mtime": 1790296439.5737174,
-    "seen": 1790298238.8150253,
+    "mtime": 1790305223.9536896,
+    "seen": 1790305238.6491385,
     "ast_hash": "e352566d0eb7aa1da8195d058a80e2a1",
     "semantic_hash": ""
   },
   "templates/financeiro.html": {
-    "mtime": 1790296439.5803993,
-    "seen": 1790298238.8151069,
+    "mtime": 1790305223.9551103,
+    "seen": 1790305238.6492062,
     "ast_hash": "35619a9b7019a16e305aa93cf62fd35f",
     "semantic_hash": ""
   },
   "templates/pagamento.html": {
-    "mtime": 1790296439.574318,
-    "seen": 1790298238.8152153,
+    "mtime": 1790305223.9557974,
+    "seen": 1790305238.649316,
     "ast_hash": "397f07b206ce9e6d90f55e1ab7c2316c",
     "semantic_hash": ""
   },
@@ -582,9 +582,9 @@
     "semantic_hash": ""
   },
   "tests/test_seguranca.py": {
-    "mtime": 1790083721.7134583,
-    "seen": 1790083727.123801,
-    "ast_hash": "36dbf5db9a3c47c160feacefbc1be104",
+    "mtime": 1790305223.9602535,
+    "seen": 1790305238.647512,
+    "ast_hash": "857ea6054867a036638184119ce0c52d",
     "semantic_hash": ""
   },
   "templates/components/csrf_field.html": {
@@ -636,8 +636,8 @@
     "semantic_hash": ""
   },
   "templates/admin_academia.html": {
-    "mtime": 1790296439.5809832,
-    "seen": 1790298238.8141568,
+    "mtime": 1790305223.9512093,
+    "seen": 1790305238.6481874,
     "ast_hash": "ed624deef6a28cde31fc827f62068271",
     "semantic_hash": ""
   },
@@ -648,8 +648,8 @@
     "semantic_hash": ""
   },
   "templates/professor_editar.html": {
-    "mtime": 1790296439.5783165,
-    "seen": 1790298238.8152776,
+    "mtime": 1790305223.9583793,
+    "seen": 1790305238.6493793,
     "ast_hash": "dd44296d93279898e03473c8693b1ac5",
     "semantic_hash": ""
   },
@@ -684,8 +684,8 @@
     "semantic_hash": ""
   },
   "templates/checkout_continuar.html": {
-    "mtime": 1790296439.5787826,
-    "seen": 1790298238.8142679,
+    "mtime": 1790305223.9527225,
+    "seen": 1790305238.6483045,
     "ast_hash": "ab9c19505977664ccb7378045ee75567",
     "semantic_hash": ""
   },
@@ -756,8 +756,8 @@
     "semantic_hash": ""
   },
   "templates/admin_aluno_novo.html": {
-    "mtime": 1790296439.5795124,
-    "seen": 1790298238.8141592,
+    "mtime": 1790305223.9517407,
+    "seen": 1790305238.6481898,
     "ast_hash": "a1afcf69cd291c63cd3438ed84523693",
     "semantic_hash": ""
   },
@@ -930,8 +930,8 @@
     "semantic_hash": ""
   },
   "tools/redesign/servir_visual.py": {
-    "mtime": 1790295906.966078,
-    "seen": 1790298238.813533,
+    "mtime": 1790305223.9608083,
+    "seen": 1790305238.6476212,
     "ast_hash": "757b00f8f7bdfc0d04b492a44041c860",
     "semantic_hash": ""
   },
@@ -1050,8 +1050,8 @@
     "semantic_hash": ""
   },
   "blueprints/gmail_oauth_bp.py": {
-    "mtime": 1790084976.9821415,
-    "seen": 1790085473.1363595,
+    "mtime": 1790305223.8909342,
+    "seen": 1790305238.6412034,
     "ast_hash": "eb1a7aa3e2d8979086a4d2d7eb653034",
     "semantic_hash": ""
   },
@@ -1098,8 +1098,8 @@
     "semantic_hash": ""
   },
   "security-review/RELATORIO.md": {
-    "mtime": 1790085454.8310049,
-    "seen": 1790085473.1421857,
+    "mtime": 1790305223.9469395,
+    "seen": 1790305238.6480794,
     "ast_hash": "4a9dd9cb6739fd4de3fc78d9ca2385e2",
     "semantic_hash": ""
   },

@@ -29,3 +29,25 @@
     if (ativo) ativo.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     marcar();
 })();
+
+// Abas das telas da administração que recarregam depois de um envio (salvar,
+// lançar mensalidade, voltar de uma conexão OAuth): o servidor redireciona para a
+// mesma URL sem dizer a aba, então a última aba aberta fica guardada por página
+// em sessionStorage. Um #id de aba ou painel na URL tem prioridade. A troca em
+// si é de componentes.js; aqui só se escolhe qual aba clicar ao abrir a página.
+(() => {
+    document.querySelectorAll('[data-tabs][data-tabs-lembrar]').forEach((grupo) => {
+        const chave = `et-aba:${location.pathname}:${grupo.dataset.tabsLembrar}`;
+        const abas = Array.from(grupo.querySelectorAll('[role="tab"]'));
+        const porAlvo = (id) => abas.find((aba) => aba.id === id || aba.getAttribute('aria-controls') === id);
+
+        let guardada = null;
+        try { guardada = sessionStorage.getItem(chave); } catch (erro) { /* armazenamento bloqueado */ }
+        const inicial = porAlvo(decodeURIComponent(location.hash.slice(1))) || porAlvo(guardada);
+        if (inicial && inicial.getAttribute('aria-selected') !== 'true') inicial.click();
+
+        abas.forEach((aba) => aba.addEventListener('click', () => {
+            try { sessionStorage.setItem(chave, aba.id); } catch (erro) { /* segue sem lembrar */ }
+        }));
+    });
+})();

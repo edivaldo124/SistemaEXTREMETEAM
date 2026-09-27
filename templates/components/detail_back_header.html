@@ -1,3 +1,8 @@
+{#- Cabeçalho das telas de detalhe com o link "Voltar".
+    Variáveis opcionais (lidas do contexto, ex.: {% with voltar_href='/admin', voltar_texto='Voltar ao painel' %}):
+      voltar_href  - destino do link; padrão '/perfil'
+      voltar_texto - texto do link; padrão 'Voltar para minha área'
+    Sem elas o HTML é exatamente o de antes (a área do aluno depende disso). -#}
 <header class="detail-header no-print">
     <a class="site-brand" href="/perfil">
         <img src="{{ url_for('static',filename='imagens/logo-icon.png') }}" alt="">
@@ -7,5 +12,5 @@
             <strong>Extreme Team</strong>
         </span>
     </a>
-    <a href="/perfil">Voltar para minha área</a>
+    <a href="{{ voltar_href|default('/perfil', true) }}">{{ voltar_texto|default('Voltar para minha área', true) }}</a>
 </header>

@@ -1035,7 +1035,8 @@ def test_aviso_repetido_no_mesmo_dia_avisa_em_vez_de_comemorar(
 
     corpo = segunda.get_data(as_text=True)
     assert 'já foi enviado hoje' in corpo
-    assert 'msg-erro' in corpo
+    # O flash agora é um toast (components/toasts.html); a categoria continua "erro".
+    assert 'et-toast--erro' in corpo
 
 
 def test_contador_do_financeiro_mostra_o_total_e_nao_a_pagina(

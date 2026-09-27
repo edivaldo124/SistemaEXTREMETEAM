@@ -1,0 +1,22 @@
+<header class="app-header">
+    <a class="site-brand" href="/">
+        <img src="{{ url_for('static',filename='imagens/logo-icon.png') }}" alt="">
+        <span>
+            Centro de treinamento
+            <br>
+            <strong>Extreme Team</strong>
+        </span>
+    </a>
+    <div>
+        <span>Professor</span>
+        <form action="/logout" method="POST" class="logout-form"
+              data-confirm-modal
+              data-modal-eyebrow="Encerrar sessão"
+              data-modal-title="Sair?"
+              data-modal-message="Você precisará entrar novamente para acessar suas turmas."
+              data-modal-confirm="Sim, sair">
+            {% include "components/csrf_field.html" %}
+            <button type="submit" class="link-logout">Sair</button>
+        </form>
+    </div>
+</header>

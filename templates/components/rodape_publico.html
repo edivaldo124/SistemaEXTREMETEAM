@@ -1,0 +1,17 @@
+<footer class="home-footer">
+    {% with contatos_compactos=true %}
+        {% include 'components/contatos_academia.html' %}
+    {% endwith %}
+    <div class="footer-bottom-row">
+        <a class="footer-brand" href="/" aria-label="Extreme Team, início">
+            <img src="{{ url_for('static', filename='imagens/logo-horizontal-400.png') }}"
+                 srcset="{{ url_for('static', filename='imagens/logo-horizontal-400.png') }} 400w, {{ url_for('static', filename='imagens/logo-horizontal-800.png') }} 800w"
+                 sizes="160px"
+                 alt="Extreme Team"
+                 width="160"
+                 height="70">
+        </a>
+        <span>© 2026 Centro de Treinamento Extreme Team</span>
+        <a href="/cadastrar" class="footer-cta-link">Criar conta</a>
+    </div>
+</footer>

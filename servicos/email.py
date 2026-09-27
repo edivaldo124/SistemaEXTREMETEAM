@@ -8,6 +8,7 @@ import time
 import requests
 from flask import render_template
 from servicos import gmail_conta
+from servicos.urls import URLPublicaInvalida, url_publica
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,18 @@ def email_valido(endereco):
                 and re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', endereco))
 
 
+def _logo_publica():
+    """Endereço absoluto da logo horizontal para o cabeçalho do e-mail, ou None.
+
+    O e-mail é lido fora do sistema, então a imagem precisa de URL pública. Sem
+    APP_BASE_URL válida o template cai para o nome em texto em vez de falhar o envio.
+    """
+    try:
+        return url_publica('static', filename='imagens/logo-horizontal-400.png')
+    except (URLPublicaInvalida, RuntimeError):
+        return None
+
+
 def enviar_email(destinatario, nome_destinatario, assunto, titulo, paragrafos, link_url=None, link_texto=None):
     """Envia e-mail transacional pela Gmail API. Retorna True/False; nunca lança."""
     if not destinatario:
@@ -42,6 +55,7 @@ def enviar_email(destinatario, nome_destinatario, assunto, titulo, paragrafos, l
     try:
         corpo_html = render_template(
             'email/base.html', titulo=titulo, paragrafos=paragrafos, link_url=link_url, link_texto=link_texto,
+            logo_url=_logo_publica(),
         )
     except Exception:
         logger.exception('Falha ao montar o corpo do e-mail "%s" para %s.', assunto, _destinatario_log(destinatario))

@@ -12,7 +12,11 @@ def test_landing_page(client):
 
     # Título do Hero em caixa alta
     assert 'DESPERTE SUA FORÇA.' in html
-    assert 'VÁ AO EXTREMO.' in html
+    assert 'CONQUISTE O SEU MELHOR.' in html
+
+    # Planos logo depois do hero (sem planos cadastrados: o estado vazio real).
+    assert 'id="planos"' in html
+    assert 'Os planos ainda não foram publicados.' in html
 
     # Visual do dragão recortado
     assert 'hero-emblema.webp' in html

@@ -151,6 +151,31 @@ with app.app_context():
 
 print('PRONTO em http://localhost:4002  admin/admin-visual-123  aluno1/senha123  aluno9(vazio)/senha123  prof/prof12345', flush=True)
 
+# Vitrine dos componentes (/_vitrine): existe SÓ nesta instância descartável, nunca em
+# produção. Os templates dela moram em tools/redesign/vitrine/.
+import time  # noqa: E402
+
+from flask import flash, redirect, render_template  # noqa: E402
+from jinja2 import ChoiceLoader, FileSystemLoader  # noqa: E402
+
+PASTA_VITRINE = os.path.join(RAIZ, 'tools', 'redesign', 'vitrine')
+app.jinja_env.loader = ChoiceLoader([app.jinja_env.loader, FileSystemLoader(PASTA_VITRINE)])
+
+
+@app.route('/_vitrine')
+def vitrine():
+    return render_template('vitrine.html')
+
+
+
+@app.route('/_vitrine/enviar', methods=['POST'])
+def vitrine_enviar():
+    # Lento de propósito, para ver o botão com carregamento; volta com um toast de flash.
+    time.sleep(2)
+    flash('Formulário enviado. Este aviso veio de um flash() no servidor.', 'sucesso')
+    return redirect('/_vitrine#carregando')
+
+
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 app.run(host='127.0.0.1', port=4002, use_reloader=False, threaded=True)

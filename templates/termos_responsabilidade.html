@@ -1,53 +1,71 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="theme-color" content="#000000">
-        <link rel="icon" type="image/png" href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
-        <title>Termo de Responsabilidade | Extreme Team</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/cadastro.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/extreme.css') }}">
-    </head>
-    <body class="auth-page">
-        <a class="skip-link" href="#termos">Ir para o termo</a>
-        <header class="account-header">
-            <a class="site-brand" href="/" aria-label="Extreme Team, início">
-                <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team">
-                <span>Centro de treinamento<br><strong>Extreme Team</strong></span>
-            </a>
-            <a href="{{ url_for('auth.pagina_cadastro') }}">Voltar ao cadastro</a>
-        </header>
-        <main class="termos-page-shell">
-            <article id="termos" class="termos-documento" aria-labelledby="termos-titulo">
-                <p class="eyebrow">Versão {{ versao_termos }}</p>
-                <h1 id="termos-titulo" class="page-title">Termo de Responsabilidade</h1>
-                <p class="page-subtitle">Leia com atenção antes de criar sua conta. Em caso de dúvida, fale com a administração.</p>
+{% extends "layouts/publico.html" %}
+{% block titulo %}Termo de Responsabilidade | Extreme Team{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cadastro.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/termos.css') }}">
+{% endblock %}
+{% block atributos_body %} class="auth-page"{% endblock %}
+{% block alvo_pular %}termos{% endblock %}
+{% block texto_pular %}Ir para o termo{% endblock %}
+{% block cabecalho %}{% endblock %}
+{% block conteudo %}
+    <header class="account-header">
+        <a class="site-brand" href="/" aria-label="Extreme Team, início">
+            <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team">
+            <span>Centro de treinamento<br><strong>Extreme Team</strong></span>
+        </a>
+        <a href="{{ url_for('auth.pagina_cadastro') }}">Voltar ao cadastro</a>
+    </header>
+    <main class="termos-page-shell">
+        <article id="termos" class="termos-documento" aria-labelledby="termos-titulo">
+            <p class="eyebrow">Versão {{ versao_termos }}</p>
+            <h1 id="termos-titulo" class="page-title">Termo de Responsabilidade</h1>
+            <p class="page-subtitle">Leia com atenção antes de criar sua conta. Em caso de dúvida, fale com a administração.</p>
 
-                <section>
-                    <h2>1. Condições de saúde</h2>
+            <nav class="termos-sumario" aria-label="Nesta página">
+                <ol>
+                    <li><a href="#secao-1">1. Condições de saúde</a></li>
+                    <li><a href="#secao-2">2. Participação segura</a></li>
+                    <li><a href="#secao-3">3. Orientação profissional</a></li>
+                    <li><a href="#secao-4">4. Convivência e uso do espaço</a></li>
+                    <li><a href="#secao-5">5. Atualização e contato</a></li>
+                </ol>
+            </nav>
+
+            <details class="et-acordeao" id="secao-1" open>
+                <summary><h2>1. Condições de saúde</h2></summary>
+                <div class="et-acordeao-corpo">
                     <p>Declaro que as informações de saúde fornecidas no cadastro são verdadeiras e atuais. Comprometo-me a informar à Extreme Team qualquer lesão, limitação, condição clínica ou alteração relevante antes de participar das atividades.</p>
-                </section>
-                <section>
-                    <h2>2. Participação segura</h2>
+                </div>
+            </details>
+            <details class="et-acordeao" id="secao-2" open>
+                <summary><h2>2. Participação segura</h2></summary>
+                <div class="et-acordeao-corpo">
                     <p>Reconheço que a prática esportiva envolve esforço físico e riscos inerentes. Comprometo-me a respeitar meus limites, seguir as orientações dos professores e interromper a atividade quando sentir dor, mal-estar ou qualquer sinal de risco.</p>
-                </section>
-                <section>
-                    <h2>3. Orientação profissional</h2>
+                </div>
+            </details>
+            <details class="et-acordeao" id="secao-3" open>
+                <summary><h2>3. Orientação profissional</h2></summary>
+                <div class="et-acordeao-corpo">
                     <p>Entendo que as orientações de treino não substituem avaliação, diagnóstico ou acompanhamento médico. Quando necessário, buscarei orientação de profissional de saúde habilitado antes de iniciar ou continuar as atividades.</p>
-                </section>
-                <section>
-                    <h2>4. Convivência e uso do espaço</h2>
+                </div>
+            </details>
+            <details class="et-acordeao" id="secao-4" open>
+                <summary><h2>4. Convivência e uso do espaço</h2></summary>
+                <div class="et-acordeao-corpo">
                     <p>Comprometo-me a utilizar os equipamentos e espaços com cuidado, respeitar professores, alunos e colaboradores, e cumprir as regras de segurança e convivência comunicadas pela academia.</p>
-                </section>
-                <section>
-                    <h2>5. Atualização e contato</h2>
+                </div>
+            </details>
+            <details class="et-acordeao" id="secao-5" open>
+                <summary><h2>5. Atualização e contato</h2></summary>
+                <div class="et-acordeao-corpo">
                     <p>Manterei meus dados de contato atualizados e comunicarei prontamente qualquer informação que possa afetar minha participação segura. A Extreme Team poderá atualizar este termo e informará os alunos quando uma nova aceitação for necessária.</p>
-                </section>
-                <p class="termos-nota">Ao marcar o aceite no cadastro, você confirma que leu e concorda com esta versão do termo.</p>
-            </article>
-        </main>
-    </body>
-</html>
+                </div>
+            </details>
+
+            <p class="termos-nota">Ao marcar o aceite no cadastro, você confirma que leu e concorda com esta versão do termo.</p>
+        </article>
+    </main>
+{% endblock %}
+{% block rodape %}{% endblock %}

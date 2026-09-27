@@ -1,0 +1,28 @@
+{#
+  Trilha de navegação. Importe com:
+    {% from "components/breadcrumb.html" import breadcrumb %}
+
+  Herda a cor do contêiner (currentColor), então serve em fundo claro e escuro.
+  Estilo em .et-breadcrumb (componentes.css).
+#}
+
+{# `itens`: lista de pares (rótulo, href), do mais geral ao atual:
+     breadcrumb([('Painel', '/admin'), ('Alunos', '/admin/alunos'), ('Marina Souza', None)])
+   O último item é a página atual: vira texto com aria-current="page", mesmo que
+   tenha href. Itens do meio sem href viram texto simples. O separador é do CSS. #}
+{% macro breadcrumb(itens) -%}
+{%- if itens %}
+<nav class="et-breadcrumb" aria-label="Você está em">
+    <ol>
+        {%- for rotulo, href in itens %}
+        <li>
+            {%- if loop.last %}<span aria-current="page">{{ rotulo }}</span>
+            {%- elif href %}<a href="{{ href }}">{{ rotulo }}</a>
+            {%- else %}<span>{{ rotulo }}</span>
+            {%- endif -%}
+        </li>
+        {%- endfor %}
+    </ol>
+</nav>
+{%- endif %}
+{%- endmacro %}

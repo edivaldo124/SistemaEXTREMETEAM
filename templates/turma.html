@@ -1,155 +1,156 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="viewport" content="width=device-width,initial-scale=1.0">
-        <title>{{ turma.nome }} | Centro de Treinamento Extreme Team</title>
-        <script src="{{ url_for('static', filename='js/turma.js') }}" defer></script>
-        <link rel="icon"
-              type="image/png"
-              href="{{ url_for('static', filename='imagens/logo-icon.png') }}">
-        {% include "components/deslize.html" %}
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/theme.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/pgAdm.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/dt_aluno.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/turmas.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/modal.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/extreme.css') }}">
-    </head>
-    <body class="{{ 'admin-shell' if eh_admin else '' }}">
-        <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-        {% if eh_admin %}
-            {% set secao_ativa = 'turmas' %}
-            {% include 'components/admin_nav.html' %}
-        {% else %}
-            <header class="detail-header">
-                <a class="site-brand" href="/professor">
-                    <img src="{{ url_for('static',filename='imagens/logo-icon.png') }}" alt="">
-                    <span>
-                        Centro de treinamento
-                        <br>
-                        <strong>Extreme Team</strong>
-                    </span>
-                </a>
-                <a href="/professor">Voltar</a>
-            </header>
-        {% endif %}
-        <main id="conteudo">
-            <div class="container-detalhes">
-                <div class="detail-intro entra">
-                    <div>
-                        <p class="eyebrow">Turma</p>
-                        <h1>{{ turma.nome }}</h1>
-                        <p>{{ turma.dias_semana|replace(',', ', ') }} · {{ turma.horario }} · Prof. {{ turma.professor.nome }}</p>
-                    </div>
-                    <span title="Alunos matriculados">{{ matriculados|length }}/{{ turma.limite_alunos }}<span class="sr-only"> alunos matriculados</span></span>
+{% extends "layouts/admin.html" if eh_admin else "layouts/professor.html" %}
+{% set secao_ativa = 'turmas' %}
+{% from "components/avatar.html" import avatar %}
+{% from "components/breadcrumb.html" import breadcrumb %}
+{% block titulo %}{{ turma.nome }} | Centro de Treinamento Extreme Team{% endblock %}
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/turma.js') }}" defer></script>
+{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/turmas.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+{% endblock %}
+{% block cabecalho %}
+    <header class="detail-header">
+        <a class="site-brand" href="/professor">
+            <img src="{{ url_for('static',filename='imagens/logo-icon.png') }}" alt="">
+            <span>
+                Centro de treinamento
+                <br>
+                <strong>Extreme Team</strong>
+            </span>
+        </a>
+        <a href="/professor">Voltar</a>
+    </header>
+{% endblock %}
+{% block conteudo %}
+    <main id="conteudo">
+        <div class="container-detalhes">
+            {% if eh_admin %}
+                {{ breadcrumb([('Turmas', url_for('turma_blueprint.gerenciar_turmas')), (turma.nome, None)]) }}
+            {% endif %}
+            <div class="detail-intro">
+                <div>
+                    <h1>{{ turma.nome }}</h1>
+                    <p>{{ turma.dias_semana|replace(',', ', ') }} · {{ turma.horario }} · Prof. {{ turma.professor.nome }}</p>
                 </div>
-                {% with mensagens = get_flashed_messages(with_categories=true) %}
-                    {% for categoria, mensagem in mensagens %}
-                        <div class="msg msg-{{ categoria }}"
-                             role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</div>
-                    {% endfor %}
-                {% endwith %}
-                <section class="detail-section">
-                    {% if eh_admin %}
-                        <div class="section-title">
-                            <h2>Matrícula</h2>
-                            <p>Vincule alunos a essa turma.</p>
-                        </div>
-                        <form action="/turmas/{{ turma.id }}/matricular"
-                              method="POST"
-                              class="form-pagamento">
-                    {% include "components/csrf_field.html" %}
-                            <div class="grupo-input">
-                                <label for="matricular-aluno">Aluno</label>
-                                <select id="matricular-aluno" name="aluno_id" required>
-                                    <option value="">Selecione</option>
-                                    {% for a in alunos_disponiveis %}
-                                        <option value="{{ a.id }}">{{ a.nome }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-actions form-actions-inline">
-                                <button type="submit" class="btn-salvar">Matricular aluno</button>
-                            </div>
-                        </form>
-                    {% endif %}
-                        <div class="table-container table-stack tabela-matriculados">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th scope="col" class="coluna-pessoa">Aluno</th>
-                                        <th scope="col">Ação</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for aluno in matriculados %}
-                                        <tr>
-                                            <td data-label="Aluno" class="celula-pessoa">
-                                                <span class="pessoa">
-                                                    <span class="student-avatar">
-                                                    {% if aluno.foto_arquivo %}
-                                                    <img class="avatar-img"
-                                                    src="{{ url_for('auth.foto_perfil', aluno_id=aluno.id) }}"
-                                                    alt="">
-                                                    {% else %}
-                                                    {{ aluno.iniciais }}
-                                                    {% endif %}
-                                                    </span>
-                                                    <span>{{ aluno.nome }}</span>
-                                                </span>
-                                            </td>
-                                            <td data-label="Ação">
-                                                {% if eh_admin %}
-                                                <form action="/turmas/{{ turma.id }}/desmatricular/{{ aluno.id }}"
-                                                      method="POST">
-                    {% include "components/csrf_field.html" %}
-                                                    <button type="submit" class="btn btn-remover">Remover</button>
-                                                </form>
-                                                {% else %}
-                                                    <span class="sr-only">Sem ações administrativas</span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="2" class="empty-state">Nenhum aluno matriculado.</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                </section>
-                <section class="secao-pagamentos">
+                <span title="Alunos matriculados">{{ matriculados|length }}/{{ turma.limite_alunos }}<span class="sr-only"> alunos matriculados</span></span>
+            </div>
+            <section class="detail-section">
+                {% if eh_admin %}
                     <div class="section-title">
-                        <h2>Presença</h2>
-                        <p>Registre a presença dos alunos na aula do dia.</p>
+                        <h2>Matrícula</h2>
+                        <p>Vincule alunos a essa turma.</p>
                     </div>
-                    <form method="GET" action="/turmas/{{ turma.id }}" class="form-pagamento">
+                    <form action="/turmas/{{ turma.id }}/matricular"
+                          method="POST"
+                          class="form-pagamento"
+                          data-enviando>
+                        {% include "components/csrf_field.html" %}
                         <div class="grupo-input">
-                            <label for="data-aula">Data da aula</label>
-                            <input id="data-aula"
-                                   type="date"
-                                   name="data"
-                                   value="{{ data_aula.isoformat() }}">
+                            <label for="matricular-aluno">Aluno</label>
+                            <select id="matricular-aluno" name="aluno_id" required>
+                                <option value="">Selecione</option>
+                                {% for a in alunos_disponiveis %}
+                                    <option value="{{ a.id }}">{{ a.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-actions form-actions-inline">
+                            <button type="submit" class="button-primary btn-salvar" data-texto-enviando="Matriculando...">Matricular aluno</button>
                         </div>
                     </form>
-                    {% if not dia_valido %}
-                        <p class="msg" role="alert">Esta turma não tem aula neste dia da semana. Os dias de aula são: {{ turma.dias_semana|replace(',', ', ') }}.</p>
-                    {% elif not matriculados %}
-                        <p class="empty-state">Nenhum aluno matriculado nesta turma. Matricule alunos acima para registrar presença.</p>
-                    {% else %}
-                        <form action="/turmas/{{ turma.id }}/presenca" method="POST">
-                    {% include "components/csrf_field.html" %}
-                            <input type="hidden" name="data_aula" value="{{ data_aula.isoformat() }}">
-                            <div class="table-container table-stack tabela-presenca">
+                {% endif %}
+                <div class="et-tabela tabela-matriculados">
+                    <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Alunos matriculados">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Aluno</th>
+                                    <th scope="col">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for aluno in matriculados %}
+                                    <tr>
+                                        <td>
+                                            <span class="pessoa">
+                                                {{ avatar(aluno.nome, url_for('auth.foto_perfil', aluno_id=aluno.id) if aluno.foto_arquivo else '', 'sm') }}
+                                                <span>{{ aluno.nome }}</span>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if eh_admin %}
+                                                <div class="et-menu" data-menu>
+                                                    <button type="button"
+                                                            class="et-menu-botao"
+                                                            aria-haspopup="menu"
+                                                            aria-expanded="false"
+                                                            aria-controls="menu-aluno-{{ aluno.id }}"
+                                                            aria-label="Ações de {{ aluno.nome }}">
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                            <circle cx="12" cy="5" r="2"/>
+                                                            <circle cx="12" cy="12" r="2"/>
+                                                            <circle cx="12" cy="19" r="2"/>
+                                                        </svg>
+                                                    </button>
+                                                    <div class="et-menu-lista" role="menu" id="menu-aluno-{{ aluno.id }}" hidden>
+                                                        <a role="menuitem" href="{{ url_for('admin_blueprint.detalhes_usuario', cpf=aluno.cpf) }}">Ver aluno</a>
+                                                        <form action="/turmas/{{ turma.id }}/desmatricular/{{ aluno.id }}"
+                                                              method="POST"
+                                                              role="none"
+                                                              data-confirm-modal
+                                                              data-modal-variant="danger"
+                                                              data-modal-eyebrow="Desmatricular aluno"
+                                                              data-modal-title="Remover {{ aluno.nome }} da turma?"
+                                                              data-modal-message="O aluno não constará mais na lista de chamada desta turma."
+                                                              data-modal-confirm="Remover">
+                                                            {% include "components/csrf_field.html" %}
+                                                            <button type="submit" role="menuitem" class="et-menu-perigo">Remover</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span class="sr-only">Sem ações administrativas</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="2" class="empty-state">Nenhum aluno matriculado.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <section class="secao-pagamentos">
+                <div class="section-title">
+                    <h2>Presença</h2>
+                    <p>Registre a presença dos alunos na aula do dia.</p>
+                </div>
+                <form method="GET" action="/turmas/{{ turma.id }}" class="form-pagamento">
+                    <div class="grupo-input">
+                        <label for="data-aula">Data da aula</label>
+                        <input id="data-aula"
+                               type="date"
+                               name="data"
+                               value="{{ data_aula.isoformat() }}">
+                    </div>
+                </form>
+                {% if not dia_valido %}
+                    <p class="msg" role="alert">Esta turma não tem aula neste dia da semana. Os dias de aula são: {{ turma.dias_semana|replace(',', ', ') }}.</p>
+                {% elif not matriculados %}
+                    <p class="empty-state">Nenhum aluno matriculado nesta turma. Matricule alunos acima para registrar presença.</p>
+                {% else %}
+                    <form action="/turmas/{{ turma.id }}/presenca" method="POST" data-enviando>
+                        {% include "components/csrf_field.html" %}
+                        <input type="hidden" name="data_aula" value="{{ data_aula.isoformat() }}">
+                        <div class="et-tabela tabela-presenca">
+                            <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Chamada de presença">
                                 <table>
                                     <thead>
                                         <tr>
@@ -161,22 +162,14 @@
                                     <tbody>
                                         {% for aluno in matriculados %}
                                             <tr>
-                                                <td data-label="#" class="celula-ordem">{{ loop.index }}</td>
-                                                <td data-label="Aluno" class="celula-pessoa">
+                                                <td class="celula-ordem">{{ loop.index }}</td>
+                                                <td class="celula-pessoa">
                                                     <span class="pessoa">
-                                                        <span class="student-avatar">
-                                                        {% if aluno.foto_arquivo %}
-                                                        <img class="avatar-img"
-                                                        src="{{ url_for('auth.foto_perfil', aluno_id=aluno.id) }}"
-                                                        alt="">
-                                                        {% else %}
-                                                        {{ aluno.iniciais }}
-                                                        {% endif %}
-                                                        </span>
+                                                        {{ avatar(aluno.nome, url_for('auth.foto_perfil', aluno_id=aluno.id) if aluno.foto_arquivo else '', 'md') }}
                                                         <span>{{ aluno.nome }}</span>
                                                     </span>
                                                 </td>
-                                                <td data-label="Presente" class="celula-presenca">
+                                                <td class="celula-presenca">
                                                     <label class="marcar-presenca">
                                                         <input type="checkbox"
                                                                name="presente_{{ aluno.id }}"
@@ -189,18 +182,20 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="form-actions barra-salvar-presenca">
-                                <button type="submit" class="btn-salvar">
-                                    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12.5 2.8 2.8L16.5 9M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                                    Salvar presença
-                                </button>
-                            </div>
-                        </form>
-                    {% endif %}
-                </section>
-            </div>
-        </main>
-        {% include 'components/confirm_modal.html' %}
-        <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
-    </body>
-</html>
+                        </div>
+                        <div class="form-actions barra-salvar-presenca">
+                            <button type="submit" class="button-primary btn-salvar" data-texto-enviando="Salvando...">
+                                <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12.5 2.8 2.8L16.5 9M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                Salvar presença
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+            </section>
+        </div>
+    </main>
+{% endblock %}
+{% block fim_corpo %}
+    {% include 'components/confirm_modal.html' %}
+    <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+{% endblock %}

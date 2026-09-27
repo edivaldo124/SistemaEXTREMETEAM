@@ -23,10 +23,12 @@ from blueprints.gmail_oauth_bp import gmail_oauth_bp
 from modelos.academia import Academia
 from modelos.email_pendente import EmailPendente
 from modelos.professor import Professor
+from dao.planoDAO import PlanoDAO
 from modelos.sessao_revogada import SessaoRevogada  # noqa: F401  (registra a tabela no metadata)
 from modelos.gmail_conexao import GmailConexao  # noqa: F401
 from servicos import credenciais, fila_email, keep_alive
 from servicos.autorizacao import revogar_sessao_atual
+from servicos.planos import vitrine_planos
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
@@ -188,7 +190,68 @@ def erro_csrf(_erro):
     # em branco, devolve o próprio login com um token novo para a pessoa só reenviar.
     if request.endpoint == 'auth.pagina_login':
         return render_template('login.html', msg=mensagem), 400
-    return mensagem, 400
+    return _pagina_de_erro(
+        400, 'Sua sessão de segurança expirou',
+        'Por segurança, um formulário aberto há muito tempo deixa de valer. Volte à página e envie de novo.',
+        acao_href=_voltar_para_origem(), acao_texto='Voltar à página',
+    )
+
+
+def _quer_json():
+    """Rotas de API e chamadas feitas por fetch recebem JSON, nunca a página de erro."""
+    if request.path.startswith('/api/'):
+        return True
+    return request.accept_mimetypes.best_match(('text/html', 'application/json')) == 'application/json'
+
+
+def _voltar_para_origem():
+    # Só volta para uma página do próprio sistema; um Referer de outro domínio vira o início.
+    origem = request.referrer or ''
+    partes = urlsplit(origem)
+    if origem and partes.netloc == request.host and partes.path:
+        return partes.path + (f'?{partes.query}' if partes.query else '')
+    return '/'
+
+
+def _pagina_de_erro(codigo, titulo, texto, acao_href='', acao_texto=''):
+    if _quer_json():
+        return {'erro': texto}, codigo
+    return render_template(
+        'erro.html', codigo=codigo, titulo=titulo, texto=texto,
+        acao_href=acao_href, acao_texto=acao_texto,
+    ), codigo
+
+
+@app.errorhandler(404)
+def pagina_nao_encontrada(_erro):
+    return _pagina_de_erro(
+        404, 'Página não encontrada',
+        'O endereço pode ter mudado ou o link está incompleto. Confira o endereço ou volte para uma página conhecida.',
+    )
+
+
+@app.errorhandler(403)
+def acesso_negado(_erro):
+    return _pagina_de_erro(
+        403, 'Você não tem acesso a esta página',
+        'Ela pertence a outra conta ou a outra área do sistema. Se deveria ter acesso, entre de novo com a sua conta.',
+        acao_href='/login', acao_texto='Entrar de novo',
+    )
+
+
+@app.errorhandler(500)
+def erro_interno(_erro):
+    # A requisição pode ter falhado no meio de uma transação: sem o rollback, a própria
+    # página de erro (que consulta os contatos da academia) quebraria de novo.
+    db.session.rollback()
+    try:
+        return _pagina_de_erro(
+            500, 'Algo falhou do nosso lado',
+            'A falha foi registrada. Tente de novo em alguns instantes.',
+        )
+    except Exception:
+        app.logger.exception('Falha ao desenhar a página de erro 500.')
+        return 'Algo falhou do nosso lado. Tente de novo em alguns instantes.', 500
 
 
 @app.errorhandler(413)
@@ -237,7 +300,11 @@ fila_email.registrar_app(app)
 @app.route("/")
 def home():
     professores = Professor.query.filter_by(perfil_publico=True).order_by(Professor.nome).all()
-    return render_template("index.html", professores_publicos=professores)
+    # Aluno logado contrata pela própria área; visitante começa pelo cadastro. O fluxo de
+    # pagamento continua o mesmo: nada aqui cria cobrança.
+    url_matricula = '/perfil#planos' if session.get('tipo_usuario') == 'aluno' else '/cadastrar'
+    planos = vitrine_planos(PlanoDAO.listar_todos(), url_matricula)
+    return render_template("index.html", professores_publicos=professores, vitrine_planos=planos)
 
 
 @app.route("/health")

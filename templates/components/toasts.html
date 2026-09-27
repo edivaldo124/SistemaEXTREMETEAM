@@ -1,0 +1,22 @@
+{#- Avisos de flash() como toasts. Incluído por layouts/base.html em todas as páginas.
+    Erro usa role="alert" e só sai quando a pessoa fecha; os demais usam role="status"
+    e saem sozinhos (componentes.js), pausando enquanto o mouse ou o foco estão neles.
+    A região existe mesmo vazia: `window.etToast(texto, categoria)` põe avisos nela. -#}
+{%- set _icones = {
+    'erro': 'M12 8v5m0 3.5v.5M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
+    'aviso': 'M12 8v5m0 3.5v.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+    'sucesso': 'm7.5 12.5 3 3 6-7M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+    'info': 'M12 11v6m0-9.5V7M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+} -%}
+<div class="et-toasts" data-toasts>
+    {%- for categoria, mensagem in get_flashed_messages(with_categories=true) %}
+    {%- set tipo = categoria if categoria in _icones else 'info' %}
+    <div class="et-toast et-toast--{{ tipo }}" role="{{ 'alert' if tipo == 'erro' else 'status' }}" data-toast{% if tipo != 'erro' %} data-toast-some{% endif %}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ _icones[tipo] }}" /></svg>
+        <p>{{ mensagem }}</p>
+        <button type="button" class="et-toast-fechar" data-toast-fechar aria-label="Fechar aviso">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+    </div>
+    {%- endfor %}
+</div>

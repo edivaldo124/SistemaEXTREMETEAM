@@ -2,8 +2,12 @@
 .academia-editor { max-width:1000px; }
 .academia-editor .admin-intro > div { max-width:65ch; }
 
+/* Um grupo de configuração por aba (et-tabs); o cartão do grupo encosta na fila de abas. */
+.academia-abas { margin-top:var(--sp-6); }
+.academia-abas .et-tabs-painel { font-size:var(--fs-md); }
+
 .academia-editor .academia-form {
-  margin-top:var(--sp-6); padding:clamp(var(--sp-5),3vw,var(--sp-7));
+  margin-top:var(--sp-2); padding:clamp(var(--sp-5),3vw,var(--sp-7));
   border:1px solid var(--line); border-radius:var(--radius-lg);
   background:var(--surface); box-shadow:var(--shadow-card);
 }
@@ -18,7 +22,7 @@
 .academia-acoes { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-4); padding-bottom:var(--sp-6); }
 .academia-acoes span { color:var(--text-2); font-size:var(--fs-sm); }
 .mp-conexao {
-  margin-top:var(--sp-6); padding:clamp(var(--sp-5),3vw,var(--sp-7));
+  margin-top:var(--sp-2); padding:clamp(var(--sp-5),3vw,var(--sp-7));
   border:1px solid var(--line); border-radius:var(--radius-lg);
   background:var(--surface); box-shadow:var(--shadow-card);
 }

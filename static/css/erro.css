@@ -1,0 +1,38 @@
+/* Página de erro (templates/erro.html): um cartão escuro centralizado sobre o preto,
+   com o emblema, o código em Bebas e o estado vazio com o próximo passo. */
+
+body.erro-page { min-height:100vh; background:var(--et-black); color:var(--et-text-on-dark); }
+
+.erro-shell {
+  display:grid; place-items:center; min-height:100vh;
+  padding:var(--sp-6) var(--sp-4);
+}
+.erro-cartao {
+  display:flex; flex-direction:column; align-items:flex-start; gap:var(--sp-3);
+  width:min(100%, 480px); padding:var(--sp-8) var(--sp-6);
+  border:1px solid var(--et-line-dark); border-radius:var(--et-radius-card);
+  background:var(--et-surface-dark); box-shadow:var(--et-shadow-dark);
+}
+/* O emblema tem placa preta: sobre o cartão #161616 o lighten some com o retângulo. */
+.erro-emblema { display:inline-flex; }
+.erro-emblema img { width:72px; height:72px; mix-blend-mode:lighten; }
+.erro-emblema:focus-visible { outline:2px solid var(--focus-ink); outline-offset:4px; border-radius:var(--et-radius-control); }
+.erro-codigo {
+  margin:var(--sp-2) 0 0; color:var(--et-gold);
+  font-family:var(--et-font-display); font-size:clamp(64px, 14vw, 96px); line-height:.9; letter-spacing:.02em;
+}
+.erro-titulo {
+  margin:0; color:var(--et-text-on-dark);
+  font-family:var(--et-font-display); font-weight:400; font-size:clamp(30px, 6vw, 40px); line-height:1.05; letter-spacing:.02em;
+}
+/* O estado vazio é pensado para superfície clara; aqui ele vira texto sobre o escuro. */
+.erro-cartao .et-vazio { padding:0; border:0; background:none; gap:var(--sp-4); }
+.erro-cartao .et-vazio-titulo { color:var(--et-text-on-dark-muted); font-weight:400; line-height:1.6; }
+.erro-cartao .et-vazio .button-secondary { margin-top:0; }
+.erro-link-secundario { color:var(--et-text-on-dark-muted); font-size:var(--fs-sm); min-height:44px; display:inline-flex; align-items:center; }
+.erro-link-secundario:hover { color:var(--et-gold); }
+.erro-cartao .et-vazio .button-secondary {
+  border-color:var(--et-line-dark-strong); color:var(--et-text-on-dark); background:transparent;
+}
+.erro-cartao .et-vazio .button-secondary:hover { border-color:var(--et-gold); color:var(--et-gold); }
+.erro-cartao .et-vazio .button-secondary:focus-visible { outline:2px solid var(--focus-ink); outline-offset:2px; }

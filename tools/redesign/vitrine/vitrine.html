@@ -1,0 +1,52 @@
+{#- Vitrine dos componentes da etapa 2. Só é servida por tools/redesign/servir_visual.py.
+    Cada agente escreve a sua parte em _a.html / _b.html; aqui fica o que é do orquestrador. -#}
+{% extends "layouts/base.html" %}
+{% block titulo %}Vitrine de componentes | Extreme Team{% endblock %}
+{% block estilos %}
+    <style>
+        .vitrine { max-width:1120px; margin:0 auto; padding:var(--sp-8) var(--sp-4) var(--sp-10); display:grid; gap:var(--sp-8); }
+        .vitrine-secao { display:grid; gap:var(--sp-4); padding:var(--sp-6); border:1px solid var(--line); border-radius:var(--et-radius-card); background:var(--surface); }
+        .vitrine-secao > h2 { margin:0; font-family:var(--et-font-display); font-weight:400; font-size:32px; }
+        .vitrine-escuro { --focus-ink:var(--yellow); --focus-halo:rgba(253,207,23,.3); background:var(--et-black); color:var(--et-text-on-dark); border-color:var(--et-line-dark); }
+        .vitrine-linha { display:flex; flex-wrap:wrap; gap:var(--sp-3); align-items:center; }
+    </style>
+{% endblock %}
+{% block corpo %}
+    <main id="conteudo" class="vitrine">
+        <h1 class="page-title">Vitrine de componentes</h1>
+
+        <section class="vitrine-secao" id="toast">
+            <h2>Toast</h2>
+            <div class="vitrine-linha">
+                <button type="button" class="button-secondary" data-demo-toast="sucesso">Aviso de sucesso</button>
+                <button type="button" class="button-secondary" data-demo-toast="info">Informação</button>
+                <button type="button" class="button-secondary" data-demo-toast="aviso">Atenção</button>
+                <button type="button" class="button-secondary" data-demo-toast="erro">Erro (não some sozinho)</button>
+            </div>
+        </section>
+
+        <section class="vitrine-secao" id="carregando">
+            <h2>Botão com carregamento + toast de flash</h2>
+            <form method="post" action="/_vitrine/enviar" data-enviando class="vitrine-linha">
+                {% include "components/csrf_field.html" %}
+                <button type="submit" class="button-primary" data-texto-enviando="Enviando...">Enviar formulário</button>
+            </form>
+        </section>
+
+        {% include "_a.html" ignore missing %}
+        {% include "_b.html" ignore missing %}
+    </main>
+{% endblock %}
+{% block fim_corpo %}
+    <script nonce="{{ csp_nonce() }}">
+        document.querySelectorAll('[data-demo-toast]').forEach((botao) => {
+            const textos = {
+                sucesso: 'Plano salvo.',
+                info: 'O comprovante foi enviado para análise.',
+                aviso: 'Sua mensalidade vence em 3 dias.',
+                erro: 'Não foi possível remover o plano: há alunos matriculados nele.',
+            };
+            botao.addEventListener('click', () => window.etToast(textos[botao.dataset.demoToast], botao.dataset.demoToast));
+        });
+    </script>
+{% endblock %}

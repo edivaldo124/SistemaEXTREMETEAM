@@ -8,7 +8,8 @@
   padding:var(--sp-5);
 }
 .form-turma .field-wide { grid-column:1/-1; }
-.form-turma .btn-cadastrar { box-shadow:none; }
+.form-turma .btn-cadastrar,
+.form-turma .button-primary { box-shadow:none; }
 
 /* Dias da semana: cada dia é um alvo de toque próprio. */
 .dias-semana { display:flex; flex-wrap:wrap; gap:var(--sp-2); }
@@ -21,7 +22,7 @@
   transition:border-color .16s ease, background .16s ease;
 }
 .dias-semana .dia-opcao:hover { border-color:var(--text); }
-.dias-semana .dia-opcao:has(input:checked) { border-color:var(--text); background:var(--yellow); }
+.dias-semana .dia-opcao:has(input:checked) { border-color:var(--text); background:var(--et-gold); }
 .dias-semana .dia-opcao:has(input:focus-visible) {
   outline:2px solid var(--focus-ink); outline-offset:2px;
   box-shadow:0 0 0 5px var(--focus-halo);
@@ -36,6 +37,8 @@ fieldset.field > legend {
   color:var(--text); font-size:var(--fs-sm); font-weight:600;
 }
 .tabela-matriculados { margin-top:var(--sp-5); }
+.secao .et-tabela { margin-top:var(--sp-4); }
+.et-tabela .pessoa { display:inline-flex; align-items:center; gap:var(--sp-3); }
 
 /* ------------------------------------------------- registro de presença -- */
 /* Linhas altas, avatar grande e uma caixa de seleção que dá para acertar com
@@ -43,7 +46,6 @@ fieldset.field > legend {
 
 .tabela-presenca .coluna-ordem,.tabela-presenca .celula-ordem { width:52px; color:var(--text-2); text-align:center; }
 .tabela-presenca td { padding-block:var(--sp-3); }
-.tabela-presenca .student-avatar { width:44px; height:44px; font-size:18px; }
 .tabela-presenca .pessoa > span:last-child { font-size:var(--fs-md); font-weight:600; }
 .tabela-presenca .celula-presenca { width:88px; text-align:center; }
 
@@ -53,30 +55,32 @@ fieldset.field > legend {
   transition:background .16s ease;
 }
 .marcar-presenca:hover { background:var(--surface-2); }
-.marcar-presenca input { width:26px; height:26px; accent-color:var(--green); }
+.marcar-presenca input { width:26px; height:26px; accent-color:var(--et-ok-ink); }
 .marcar-presenca:has(input:focus-visible) {
   outline:2px solid var(--focus-ink); outline-offset:2px;
   box-shadow:0 0 0 5px var(--focus-halo);
 }
 /* A linha inteira muda de fundo quando o aluno está marcado: dá para conferir
    a chamada de relance, e o estado nunca depende só da cor da caixa. */
-.tabela-presenca tr:has(input:checked) td { background:#F1F8F4; }
+.tabela-presenca tr:has(input:checked) td { background:var(--et-ok-bg); }
 
 .barra-salvar-presenca { margin-top:var(--sp-5); }
-.barra-salvar-presenca .btn-salvar { min-height:54px; padding-inline:var(--sp-7); font-size:var(--fs-md); }
+.barra-salvar-presenca .btn-salvar,
+.barra-salvar-presenca .button-primary { min-height:54px; padding-inline:var(--sp-7); font-size:var(--fs-md); }
 
 @media (max-width:640px) {
   .tabela-presenca tbody tr {
     display:grid; grid-template-columns:auto 1fr auto; align-items:center;
     gap:0 var(--sp-3); padding:var(--sp-3) var(--sp-4);
   }
-  .tabela-presenca tbody tr:has(input:checked) { border-color:var(--green); background:#F1F8F4; }
+  .tabela-presenca tbody tr:has(input:checked) { border-color:var(--et-ok-ink); background:var(--et-ok-bg); }
   .tabela-presenca td,.tabela-presenca td + td { display:flex; padding:0; border:0; text-align:left; }
   .tabela-presenca td::before { content:none !important; }
   .tabela-presenca .celula-ordem { justify-content:center; font-size:var(--fs-xs); }
   .tabela-presenca .celula-presenca { width:auto; }
   .barra-salvar-presenca { position:sticky; bottom:var(--sp-3); z-index:5; }
-  .barra-salvar-presenca .btn-salvar { width:100%; box-shadow:var(--shadow-raised); }
+  .barra-salvar-presenca .btn-salvar,
+  .barra-salvar-presenca .button-primary { width:100%; box-shadow:var(--shadow-raised); }
 }
 @media (max-width:900px) {
   .form-turma { grid-template-columns:1fr 1fr; }
@@ -84,5 +88,6 @@ fieldset.field > legend {
 }
 @media (max-width:540px) {
   .form-turma { grid-template-columns:1fr; }
-  .form-turma .btn-cadastrar { width:100%; }
+  .form-turma .btn-cadastrar,
+  .form-turma .button-primary { width:100%; }
 }

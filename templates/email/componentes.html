@@ -1,0 +1,53 @@
+{#- Componentes seguros para e-mail. Cliente de e-mail não roda JS nem lê folha externa
+    (e o Gmail descarta boa parte do <style>): tudo aqui é tabela e estilo inline.
+    As cores são as de static/css/tokens.css copiadas em hex, porque e-mail não entende
+    var(--...): ouro #F5B914, preto #000000, texto #16181A / #4C5155, filete #D9D8D4,
+    e os pares fundo/tinta das situações (ok, alerta, erro, informação, neutro).
+    Uso: {% from "email/componentes.html" import botao, badge, cartao_resumo %} -#}
+
+{%- set _situacoes = {
+    'pago': ('#DFEEE7', '#14503A'), 'ativo': ('#DFEEE7', '#14503A'),
+    'pendente': ('#FBEFC6', '#5F4A00'), 'em_analise': ('#FBEFC6', '#5F4A00'),
+    'atrasado': ('#F7E1DD', '#7C2C22'), 'vencido': ('#F7E1DD', '#7C2C22'), 'recusado': ('#F7E1DD', '#7C2C22'),
+    'em_processamento': ('#DDE6F5', '#1A3E6C'), 'reembolsado': ('#DDE6F5', '#1A3E6C'),
+    'cancelado': ('#E4E2DC', '#41454A'),
+} -%}
+
+{#- Botão "à prova de Outlook": a célula carrega o fundo, o link ocupa a célula toda. -#}
+{% macro botao(url, texto) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 4px;">
+    <tr>
+        <td bgcolor="#F5B914" style="background:#F5B914;border-radius:8px;">
+            <a href="{{ url }}" style="display:inline-block;padding:14px 24px;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;line-height:1;text-decoration:none;border-radius:8px;">{{ texto or url }}</a>
+        </td>
+    </tr>
+</table>
+{%- endmacro %}
+
+{#- Etiqueta de situação: cor mais texto, nunca só cor. `estado` usa os mesmos nomes do
+    sistema (pago, pendente, atrasado, em_analise...). -#}
+{% macro badge(estado, rotulo) -%}
+{%- set cores = _situacoes.get(estado, ('#E4E2DC', '#41454A')) -%}
+<span style="display:inline-block;padding:4px 10px;background:{{ cores[0] }};color:{{ cores[1] }};font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;line-height:1.4;border-radius:999px;">{{ rotulo }}</span>
+{%- endmacro %}
+
+{#- Cartão de resumo de pagamento ou plano. `linhas` = [(rótulo, valor), ...] já formatados
+    (valores com |moeda, datas dd/mm/aaaa); `estado`/`rotulo_estado` opcionais viram badge. -#}
+{% macro cartao_resumo(titulo, linhas, estado='', rotulo_estado='') -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border:1px solid #D9D8D4;border-radius:8px;border-collapse:separate;">
+    <tr>
+        <td style="padding:16px 20px 8px;font-family:Arial,Helvetica,sans-serif;">
+            <span style="font-size:16px;font-weight:bold;color:#16181A;">{{ titulo }}</span>
+            {% if estado and rotulo_estado %}&nbsp; {{ badge(estado, rotulo_estado) }}{% endif %}
+        </td>
+    </tr>
+    {% for rotulo, valor in linhas %}
+    <tr>
+        <td style="padding:6px 20px{{ ' 16px' if loop.last }};font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;">
+            <span style="color:#4C5155;">{{ rotulo }}:</span>
+            <strong style="color:#16181A;">{{ valor }}</strong>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{%- endmacro %}
