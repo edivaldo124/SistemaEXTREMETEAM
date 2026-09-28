@@ -27,7 +27,7 @@ from modelos.professor import Professor
 from dao.planoDAO import PlanoDAO
 from modelos.sessao_revogada import SessaoRevogada  # noqa: F401  (registra a tabela no metadata)
 from modelos.gmail_conexao import GmailConexao  # noqa: F401
-from servicos import conteudo_home, credenciais, fila_email, keep_alive, seo
+from servicos import analytics, conteudo_home, credenciais, fila_email, keep_alive, seo
 from servicos.autorizacao import revogar_sessao_atual
 from servicos.planos import vitrine_planos
 
@@ -113,6 +113,8 @@ if not credenciais.admin_configurado():
         '"python -m servicos.credenciais").'
     )
 
+analytics.validar_configuracao()
+
 database_url = os.environ.get('DATABASE_URL')
 if not database_url:
     raise RuntimeError('A variavel de ambiente DATABASE_URL e obrigatoria.')
@@ -144,6 +146,8 @@ app.jinja_env.globals.update(
     url_canonica=seo.url_canonica,
     pagina_indexavel=seo.pagina_indexavel,
     url_estatico_absoluta=seo.url_estatico,
+    analytics_ativo=analytics.analytics_ativo,
+    id_analytics=analytics.id_analytics,
 )
 
 app.register_blueprint(auth_bp)
@@ -165,6 +169,12 @@ def contatos_da_academia():
 @app.after_request
 def adicionar_cabecalhos_de_seguranca(resposta):
     nonce = getattr(g, 'csp_nonce', '')
+    # Os domínios do GA4 só entram quando esta resposta pode carregá-lo (ANALYTICS_ID
+    # definida, visitante, página pública); em qualquer outra a política é a de sempre.
+    ga = analytics.analytics_ativo()
+    script_ga = f' {analytics.CSP_SCRIPT}' if ga else ''
+    img_ga = f' {analytics.CSP_IMG}' if ga else ''
+    connect_ga = f' {analytics.CSP_CONNECT}' if ga else ''
     resposta.headers.setdefault('X-Content-Type-Options', 'nosniff')
     resposta.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
     resposta.headers.setdefault('Referrer-Policy', 'same-origin')
@@ -172,11 +182,11 @@ def adicionar_cabecalhos_de_seguranca(resposta):
     resposta.headers.setdefault(
         'Content-Security-Policy',
         "default-src 'self'; "
-        f"script-src 'self' 'nonce-{nonce}'; "
+        f"script-src 'self' 'nonce-{nonce}'{script_ga}; "
         "script-src-attr 'none'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
+        f"img-src 'self' data:{img_ga}; connect-src 'self'{connect_ga}; object-src 'none'; "
         "base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
     )
     if enviar_hsts:

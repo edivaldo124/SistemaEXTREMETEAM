@@ -123,6 +123,7 @@ docker compose up --build     # app + Caddy (HTTPS)
 ```bash
 pip install -r requirements-dev.txt
 pytest
+node --test tests/js/*.test.cjs   # scripts do navegador (Node 20+)
 ```
 
 Os testes forçam um banco SQLite temporário isolado (configurado em `tests/conftest.py`) e nunca chamam a API real do Mercado Pago: o SDK é mockado. A configuração de teste substitui qualquer `DATABASE_URL` presente no shell para impedir acesso acidental ao banco real.
@@ -240,6 +241,47 @@ Use a origem HTTPS real do serviço, sem caminho. Salve e faça o deploy para ap
 Nos logs, procure `Keep-alive falhou`, `Keep-alive recebeu HTTP` ou `Keep-alive desligado`.
 O Render documenta a hibernação após 15 minutos sem tráfego de entrada e a possibilidade
 de reiniciar instâncias gratuitas: https://render.com/docs/free.
+
+## Google Analytics 4 (opcional, com consentimento)
+
+Desligado por padrão. Com `ANALYTICS_ID` vazia nada é carregado e a CSP não muda.
+
+Para ligar, crie uma propriedade GA4 com um fluxo de dados **Web** para o domínio da
+academia e copie o **ID de medição** (`G-XXXXXXXXXX`) para o `.env` (ou para o painel da
+hospedagem):
+
+```env
+ANALYTICS_ID=G-XXXXXXXXXX
+```
+
+Um valor em outro formato (Universal Analytics `UA-…`, contêiner `GTM-…`) derruba a
+subida da aplicação, como as demais variáveis obrigatórias.
+
+O que acontece com o ID definido:
+
+- **Onde carrega:** só nas páginas públicas indexáveis (início, cadastro, entrar, recuperar
+  senha, termos e política) e na página de obrigado do cadastro, e só para quem **não**
+  está logado. Área do aluno, do professor e da administração, links com token
+  (`/recuperar_senha/<token>`, `/ativar-acesso/<token>`) e páginas de erro nunca carregam.
+- **Consentimento (LGPD):** as páginas mostram um aviso de cookies. O `gtag.js` só é
+  baixado depois do **Aceitar**; antes disso nada vai para o Google. "Recusar" tem o mesmo
+  peso visual. A escolha fica no navegador e pode ser trocada em **Preferências de
+  cookies** (rodapé da home) ou na seção 7 da política de privacidade; recusar apaga os
+  cookies `_ga`.
+- **Sem dado pessoal:** o endereço é enviado sem query string, a origem só com o domínio,
+  sinais do Google e personalização de anúncios ficam desligados. Nenhum nome, CPF,
+  e-mail, telefone ou ID de conta vai em URL ou evento.
+- **Conversão:** o evento recomendado `sign_up` sai uma vez na página de obrigado, no
+  primeiro acesso depois de um cadastro público (recarregar ou abrir o endereço direto
+  não conta). Marque-o como **evento principal** (conversão) no painel do GA4.
+- **CSP:** os domínios `*.googletagmanager.com`, `*.google-analytics.com` e
+  `*.analytics.google.com` entram na política **somente** nas respostas que podem
+  carregar o GA4.
+
+No painel do GA4, recomenda-se ainda: **Administrador → Coleta e retenção de dados →
+Retenção de dados** em **2 meses**, e deixar **Sinais do Google** desligado. A seção 7 da
+política de privacidade (`templates/politica_privacidade.html`) descreve essa coleta; se
+mudar a configuração, atualize o texto.
 
 ## Pagamento de mensalidade via Pix (Mercado Pago)
 

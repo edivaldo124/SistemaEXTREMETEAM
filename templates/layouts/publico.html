@@ -37,4 +37,6 @@
     {% block cabecalho %}{% include "components/cabecalho_publico.html" %}{% endblock %}
     {% block conteudo %}{% endblock %}
     {% block rodape %}{% include "components/rodape_publico.html" %}{% endblock %}
+    {#- GA4 opcional: só com ANALYTICS_ID, visitante e página pública (servicos/analytics.py). -#}
+    {% if analytics_ativo() %}{% include "components/consentimento_analytics.html" %}{% endif %}
 {% endblock %}

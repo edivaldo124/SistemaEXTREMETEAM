@@ -32,6 +32,7 @@
                     <li><a href="#secao-4">4. Compartilhamento</a></li>
                     <li><a href="#secao-5">5. Segurança e retenção</a></li>
                     <li><a href="#secao-6">6. Direitos e contato</a></li>
+                    <li><a href="#secao-7">7. Cookies e medição de audiência</a></li>
                 </ol>
             </nav>
 
@@ -61,7 +62,7 @@
             <details class="et-acordeao" id="secao-4" open>
                 <summary><h2>4. Compartilhamento</h2></summary>
                 <div class="et-acordeao-corpo">
-                    <p>Não vendemos dados pessoais. Os dados podem ser enviados a prestadores necessários ao funcionamento do serviço, como provedores de hospedagem, banco de dados, pagamentos e envio de e-mails, sempre conforme a finalidade da operação.</p>
+                    <p>Não vendemos dados pessoais. Os dados podem ser enviados a prestadores necessários ao funcionamento do serviço, como provedores de hospedagem, banco de dados, pagamentos e envio de e-mails, sempre conforme a finalidade da operação. Com o seu consentimento, dados de navegação das páginas públicas também vão para o Google Analytics (ver seção 7).</p>
                 </div>
             </details>
             <details class="et-acordeao" id="secao-5" open>
@@ -74,6 +75,20 @@
                 <summary><h2>6. Direitos e contato</h2></summary>
                 <div class="et-acordeao-corpo">
                     <p>Para solicitar acesso, correção, exclusão ou esclarecimentos sobre seus dados, entre em contato com a administração da academia pelo endereço informado no sistema.</p>
+                </div>
+            </details>
+
+            <details class="et-acordeao" id="secao-7" open>
+                <summary><h2>7. Cookies e medição de audiência</h2></summary>
+                <div class="et-acordeao-corpo">
+                    <p>As páginas públicas do site (início, cadastro, entrar, recuperar senha e estes documentos) podem usar o Google Analytics 4, do Google, para contar visitas e entender quais páginas ajudam as pessoas a conhecer a academia. <strong>Ele só é ativado se você clicar em "Aceitar" no aviso de cookies</strong>; antes disso, nenhum script do Google é carregado. A área do aluno, a do professor e a da administração nunca carregam o Analytics.</p>
+                    <p><strong>O que é coletado:</strong> as páginas visitadas (sem os parâmetros do endereço), o domínio de onde você veio, o tipo de aparelho e de navegador, a localização aproximada que o Google deduz da conexão e o aviso de que um cadastro foi concluído. Nome, CPF, e-mail, telefone e identificadores da sua conta nunca são enviados. Os recursos de publicidade e os sinais do Google ficam desligados.</p>
+                    <p><strong>Cookies:</strong> <code>_ga</code> e <code>_ga_&lt;id&gt;</code>, gravados no seu navegador para distinguir uma visita da outra. A sua escolha no aviso fica guardada só neste navegador.</p>
+                    <p><strong>Base legal, retenção e transferência:</strong> consentimento (art. 7º, I, da LGPD). Os dados de cada visita ficam no Google Analytics pelo prazo configurado pela academia (2 ou 14 meses; relatórios agregados, sem identificação, podem ficar por mais tempo) e são tratados pelo Google, que pode armazená-los fora do Brasil conforme a <a href="https://policies.google.com/privacy">política de privacidade do Google</a>.</p>
+                    <p><strong>Como mudar de ideia:</strong> use "Preferências de cookies", no rodapé da página inicial{% if analytics_ativo() %}, ou o botão abaixo{% endif %}. Ao recusar, a coleta para e os cookies do Analytics são apagados deste navegador.</p>
+                    {% if analytics_ativo() %}
+                        <p><button type="button" class="button-secondary" data-consentimento-abrir>Rever minha escolha</button></p>
+                    {% endif %}
                 </div>
             </details>
 

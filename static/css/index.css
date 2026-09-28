@@ -596,13 +596,24 @@
   gap: var(--sp-2) var(--sp-5);
 }
 
-.footer-legal a {
+.footer-legal a,
+.footer-cookies {
   color: var(--et-text-on-dark-muted);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.footer-legal a:hover {
+/* Botão (abre o aviso de cookies) com cara de link, como os vizinhos. */
+.footer-cookies {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.footer-legal a:hover,
+.footer-cookies:hover {
   color: var(--et-text-on-dark);
 }
 
