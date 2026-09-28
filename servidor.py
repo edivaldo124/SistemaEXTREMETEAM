@@ -20,13 +20,14 @@ from blueprints.checkout_bp import checkout_bp
 from blueprints.academia_bp import academia_bp
 from blueprints.mercado_pago_oauth_bp import mercado_pago_oauth_bp
 from blueprints.gmail_oauth_bp import gmail_oauth_bp
+from blueprints.seo_bp import seo_bp
 from modelos.academia import Academia
 from modelos.email_pendente import EmailPendente
 from modelos.professor import Professor
 from dao.planoDAO import PlanoDAO
 from modelos.sessao_revogada import SessaoRevogada  # noqa: F401  (registra a tabela no metadata)
 from modelos.gmail_conexao import GmailConexao  # noqa: F401
-from servicos import credenciais, fila_email, keep_alive
+from servicos import credenciais, fila_email, keep_alive, seo
 from servicos.autorizacao import revogar_sessao_atual
 from servicos.planos import vitrine_planos
 
@@ -138,6 +139,12 @@ from servicos.formatacao import formatar_moeda, rotulo_forma_pagamento
 
 app.jinja_env.filters['moeda'] = formatar_moeda
 app.jinja_env.filters['forma_pagamento'] = rotulo_forma_pagamento
+# URLs absolutas das meta tags (canonical, Open Graph) e do JSON-LD da home.
+app.jinja_env.globals.update(
+    url_canonica=seo.url_canonica,
+    pagina_indexavel=seo.pagina_indexavel,
+    url_estatico_absoluta=seo.url_estatico,
+)
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
@@ -147,6 +154,7 @@ app.register_blueprint(checkout_bp)
 app.register_blueprint(academia_bp)
 app.register_blueprint(mercado_pago_oauth_bp)
 app.register_blueprint(gmail_oauth_bp)
+app.register_blueprint(seo_bp)
 
 
 @app.context_processor
@@ -304,7 +312,10 @@ def home():
     # pagamento continua o mesmo: nada aqui cria cobrança.
     url_matricula = '/perfil#planos' if session.get('tipo_usuario') == 'aluno' else '/cadastrar'
     planos = vitrine_planos(PlanoDAO.listar_todos(), url_matricula)
-    return render_template("index.html", professores_publicos=professores, vitrine_planos=planos)
+    return render_template(
+        "index.html", professores_publicos=professores, vitrine_planos=planos,
+        dados_estruturados=seo.dados_estruturados_academia(db.session.get(Academia, 1)),
+    )
 
 
 @app.route("/health")

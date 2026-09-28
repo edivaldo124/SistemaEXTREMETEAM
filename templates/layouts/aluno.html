@@ -1,6 +1,8 @@
 {#- Área do aluno. A tela principal (/perfil) troca o cabeçalho pelo dela; as telas de
     detalhe (pagamento, comprovante, checkout) usam o cabeçalho com "Voltar". -#}
 {% extends "layouts/base.html" %}
+{#- Área autenticada: fora dos buscadores. -#}
+{% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 {% block corpo %}
     {% block cabecalho %}{% include "components/detail_back_header.html" %}{% endblock %}
     {% block conteudo %}{% endblock %}

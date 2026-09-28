@@ -7,6 +7,7 @@
 {% from "components/ui.html" import estado_vazio with context %}
 {% set _areas = {'admin': ('/admin', 'Ir para o painel'), 'aluno': ('/perfil', 'Ir para minha área'), 'professor': ('/professor', 'Ir para minhas turmas')} %}
 {% set _area = _areas.get(session.get('tipo_usuario'), ('/', 'Voltar ao início')) %}
+{% set indexavel = false %}
 {% block titulo %}{{ titulo }} | Extreme Team{% endblock %}
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/erro.css') }}">
