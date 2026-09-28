@@ -324,7 +324,9 @@ def test_cadastro_publico_nao_revela_cpf_nem_email_ja_cadastrados(client, criar_
     cpf_repetido = _cadastro_publico(client, cpfusuario=existente.cpf, loginusuario='outro-1', emailusuario='a@example.com')
     email_repetido = _cadastro_publico(client, cpfusuario='390.533.447-05', loginusuario='outro-2', emailusuario=existente.email)
 
-    assert novo.status_code == cpf_repetido.status_code == email_repetido.status_code == 200
+    # Os três terminam no mesmo redirecionamento (PRG), sem nada do cadastro na URL.
+    assert novo.status_code == cpf_repetido.status_code == email_repetido.status_code == 302
+    assert novo.location == cpf_repetido.location == email_repetido.location == '/cadastro/obrigado'
     assert _mensagem_da_resposta(novo) == _mensagem_da_resposta(cpf_repetido) == _mensagem_da_resposta(email_repetido)
 
 

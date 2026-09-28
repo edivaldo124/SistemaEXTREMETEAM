@@ -431,7 +431,8 @@ def test_cadastro_publico_sem_conflito_continua_criando_a_conta(client, capturar
         'descricaousuario': '', 'aceite_termos_responsabilidade': 'aceito',
     })
 
-    assert resposta.status_code == 200
+    assert resposta.status_code == 302
+    assert resposta.location == '/cadastro/obrigado'
     aluno = AlunoDAO.buscar_por_cpf('529.982.247-25')
     assert aluno.acesso_ativado is True
     assert aluno.status_cadastro == 'pendente'

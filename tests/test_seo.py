@@ -39,9 +39,9 @@ def _robots(client):
     return parser
 
 
-def _json_ld(html):
+def _json_ld(html, tipo='ExerciseGym'):
     blocos = re.findall(r'<script type="application/ld\+json"[^>]*>(.*?)</script>', html, re.S)
-    return [json.loads(bloco) for bloco in blocos]
+    return [dados for dados in map(json.loads, blocos) if dados['@type'] == tipo]
 
 
 def _sem_vazios(valor, caminho='raiz'):
@@ -275,7 +275,8 @@ def test_json_ld_nao_deixa_texto_do_painel_fechar_o_script(client, contexto_app)
 def test_json_ld_leva_o_nonce_da_csp(client):
     resposta = client.get('/')
     nonce = re.search(r"'nonce-([^']+)'", resposta.headers['Content-Security-Policy']).group(1)
-    assert f'<script type="application/ld+json" nonce="{nonce}">' in resposta.get_data(as_text=True)
+    html = resposta.get_data(as_text=True)
+    assert html.count('<script type="application/ld+json"') == html.count(f'<script type="application/ld+json" nonce="{nonce}">') == 2
 
 
 def test_dados_estruturados_sem_academia(app):

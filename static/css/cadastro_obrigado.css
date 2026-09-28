@@ -1,0 +1,71 @@
+/* =========================================================================
+   Extreme Team - Página de obrigado do cadastro (/cadastro/obrigado)
+   Cartão de acesso (auth.css + recuperar.css); aqui só os passos e as ações.
+   ========================================================================= */
+
+.obrigado-passos {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0 0 var(--sp-7);
+  padding: 0;
+  list-style: none;
+  counter-reset: passo;
+}
+
+.obrigado-passos li {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  column-gap: var(--sp-3);
+  counter-increment: passo;
+}
+
+.obrigado-passos li::before {
+  content: counter(passo);
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--et-black);
+  background: var(--et-gold);
+  font-family: var(--et-font-display);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.obrigado-passos strong {
+  padding-top: 5px;
+  color: var(--et-text-on-dark);
+  font-size: var(--fs-sm);
+}
+
+.obrigado-passos span {
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.obrigado-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-5);
+}
+
+.obrigado-acoes .back-link {
+  margin: 0;
+}
+
+.obrigado-contato {
+  margin: var(--sp-6) 0 0;
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.obrigado-contato a {
+  color: var(--et-gold);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}

@@ -5,7 +5,11 @@
     <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
     {# `tojson` escapa <, > e &: um texto do painel não fecha a tag <script>. #}
     <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ dados_estruturados|tojson }}</script>
+    <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ faq_estruturado|tojson }}</script>
 {% endblock %}
+{#- Visitante ganha a barra fixa de conversão no celular; quem já entrou, não. -#}
+{% set mostrar_cta_fixo = not session.get('tipo_usuario') %}
+{% block atributos_body %}{% if mostrar_cta_fixo %} class="has-cta-fixo"{% endif %}{% endblock %}
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/contatos.css') }}">
@@ -149,8 +153,33 @@
                 </div>
             </section>
         {% endif %}
+        {# Perguntas e respostas: servicos/conteudo_home.py (a mesma lista vira o JSON-LD). #}
+        <section class="home-faq" id="duvidas" aria-labelledby="duvidas-titulo">
+            <div class="home-secao-cabeca">
+                <h2 id="duvidas-titulo">Dúvidas frequentes</h2>
+                <p>O que as pessoas mais perguntam antes do primeiro treino.</p>
+            </div>
+            <div class="home-faq-lista">
+                {% for item in perguntas_frequentes %}
+                    <details class="et-acordeao" id="duvida-{{ loop.index }}">
+                        <summary><h3>{{ item.pergunta }}</h3></summary>
+                        <div class="et-acordeao-corpo">
+                            <p>{{ item.resposta }}</p>
+                        </div>
+                    </details>
+                {% endfor %}
+            </div>
+            {% if academia and academia.whatsapp_url %}
+                <p class="home-faq-contato">
+                    Não achou sua dúvida?
+                    <a href="{{ academia.whatsapp_url }}" target="_blank" rel="noopener noreferrer">Chame no WhatsApp<span class="sr-only"> (abre em nova aba)</span></a>:
+                    respondemos {{ tempo_resposta_whatsapp }}.
+                </p>
+            {% endif %}
+        </section>
         {% include 'components/contatos_academia.html' %}
     </main>
+    {% if mostrar_cta_fixo %}{% include 'components/cta_fixo.html' %}{% endif %}
 {% endblock %}
 {% block fim_corpo %}
     <div id="meuModal"
