@@ -50,7 +50,7 @@ from servicos.armazenamento import (
     salvar_comprovante_manual,
     salvar_foto_perfil,
 )
-from servicos import conteudo_home, convites, fila_email
+from servicos import analytics, conteudo_home, convites, fila_email
 from servicos import planos as regras_plano
 from servicos.formatacao import (
     cpf_valido,
@@ -213,7 +213,9 @@ def _cadastro_recebido():
     Cadastro novo, CPF já cadastrado e e-mail já cadastrado terminam aqui, no MESMO
     redirecionamento e sem nada na URL: a resposta não diz se o CPF ou o e-mail existem.
     A página explica os dois caminhos ("análise" ou "instruções de acesso") por e-mail.
+    A marca de conversão do analytics também é igual nos três.
     """
+    analytics.marcar_conversao_cadastro()
     return redirect(url_for('auth.cadastro_obrigado'))
 
 
@@ -388,9 +390,14 @@ def pagina_cadastro():
 
 @auth_bp.route('/cadastro/obrigado')
 def cadastro_obrigado():
-    # Não mostra nada do cadastro: a página é a mesma para qualquer visitante.
+    # Não mostra nada do cadastro: a página é a mesma para qualquer visitante. O evento
+    # de conversão só sai no primeiro GET depois do cadastro, nunca num recarregamento
+    # nem em quem abre o endereço direto.
     return render_template(
         'cadastro_obrigado.html', prazo_analise=conteudo_home.PRAZO_ANALISE_CADASTRO,
+        evento_conversao=(
+            analytics.EVENTO_CONVERSAO_CADASTRO if analytics.consumir_conversao_cadastro() else ''
+        ),
     )
 
 

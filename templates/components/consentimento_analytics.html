@@ -1,0 +1,24 @@
+{#- Aviso de cookies do Google Analytics (servicos/analytics.py). Incluído pelo layout
+    público só quando analytics_ativo(): ANALYTICS_ID definida, visitante e página
+    pública. Nasce escondido; static/js/analytics.js mostra se ainda não há escolha
+    neste navegador e só baixa o gtag.js depois do "Aceitar". Os dois botões têm o
+    mesmo peso visual de propósito: recusar precisa ser tão fácil quanto aceitar. -#}
+<section class="et-consentimento" data-consentimento aria-labelledby="consentimento-titulo" hidden>
+    <div class="et-consentimento-texto">
+        <h2 id="consentimento-titulo">Cookies de medição</h2>
+        <p>
+            Com a sua permissão, usamos o Google Analytics para saber quais páginas são mais visitadas.
+            Nome, CPF e e-mail nunca são enviados.
+            <a href="{{ url_for('auth.politica_privacidade') }}#secao-7">Saiba mais</a>
+        </p>
+    </div>
+    <div class="et-consentimento-acoes">
+        <button type="button" class="button-secondary" data-consentimento-recusar>Recusar</button>
+        <button type="button" class="button-secondary" data-consentimento-aceitar>Aceitar</button>
+    </div>
+</section>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"
+        nonce="{{ csp_nonce() }}"
+        data-analytics-id="{{ id_analytics() }}"
+        data-evento="{{ evento_conversao|default('') }}"
+        defer></script>

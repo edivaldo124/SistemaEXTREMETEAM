@@ -64,6 +64,8 @@ services:
       MERCADO_PAGO_AMBIENTE: ${MERCADO_PAGO_AMBIENTE:-}
       KEEP_ALIVE: ${KEEP_ALIVE:-false}
       KEEP_ALIVE_INTERVALO: ${KEEP_ALIVE_INTERVALO:-}
+      # Opcional: GA4 só em página pública e com consentimento (README).
+      ANALYTICS_ID: ${ANALYTICS_ID:-}
       UPLOAD_DIR: /app/uploads
     volumes:
       # Fotos de perfil e comprovantes manuais - o filesystem do container é

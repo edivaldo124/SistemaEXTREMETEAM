@@ -146,6 +146,40 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   .et-cta-fixo { display:none !important; }
 }
 
+/* ------------------------------------------------ aviso de cookies (GA4) -- */
+/* Cartão escuro preso ao pé da tela até a pessoa escolher. Fica acima da barra de
+   CTA quando as duas existem e abaixo do modal de login. Os dois botões têm o mesmo
+   peso: recusar é tão fácil quanto aceitar. */
+
+.et-consentimento {
+  position:fixed; z-index:45; left:var(--sp-3); right:var(--sp-3);
+  bottom:calc(var(--sp-3) + var(--safe-b, 0px));
+  display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3) var(--sp-5);
+  max-width:760px; margin:0 auto;
+  padding:var(--sp-4) var(--sp-5);
+  border:1px solid var(--et-line-dark); border-radius:var(--et-radius-card);
+  color:var(--et-text-on-dark); background:var(--et-surface-dark-2);
+  box-shadow:var(--et-shadow-dark);
+}
+.et-consentimento[hidden] { display:none; }
+.et-consentimento-texto { flex:1 1 320px; min-width:0; }
+.et-consentimento h2 { margin:0 0 var(--sp-1); font-size:var(--fs-sm); font-weight:700; }
+.et-consentimento p { margin:0; color:var(--et-text-on-dark-muted); font-size:var(--fs-sm); line-height:1.5; }
+.et-consentimento a { color:var(--et-gold); font-weight:600; text-underline-offset:3px; }
+.et-consentimento-acoes { display:flex; flex:1 1 220px; gap:var(--sp-2); }
+.et-consentimento-acoes .button-secondary {
+  flex:1 1 0; min-height:44px;
+  border-color:var(--et-line-dark); color:var(--et-text-on-dark); background:transparent;
+}
+.et-consentimento-acoes .button-secondary:hover { border-color:var(--et-text-on-dark); background:rgba(255,255,255,.06); }
+
+@media (max-width:768px) {
+  body.has-cta-fixo .et-consentimento { bottom:calc(92px + var(--safe-b, 0px)); }
+}
+@media print {
+  .et-consentimento { display:none !important; }
+}
+
 /* =========================================================================
    Componentes de dados: avatar, linha do tempo, breadcrumb, cartão de plano.
    Macros em templates/components/{avatar,linha_tempo,breadcrumb,cartao_plano}.html.
