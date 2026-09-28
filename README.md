@@ -14,9 +14,21 @@ cp .env.example .env
 ```
 
 As imagens de produção instalam `requirements.lock`, gerado a partir de
-`requirements.txt` com hashes das dependências transitivas. Ao atualizar dependências,
-regenere o lockfile com `pip-compile --generate-hashes --output-file=requirements.lock requirements.txt`
-e rode `pip-audit -r requirements.lock`.
+`requirements.txt` com hashes das dependências transitivas (`pip install --require-hashes`
+no `Dockerfile`). Ao atualizar dependências, regenere o lockfile **com o mesmo Python do
+`Dockerfile`** (3.11): gerado noutra versão ele pode deixar de fora dependências que só
+valem nela (o `greenlet` do SQLAlchemy é exigido abaixo do Python 3.13) e a imagem não
+instala.
+
+```bash
+docker run --rm -v "$PWD":/src -w /src python:3.11.16-slim-bookworm sh -c \
+  "pip install -q pip-tools==7.6.1 && pip-compile --generate-hashes --output-file=requirements.lock requirements.txt"
+pip-audit -r requirements.lock
+docker build --target builder .   # confere que o lock instala com --require-hashes
+```
+
+O Dependabot (`.github/dependabot.yml`) abre PRs que mudam só o `requirements.txt`; em
+cada um, regenere o lock com o comando acima antes do merge.
 
 Edite o `.env` e preencha pelo menos: `DATABASE_URL`, `SECRET_KEY`, `ADMIN_USER`, `ADMIN_PASSWORD_HASH`. O arquivo `.env` nunca deve ser commitado (já está no `.gitignore`).
 `SECRET_KEY` deve ter pelo menos 32 caracteres aleatórios. Em produção, mantenha
@@ -83,30 +95,89 @@ não contra apagar um registro por engano, contra uma migration malfeita nem con
 perda da máquina. O mesmo vale para `uploads_data`, que guarda comprovantes de pagamento
 e fotos de alunos.
 
-Se você já tem uma rotina de backup fora deste repositório (snapshot do provedor,
-backup gerenciado do banco), mantenha-a e confira apenas a parte de **restauração**: um
-backup nunca testado não é um backup. Se não tem, os comandos abaixo cobrem o mínimo.
+#### Backup automático (serviço `backup` do compose)
 
-Gerar:
+O `compose.yaml` sobe o serviço `backup` (imagem `postgres:17-alpine`, a mesma versão do
+banco). Todo dia em `BACKUP_HORA` (padrão `03:30`, fuso `America/Sao_Paulo`) ele roda
+[tools/backup/backup.sh](tools/backup/backup.sh), que grava no volume `backups_data`:
 
-```bash
-# Banco (formato custom, restaura seletivamente e comprime)
-docker compose exec -T db pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB" > backup-$(date +%F).dump
-
-# Uploads (comprovantes e fotos)
-docker run --rm -v sistemaextremeteam_uploads_data:/dados -v "$PWD":/saida alpine \
-  tar czf /saida/uploads-$(date +%F).tar.gz -C /dados .
+```
+/backups/
+  diarios/2026-09-27_033000/   banco.dump (pg_dump -Fc -Z9) + uploads.tar.gz
+  semanais/2026-S39/           cópia do primeiro backup de cada semana ISO
+  ULTIMO_BACKUP_OK             data do último backup concluído
 ```
 
-Restaurar — **sempre num banco descartável primeiro**, nunca direto em produção:
+- **Retenção:** 7 diários e 4 semanais (`BACKUP_DIARIOS`/`BACKUP_SEMANAIS` no `.env`).
+- **Nunca pela metade:** o backup é montado numa pasta provisória e só ganha o nome final
+  depois que o `pg_restore --list` relê o dump. Uma falha fica no log
+  (`docker compose logs backup`) e o serviço tenta de novo no dia seguinte.
+- **Uploads** entram no mesmo backup, lidos de um volume montado só para leitura. Os
+  arquivos ficam com permissão só do dono (`umask 077`).
+
+Rodar um backup agora (por exemplo, antes de uma migration) e listar o que existe:
 
 ```bash
-createdb restauracao_teste
-pg_restore -d restauracao_teste --clean --if-exists backup-2026-09-12.dump
+docker compose exec backup sh /scripts/backup.sh
+docker compose exec backup ls -R /backups
 ```
 
-Guarde as cópias fora da máquina que roda a aplicação e confira periodicamente que uma
-restauração completa funciona de ponta a ponta.
+**O volume `backups_data` fica no mesmo disco da aplicação.** Ele cobre erro humano e
+migration ruim, não a perda da máquina. Copie os backups para fora com regularidade, por
+exemplo:
+
+```bash
+docker run --rm -v sistemaextremeteam_backups_data:/backups:ro -v "$PWD":/saida alpine \
+  tar czf /saida/backups-$(date +%F).tar.gz -C /backups .
+```
+
+(o prefixo `sistemaextremeteam_` é o nome do projeto do compose; confira com
+`docker volume ls`). Guarde a cópia num lugar que não dependa desta máquina.
+
+#### Restauração
+
+[tools/backup/restaurar.sh](tools/backup/restaurar.sh) restaura o `banco.dump` numa
+transação só (ou tudo, ou nada) e, se pedido, extrai os uploads. O banco de destino é
+sempre explícito, e restaurar por cima do banco em uso exige `CONFIRMAR=sim`.
+
+**1. Sempre primeiro num banco descartável** (não mexe em nada do que está no ar):
+
+```bash
+# escolha o backup
+docker compose exec backup ls /backups/diarios
+# cria o banco descartável e restaura nele
+docker compose exec backup createdb restauracao_teste
+docker compose exec backup sh /scripts/restaurar.sh /backups/diarios/2026-09-27_033000 restauracao_teste
+# confira contagens, por exemplo
+docker compose exec backup psql -d restauracao_teste -c "select count(*) from alunos"
+docker compose exec backup dropdb restauracao_teste
+```
+
+**2. Restaurar de verdade** (perda de dados, migration desfeita):
+
+```bash
+docker compose stop app                     # ninguém escreve durante a restauração
+docker compose exec -e CONFIRMAR=sim backup \
+  sh -c 'sh /scripts/restaurar.sh /backups/diarios/2026-09-27_033000 "$PGDATABASE"'
+# uploads: o serviço backup só lê o volume; a extração usa um container à parte
+docker run --rm -v sistemaextremeteam_uploads_data:/destino \
+  -v sistemaextremeteam_backups_data:/backups:ro alpine \
+  tar xzf /backups/diarios/2026-09-27_033000/uploads.tar.gz -C /destino
+docker compose start app
+```
+
+O app roda como um usuário sem privilégio; se ele não conseguir gravar fotos depois da
+extração, acerte o dono com
+`docker compose run --rm --user root --entrypoint chown app -R academia:academia /app/uploads`.
+
+**Teste feito (27/09/2026):** o `backup.sh` rodou dentro da imagem `postgres:17-alpine`
+contra um PostgreSQL 17 descartável com o schema completo (todas as migrations) e dados
+de exemplo; o `restaurar.sh` levou o dump para outro banco descartável. As 15 tabelas, as
+contagens e um hash do conteúdo de cada tabela conferida bateram com a origem, e os
+arquivos de uploads voltaram com o mesmo SHA-256. A retenção (7 + 4), a limpeza de pasta
+provisória e a recusa de restaurar por cima do banco em uso também foram exercitadas; o
+`tests/test_backup_scripts.py` repete essas verificações na suíte com `pg_dump`/`pg_restore`
+falsos. Repita o passo 1 acima de tempos em tempos: um backup nunca restaurado não é backup.
 
 **Atenção:** o `DATABASE_URL` de desenvolvimento local aponta para um Postgres local. Em produção, `DATABASE_URL` aponta para o banco real da academia, com dados de alunos — nunca rode testes automatizados apontando para ele, e sempre revise (`flask db upgrade --sql` ou leitura manual do arquivo em `migrations/versions/`) uma migration nova antes de aplicá-la em produção.
 
@@ -219,6 +290,36 @@ E acerte, no `.env`, as variáveis que dependem do domínio:
 
 Estes valores não estão preenchidos no repositório porque dependem do domínio que a
 academia contratar.
+
+## Monitoramento
+
+### `/health` e `/health/pronto`
+
+| Rota | Para quê | Resposta |
+| --- | --- | --- |
+| `/health` | *liveness*: o processo está de pé. Usada pelo healthcheck do `compose.yaml` e pelo keep-alive | sempre `200 {"status": "ok"}` |
+| `/health/pronto` | *readiness*: o banco (`SELECT 1`) e o Redis (`PING`, quando `RATELIMIT_STORAGE_URI` é `redis://`) respondem agora | `200 {"status": "ok", "banco": "ok", "redis": "ok"}` ou `503` com `"falha"` na dependência que caiu |
+
+`/health/pronto` é a rota para o monitor externo (UptimeRobot etc.): cada verificação
+tem prazo de ~2 s, então a resposta sai rápido mesmo com o banco travado. Ela não cria
+sessão, fica fora do limite de requisições, não vai para cache e nunca devolve mensagem
+de erro, host ou credencial (o motivo da falha vai só para o log do app). Não use
+`/health/pronto` no healthcheck do Docker: reiniciar o app não resolve banco fora do ar.
+
+### Erros no Sentry (opcional)
+
+Desligado por padrão. Para ligar, crie um projeto **Flask** no Sentry e defina
+`SENTRY_DSN` (e, se quiser, `SENTRY_ENVIRONMENT`) no `.env`. Com o DSN definido, só
+**erros** são enviados (sem rastreamento de desempenho) e sem dado pessoal:
+
+- `send_default_pii=False`, `include_local_variables=False` e corpo de requisição nunca lido;
+- `before_send` (`servicos/observabilidade.py`) tira cookies, query string, corpo de
+  formulário, IP e usuário; dos cabeçalhos ficam só `User-Agent`, `Referer`, `Host`,
+  `Accept*` e `Content-*`;
+- em qualquer texto do evento (mensagem, exceção, rastros de log) CPF vira `[cpf]`,
+  e-mail vira `[e-mail]`, token de link (`/recuperar_senha/…`, `/ativar-acesso/…`,
+  `?code=`, `?state=`) vira `[token]` e os `[parameters: …]` de erros de SQL somem;
+- a transação aparece pelo nome da rota (`auth.pagina_login`), nunca pelo caminho.
 
 ## Keep-alive (hospedagem que hiberna)
 
