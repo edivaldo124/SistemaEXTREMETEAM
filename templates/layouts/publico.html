@@ -1,9 +1,38 @@
 {#- Telas públicas: página inicial, entrar/cadastrar/recuperar e documentos legais.
     Sem o deslize da área logada (ele só age em /admin, /perfil, /turmas e /professor).
     O cabeçalho e o rodapé públicos vêm por padrão; as telas de acesso, que são um
-    cartão sozinho na tela, esvaziam os dois blocos. -#}
+    cartão sozinho na tela, esvaziam os dois blocos.
+
+    Só as rotas do sitemap (`servicos/seo.py`) são indexáveis e ganham canonical e Open
+    Graph; o resto (links com token, obrigado, erro) sai com `noindex` e sem eles, que
+    levariam o token para fora. A página de erro também declara
+    `{% set indexavel = false %}`, porque pode ser desenhada numa rota indexável. -#}
 {% extends "layouts/base.html" %}
 {% block deslize %}{% endblock %}
+{% set _indexavel = pagina_indexavel() and (indexavel is not defined or indexavel) %}
+{% block robots %}{% if not _indexavel %}<meta name="robots" content="noindex, nofollow">{% endif %}{% endblock %}
+{% block metas %}
+    {%- if _indexavel %}
+        {%- set titulo_pagina = self.titulo()|trim %}
+        {%- set descricao_pagina = self.descricao()|trim %}
+        {%- set imagem = url_estatico_absoluta('imagens/og-extreme-team.jpg') %}
+        <link rel="canonical" href="{{ url_canonica() }}">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Extreme Team">
+        <meta property="og:locale" content="pt_BR">
+        <meta property="og:title" content="{{ titulo_pagina }}">
+        <meta property="og:description" content="{{ descricao_pagina }}">
+        <meta property="og:url" content="{{ url_canonica() }}">
+        <meta property="og:image" content="{{ imagem }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="Logo do Centro de Treinamento Extreme Team">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ titulo_pagina }}">
+        <meta name="twitter:description" content="{{ descricao_pagina }}">
+        <meta name="twitter:image" content="{{ imagem }}">
+    {%- endif %}
+{% endblock %}
 {% block corpo %}
     {% block cabecalho %}{% include "components/cabecalho_publico.html" %}{% endblock %}
     {% block conteudo %}{% endblock %}

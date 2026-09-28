@@ -1,7 +1,10 @@
 {% extends "layouts/publico.html" %}
-{% block titulo %}Extreme Team | Centro de Treinamento{% endblock %}
+{% block titulo %}Centro de Treinamento | Extreme Team{% endblock %}
+{% block descricao %}Treine no Centro de Treinamento Extreme Team: conheça os planos e a equipe de professores e crie sua conta para começar.{% endblock %}
 {% block scripts %}
     <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
+    {# `tojson` escapa <, > e &: um texto do painel não fecha a tag <script>. #}
+    <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ dados_estruturados|tojson }}</script>
 {% endblock %}
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
@@ -28,7 +31,9 @@
             </div>
             <div class="hero-visual entra-3" aria-hidden="true">
                 <div class="hero-dragon-glow"></div>
-                {# TODO: trocar por hero-dragao.webp quando o arquivo oficial existir. #}
+                {# TODO: trocar por hero-dragao.webp quando o arquivo oficial existir.
+                   alt vazio de propósito: é o emblema da marca como ilustração (o nome já
+                   está no h1 e no logo do cabeçalho); descrevê-lo só repetiria "Extreme Team". #}
                 <img src="{{ url_for('static', filename='imagens/hero-emblema.webp') }}"
                      alt=""
                      class="hero-dragon-img"

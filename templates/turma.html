@@ -2,7 +2,7 @@
 {% set secao_ativa = 'turmas' %}
 {% from "components/avatar.html" import avatar %}
 {% from "components/breadcrumb.html" import breadcrumb %}
-{% block titulo %}{{ turma.nome }} | Centro de Treinamento Extreme Team{% endblock %}
+{% block titulo %}{{ turma.nome }} | Turmas | Extreme Team{% endblock %}
 {% block scripts %}
     <script src="{{ url_for('static', filename='js/turma.js') }}" defer></script>
 {% endblock %}

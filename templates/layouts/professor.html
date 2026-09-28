@@ -1,5 +1,7 @@
 {#- Área do professor: cabeçalho com a marca e o botão de sair. -#}
 {% extends "layouts/base.html" %}
+{#- Área autenticada: fora dos buscadores. -#}
+{% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 {% block corpo %}
     {% block cabecalho %}{% include "components/cabecalho_professor.html" %}{% endblock %}
     {% block conteudo %}{% endblock %}
