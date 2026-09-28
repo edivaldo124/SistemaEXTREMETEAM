@@ -12,6 +12,12 @@ from urllib.parse import urlsplit
 
 load_dotenv()
 
+# Rastreamento de erros opcional: sem SENTRY_DSN não carrega nada. Vem antes do app
+# para a integração com o Flask ver a aplicação nascer.
+from servicos.observabilidade import iniciar_sentry
+
+iniciar_sentry()
+
 from blueprints.usuario_bp import auth_bp
 from blueprints.adm_bp import admin_bp
 from blueprints.turma_bp import turma_bp
@@ -27,7 +33,7 @@ from modelos.professor import Professor
 from dao.planoDAO import PlanoDAO
 from modelos.sessao_revogada import SessaoRevogada  # noqa: F401  (registra a tabela no metadata)
 from modelos.gmail_conexao import GmailConexao  # noqa: F401
-from servicos import analytics, conteudo_home, credenciais, fila_email, keep_alive, seo
+from servicos import analytics, conteudo_home, credenciais, fila_email, keep_alive, prontidao, seo
 from servicos.autorizacao import revogar_sessao_atual
 from servicos.planos import vitrine_planos
 
@@ -334,6 +340,18 @@ def home():
 @app.route("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.route("/health/pronto")
+@limiter.exempt
+def health_pronto():
+    # Prontidão para o monitor externo (UptimeRobot): banco e Redis respondem? Nenhuma
+    # sessão é lida nem criada, e o corpo diz só ok/falha por dependência, sem detalhe.
+    verificacoes = prontidao.verificar(app)
+    pronto = all(verificacoes.values())
+    corpo = {'status': 'ok' if pronto else 'indisponivel'}
+    corpo.update({nome: 'ok' if ok else 'falha' for nome, ok in verificacoes.items()})
+    return corpo, 200 if pronto else 503, {'Cache-Control': 'no-store'}
 
 
 @app.route("/logout", methods=['POST'])

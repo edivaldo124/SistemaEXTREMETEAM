@@ -66,6 +66,9 @@ services:
       KEEP_ALIVE_INTERVALO: ${KEEP_ALIVE_INTERVALO:-}
       # Opcional: GA4 só em página pública e com consentimento (README).
       ANALYTICS_ID: ${ANALYTICS_ID:-}
+      # Opcional: Sentry sem dado pessoal (README, "Monitoramento").
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-producao}
       UPLOAD_DIR: /app/uploads
     volumes:
       # Fotos de perfil e comprovantes manuais - o filesystem do container é
@@ -82,6 +85,33 @@ services:
       timeout: 5s
       retries: 5
       start_period: 45s
+
+  backup:
+    # Mesma imagem (e versão do pg_dump) do serviço "db". Todo dia em BACKUP_HORA gera
+    # banco.dump (pg_dump custom, compactado) + uploads.tar.gz em "backups_data", com
+    # retenção de 7 diários e 4 semanais. Restauração e teste: README, "Backup e restauração".
+    image: postgres:17-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/scripts/agendar.sh"]
+    environment:
+      PGHOST: db
+      PGDATABASE: ${POSTGRES_DB:?defina POSTGRES_DB no arquivo .env}
+      PGUSER: ${POSTGRES_USER:?defina POSTGRES_USER no arquivo .env}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
+      TZ: ${BACKUP_TZ:-America/Sao_Paulo}
+      BACKUP_HORA: ${BACKUP_HORA:-03:30}
+      BACKUP_DIARIOS: ${BACKUP_DIARIOS:-7}
+      BACKUP_SEMANAIS: ${BACKUP_SEMANAIS:-4}
+    volumes:
+      - ./tools/backup:/scripts:ro
+      # Só leitura: o backup nunca altera fotos e comprovantes.
+      - uploads_data:/uploads:ro
+      - backups_data:/backups
+    mem_limit: 128m
+    cpus: 0.25
 
   https:
     image: caddy:2.9-alpine
@@ -103,3 +133,5 @@ volumes:
   caddy_data:
   caddy_config:
   uploads_data:
+  # Backups diários/semanais. Fica no mesmo disco: copie para fora da máquina (README).
+  backups_data:

@@ -1,0 +1,47 @@
+# Atualizações semanais de dependências (segunda de manhã, horário de Brasília).
+#
+# pip: o Dependabot muda só o requirements.txt; o requirements.lock (com hashes, usado
+# pelo Dockerfile com --require-hashes) precisa ser regenerado no PR com o Python do
+# Dockerfile. Comando no README, seção "Instalação local".
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    groups:
+      # Patches e minors juntos num PR só; major sai sozinho para revisão com calma.
+      pip-menores:
+        update-types: [minor, patch]
+
+  # Imagem base do Dockerfile (python:3.11-slim-bookworm).
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Sao_Paulo
+
+  # Imagens do compose.yaml (postgres, redis, caddy). Major do Postgres exige
+  # dump/restore do volume: não aceite esse PR sem planejar a migração.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Sao_Paulo
+
+  # Ainda não há workflows em .github/workflows; fica pronto para quando houver.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Sao_Paulo
