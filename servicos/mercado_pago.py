@@ -4,7 +4,7 @@ import logging
 import math
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from urllib.parse import urlsplit
 
@@ -143,6 +143,25 @@ def url_webhook(base_url=None):
     return f'{base}{CAMINHO_WEBHOOK}'
 
 
+def url_notificacao_pagamento(base_url=None):
+    """notification_url de cada Pix e preferência.
+
+    `source_news=webhooks` pede só o formato Webhooks. Sem ele o Mercado Pago manda
+    também o IPN antigo (sem data.id e sem assinatura válida), que o endpoint recusa
+    com 400 e o Mercado Pago fica reenviando.
+    """
+    return f'{url_webhook(base_url)}?source_news=webhooks'
+
+
+def _utc_sem_fuso(instante):
+    """Como o projeto grava instantes no banco: UTC, sem fuso.
+
+    Um datetime com fuso numa coluna sem fuso depende do fuso da sessão do banco (o
+    SQLite simplesmente o descarta) e a validade saía deslocada em relação ao utcnow().
+    """
+    return instante.astimezone(timezone.utc).replace(tzinfo=None)
+
+
 def _extrair_dados_pix(resposta_pagamento):
     dados_transacao = ((resposta_pagamento or {}).get('point_of_interaction') or {}).get('transaction_data') or {}
     return {
@@ -189,7 +208,7 @@ def criar_pagamento_pix(*, valor, descricao, email_pagador, external_reference, 
     # que o polling de status cobre) - diferente do Checkout Pro, que a exige.
     app_base_url = _base_url_opcional()
     if app_base_url:
-        payload['notification_url'] = url_webhook(app_base_url)
+        payload['notification_url'] = url_notificacao_pagamento(app_base_url)
     request_options = _request_options({'x-idempotency-key': idempotency_key})
 
     try:
@@ -221,7 +240,7 @@ def criar_pagamento_pix(*, valor, descricao, email_pagador, external_reference, 
         'qr_code': dados_pix['qr_code'],
         'qr_code_base64': dados_pix['qr_code_base64'],
         'ticket_url': dados_pix['ticket_url'],
-        'data_expiracao': data_expiracao,
+        'data_expiracao': _utc_sem_fuso(data_expiracao) if data_expiracao else None,
     }
 
 
@@ -258,7 +277,7 @@ def criar_preferencia_checkout(*, valor, titulo, descricao, email_pagador, exter
             'unit_price': _valor_para_float(valor),
         }],
         'external_reference': external_reference,
-        'notification_url': url_webhook(base_url),
+        'notification_url': url_notificacao_pagamento(base_url),
         'back_urls': {'success': url_sucesso, 'pending': url_pendente, 'failure': url_falha},
         'auto_return': 'approved',
         'binary_mode': False,
@@ -312,7 +331,7 @@ def criar_preferencia_checkout(*, valor, titulo, descricao, email_pagador, exter
         'preference_id': str(resposta.get('id')),
         'url_checkout': url_checkout,
         'ambiente': ambiente,
-        'expira_em': expira_em,
+        'expira_em': _utc_sem_fuso(expira_em),
     }
 
 
@@ -341,6 +360,7 @@ def _normalizar_pagamento(resposta):
         'currency_id': resposta.get('currency_id'),
         'payment_method_id': resposta.get('payment_method_id'),
         'payment_type_id': resposta.get('payment_type_id'),
+        'date_created': resposta.get('date_created'),
         'date_approved': resposta.get('date_approved'),
         'qr_code': dados_pix['qr_code'],
         'qr_code_base64': dados_pix['qr_code_base64'],

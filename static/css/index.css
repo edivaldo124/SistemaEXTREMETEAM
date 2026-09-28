@@ -554,6 +554,22 @@
   object-fit: contain;
 }
 
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+}
+
+.footer-legal a {
+  color: var(--et-text-on-dark-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-legal a:hover {
+  color: var(--et-text-on-dark);
+}
+
 .footer-cta-link {
   color: var(--et-gold);
   font-weight: 600;

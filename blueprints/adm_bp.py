@@ -14,7 +14,7 @@ from dao.planoDAO import PlanoDAO
 from dao.turmaDAO import TurmaDAO
 from dao.financeiroDAO import (
     ACAO_CONTRATAR, FORMAS_PAGAMENTO_VALIDAS, PagamentoDAO, STATUS_VALIDOS,
-    SolicitacaoPlanoDAO, rotulo_status,
+    SolicitacaoPlanoDAO, forma_pagamento_aceita, rotulo_status,
 )
 from modelos.pagamento import Pagamento
 from servicos.armazenamento import ArquivoInvalido, remover_arquivo, salvar_foto_perfil
@@ -522,7 +522,7 @@ def cadastrar_pagamento(cpf):
         flash('Valor ou data inválidos.', 'erro')
         return redirect(f'/admin/usuario/{cpf}')
 
-    if status not in STATUS_VALIDOS or (forma_pagamento and forma_pagamento not in FORMAS_PAGAMENTO_VALIDAS):
+    if status not in STATUS_VALIDOS or not forma_pagamento_aceita(forma_pagamento):
         flash('Status ou forma de pagamento inválidos.', 'erro')
         return redirect(f'/admin/usuario/{cpf}')
     if not valor_decimal.is_finite() or valor_decimal <= 0 or valor_decimal > Decimal('99999999.99'):
@@ -578,7 +578,7 @@ def atualizar_status_pagamento(pagamento_id):
 
     status = request.form.get('status')
     forma_pagamento = request.form.get('forma_pagamento')
-    if status not in STATUS_VALIDOS or (forma_pagamento and forma_pagamento not in FORMAS_PAGAMENTO_VALIDAS):
+    if status not in STATUS_VALIDOS or not forma_pagamento_aceita(forma_pagamento, pagamento.forma_pagamento):
         flash('Status ou forma de pagamento inválidos.', 'erro')
         return redirect('/admin/financeiro')
     status_antes = pagamento.status
@@ -611,6 +611,9 @@ def aprovar_comprovante_manual(pagamento_id):
     observacao = (request.form.get('observacao') or '').strip() or None
     data_pagamento = _data_do_form(request.form.get('data_pagamento'))
     forma_pagamento = request.form.get('forma_pagamento') or 'transferencia'
+    if forma_pagamento not in FORMAS_PAGAMENTO_VALIDAS:
+        flash('Forma de pagamento inválida.', 'erro')
+        return redirect('/admin/financeiro')
 
     PagamentoDAO.aprovar_comprovante_manual(
         pagamento, admin_login=session.get('usuario'), observacao=observacao,

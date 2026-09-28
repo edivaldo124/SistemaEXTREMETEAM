@@ -127,8 +127,9 @@ def test_conectar_manda_ao_mercado_pago_com_state_e_pkce(client, logar_como_admi
 
     assert resposta.status_code == 302
     destino = urlsplit(resposta.headers['Location'])
+    # Host da documentação e do SDK oficial; o site do país sai do client_id.
     assert (destino.scheme, destino.netloc, destino.path) == (
-        'https', 'auth.mercadopago.com.br', '/authorization',
+        'https', 'auth.mercadopago.com', '/authorization',
     )
     consulta = {chave: valor[0] for chave, valor in parse_qs(destino.query).items()}
     assert consulta['client_id'] == 'app-123'
@@ -288,9 +289,64 @@ def test_callback_com_code_recusado_nao_grava(app, client, logar_como_admin, api
 
     resposta = client.get(f'{CALLBACK}?code=codigo-1&state={guardado["state"]}', follow_redirects=True)
 
-    assert 'não concluiu a conexão' in resposta.get_data(as_text=True)
+    # invalid_grant tem causa conhecida: o texto aponta para o que conferir.
+    assert 'o código venceu ou a URL de retorno e o PKCE' in resposta.get_data(as_text=True)
     with app.app_context():
         assert db.session.get(MercadoPagoConexao, 1) is None
+
+
+def test_callback_com_aplicativo_recusado_aponta_as_credenciais(app, client, logar_como_admin, api_mp):
+    api_mp['respostas'] = [_Resposta(400, {'error': 'invalid_client', 'message': 'invalid client_id or client_secret'})]
+    logar_como_admin()
+    guardado = _preparar_state(client)
+
+    resposta = client.get(f'{CALLBACK}?code=codigo-1&state={guardado["state"]}', follow_redirects=True)
+
+    assert 'MERCADO_PAGO_CLIENT_ID e MERCADO_PAGO_CLIENT_SECRET' in resposta.get_data(as_text=True)
+    with app.app_context():
+        assert db.session.get(MercadoPagoConexao, 1) is None
+
+
+def test_callback_com_erro_desconhecido_usa_a_mensagem_generica(client, logar_como_admin, api_mp):
+    api_mp['respostas'] = [_Resposta(400, {'error': 'algo_novo'})]
+    logar_como_admin()
+    guardado = _preparar_state(client)
+
+    resposta = client.get(f'{CALLBACK}?code=codigo-1&state={guardado["state"]}', follow_redirects=True)
+
+    assert 'não concluiu a conexão' in resposta.get_data(as_text=True)
+
+
+def test_log_da_recusa_traz_o_motivo_sem_code_nem_token(client, logar_como_admin, api_mp, caplog):
+    api_mp['respostas'] = [_Resposta(400, {
+        'error': 'invalid_grant', 'message': 'redirect_uri mismatch for code TG-abc123-999',
+    })]
+    logar_como_admin()
+    guardado = _preparar_state(client)
+
+    with caplog.at_level('WARNING'):
+        client.get(f'{CALLBACK}?code=TG-abc123-999&state={guardado["state"]}')
+
+    assert 'redirect_uri mismatch' in caplog.text
+    assert 'TG-abc123-999' not in caplog.text
+
+
+def test_callback_com_erro_do_mercado_pago_que_nao_e_cancelamento(client, logar_como_admin, api_mp, caplog):
+    logar_como_admin()
+    guardado = _preparar_state(client)
+
+    with caplog.at_level('WARNING'):
+        resposta = client.get(
+            f'{CALLBACK}?error=invalid_request&error_description=redirect_uri+invalida'
+            f'&state={guardado["state"]}',
+            follow_redirects=True,
+        )
+
+    texto = resposta.get_data(as_text=True)
+    assert 'não autorizou a conexão' in texto
+    assert 'cancelada no Mercado Pago' not in texto
+    assert 'redirect_uri invalida' in caplog.text
+    assert api_mp['chamadas'] == []
 
 
 @pytest.mark.parametrize('resposta', [
@@ -472,6 +528,74 @@ def test_erro_de_validacao_da_academia_mantem_a_secao_do_mercado_pago(client, lo
 
     assert resposta.status_code == 400
     assert 'Conectar Mercado Pago' in resposta.get_data(as_text=True)
+
+
+def test_tela_mostra_os_enderecos_que_o_aplicativo_precisa_ter(client, logar_como_admin, oauth_env):
+    logar_como_admin()
+
+    pagina = client.get('/admin/academia').get_data(as_text=True)
+
+    # O mesmo redirect_uri que o conectar envia: o MP recusa qualquer diferença.
+    assert f'value="{REDIRECT_URI}"' in pagina
+    assert 'value="https://academia.example.test/api/webhooks/mercado-pago"' in pagina
+    assert 'fluxo de código de autorização com PKCE' in pagina
+    assert 'A assinatura secreta já está configurada no servidor' in pagina
+
+
+def test_tela_avisa_quando_falta_a_assinatura_do_webhook(client, logar_como_admin, oauth_env, monkeypatch):
+    monkeypatch.delenv('MERCADO_PAGO_WEBHOOK_SECRET', raising=False)
+    logar_como_admin()
+
+    pagina = client.get('/admin/academia').get_data(as_text=True)
+
+    assert 'A assinatura secreta ainda não está no servidor' in pagina
+
+
+def test_tela_sem_url_publica_pede_app_base_url(client, logar_como_admin, oauth_env, monkeypatch):
+    monkeypatch.delenv('APP_BASE_URL', raising=False)
+    logar_como_admin()
+
+    pagina = client.get('/admin/academia').get_data(as_text=True)
+
+    assert 'Defina <code>APP_BASE_URL</code>' in pagina
+    assert 'mp-redirect-uri' not in pagina
+
+
+def test_tela_avisa_quando_a_autorizacao_nao_volta_do_mercado_pago(client, logar_como_admin, oauth_env, api_mp):
+    logar_como_admin()
+    assert 'A autorização não voltou' not in client.get('/admin/academia').get_data(as_text=True)
+
+    # Foi ao Mercado Pago e voltou pelo "Voltar" (ou a página de lá deu erro).
+    client.get('/admin/mercado-pago/conectar')
+    pagina = client.get('/admin/academia').get_data(as_text=True)
+    assert 'A autorização não voltou do Mercado Pago' in pagina
+
+    # Conectou de verdade: o callback consome o state e o aviso some.
+    with client.session_transaction() as sess:
+        state = sess['mp_oauth']['state']
+    client.get(f'{CALLBACK}?code=codigo-1&state={state}')
+    assert 'A autorização não voltou' not in client.get('/admin/academia').get_data(as_text=True)
+
+
+def test_aviso_de_autorizacao_vencida_aparece_uma_vez(client, logar_como_admin, oauth_env):
+    logar_como_admin()
+    _preparar_state(client, criado_em=time.time() - 3600)
+
+    assert 'A autorização não voltou' in client.get('/admin/academia').get_data(as_text=True)
+    assert 'A autorização não voltou' not in client.get('/admin/academia').get_data(as_text=True)
+    with client.session_transaction() as sess:
+        assert 'mp_oauth' not in sess
+
+
+def test_tela_do_gmail_mostra_a_uri_de_redirecionamento(client, logar_como_admin, monkeypatch):
+    monkeypatch.setenv('GMAIL_CLIENT_ID', 'cliente-google')
+    monkeypatch.setenv('GMAIL_CLIENT_SECRET', 'segredo-google')
+    logar_como_admin()
+
+    pagina = client.get('/admin/academia').get_data(as_text=True)
+
+    assert 'value="https://academia.example.test/admin/gmail/callback"' in pagina
+    assert 'segredo-google' not in pagina
 
 
 # --- token usado pelo serviço de pagamentos ---------------------------------------

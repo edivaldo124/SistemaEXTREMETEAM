@@ -12,6 +12,11 @@
                  height="70">
         </a>
         <span>© 2026 Centro de Treinamento Extreme Team</span>
+        {# O Google exige o link da política na página inicial para verificar o app do Gmail. #}
+        <nav class="footer-legal" aria-label="Documentos">
+            <a href="{{ url_for('auth.politica_privacidade') }}">Política de privacidade</a>
+            <a href="{{ url_for('auth.termos_de_servico') }}">Termos de serviço</a>
+        </nav>
         <a href="/cadastrar" class="footer-cta-link">Criar conta</a>
     </div>
 </footer>

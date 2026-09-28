@@ -1,8 +1,10 @@
 import logging
 import os
 import secrets
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
+from urllib.parse import urlsplit
+from zoneinfo import ZoneInfo
 
 from flask import Blueprint, flash, jsonify, redirect, request, session
 from config import csrf
@@ -54,6 +56,8 @@ FORMAS_PAGAMENTO_MP = {
 # representa o estado real: um aprovado sempre vale mais que uma tentativa recusada.
 PRIORIDADE_STATUS_MP = ('approved', 'in_process', 'pending', 'authorized', 'rejected', 'cancelled', 'refunded', 'charged_back')
 
+FUSO_ACADEMIA = ZoneInfo('America/Sao_Paulo')
+
 
 def _pagamento_ou_none(pagamento_id):
     return PagamentoDAO.buscar_por_id(pagamento_id)
@@ -75,6 +79,19 @@ def _pix_expirado(pagamento):
     return pagamento.data_expiracao <= datetime.utcnow()
 
 
+def _iso_utc(instante):
+    """Instante do banco (UTC sem fuso) com o fuso explícito para o navegador.
+
+    Sem o "+00:00", o JavaScript lê a data como hora local e a validade do Pix
+    aparecia três horas depois da real.
+    """
+    if instante is None:
+        return None
+    if instante.tzinfo is None:
+        instante = instante.replace(tzinfo=timezone.utc)
+    return instante.isoformat()
+
+
 def _serializar_pagamento(pagamento, *, qr_code_base64=None):
     return {
         'pagamento_id': pagamento.id,
@@ -91,7 +108,7 @@ def _serializar_pagamento(pagamento, *, qr_code_base64=None):
         'pix_copia_cola': pagamento.pix_copia_cola,
         'qr_code_base64': qr_code_base64,
         'ticket_url': pagamento.ticket_url,
-        'data_expiracao': pagamento.data_expiracao.isoformat() if pagamento.data_expiracao else None,
+        'data_expiracao': _iso_utc(pagamento.data_expiracao),
         'pix_expirado': _pix_expirado(pagamento),
         'provider_status_detail': pagamento.provider_status_detail,
         'checkout_url': pagamento.checkout_url if PagamentoDAO.checkout_ainda_valido(pagamento) else None,
@@ -118,9 +135,36 @@ def _forma_pagamento_confirmada(resultado_mp, pagamento):
     return 'pix'
 
 
+def _instante_utc(texto):
+    """Data ISO do Mercado Pago (com fuso) em UTC sem fuso, como o banco guarda. None se inválida."""
+    try:
+        instante = datetime.fromisoformat(texto)
+    except (TypeError, ValueError):
+        return None
+    if instante.tzinfo is None:
+        return instante
+    return instante.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def _data_da_aprovacao(texto):
+    """Dia do pagamento no horário da academia.
+
+    O Mercado Pago devolve as datas em -04:00: sem a conversão, um Pix pago entre
+    meia-noite e uma da manhã de Brasília ficava registrado no dia anterior.
+    """
+    try:
+        instante = datetime.fromisoformat(texto)
+    except (TypeError, ValueError):
+        return None
+    if instante.tzinfo is not None:
+        instante = instante.astimezone(FUSO_ACADEMIA)
+    return instante.date()
+
+
 def _pagamento_mp_mais_relevante(pagamentos_mp):
     """Entre os pagamentos que o MP associa a uma referencia, devolve o que manda no
-    estado final - um aprovado nunca perde para uma tentativa recusada anterior."""
+    estado final - um aprovado nunca perde para uma tentativa recusada anterior. Entre
+    dois de mesmo peso (duas recusas, por exemplo), vale a tentativa mais recente."""
     if not pagamentos_mp:
         return None
 
@@ -128,7 +172,11 @@ def _pagamento_mp_mais_relevante(pagamentos_mp):
         status = item.get('status')
         return PRIORIDADE_STATUS_MP.index(status) if status in PRIORIDADE_STATUS_MP else len(PRIORIDADE_STATUS_MP)
 
-    return sorted(pagamentos_mp, key=peso)[0]
+    def recencia(item):
+        instante = _instante_utc(item.get('date_created'))
+        return -instante.timestamp() if instante else 0
+
+    return sorted(pagamentos_mp, key=lambda item: (peso(item), recencia(item)))[0]
 
 
 def sincronizar_por_referencia_checkout(pagamento, *, timeout=None, retries=None):
@@ -198,6 +246,9 @@ def criar_pix_mensalidade(pagamento_id):
                 # A consulta acima ja aprovou/reembolsou a cobranca existente - nada a gerar.
                 return jsonify(_serializar_pagamento(pagamento)), 200
             if resultado_mp['status'] in ('pending', 'in_process'):
+                # O Pix aberto continua valendo mesmo depois de um cartão recusado: pedir
+                # para pagar com ele é a nova tentativa.
+                PagamentoDAO.reabrir_para_nova_tentativa(pagamento, ator=session.get('usuario') or 'sistema')
                 return jsonify(_serializar_pagamento(
                     pagamento, qr_code_base64=resultado_mp.get('qr_code_base64'),
                 )), 200
@@ -218,6 +269,10 @@ def criar_pix_mensalidade(pagamento_id):
     idempotency_key = secrets.token_urlsafe(24)
     external_reference = f'mensalidade-{pagamento.id}-{secrets.token_urlsafe(8)}'
 
+    # Instante da nova tentativa: antes de falar com o Mercado Pago, para uma recusa do
+    # próprio Pix novo continuar valendo (ver PagamentoDAO.recusa_superada).
+    inicio_tentativa = datetime.utcnow()
+
     # O valor cobrado vem sempre do banco - nunca do corpo da requisicao.
     try:
         resultado = criar_pagamento_pix(
@@ -235,6 +290,10 @@ def criar_pix_mensalidade(pagamento_id):
         logger.error('Mercado Pago recusou a criacao do Pix para o pagamento %s: %s', pagamento.id, resultado['erro'])
         return jsonify({'erro': 'Não foi possível gerar a cobrança Pix. Tente novamente ou use outra forma de pagamento.'}), 502
 
+    # Gravada no mesmo commit do Pix novo: se a emissão falha, a mensalidade fica como estava.
+    PagamentoDAO.reabrir_para_nova_tentativa(
+        pagamento, ator=session.get('usuario') or 'sistema', commit=False, momento=inicio_tentativa,
+    )
     PagamentoDAO.salvar_dados_pix(
         pagamento,
         provider_payment_id=resultado['payment_id'],
@@ -286,6 +345,18 @@ def status_pix_mensalidade(pagamento_id):
     return jsonify(_serializar_pagamento(pagamento)), 200
 
 
+def _voltar_ao_painel():
+    """Volta para a tela do painel de onde veio o pedido (financeiro ou ficha do aluno).
+
+    Só aceita um Referer deste mesmo host e dentro de /admin/; qualquer outro destino
+    vira o financeiro.
+    """
+    origem = urlsplit(request.referrer or '')
+    if origem.netloc == request.host and origem.path.startswith('/admin/'):
+        return redirect(origem.path + (f'?{origem.query}' if origem.query else ''))
+    return redirect('/admin/financeiro')
+
+
 @pix_bp.route('/admin/pagamentos/<int:pagamento_id>/sincronizar', methods=['POST'])
 @limitar_consulta_pagamento
 def sincronizar_pagamento(pagamento_id):
@@ -301,28 +372,36 @@ def sincronizar_pagamento(pagamento_id):
         flash('Mensalidade não encontrada.', 'erro')
         return redirect('/admin/financeiro')
 
-    if not pagamento.provider_payment_id:
+    # Cartão e boleto passam pelo Checkout Pro: a preferência existe antes de qualquer
+    # payment_id, então a cobrança pode ter só a referência do checkout para consultar.
+    if not pagamento.provider_payment_id and not pagamento.checkout_external_reference:
         flash('Esta mensalidade não tem cobrança do Mercado Pago para sincronizar.', 'erro')
-        return redirect('/admin/financeiro')
-
-    try:
-        resultado_mp = buscar_pagamento(pagamento.provider_payment_id)
-    except MercadoPagoIndisponivel:
-        flash('Mercado Pago indisponível no momento. Tente novamente em instantes.', 'erro')
-        return redirect('/admin/financeiro')
-
-    if not resultado_mp['sucesso']:
-        flash('Não foi possível consultar esta cobrança no Mercado Pago.', 'erro')
-        return redirect('/admin/financeiro')
+        return _voltar_ao_painel()
 
     status_antes = pagamento.status
-    _processar_status_mp(pagamento, resultado_mp)
+    consultou = False
+    try:
+        if pagamento.provider_payment_id:
+            resultado_mp = buscar_pagamento(pagamento.provider_payment_id)
+            if resultado_mp['sucesso']:
+                _processar_status_mp(pagamento, resultado_mp)
+                consultou = True
+        if pagamento.status not in STATUS_FECHADOS and pagamento.checkout_external_reference:
+            consultou = sincronizar_por_referencia_checkout(pagamento) or consultou
+    except MercadoPagoIndisponivel:
+        flash('Mercado Pago indisponível no momento. Tente novamente em instantes.', 'erro')
+        return _voltar_ao_painel()
+
+    if not consultou:
+        flash('Não foi possível consultar esta cobrança no Mercado Pago.', 'erro')
+        return _voltar_ao_painel()
+
     if pagamento.status != status_antes:
         flash(f'Situação atualizada: {rotulo_status(status_antes)} → {rotulo_status(pagamento.status)}.', 'sucesso')
     else:
         flash('Situação confirmada junto ao Mercado Pago - nenhuma mudança.', 'sucesso')
 
-    return redirect('/admin/financeiro')
+    return _voltar_ao_painel()
 
 
 @pix_bp.route('/api/webhooks/mercado-pago', methods=['POST'])
@@ -444,11 +523,7 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
     if status_mp == 'approved':
         if pagamento.status == 'pago':
             return
-        data_aprovacao = resultado_mp.get('date_approved')
-        try:
-            data_pagamento = datetime.fromisoformat(data_aprovacao).date() if data_aprovacao else date.today()
-        except ValueError:
-            data_pagamento = date.today()
+        data_pagamento = _data_da_aprovacao(resultado_mp.get('date_approved')) or date.today()
         PagamentoDAO.marcar_pago_via_webhook(
             pagamento, data_pagamento=data_pagamento,
             forma_pagamento=_forma_pagamento_confirmada(resultado_mp, pagamento),
@@ -459,6 +534,10 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
     elif status_mp == 'in_process':
         PagamentoDAO.marcar_em_processamento_via_webhook(pagamento)
     elif status_mp == 'rejected':
+        # O Mercado Pago continua listando a tentativa recusada depois que o aluno parte
+        # para outra (Pix novo, checkout de novo). Essa recusa já foi vista e superada.
+        if PagamentoDAO.recusa_superada(pagamento, _instante_utc(resultado_mp.get('date_created'))):
+            return
         PagamentoDAO.marcar_recusado_via_webhook(pagamento, status_detail=resultado_mp.get('status_detail'))
     # pending / cancelled: nao mexe no status local (cancelled costuma ser uma
     # tentativa antiga substituida por uma nova cobranca, nao a mensalidade toda).

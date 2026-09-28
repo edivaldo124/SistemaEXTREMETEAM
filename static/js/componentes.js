@@ -416,6 +416,24 @@
   abrirAlvoDaAncora();
   window.addEventListener('hashchange', abrirAlvoDaAncora);
 
+  // -------------------------------------------------------- campo copiável --
+  // [data-copiar-campo="<id do campo>"] copia o valor e avisa pelo toast. Se o
+  // navegador negar a área de transferência, o texto fica selecionado para Ctrl+C.
+  document.addEventListener('click', async (evento) => {
+    const botao = evento.target.closest('[data-copiar-campo]');
+    if (!botao) return;
+    const campo = document.getElementById(botao.dataset.copiarCampo);
+    if (!campo) return;
+    try {
+      await navigator.clipboard.writeText(campo.value);
+      window.etToast('Copiado.', 'sucesso');
+    } catch (erro) {
+      campo.focus();
+      campo.select();
+      window.etToast('Não foi possível copiar. O texto ficou selecionado para você copiar.', 'aviso');
+    }
+  });
+
   // Esc: fecha o menu de ações (devolvendo o foco) e o tooltip.
   document.addEventListener('keydown', (evento) => {
     if (evento.key !== 'Escape') return;

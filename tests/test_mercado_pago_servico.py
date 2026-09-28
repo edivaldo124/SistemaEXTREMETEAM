@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -303,7 +304,8 @@ def test_criar_preferencia_monta_payload_esperado(mp_fake, base_url, monkeypatch
     assert item['unit_price'] == 150.0
     assert payload['external_reference'] == 'checkout-1-abc'
     assert payload['payer']['email'] == 'aluno@example.com'
-    assert payload['notification_url'] == f'{base_url}/api/webhooks/mercado-pago'
+    # Só o formato Webhooks: o IPN antigo não traz data.id nem assinatura válida.
+    assert payload['notification_url'] == f'{base_url}/api/webhooks/mercado-pago?source_news=webhooks'
     assert payload['back_urls']['success'] == 'https://academia.example.com/retorno'
     assert payload['auto_return'] == 'approved'
 
@@ -480,3 +482,48 @@ def test_buscar_pagamento_expoe_meio_de_pagamento_e_moeda(mp_fake):
     assert resultado['payment_id'] == '42'
     assert resultado['currency_id'] == 'BRL'
     assert resultado['payment_type_id'] == 'ticket'
+
+
+# ---------------------------------------------------------------------------
+# Instantes gravados no banco e notification_url
+# ---------------------------------------------------------------------------
+
+def test_pix_devolve_validade_em_utc_sem_fuso_e_pede_so_webhooks(mp_fake, base_url):
+    mp_fake['create'] = {'status': 201, 'response': {'id': 1, 'status': 'pending'}}
+    antes = datetime.utcnow()
+
+    resultado = mercado_pago.criar_pagamento_pix(
+        valor=Decimal('150.00'), descricao='Mensalidade', email_pagador='aluno@example.com',
+        external_reference='mensalidade-1-abc', idempotency_key='chave', minutos_para_expirar=30,
+    )
+
+    # A coluna não guarda fuso: um datetime com fuso ficava deslocado do utcnow().
+    assert resultado['data_expiracao'].tzinfo is None
+    assert antes + timedelta(minutes=29) <= resultado['data_expiracao'] <= datetime.utcnow() + timedelta(minutes=31)
+    _, payload = mp_fake['chamadas'][0]
+    assert payload['notification_url'] == f'{base_url}/api/webhooks/mercado-pago?source_news=webhooks'
+    # Para o Mercado Pago a data segue com fuso, como a API exige.
+    assert payload['date_of_expiration'][-6] in '+-'
+
+
+def test_preferencia_devolve_expiracao_em_utc_sem_fuso(mp_fake, base_url, monkeypatch):
+    monkeypatch.setenv('MERCADO_PAGO_AMBIENTE', 'producao')
+    mp_fake['preference_create'] = _resposta_preferencia()
+    antes = datetime.utcnow()
+
+    resultado = _criar_preferencia()
+
+    assert resultado['expira_em'].tzinfo is None
+    minutos = mercado_pago.CHECKOUT_MINUTOS_EXPIRACAO
+    assert antes + timedelta(minutes=minutos - 1) <= resultado['expira_em'] <= datetime.utcnow() + timedelta(minutes=minutos + 1)
+
+
+def test_busca_por_referencia_expoe_a_data_de_criacao(mp_fake):
+    mp_fake['search'] = {'status': 200, 'response': {'results': [
+        {'id': 777, 'status': 'rejected', 'external_reference': 'checkout-1-abc',
+         'date_created': '2026-09-27T10:00:00.000-04:00'},
+    ]}}
+
+    resultado = mercado_pago.buscar_pagamentos_por_referencia('checkout-1-abc')
+
+    assert resultado['pagamentos'][0]['date_created'] == '2026-09-27T10:00:00.000-04:00'

@@ -17,7 +17,7 @@ from sqlalchemy import delete
 
 from config import db
 from modelos.gmail_conexao import GmailConexao
-from servicos.mercado_pago import base_url_publica
+from servicos.mercado_pago import ConfiguracaoInvalida, base_url_publica
 
 logger = logging.getLogger(__name__)
 AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -116,11 +116,17 @@ def remover():
 
 def estado():
     conexao = db.session.get(GmailConexao, 1)
+    try:
+        # O Google só aceita o retorno se este endereço estiver cadastrado no cliente OAuth.
+        retorno = redirect_uri()
+    except ConfiguracaoInvalida:
+        retorno = None
     return {
         'oauth_disponivel': oauth_configurado(),
         'conectada': conexao is not None,
         'email': conexao.email if conexao else None,
         'conectado_em': conexao.conectado_em if conexao else None,
+        'redirect_uri': retorno,
     }
 
 

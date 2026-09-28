@@ -991,6 +991,36 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   display: none !important;
 }
 
+/* -------------------------------------------------------- Campo copiável -- */
+.et-copiavel { min-width: 0; }
+.et-copiavel label {
+  display: block;
+  margin-bottom: var(--sp-2);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+.et-copiavel-linha { display: flex; gap: var(--sp-2); }
+.et-copiavel-linha input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--control-h);
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: var(--surface-2);
+  font-size: var(--fs-xs);
+}
+.et-copiavel-linha input:focus-visible { outline: 2px solid var(--focus-ink); outline-offset: 1px; }
+.et-copiavel-linha button { flex: 0 0 auto; min-height: var(--control-h); }
+.et-copiavel-ajuda { margin: var(--sp-2) 0 0; color: var(--text-2); font-size: var(--fs-xs); line-height: 1.5; }
+
+@media (max-width: 600px) {
+  .et-copiavel-linha { flex-direction: column; }
+  .et-copiavel-linha button { width: 100%; }
+}
+
 /* --------------------------------- Acessibilidade: Movimento reduzido -- */
 @media (prefers-reduced-motion: reduce) {
   .et-tabs *,

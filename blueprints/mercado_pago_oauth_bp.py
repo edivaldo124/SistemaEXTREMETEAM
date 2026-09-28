@@ -23,11 +23,49 @@ MSG_NAO_HABILITADO = (
 )
 MSG_FALHA_VALIDACAO = 'Não foi possível validar a autorização. Clique em “Conectar” para tentar de novo.'
 MSG_INDISPONIVEL = 'O Mercado Pago não respondeu agora. Tente conectar novamente em instantes.'
-MSG_FALHA_GENERICA = 'O Mercado Pago não concluiu a conexão. Tente novamente.'
+MSG_FALHA_GENERICA = (
+    'O Mercado Pago não concluiu a conexão. Tente de novo; se repetir, confira a '
+    'configuração do aplicativo nesta página.'
+)
+MSG_APLICATIVO_RECUSADO = (
+    'O Mercado Pago não reconheceu o aplicativo configurado no servidor. Confira '
+    'MERCADO_PAGO_CLIENT_ID e MERCADO_PAGO_CLIENT_SECRET.'
+)
+MSG_CODIGO_RECUSADO = (
+    'O Mercado Pago recusou a autorização: o código venceu ou a URL de retorno e o PKCE '
+    'não batem com o aplicativo. Confira a configuração nesta página e conecte de novo.'
+)
+MSG_AUTORIZACAO_RECUSADA = (
+    'O Mercado Pago não autorizou a conexão. Confira a configuração do aplicativo nesta página.'
+)
+
+# Códigos de erro do POST /oauth/token que têm causa conhecida.
+MENSAGEM_POR_ERRO = {
+    'invalid_client': MSG_APLICATIVO_RECUSADO,
+    'unauthorized_client': MSG_APLICATIVO_RECUSADO,
+    'invalid_grant': MSG_CODIGO_RECUSADO,
+}
 
 
 def _voltar():
     return redirect(url_for('academia.configuracoes'))
+
+
+def tentativa_sem_retorno():
+    """O administrador foi ao Mercado Pago e a autorização não voltou para cá?
+
+    O state só sai da sessão no callback. Se ele continua lá quando a tela da academia
+    abre de novo, a ida terminou do lado do Mercado Pago: erro na página dele (em geral
+    URL de retorno ou PKCE diferentes do aplicativo), aba fechada ou "Voltar". Depois da
+    validade o state já não serve para nada e sai da sessão; o aviso aparece essa vez.
+    """
+    guardada = session.get(CHAVE_SESSAO)
+    if not isinstance(guardada, dict):
+        return False
+    criado_em = guardada.get('criado_em')
+    if not isinstance(criado_em, (int, float)) or time.time() - criado_em > VALIDADE_AUTORIZACAO_SEGUNDOS:
+        session.pop(CHAVE_SESSAO, None)
+    return True
 
 
 def _autorizacao_valida(guardada, state_recebido):
@@ -74,9 +112,17 @@ def callback():
     # a URL de retorno (histórico, atualizar a página) nunca reaproveita uma autorização.
     guardada = session.pop(CHAVE_SESSAO, None)
 
-    if request.args.get('error'):
-        # access_denied: a pessoa clicou em "Cancelar" na tela do Mercado Pago.
-        flash('A conexão foi cancelada no Mercado Pago. Nada foi alterado.', 'erro')
+    erro = request.args.get('error')
+    if erro:
+        if erro == 'access_denied':
+            # A pessoa clicou em "Cancelar" na tela do Mercado Pago.
+            flash('A conexão foi cancelada no Mercado Pago. Nada foi alterado.', 'erro')
+        else:
+            logger.warning(
+                'Mercado Pago devolveu erro na autorizacao (erro=%s, descricao=%s).',
+                conta.texto_para_log(erro, 60), conta.texto_para_log(request.args.get('error_description')),
+            )
+            flash(MSG_AUTORIZACAO_RECUSADA, 'erro')
         return _voltar()
 
     code = request.args.get('code', '')
@@ -98,7 +144,7 @@ def callback():
         return _voltar()
 
     if not dados['sucesso']:
-        flash(MSG_FALHA_GENERICA, 'erro')
+        flash(MENSAGEM_POR_ERRO.get(dados['erro'], MSG_FALHA_GENERICA), 'erro')
         return _voltar()
 
     try:

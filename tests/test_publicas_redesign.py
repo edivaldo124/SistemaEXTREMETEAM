@@ -127,6 +127,18 @@ def test_politica_privacidade_page(client):
     assert 'Política de Privacidade' in html
     assert 'Gmail' in html
     assert 'Extreme Team' in html
+    # Exigências da verificação do app no Google (escopo sensível gmail.send).
+    assert 'https://developers.google.com/terms/api-services-user-data-policy' in html
+    assert 'requisitos de Uso Limitado' in html
+    assert 'myaccount.google.com/permissions' in html
+
+
+def test_pagina_inicial_liga_a_politica_e_os_termos(client):
+    html = client.get('/').get_data(as_text=True)
+
+    # O Google recusa a verificação do app sem o link da política na página inicial.
+    assert 'href="/politica-privacidade"' in html
+    assert 'href="/termos-de-servico"' in html
 
 
 def test_termos_servico_page(client):

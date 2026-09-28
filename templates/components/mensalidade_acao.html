@@ -5,7 +5,8 @@
             <button type="button"
                     class="{{ classe_botao }}"
                     data-pix-pagar
-                    data-pagamento-id="{{ pagamento.id }}">Pagar com Pix</button>
+                    data-pagamento-id="{{ pagamento.id }}"
+                    data-status="{{ status }}">Pagar com Pix</button>
             <form class="form-outras-formas"
                   method="POST"
                   action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">

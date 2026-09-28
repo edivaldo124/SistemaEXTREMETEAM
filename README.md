@@ -132,23 +132,29 @@ A regressão de concorrência do Pix exige PostgreSQL, pois SQLite não aplica `
 ## Configuração de e-mail
 
 O envio é feito pela fila persistida no banco e pelo consumidor em segundo plano usando
-a Gmail API:
+a Gmail API, pela conta que o administrador conecta em `/admin/academia` → aba **Gmail**:
 
 ```env
 GMAIL_CLIENT_ID=...
 GMAIL_CLIENT_SECRET=...
-GMAIL_REFRESH_TOKEN=...
-GMAIL_SENDER_EMAIL=conta-do-sistema@gmail.com
 ```
 
-Crie um cliente OAuth 2.0 do tipo **Web application** no Google Cloud, autorize o escopo
-`https://www.googleapis.com/auth/gmail.send` uma vez e guarde o refresh token somente
-no ambiente de produção.
+1. No Google Cloud (Google Auth Platform), crie um cliente OAuth do tipo **Aplicativo da
+   Web** e cadastre em *URIs de redirecionamento autorizados* `{APP_BASE_URL}/admin/gmail/callback`
+   (a aba Gmail mostra o endereço exato para copiar).
+2. Em **Público-alvo**, deixe o status de publicação **Em produção**. No modo *Teste* o
+   Google invalida a autorização em 7 dias e os e-mails param de sair.
+3. O escopo `https://www.googleapis.com/auth/gmail.send` é **sensível**. Até o app ser
+   verificado, a autorização mostra "O Google não verificou este app", mesmo com o
+   domínio verificado: verificar o domínio é só um dos requisitos. A verificação do app
+   é pedida na **Central de verificação** e exige página inicial e política de
+   privacidade no domínio verificado, a justificativa do escopo e um vídeo mostrando a
+   autorização e o uso. Enquanto isso, quem conecta (a própria academia) pode seguir em
+   **Avançado → Acessar**; app não verificado aceita até 100 usuários, e aqui só a conta
+   da academia autoriza.
 
-O código troca o refresh token por access tokens curtos, mantém o access token apenas
-em memória do worker e nunca grava credenciais na fila ou no banco. Não use Gmail para
-o cenário de conectar contas individuais de usuários: esse fluxo exigiria uma tabela
-própria para tokens criptografados, consentimento por usuário e rotas OAuth separadas.
+O refresh token fica **cifrado** no banco (chave derivada da `SECRET_KEY`; trocá-la exige
+conectar o Gmail de novo) e o access token é pedido na hora de cada envio, sem ser gravado.
 
 ## Configuração de segurança
 
@@ -270,6 +276,8 @@ Configuração, uma vez só:
 3. Opcional, mas recomendado em produção: `MERCADO_PAGO_TOKEN_KEY` com uma chave Fernet dedicada (comando no `.env.example`). Sem ela, a chave de cifra é derivada da `SECRET_KEY`, e trocar a `SECRET_KEY` deixa os tokens ilegíveis até a academia reconectar.
 4. Rode `flask db upgrade` (cria a tabela `mercado_pago_conexao`; o Dockerfile já faz isso).
 
+A aba **Mercado Pago** em `/admin/academia` mostra a URL de redirecionamento e a de notificações exatamente como o servidor as envia, com botão de copiar. Se o administrador vai ao Mercado Pago e a autorização não volta (erro na página do Mercado Pago, aba fechada ou "Voltar"), a aba avisa e abre esse passo a passo: quase sempre é a URL de redirecionamento cadastrada diferente em algum caractere ou o PKCE desligado no aplicativo. Recusas na troca do código aparecem com o motivo (credenciais do aplicativo, código vencido) e o log registra a mensagem do Mercado Pago, sem tokens.
+
 Como funciona:
 
 - Os tokens ficam **cifrados** no banco (Fernet) e nunca aparecem em tela nem em log. A autorização usa `state` de uso único (10 min, preso à sessão do administrador) e PKCE `S256`.
@@ -296,6 +304,8 @@ No painel do Mercado Pago (Suas integrações → Webhooks → Configurar notifi
 ```
 
 Por exemplo, `https://academiaextremeteam.com.br/api/webhooks/mercado-pago`. Essa URL **precisa** responder em HTTPS público e válido — o `Caddyfile` deste projeto usa `tls internal` (certificado local) enquanto não houver um domínio real configurado, e o Mercado Pago não consegue entregar webhooks para esse certificado. Até lá, teste o webhook com um túnel (ex.: `ngrok http 4000`) apontando o Mercado Pago para a URL do túnel, ou use o botão "Simular notificação" do painel do Mercado Pago.
+
+Cada Pix e cada preferência do Checkout Pro também levam essa URL como `notification_url`, com `?source_news=webhooks`: assim o Mercado Pago manda só o formato Webhooks (assinado) e não o IPN antigo, que chegava sem `data.id` e era recusado com 400.
 
 ### Como testar localmente
 

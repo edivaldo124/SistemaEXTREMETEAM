@@ -4,6 +4,7 @@ import os
 import time
 from datetime import datetime, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 import blueprints.pix_bp as pix_bp
 from dao.financeiroDAO import PagamentoDAO
@@ -22,6 +23,10 @@ def _resposta_criacao(payment_id='mp-1', status='pending'):
     }
 
 
+def _agora_mercado_pago():
+    return datetime.now(ZoneInfo('America/Manaus')).isoformat(timespec='milliseconds')
+
+
 def _resposta_consulta(status='pending', external_reference=None, transaction_amount=None,
                        currency_id='BRL'):
     return {
@@ -31,7 +36,9 @@ def _resposta_consulta(status='pending', external_reference=None, transaction_am
         'external_reference': external_reference,
         'transaction_amount': transaction_amount,
         'currency_id': currency_id,
-        'date_approved': '2026-08-25T10:00:00.000-03:00' if status == 'approved' else None,
+        # Aprovado agora, no fuso do Mercado Pago: uma data fixa envelhecia e a vigência
+        # aberta por ela já tinha acabado quando a suíte rodava.
+        'date_approved': _agora_mercado_pago() if status == 'approved' else None,
         'qr_code': None,
         'qr_code_base64': None,
         'ticket_url': None,

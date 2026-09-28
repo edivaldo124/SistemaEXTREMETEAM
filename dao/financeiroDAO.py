@@ -105,7 +105,27 @@ STATUS_FECHADOS = ('pago', 'cancelado', 'reembolsado')
 # Estados "em aberto": ainda pedem alguma ação (do aluno ou de uma decisão pendente).
 STATUS_ABERTOS = ('pendente', 'atrasado', 'em_processamento', 'em_analise', 'recusado')
 STATUS_VALIDOS = STATUS_FECHADOS + STATUS_ABERTOS
-FORMAS_PAGAMENTO_VALIDAS = ('pix', 'dinheiro', 'transferencia', 'boleto', 'cartao', 'account_money')
+# O que os formulários do painel oferecem, mais as formas antigas que ainda existem em
+# lançamentos. As que o Mercado Pago confirma (pix_bp.FORMAS_PAGAMENTO_MP) são gravadas
+# pelo webhook; o admin pode mantê-las ao editar (ver forma_pagamento_aceita).
+FORMAS_PAGAMENTO_VALIDAS = (
+    'pix', 'dinheiro', 'transferencia', 'cartao_credito', 'cartao_debito', 'boleto',
+    'cartao', 'account_money',
+)
+
+
+# Evento que marca a volta de uma mensalidade recusada para "aguardando pagamento".
+EVENTO_NOVA_TENTATIVA = 'nova_tentativa'
+
+
+def forma_pagamento_aceita(forma, atual=None):
+    """Vazio, uma forma do painel ou a que a mensalidade já tem.
+
+    Sem a última opção, mudar só o status de uma mensalidade paga pelo Mercado Pago com
+    uma forma que o painel não oferece ('saldo_mercado_pago', 'cartao_pre_pago'...) era
+    recusado.
+    """
+    return not forma or forma in FORMAS_PAGAMENTO_VALIDAS or (atual is not None and forma == atual)
 
 # Rótulo humano de cada status interno - usado nos badges (nunca só a cor comunica o estado).
 ROTULO_STATUS = {
@@ -707,10 +727,10 @@ class PagamentoDAO:
         if pagamento:
             if status not in STATUS_VALIDOS:
                 return False
-            if forma_pagamento and forma_pagamento not in FORMAS_PAGAMENTO_VALIDAS:
+            if not forma_pagamento_aceita(forma_pagamento, pagamento.forma_pagamento):
                 return False
             pagamento.status = status
-            pagamento.forma_pagamento = forma_pagamento
+            pagamento.forma_pagamento = forma_pagamento or None
 
             if status == 'pago':
                 pagamento.data_pagamento = date.today()
@@ -909,7 +929,9 @@ class PagamentoDAO:
 
     @staticmethod
     def marcar_em_processamento_via_webhook(pagamento):
-        if pagamento.status in STATUS_FECHADOS:
+        # Idempotente: o polling da tela consulta a cada 5 s enquanto o cartão está em
+        # análise, e cada consulta gravava mais um evento igual.
+        if pagamento.status in STATUS_FECHADOS or pagamento.status == 'em_processamento':
             return
         pagamento.status = 'em_processamento'
         pagamento.provider_status = 'in_process'
@@ -922,7 +944,7 @@ class PagamentoDAO:
 
     @staticmethod
     def marcar_recusado_via_webhook(pagamento, *, status_detail=None):
-        if pagamento.status in STATUS_FECHADOS:
+        if pagamento.status in STATUS_FECHADOS or pagamento.status == 'recusado':
             return
         pagamento.status = 'recusado'
         pagamento.provider_status = 'rejected'
@@ -933,6 +955,50 @@ class PagamentoDAO:
             detalhe='Pagamento recusado pelo Mercado Pago.', ator='webhook_mercado_pago',
         ))
         db.session.commit()
+
+    @staticmethod
+    def reabrir_para_nova_tentativa(pagamento, *, ator, commit=True, momento=None):
+        """Uma recusa encerra aquela tentativa, não a mensalidade.
+
+        Quando o aluno gera um Pix novo ou volta ao checkout, a cobrança torna a esperar
+        pagamento. O evento guarda o instante da nova tentativa: a recusa anterior, que o
+        polling e webhooks atrasados continuam trazendo do Mercado Pago, deixa de valer
+        (ver recusa_superada). Sem isso a tela voltava a "Pagamento recusado" a cada
+        consulta e o aluno nunca via o QR Code novo.
+
+        `momento` (UTC) é quando o pedido começou, se ele passou pelo Mercado Pago antes
+        de chegar aqui: uma recusa da própria tentativa nova nasce depois dele e vale.
+        """
+        if pagamento.status != 'recusado':
+            return False
+        pagamento.status = 'atrasado' if pagamento.vencimento < date.today() else 'pendente'
+        PagamentoDAO._sincronizar_situacao(pagamento.aluno)
+        evento = PagamentoEvento(
+            pagamento_id=pagamento.id, tipo=EVENTO_NOVA_TENTATIVA,
+            detalhe='Nova tentativa de pagamento depois de uma recusa.', ator=ator,
+        )
+        evento.criado_em = momento or datetime.utcnow()
+        db.session.add(evento)
+        if commit:
+            db.session.commit()
+        return True
+
+    @staticmethod
+    def recusa_superada(pagamento, criada_em):
+        """A recusa (criada em `criada_em`, UTC) é de antes da última nova tentativa?
+
+        Sem data da recusa, e havendo nova tentativa, ela é tratada como superada: na
+        dúvida a cobrança fica aberta para pagar, em vez de voltar a "recusado".
+        """
+        ultima = (
+            PagamentoEvento.query
+            .filter_by(pagamento_id=pagamento.id, tipo=EVENTO_NOVA_TENTATIVA)
+            .order_by(PagamentoEvento.criado_em.desc())
+            .first()
+        )
+        if ultima is None:
+            return False
+        return criada_em is None or criada_em <= ultima.criado_em
 
     # ---------------- Comprovante manual (dinheiro/transferência) ----------------
 

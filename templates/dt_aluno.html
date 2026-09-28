@@ -485,14 +485,20 @@
                                     <td data-label="Forma">{{ pagamento.forma_pagamento|forma_pagamento }}</td>
                                     <td data-label="Origem">
                                         {% if pagamento.provider == 'mercado_pago' %}
-                                            <span title="ID Mercado Pago: {{ pagamento.provider_payment_id }}">Pix</span>
+                                            {# Pix direto ou Checkout Pro (cartão, boleto, saldo): a forma mostra qual. #}
+                                            {% if pagamento.provider_payment_id %}
+                                                <span title="ID Mercado Pago: {{ pagamento.provider_payment_id }}">Mercado Pago</span>
+                                            {% else %}
+                                                Mercado Pago
+                                            {% endif %}
                                         {% else %}
                                             Manual
                                         {% endif %}
                                     </td>
                                     <td data-label="Ação" class="acao-cell">
                                         {% set pode_pix = pagamento.status in ('pendente', 'atrasado') %}
-                                        {% if pode_pix or pagamento.provider_payment_id %}
+                                        {% set pode_sincronizar = pagamento.provider_payment_id or pagamento.checkout_external_reference %}
+                                        {% if pode_pix or pode_sincronizar %}
                                             <div class="et-menu" data-menu>
                                                 <button type="button" class="et-menu-botao" aria-haspopup="menu" aria-expanded="false"
                                                         aria-controls="menu-pagamento-{{ pagamento.id }}"
@@ -506,7 +512,7 @@
                                                                 data-pix-pagar
                                                                 data-pagamento-id="{{ pagamento.id }}">Pagar com Pix</button>
                                                     {% endif %}
-                                                    {% if pagamento.provider_payment_id %}
+                                                    {% if pode_sincronizar %}
                                                         <form action="{{ url_for('pix.sincronizar_pagamento', pagamento_id=pagamento.id) }}"
                                                               method="POST"
                                                               role="none">
@@ -533,12 +539,18 @@
                                             <select name="forma_pagamento"
                                                     aria-label="Forma de pagamento da mensalidade de {{ formatar_competencia(pagamento.competencia) }}">
                                                 <option value="">Forma</option>
-                                                {% for forma, rotulo in [('pix', 'Pix'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Crédito'), ('cartao_debito', 'Débito'), ('boleto', 'Boleto')] %}
+                                                {% set formas_painel = [('pix', 'Pix'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Crédito'), ('cartao_debito', 'Débito'), ('boleto', 'Boleto')] %}
+                                                {% for forma, rotulo in formas_painel %}
                                                     <option value="{{ forma }}"
                                                             {% if pagamento.forma_pagamento == forma %}selected{% endif %}>
                                                         {{ rotulo }}
                                                     </option>
                                                 {% endfor %}
+                                                {# Forma confirmada pelo Mercado Pago que o painel não oferece (saldo,
+                                                   pré-pago...): continua escolhida, senão mudar só o status a apagaria. #}
+                                                {% if pagamento.forma_pagamento and pagamento.forma_pagamento not in formas_painel|map('first')|list %}
+                                                    <option value="{{ pagamento.forma_pagamento }}" selected>{{ pagamento.forma_pagamento|forma_pagamento }}</option>
+                                                {% endif %}
                                             </select>
                                             <button type="submit">Atualizar</button>
                                         </form>

@@ -71,7 +71,6 @@
                     </div>
                 </article>
             </section>
-            {% set rotulos_forma = {'pix': 'Pix', 'dinheiro': 'Dinheiro', 'transferencia': 'Transferência', 'cartao_credito': 'Cartão de crédito', 'cartao_debito': 'Cartão de débito', 'boleto': 'Boleto'} %}
             {% set filtros_ativos = [] %}
             {% if filtros.get('inicio') and filtros.get('fim') %}
                 {{ filtros_ativos.append(('Período', filtros['inicio'][8:10] ~ '/' ~ filtros['inicio'][5:7] ~ '/' ~ filtros['inicio'][0:4] ~ ' a ' ~ filtros['fim'][8:10] ~ '/' ~ filtros['fim'][5:7] ~ '/' ~ filtros['fim'][0:4])) or '' }}
@@ -89,7 +88,7 @@
                 {{ filtros_ativos.append(('Plano', plano_filtrado.nome_plano if plano_filtrado else filtros['plano_id'])) or '' }}
             {% endif %}
             {% if filtros.get('forma_pagamento') %}
-                {{ filtros_ativos.append(('Método', rotulos_forma.get(filtros['forma_pagamento'], filtros['forma_pagamento']))) or '' }}
+                {{ filtros_ativos.append(('Método', filtros['forma_pagamento']|forma_pagamento)) or '' }}
             {% endif %}
             {% if filtros.get('status') %}
                 {{ filtros_ativos.append(('Situação', rotulo_status(filtros['status']))) or '' }}
@@ -171,10 +170,10 @@
                         <label for="f-forma">Método</label>
                         <select id="f-forma" name="forma_pagamento">
                             <option value="">Todos</option>
-                            {% for forma, rotulo in [('pix', 'Pix'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Cartão de crédito'), ('cartao_debito', 'Cartão de débito'), ('boleto', 'Boleto')] %}
+                            {% for forma in ['pix', 'dinheiro', 'transferencia', 'cartao_credito', 'cartao_debito', 'boleto', 'saldo_mercado_pago'] %}
                                 <option value="{{ forma }}"
                                         {% if filtros.get('forma_pagamento') == forma %}selected{% endif %}>
-                                    {{ rotulo }}
+                                    {{ forma|forma_pagamento }}
                                 </option>
                             {% endfor %}
                         </select>
@@ -245,7 +244,7 @@
                                         <td data-label="Forma">{{ pagamento.forma_pagamento|forma_pagamento }}</td>
                                         <td data-label="Origem">
                                             {% if pagamento.provider == 'mercado_pago' %}
-                                                Pix
+                                                Mercado Pago
                                             {% elif pagamento.provider == 'manual' %}
                                                 Manual
                                             {% else %}
@@ -268,7 +267,7 @@
                                                 </button>
                                                 <div class="et-menu-lista" role="menu" id="menu-pagamento-{{ pagamento.id }}" hidden>
                                                     <a role="menuitem" href="{{ url_for('admin_blueprint.detalhes_usuario', cpf=pagamento.aluno.cpf) }}">Ver aluno</a>
-                                                    {% if pagamento.provider_payment_id %}
+                                                    {% if pagamento.provider_payment_id or pagamento.checkout_external_reference %}
                                                         <form action="{{ url_for('pix.sincronizar_pagamento', pagamento_id=pagamento.id) }}"
                                                               method="POST"
                                                               role="none"

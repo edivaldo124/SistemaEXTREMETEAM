@@ -1,6 +1,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from sqlalchemy.exc import SQLAlchemyError
 
+from blueprints.mercado_pago_oauth_bp import tentativa_sem_retorno
 from config import db
 from modelos.academia import Academia
 from servicos.autorizacao import admin_requerido
@@ -12,7 +13,10 @@ academia_bp = Blueprint('academia', __name__)
 
 
 def _pagina(dados, status=200):
-    return render_template('admin_academia.html', dados=dados, mp=estado_conexao(), gmail=estado_gmail()), status
+    return render_template(
+        'admin_academia.html', dados=dados, mp=estado_conexao(), gmail=estado_gmail(),
+        mp_sem_retorno=tentativa_sem_retorno(),
+    ), status
 
 
 @academia_bp.route('/admin/academia', methods=['GET', 'POST'])

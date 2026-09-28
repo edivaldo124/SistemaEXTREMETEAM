@@ -122,6 +122,17 @@ ROTULOS_FORMA_PAGAMENTO = {
     'cartao_credito': 'Cartão de crédito',
     'cartao_debito': 'Cartão de débito',
     'boleto': 'Boleto',
+    # Gravadas pelo webhook a partir do meio que o Mercado Pago confirmou
+    # (pix_bp.FORMAS_PAGAMENTO_MP), e as antigas que ainda existem em lançamentos.
+    'saldo_mercado_pago': 'Saldo Mercado Pago',
+    'cartao_pre_pago': 'Cartão pré-pago',
+    'carteira_digital': 'Carteira digital',
+    'deposito': 'Depósito',
+    'voucher': 'Vale',
+    'cripto': 'Cripto',
+    'mercado_pago': 'Mercado Pago',
+    'cartao': 'Cartão',
+    'account_money': 'Saldo Mercado Pago',
 }
 
 

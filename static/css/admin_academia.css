@@ -46,6 +46,17 @@
 .mp-nota { margin-top:var(--sp-3); font-size:var(--fs-sm); }
 .mp-acoes { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); margin-top:var(--sp-5); }
 .mp-acoes form { margin:0; }
+/* Autorização que foi ao provedor e não voltou (mercado_pago_oauth_bp.tentativa_sem_retorno). */
+.mp-aviso { margin-top:var(--sp-5); max-width:75ch; }
+.mp-aviso p { margin:0; }
+/* Passo a passo do aplicativo no provedor, com os endereços para copiar (et-acordeao + et-copiavel). */
+.mp-config { margin-top:var(--sp-6); }
+.mp-config .et-acordeao-corpo > p { margin:0 0 var(--sp-4); max-width:75ch; }
+.mp-config code { overflow-wrap:anywhere; }
+.mp-passos { display:grid; gap:var(--sp-5); margin:0; padding-left:var(--sp-5); }
+.mp-passos p { margin:0 0 var(--sp-3); max-width:75ch; }
+.mp-passos li > p:last-child { margin-bottom:0; }
+.mp-passos .mp-nota { margin:var(--sp-3) 0 0; }
 @media (max-width:600px) {
   .academia-campos { grid-template-columns:1fr; }
   .academia-acoes .button-primary { width:100%; }

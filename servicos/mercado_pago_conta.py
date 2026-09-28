@@ -21,6 +21,7 @@ import base64
 import hashlib
 import logging
 import os
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
@@ -37,6 +38,7 @@ from modelos.mercado_pago_conexao import MercadoPagoConexao
 from servicos.mercado_pago import (
     AMBIENTE_PRODUCAO,
     AMBIENTE_SANDBOX,
+    CAMINHO_WEBHOOK,
     ConfiguracaoInvalida,
     MercadoPagoIndisponivel,
     base_url_publica,
@@ -44,7 +46,8 @@ from servicos.mercado_pago import (
 
 logger = logging.getLogger(__name__)
 
-URL_AUTORIZACAO = 'https://auth.mercadopago.com.br/authorization'
+# Host da documentação atual e do SDK oficial do Mercado Pago (o .com.br era o antigo).
+URL_AUTORIZACAO = 'https://auth.mercadopago.com/authorization'
 URL_TOKEN = 'https://api.mercadopago.com/oauth/token'
 CAMINHO_CALLBACK = '/admin/mercado-pago/callback'
 TIMEOUT_OAUTH_SEGUNDOS = 6.0
@@ -56,6 +59,8 @@ RENOVAR_ANTES = timedelta(days=15)
 VARIAVEL_CHAVE = 'MERCADO_PAGO_TOKEN_KEY'
 _INFO_HKDF = b'extremeteam/mercado-pago/tokens/v1'
 _TABELA = MercadoPagoConexao.__table__
+# Tokens e codes do Mercado Pago começam assim; nada nesse formato vai para o log.
+_PADRAO_CREDENCIAL = re.compile(r'\b(?:APP_USR|TEST|TG)-[\w-]+')
 
 
 class ConexaoIlegivel(MercadoPagoIndisponivel):
@@ -69,6 +74,11 @@ class ConexaoIlegivel(MercadoPagoIndisponivel):
 def _agora():
     """UTC sem fuso, o mesmo formato que o restante do projeto grava no banco."""
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def texto_para_log(texto, limite=160):
+    """Texto vindo do Mercado Pago, curto e sem nada com cara de token ou code."""
+    return _PADRAO_CREDENCIAL.sub('***', str(texto or '-'))[:limite]
 
 
 # --- cifra ------------------------------------------------------------------------
@@ -199,8 +209,12 @@ def _pedir_token(corpo):
 
     if resposta.status_code >= 400:
         erro = str(dados.get('error') or 'recusado')[:60]
-        logger.warning('Mercado Pago recusou a troca de credenciais OAuth (status=%s, erro=%s).',
-                       resposta.status_code, erro)
+        # A mensagem diz o motivo (redirect_uri, PKCE, client_secret...), que é o que
+        # quem configura o aplicativo precisa ler no log.
+        logger.warning(
+            'Mercado Pago recusou a troca de credenciais OAuth (status=%s, erro=%s, mensagem=%s).',
+            resposta.status_code, erro, texto_para_log(dados.get('message')),
+        )
         return {'sucesso': False, 'erro': erro}
 
     access_token, refresh_token = dados.get('access_token'), dados.get('refresh_token')
@@ -274,6 +288,24 @@ def remover_conexao():
     return bool(removidas)
 
 
+def _configuracao_do_aplicativo():
+    """O que precisa estar cadastrado no aplicativo do Mercado Pago, pronto para copiar.
+
+    Sai de APP_BASE_URL, como o redirect_uri que este servidor envia: o Mercado Pago
+    recusa a autorização na própria página dele quando o endereço cadastrado difere
+    em qualquer caractere. Sem URL pública válida, nenhum dos dois endereços existe.
+    """
+    try:
+        publica = base_url_publica()
+    except ConfiguracaoInvalida:
+        publica = None
+    return {
+        'redirect_uri': f'{publica}{CAMINHO_CALLBACK}' if publica else None,
+        'url_notificacoes': f'{publica}{CAMINHO_WEBHOOK}' if publica else None,
+        'assinatura_webhook': bool((os.environ.get('MERCADO_PAGO_WEBHOOK_SECRET') or '').strip()),
+    }
+
+
 def estado_conexao():
     """Resumo para a tela do administrador. Não expõe token algum."""
     conexao = db.session.get(MercadoPagoConexao, 1)
@@ -281,6 +313,7 @@ def estado_conexao():
         'oauth_disponivel': oauth_configurado(),
         'usa_credencial_do_servidor': bool(_token_do_ambiente()),
         'conectada': conexao is not None,
+        **_configuracao_do_aplicativo(),
     }
     if conexao is None:
         return base

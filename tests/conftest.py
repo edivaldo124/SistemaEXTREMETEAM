@@ -32,6 +32,16 @@ os.environ.setdefault('ADMIN_PASSWORD_HASH', generate_password_hash('senha-de-te
 os.environ['CRIAR_SCHEMA_NA_IMPORTACAO'] = 'true'
 # A fila de e-mail é drenada pelo próprio teste, nunca por uma thread de fundo.
 os.environ['FILA_EMAIL_SINCRONA'] = 'true'
+# Integrações que o .env de desenvolvimento costuma preencher. load_dotenv não
+# sobrescreve variável já definida, então o vazio aqui impede que a chave de cifra, o
+# aplicativo OAuth ou o keep-alive da máquina de quem roda mudem o resultado da suíte.
+# Quem precisa de um deles liga com monkeypatch.setenv no próprio teste.
+for _variavel in (
+    'MERCADO_PAGO_CLIENT_ID', 'MERCADO_PAGO_CLIENT_SECRET', 'MERCADO_PAGO_TOKEN_KEY',
+    'MERCADO_PAGO_AMBIENTE', 'GMAIL_CLIENT_ID', 'GMAIL_CLIENT_SECRET', 'ADMIN_EMAIL',
+    'KEEP_ALIVE', 'KEEP_ALIVE_INTERVALO',
+):
+    os.environ[_variavel] = ''
 
 import pytest
 from flask.testing import FlaskClient

@@ -7,7 +7,7 @@ const vm = require('node:vm');
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
 // Executa os scripts reais com respostas controladas: nenhum pedido sai para a rede.
-function criarPagina(script) {
+function criarPagina(script, opcoes = {}) {
     function elemento(dataset = {}) {
         const eventos = new Map();
         const filhos = new Map();
@@ -35,7 +35,7 @@ function criarPagina(script) {
         };
     }
 
-    const raiz = elemento({ pagamentoId: '42', statusInicial: 'pendente', status: 'pendente' });
+    const raiz = elemento({ pagamentoId: '42', statusInicial: opcoes.statusInicial || 'pendente', status: 'pendente' });
     const document = elemento();
     const window = elemento();
     let recargas = 0;
@@ -47,6 +47,7 @@ function criarPagina(script) {
     let proximoTimer = 0;
     const consultas = [];
     const pendente = { status: 'pendente', valor: 10, pix_copia_cola: 'pix-test' };
+    const respostaPost = opcoes.respostaPost || pendente;
     const contexto = {
         document, window, Intl, console: { ...console, warn() {} },
         setInterval(callback) {
@@ -58,7 +59,7 @@ function criarPagina(script) {
         setTimeout() { return ++proximoTimer; },
         fetch(url, opcoes) {
             if (opcoes?.method === 'POST') {
-                return Promise.resolve({ ok: true, json: async () => pendente });
+                return Promise.resolve({ ok: true, json: async () => respostaPost });
             }
             assert.match(url, /^\/api\/mensalidades\/42\/status$/);
             return new Promise((resolve, reject) => consultas.push({ resolve, reject }));
@@ -68,7 +69,7 @@ function criarPagina(script) {
     vm.runInNewContext(fs.readFileSync(arquivo, 'utf8'), contexto, { filename: arquivo });
     let botaoPix = null;
     if (script === 'pix') {
-        botaoPix = elemento({ pagamentoId: '42' });
+        botaoPix = elemento({ pagamentoId: '42', ...(opcoes.statusBotao ? { status: opcoes.statusBotao } : {}) });
         document.emitir('click', { target: { closest: () => botaoPix } });
     }
 
@@ -149,4 +150,58 @@ test('pix: fechar o diálogo ignora a resposta pendente e impede novas consultas
     await pagina.tick();
     assert.equal(pagina.intervalos.size, 0);
     assert.equal(pagina.consultas.length, 1);
+});
+
+
+test('pagamento: a consulta de status (sem imagem) não põe "QR indisponível" embaixo do QR', async () => {
+    const pagina = criarPagina('pagamento', {
+        respostaPost: { status: 'pendente', pix_copia_cola: 'pix-test', qr_code_base64: 'QUJD' },
+    });
+    await flush();
+    const qr = pagina.raiz.querySelector('[data-qr]');
+    const semQr = pagina.raiz.querySelector('[data-sem-qr]');
+    assert.equal(qr.hidden, false);
+    assert.equal(semQr.hidden, true);
+
+    await pagina.tick();
+    await pagina.responder(0, { status: 'pendente', pix_copia_cola: 'pix-test' });
+    assert.equal(qr.hidden, false);
+    assert.equal(semQr.hidden, true);
+});
+
+test('pagamento: código novo sem imagem tira o QR do código anterior', async () => {
+    const pagina = criarPagina('pagamento', {
+        respostaPost: { status: 'pendente', pix_copia_cola: 'pix-a', qr_code_base64: 'QUJD' },
+    });
+    await flush();
+    await pagina.tick();
+    await pagina.responder(0, { status: 'pendente', pix_copia_cola: 'pix-b' });
+
+    assert.equal(pagina.raiz.querySelector('[data-qr]').hidden, true);
+    assert.equal(pagina.raiz.querySelector('[data-sem-qr]').hidden, false);
+});
+
+test('pagamento: Pix gerado para mensalidade recusada recarrega a tela em vez de mostrar "Recusada"', async () => {
+    const pagina = criarPagina('pagamento', { statusInicial: 'recusado' });
+    await flush();
+
+    assert.equal(pagina.recargas, 1);
+    assert.equal(pagina.intervalos.size, 0);
+});
+
+test('pix: fechar o diálogo de uma mensalidade recusada que voltou a aguardar recarrega a lista', async () => {
+    const pagina = criarPagina('pix', { statusBotao: 'recusado' });
+    await flush();
+    assert.equal(pagina.recargas, 0);
+
+    pagina.raiz.querySelector('[data-pix-fechar]').emitir('click');
+    assert.equal(pagina.recargas, 1);
+});
+
+test('pix: fechar o diálogo de uma mensalidade pendente não recarrega', async () => {
+    const pagina = criarPagina('pix', { statusBotao: 'pendente' });
+    await flush();
+
+    pagina.raiz.querySelector('[data-pix-fechar]').emitir('click');
+    assert.equal(pagina.recargas, 0);
 });

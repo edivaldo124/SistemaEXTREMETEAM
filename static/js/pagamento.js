@@ -3,7 +3,8 @@
     if (!raiz) return;
 
     const pagamentoId = raiz.dataset.pagamentoId;
-    let statusAtual = raiz.dataset.statusInicial;
+    const statusDaPagina = raiz.dataset.statusInicial;
+    let statusAtual = statusDaPagina;
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     const estados = {};
@@ -20,8 +21,14 @@
     const elExpiracao = raiz.querySelector('[data-expiracao]');
     const botoesTentarNovamente = raiz.querySelectorAll('[data-tentar-novamente]');
 
-    const formatadorData = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    // A validade vem em UTC com fuso explícito; exibe no horário da academia.
+    const formatadorData = new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo',
+    });
 
+    // Copia e cola que o QR exibido representa. O status (polling) não traz a imagem de
+    // novo: sem isto, a primeira consulta punha "QR Code indisponível" embaixo do QR.
+    let qrDoCodigo = null;
     let intervaloPolling = null;
     let consultaEmAndamento = false;
     let paginaAtiva = true;
@@ -118,13 +125,22 @@
             return;
         }
 
-        if (elCopiaCola) elCopiaCola.value = dados.pix_copia_cola || '';
+        const codigo = dados.pix_copia_cola || '';
+        if (elCopiaCola) elCopiaCola.value = codigo;
         if (dados.qr_code_base64 && elQr) {
             elQr.src = 'data:image/png;base64,' + dados.qr_code_base64;
             elQr.hidden = false;
+            qrDoCodigo = codigo;
             if (elSemQr) elSemQr.hidden = true;
-        } else if (elSemQr) {
-            elSemQr.hidden = !dados.pix_copia_cola;
+        } else if (qrDoCodigo !== codigo) {
+            // Código novo sem imagem (ou nenhum QR ainda): o QR na tela, se houver, é de
+            // outro código e sai; fica o copia e cola.
+            if (elQr) {
+                elQr.hidden = true;
+                elQr.removeAttribute('src');
+            }
+            qrDoCodigo = null;
+            if (elSemQr) elSemQr.hidden = !codigo;
         }
         if (elExpiracao && dados.data_expiracao) {
             elExpiracao.textContent = formatadorData.format(new Date(dados.data_expiracao));
@@ -162,6 +178,12 @@
             if (!resposta.ok) {
                 if (elErroMsg) elErroMsg.textContent = dados.erro || 'Não foi possível carregar o pagamento. Tente novamente.';
                 mostrarEstado('erro');
+                return;
+            }
+            // A nova tentativa reabriu uma mensalidade recusada: recarrega para o selo e
+            // a linha do tempo (montados no servidor) deixarem de dizer "Recusada".
+            if (statusDaPagina === 'recusado' && dados.status !== 'recusado') {
+                window.location.reload();
                 return;
             }
             tratarResposta(dados);

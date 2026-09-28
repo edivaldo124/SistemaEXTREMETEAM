@@ -1,4 +1,5 @@
 {% extends "layouts/admin.html" %}
+{% from 'components/ui.html' import campo_copiavel %}
 {% set secao_ativa = 'academia' %}
 {% block titulo %}Informações da academia | Extreme Team{% endblock %}
 {% block estilos %}
@@ -87,6 +88,13 @@
                         {% endif %}
                     </div>
 
+                    {% if mp_sem_retorno and mp.oauth_disponivel %}
+                        <div class="msg msg-aviso mp-aviso" role="status">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5m0 3.5v.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                            <p><strong>A autorização não voltou do Mercado Pago.</strong> Se apareceu um erro por lá, quase sempre é a URL de redirecionamento ou o PKCE do aplicativo. Confira a configuração abaixo e clique em Conectar de novo.</p>
+                        </div>
+                    {% endif %}
+
                     {% if mp.conectada %}
                         <dl class="mp-detalhes">
                             <div><dt>Conta</dt><dd>{{ mp.mp_user_id }}</dd></div>
@@ -130,6 +138,36 @@
                             {% endif %}
                         </div>
                     {% endif %}
+
+                    {% if mp.oauth_disponivel %}
+                        <details class="et-acordeao mp-config"{% if mp_sem_retorno or not mp.conectada or mp.precisa_reconectar %} open{% endif %}>
+                            <summary>Configuração do aplicativo no Mercado Pago</summary>
+                            <div class="et-acordeao-corpo">
+                                {% if mp.redirect_uri %}
+                                    <p>Feita uma vez, em Mercado Pago Developers → Suas integrações → sua aplicação. Se o Mercado Pago mostrar erro ao conectar, confira estes pontos.</p>
+                                    <ol class="mp-passos">
+                                        <li>
+                                            <p>Em <strong>Editar</strong>, cadastre esta URL de redirecionamento exatamente igual, com https e sem barra no fim:</p>
+                                            {{ campo_copiavel('mp-redirect-uri', 'URL de redirecionamento', mp.redirect_uri) }}
+                                        </li>
+                                        <li><p>Na mesma tela, ative o <strong>fluxo de código de autorização com PKCE</strong>.</p></li>
+                                        <li>
+                                            <p>Em <strong>Webhooks</strong>, cadastre esta URL no evento <strong>Pagamentos</strong> e guarde a assinatura secreta gerada em <code>MERCADO_PAGO_WEBHOOK_SECRET</code>, no servidor:</p>
+                                            {{ campo_copiavel('mp-url-notificacoes', 'URL de notificações', mp.url_notificacoes) }}
+                                            {% if mp.assinatura_webhook %}
+                                                <p class="mp-nota">A assinatura secreta já está configurada no servidor.</p>
+                                            {% else %}
+                                                <p class="mp-nota"><strong>A assinatura secreta ainda não está no servidor.</strong> Sem ela, um pagamento só é confirmado quando o aluno volta à tela de pagamento ou quando você sincroniza a cobrança.</p>
+                                            {% endif %}
+                                        </li>
+                                        <li><p>Na hora de autorizar, entre com a conta do Mercado Pago que vai receber as mensalidades.</p></li>
+                                    </ol>
+                                {% else %}
+                                    <p>Defina <code>APP_BASE_URL</code> no servidor com o endereço https público do sistema. É dele que saem a URL de redirecionamento e a de notificações que o aplicativo precisa ter cadastradas.</p>
+                                {% endif %}
+                            </div>
+                        </details>
+                    {% endif %}
                 </section>
             </div>
             <div class="et-tabs-painel" role="tabpanel" id="painel-gmail" aria-labelledby="aba-gmail" tabindex="0" hidden>
@@ -155,9 +193,27 @@
                         </div>
                     {% elif gmail.oauth_disponivel %}
                         <p class="mp-texto">Conecte o Gmail do administrador para enviar notificações. O Google pedirá autorização uma única vez.</p>
-                        <a class="button-primary" href="{{ url_for('gmail_oauth.conectar') }}">Conectar Gmail</a>
+                        <div class="mp-acoes">
+                            <a class="button-primary" href="{{ url_for('gmail_oauth.conectar') }}">Conectar Gmail</a>
+                        </div>
                     {% else %}
                         <p class="mp-texto">Configure GMAIL_CLIENT_ID e GMAIL_CLIENT_SECRET no ambiente do servidor para habilitar a conexão.</p>
+                    {% endif %}
+
+                    {% if gmail.oauth_disponivel and gmail.redirect_uri %}
+                        <details class="et-acordeao mp-config"{% if not gmail.conectada %} open{% endif %}>
+                            <summary>Configuração do cliente OAuth no Google</summary>
+                            <div class="et-acordeao-corpo">
+                                <ol class="mp-passos">
+                                    <li>
+                                        <p>No Google Cloud, em Google Auth Platform → Clientes → seu cliente da Web, cadastre em <strong>URIs de redirecionamento autorizados</strong>:</p>
+                                        {{ campo_copiavel('gmail-redirect-uri', 'URI de redirecionamento', gmail.redirect_uri) }}
+                                    </li>
+                                    <li><p>Em <strong>Público-alvo</strong>, deixe o status de publicação <strong>Em produção</strong>. No modo Teste, o Google derruba a autorização em 7 dias e os e-mails param de sair.</p></li>
+                                    <li><p>Enquanto o Google não verificar o app, a autorização mostra “O Google não verificou este app”. Quem conecta é a própria academia, então dá para seguir em <strong>Avançado</strong> → <strong>Acessar</strong>. Para tirar o aviso, envie o app para verificação na Central de verificação do Google Auth Platform.</p></li>
+                                </ol>
+                            </div>
+                        </details>
                     {% endif %}
                 </section>
             </div>

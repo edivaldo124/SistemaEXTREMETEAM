@@ -115,11 +115,16 @@ def abrir_checkout(pagamento_id):
                      pagamento.id, exc_info=True)
         return _erro_abertura(MSG_ERRO_CONFIG, destino_erro, 503)
 
+    # Voltar ao checkout depois de um cartão recusado é uma nova tentativa: a mensalidade
+    # volta a aguardar pagamento assim que o destino estiver garantido.
+    ator = session.get('usuario') or 'sistema'
+
     # Clique repetido / duas abas: se já existe uma preferência válida para ESTA
     # mensalidade, com o mesmo valor e no mesmo ambiente, reusa a mesma URL em vez de
     # criar outra cobrança no Mercado Pago.
     if (PagamentoDAO.checkout_ainda_valido(pagamento, ambiente_atual=ambiente)
             and url_checkout_permitida(pagamento.checkout_url)):
+        PagamentoDAO.reabrir_para_nova_tentativa(pagamento, ator=ator)
         return _checkout_pronto(pagamento)
 
     aluno = pagamento.aluno
@@ -162,6 +167,8 @@ def abrir_checkout(pagamento_id):
         logger.error('Mercado Pago devolveu um destino de checkout não permitido para %s.', pagamento.id)
         return _erro_abertura(MSG_ERRO_GENERICO, destino_erro, 502)
 
+    # No mesmo commit da preferência (salvar_dados_checkout), que mantém a trava até lá.
+    PagamentoDAO.reabrir_para_nova_tentativa(pagamento, ator=ator, commit=False)
     PagamentoDAO.salvar_dados_checkout(
         pagamento,
         preference_id=resultado['preference_id'],

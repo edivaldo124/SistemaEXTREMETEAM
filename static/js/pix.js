@@ -35,6 +35,11 @@
 
     let pagamentoIdAtual = null;
     let botaoQueAbriu = null;
+    // Status da linha que abriu o diálogo e o último que o servidor devolveu. Pix gerado
+    // para uma mensalidade recusada a reabre: ao fechar, a página recarrega para a
+    // linha deixar de dizer "Recusada".
+    let statusDaLinha = null;
+    let ultimoStatus = null;
 
     // ------------------------------------------------------ botão ocupado --
     // Enquanto o servidor conversa com o Mercado Pago o botão trava, avisa por
@@ -120,6 +125,11 @@
             botaoQueAbriu.focus();
         }
         botaoQueAbriu = null;
+        if (statusDaLinha === 'recusado' && ultimoStatus && ultimoStatus !== 'recusado') {
+            window.location.reload();
+        }
+        statusDaLinha = null;
+        ultimoStatus = null;
     }
 
     function preencherDados(dados) {
@@ -232,6 +242,7 @@
                 return;
             }
 
+            ultimoStatus = dados.status;
             preencherDados(dados);
 
             if (dados.status === 'pago') {
@@ -265,6 +276,7 @@
         if (!pagamentoId) return;
 
         botaoQueAbriu = botao;
+        statusDaLinha = botao.dataset.status || null;
         marcarOcupado(botao, 'Gerando Pix…');
         abrirPix(pagamentoId);
     });
@@ -276,6 +288,7 @@
         );
         if (botaoAutomatico) {
             botaoQueAbriu = botaoAutomatico;
+            statusDaLinha = botaoAutomatico.dataset.status || null;
             marcarOcupado(botaoAutomatico, 'Gerando Pix…');
             abrirPix(autoPixId);
         }

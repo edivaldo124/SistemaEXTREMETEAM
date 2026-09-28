@@ -328,7 +328,7 @@ def test_cadastro_publico_nao_revela_cpf_nem_email_ja_cadastrados(client, criar_
     assert _mensagem_da_resposta(novo) == _mensagem_da_resposta(cpf_repetido) == _mensagem_da_resposta(email_repetido)
 
 
-def test_cadastro_publico_rejeita_cpf_invalido(client):
+def test_cadastro_publico_rejeita_cpf_invalido(client, contexto_app):
     resposta = _cadastro_publico(client, cpfusuario='529.982.247-26')
 
     assert resposta.status_code == 200
