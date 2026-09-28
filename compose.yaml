@@ -17,7 +17,7 @@ services:
     cpus: 0.5
 
   rate-limit:
-    image: redis:7-alpine
+    image: redis:8-alpine
     restart: unless-stopped
     command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "32mb", "--maxmemory-policy", "allkeys-lru"]
     healthcheck:
