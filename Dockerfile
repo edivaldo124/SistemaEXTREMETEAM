@@ -1,4 +1,4 @@
-FROM python:3.11.16-slim-bookworm AS builder
+FROM python:3.14.7-slim-bookworm AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
@@ -9,7 +9,7 @@ RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip setuptools wheel \
     && /opt/venv/bin/pip install --require-hashes -r requirements.lock
 
-FROM python:3.11.16-slim-bookworm
+FROM python:3.14.7-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
