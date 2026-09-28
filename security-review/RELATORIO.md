@@ -46,36 +46,20 @@ relacionada a segurança do `requirements.lock` foi resolvida.
 
 ### Pendências não relacionadas a segurança
 
-Rodar a suíte **completa** (`pytest -q`, 632 testes) nesta rodada — as rodadas anteriores
-sempre selecionaram um subconjunto de arquivos — revelou mais 4 falhas além da já conhecida,
-todas investigadas individualmente até a causa raiz. Nenhuma é uma vulnerabilidade; todas são
-dívida de teste:
+**Todas resolvidas (27/09/2026).** A 2ª rodada de 22/09 encontrou 4 falhas de teste na suíte
+completa, todas dívida de teste e nenhuma vulnerabilidade. Revalidadas uma a uma em 27/09:
 
-- **`tests/test_seguranca.py::test_cadastro_publico_rejeita_cpf_invalido`**: a asserção final
-  consulta `Aluno.query` fora de um contexto de aplicação Flask (`RuntimeError: Working
-  outside of application context`). Já documentado desde 21/09.
-- **`tests/test_email_gmail.py::test_envia_pelo_gmail_com_refresh_token` e
-  `test_gmail_sem_credenciais_nao_chama_rede`**: chamam `email._enviar_via_gmail`, uma
-  função que **não existe mais** em `servicos/email.py` (`AttributeError`). É um teste órfão
-  do envio de e-mail por variável de ambiente (`GMAIL_REFRESH_TOKEN`), fluxo substituído
-  pela conexão OAuth com o banco em `servicos/gmail_conta.py` (revisada e aprovada nesta
-  rodada — ver **Controles verificados**). O arquivo de teste antigo não foi removido/
-  atualizado junto com a migração.
-- **`tests/test_mercado_pago_oauth.py::test_sem_chave_dedicada_a_cifra_deriva_da_secret_key`**:
-  falha **só neste ambiente local**, porque o teste não limpa `MERCADO_PAGO_TOKEN_KEY` (não
-  usa a fixture `oauth_env`, que faz `monkeypatch.delenv('MERCADO_PAGO_TOKEN_KEY', ...)`) e
-  o `.env` local da máquina já tem essa variável definida — `load_dotenv()` ([servidor.py:13](../servidor.py#L13))
-  não sobrescreve variável já presente no ambiente. Com a variável setada, `_fernet()` usa a
-  chave dedicada e ignora a `SECRET_KEY` de propósito, então trocar `app.secret_key` no teste
-  não muda nada. **Reproduzido isoladamente fora do pytest** (sem `MERCADO_PAGO_TOKEN_KEY`) que
-  o comportamento real do produto está correto: derivar a chave da `SECRET_KEY` e depois trocar
-  a `SECRET_KEY` de fato torna o token ilegível (`ConexaoIlegivel`), confirmando a garantia
-  documentada em [mercado_pago_conta.py:87-88](../servicos/mercado_pago_conta.py#L87-L88). Falso
-  negativo de teste, não falha de produto — mas vale adicionar a fixture `oauth_env` a este
-  teste para não mascarar uma regressão real nesse caminho no futuro.
-- **`tests/test_publicas_redesign.py::test_landing_page`**: espera o texto `'VÁ AO EXTREMO.'`
-  no HTML da home, que não está mais lá — troca de copy na landing page sem atualizar o teste.
-  Conteúdo de marketing, sem relação com segurança.
+| Teste | Causa em 22/09 | Situação em 27/09 |
+|---|---|---|
+| `test_seguranca.py::test_cadastro_publico_rejeita_cpf_invalido` | `Aluno.query` fora do contexto de aplicação | Passa; o teste usa a fixture `contexto_app`, que abre o contexto de aplicação. |
+| `test_email_gmail.py` (2 testes) | Chamavam `email._enviar_via_gmail`, que deixou de existir com a conexão OAuth | Arquivo reescrito para `servicos/gmail_conta.py` (commits `795bb2b` e `56e5d9c`); nenhuma referência à função antiga. |
+| `test_mercado_pago_oauth.py::test_sem_chave_dedicada_a_cifra_deriva_da_secret_key` | `MERCADO_PAGO_TOKEN_KEY` do `.env` local vazava para o teste | Passa; o `tests/conftest.py` zera essa e as demais variáveis de integração antes de importar o app. |
+| `test_publicas_redesign.py::test_landing_page` | Esperava o texto antigo da home (`VÁ AO EXTREMO.`) | Passa; o teste acompanha o texto atual. |
+
+Resultado da suíte completa em 27/09/2026: `pytest -q` → **740 passaram, 0 falharam, 0
+pulados**, com os 8 testes `*_postgres.py` executados contra um PostgreSQL 17 local descartável
+(`TEST_POSTGRES_URL` com socket em `/tmp/`, exigência dos próprios testes). Sem essa variável,
+os mesmos 8 aparecem como pulados e o restante continua verde (732 passaram).
 
 ## Controles verificados
 
