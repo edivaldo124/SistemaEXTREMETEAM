@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no arquivo .env}
@@ -90,7 +90,7 @@ services:
     # Mesma imagem (e versão do pg_dump) do serviço "db". Todo dia em BACKUP_HORA gera
     # banco.dump (pg_dump custom, compactado) + uploads.tar.gz em "backups_data", com
     # retenção de 7 diários e 4 semanais. Restauração e teste: README, "Backup e restauração".
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     depends_on:
       db:
