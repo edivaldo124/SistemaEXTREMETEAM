@@ -50,7 +50,7 @@ from servicos.armazenamento import (
     salvar_comprovante_manual,
     salvar_foto_perfil,
 )
-from servicos import convites, fila_email
+from servicos import conteudo_home, convites, fila_email
 from servicos import planos as regras_plano
 from servicos.formatacao import (
     cpf_valido,
@@ -207,11 +207,14 @@ def pagina_login():
 # CPF ou e-mail já cadastrados nunca devolvem o nome, o e-mail nem a situação de quem
 # está na base: quem digita dados de terceiro não pode descobrir nada sobre ele por aqui.
 # Por isso a resposta é a MESMA para cadastro novo, CPF existente e e-mail existente.
-MSG_CADASTRO_RECEBIDO = (
-    'Recebemos sua solicitação. Você vai receber um e-mail com os próximos passos: a análise do '
-    'seu cadastro pela administração ou, se você já tiver cadastro na Extreme Team, as instruções '
-    'de acesso. Não recebeu? Fale com a administração.'
-)
+def _cadastro_recebido():
+    """Post/Redirect/Get para a página de obrigado.
+
+    Cadastro novo, CPF já cadastrado e e-mail já cadastrado terminam aqui, no MESMO
+    redirecionamento e sem nada na URL: a resposta não diz se o CPF ou o e-mail existem.
+    A página explica os dois caminhos ("análise" ou "instruções de acesso") por e-mail.
+    """
+    return redirect(url_for('auth.cadastro_obrigado'))
 
 
 def _convidar_cadastro_existente(aluno):
@@ -308,7 +311,7 @@ def pagina_cadastro():
         if ja_cadastrado:
             generate_password_hash(senha)
             _em_segundo_plano(_convidar_cadastro_existente_por_id, ja_cadastrado.id)
-            return render_template("login.html", msg=MSG_CADASTRO_RECEBIDO)
+            return _cadastro_recebido()
 
         # O nome de usuário continua com aviso explícito: quem escolhe um já usado
         # precisa saber para trocar. Não é dado pessoal, ao contrário de CPF e e-mail.
@@ -331,7 +334,7 @@ def pagina_cadastro():
                     'Se não foi você, pode ignorar este e-mail: nada foi alterado.',
                 ],
             )
-            return render_template("login.html", msg=MSG_CADASTRO_RECEBIDO)
+            return _cadastro_recebido()
 
         novo_aluno = Aluno(
             nome=nome, login=login, datanascimento=datanascimento, cpf=cpf,
@@ -378,9 +381,17 @@ def pagina_cadastro():
                     link_texto='Abrir painel administrativo',
                 )
 
-        return render_template('login.html', msg=MSG_CADASTRO_RECEBIDO)
+        return _cadastro_recebido()
 
     return render_template("cadastro.html")
+
+
+@auth_bp.route('/cadastro/obrigado')
+def cadastro_obrigado():
+    # Não mostra nada do cadastro: a página é a mesma para qualquer visitante.
+    return render_template(
+        'cadastro_obrigado.html', prazo_analise=conteudo_home.PRAZO_ANALISE_CADASTRO,
+    )
 
 
 @auth_bp.route('/termos-de-responsabilidade')

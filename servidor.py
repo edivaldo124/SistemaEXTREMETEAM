@@ -27,7 +27,7 @@ from modelos.professor import Professor
 from dao.planoDAO import PlanoDAO
 from modelos.sessao_revogada import SessaoRevogada  # noqa: F401  (registra a tabela no metadata)
 from modelos.gmail_conexao import GmailConexao  # noqa: F401
-from servicos import credenciais, fila_email, keep_alive, seo
+from servicos import conteudo_home, credenciais, fila_email, keep_alive, seo
 from servicos.autorizacao import revogar_sessao_atual
 from servicos.planos import vitrine_planos
 
@@ -315,6 +315,9 @@ def home():
     return render_template(
         "index.html", professores_publicos=professores, vitrine_planos=planos,
         dados_estruturados=seo.dados_estruturados_academia(db.session.get(Academia, 1)),
+        perguntas_frequentes=conteudo_home.PERGUNTAS_FREQUENTES,
+        faq_estruturado=conteudo_home.faq_estruturado(conteudo_home.PERGUNTAS_FREQUENTES),
+        tempo_resposta_whatsapp=conteudo_home.TEMPO_RESPOSTA_WHATSAPP,
     )
 
 

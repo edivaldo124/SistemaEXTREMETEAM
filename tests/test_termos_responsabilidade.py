@@ -40,6 +40,6 @@ def test_cadastro_registra_versao_e_horario_do_aceite(client, sem_email, context
     )
 
     aluno = Aluno.query.one()
-    assert resposta.status_code == 200
+    assert resposta.status_code == 302
     assert aluno.termos_responsabilidade_versao == '2026-09'
     assert aluno.termos_responsabilidade_aceito_em is not None

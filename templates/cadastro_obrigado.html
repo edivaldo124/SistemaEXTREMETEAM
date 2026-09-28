@@ -1,0 +1,68 @@
+{% extends "layouts/publico.html" %}
+{#- Destino do cadastro público (PRG). Vale para quem acabou de se cadastrar e para quem
+    já tinha cadastro: o texto cobre os dois casos e nenhum dado do formulário aparece. -#}
+{% block titulo %}Cadastro recebido | Extreme Team{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/recuperar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cadastro_obrigado.css') }}">
+{% endblock %}
+{% block atributos_body %} class="auth-page"{% endblock %}
+{% block alvo_pular %}obrigado-titulo{% endblock %}
+{% block cabecalho %}{% endblock %}
+{% block conteudo %}
+    <main class="auth-shell recovery-shell">
+        <section class="auth-brand-panel" aria-labelledby="brand-title">
+            <div class="auth-brand-inner">
+                <a class="auth-brand-emblem" href="/" aria-label="Extreme Team, página inicial">
+                    <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team" width="200" height="200">
+                </a>
+                <h1 id="brand-title"> O primeiro <br> passo já <em>foi</em>. </h1>
+                <p>Falta pouco para o seu primeiro treino com a equipe.</p>
+            </div>
+        </section>
+
+        <section class="auth-form-panel recovery-panel" aria-labelledby="obrigado-titulo">
+            <a class="auth-mobile-emblem" href="/" aria-label="Extreme Team, página inicial">
+                <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team" width="72" height="72">
+            </a>
+            <div class="auth-form-wrap recovery-form">
+                <div class="auth-form-heading">
+                    <h2 id="obrigado-titulo" tabindex="-1">Recebemos sua solicitação</h2>
+                    <p>Você vai receber um e-mail com os próximos passos. Se ele não chegar em alguns minutos, confira a caixa de spam.</p>
+                </div>
+                <ol class="obrigado-passos">
+                    <li>
+                        <strong>Confira seu e-mail</strong>
+                        <span>Se você já tinha cadastro na Extreme Team, o aviso vai para o e-mail da sua conta e explica como entrar.</span>
+                    </li>
+                    <li>
+                        <strong>Análise da administração</strong>
+                        <span>Cadastros novos são analisados em {{ prazo_analise }}.</span>
+                    </li>
+                    <li>
+                        <strong>Primeiro acesso</strong>
+                        <span>Com o cadastro aprovado, entre com seu usuário e senha e escolha seu plano.</span>
+                    </li>
+                </ol>
+                <div class="obrigado-acoes">
+                    <a class="button-primary" href="/login">Ir para o login</a>
+                    <a class="back-link" href="/">Voltar ao início</a>
+                </div>
+                {% if academia and (academia.whatsapp_url or academia.email_url) %}
+                    <p class="obrigado-contato">
+                        Não recebeu o e-mail? Fale com a gente
+                        {%- if academia.whatsapp_url %} pelo <a href="{{ academia.whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp<span class="sr-only"> (abre em nova aba)</span></a>{% endif %}
+                        {%- if academia.whatsapp_url and academia.email_url %} ou{% endif %}
+                        {%- if academia.email_url %} por <a href="{{ academia.email_url }}">e-mail</a>{% endif %}.
+                    </p>
+                {% endif %}
+            </div>
+            <footer>
+                <span>© 2026 Centro de Treinamento Extreme Team</span>
+                <span>Força &amp; resistência</span>
+            </footer>
+        </section>
+    </main>
+{% endblock %}
+{% block rodape %}{% endblock %}
