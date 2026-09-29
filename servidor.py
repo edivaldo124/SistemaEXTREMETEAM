@@ -327,7 +327,7 @@ def home():
     # Aluno logado contrata pela própria área; visitante começa pelo cadastro. O fluxo de
     # pagamento continua o mesmo: nada aqui cria cobrança.
     url_matricula = '/perfil#planos' if session.get('tipo_usuario') == 'aluno' else '/cadastrar'
-    planos = vitrine_planos(PlanoDAO.listar_todos(), url_matricula)
+    planos = vitrine_planos(PlanoDAO.listar_ativos(), url_matricula)
     return render_template(
         "index.html", professores_publicos=professores, vitrine_planos=planos,
         dados_estruturados=seo.dados_estruturados_academia(db.session.get(Academia, 1)),

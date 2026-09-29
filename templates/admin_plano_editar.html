@@ -1,0 +1,120 @@
+{% extends "layouts/admin.html" %}
+{% set secao_ativa = 'painel' %}
+{% block titulo %}Editar plano | Extreme Team{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}">
+{% endblock %}
+{% block conteudo %}
+    <main id="conteudo">
+        <div class="container-detalhes">
+            {% from "components/breadcrumb.html" import breadcrumb %}
+            {{ breadcrumb([('Painel', url_for('admin_blueprint.painel_adm') ~ '#planos'), ('Editar ' ~ plano.nome_plano, None)]) }}
+            <div class="detail-intro">
+                <div>
+                    <h1>Editar plano</h1>
+                    <p>As mudanças valem para as próximas cobranças. Mensalidades já lançadas mantêm o valor que têm.</p>
+                </div>
+            </div>
+            {% if erro %}
+                <div class="msg msg-erro" role="alert">{{ erro }}</div>
+            {% endif %}
+            {% if plano.arquivado %}
+                <div class="msg msg-info" role="status">Este plano está arquivado: os alunos não o veem e ele não recebe cobranças novas. Reative-o no painel para voltar a vendê-lo.</div>
+            {% endif %}
+            <form action="{{ url_for('admin_blueprint.editar_plano', plano_id=plano.id) }}"
+                  method="POST"
+                  class="plano-editar"
+                  data-enviando>
+                {% include "components/csrf_field.html" %}
+                <section class="detail-section">
+                    <div class="section-title">
+                        <h2>Dados do plano</h2>
+                        <p>O que o aluno vê na página inicial e na área dele.</p>
+                    </div>
+                    <div class="form-detalhes">
+                        <div class="grupo-input campo-largo">
+                            <label for="plano-nome">Nome do plano</label>
+                            <input id="plano-nome"
+                                   type="text"
+                                   name="nome_plano"
+                                   value="{{ valores.nome_plano or '' }}"
+                                   maxlength="100"
+                                   required>
+                        </div>
+                        <div class="grupo-input">
+                            <label for="plano-preco">Preço normal</label>
+                            <input id="plano-preco"
+                                   type="text"
+                                   name="preco_plano"
+                                   value="{{ valores.preco_plano or '' }}"
+                                   inputmode="decimal"
+                                   placeholder="80,00"
+                                   required>
+                        </div>
+                        <div class="grupo-input">
+                            <label for="plano-duracao">Duração em dias</label>
+                            <input id="plano-duracao"
+                                   type="number"
+                                   name="duracao_dias"
+                                   value="{{ valores.duracao_dias or '' }}"
+                                   min="1"
+                                   max="3650"
+                                   required>
+                        </div>
+                    </div>
+                </section>
+                <section class="detail-section">
+                    <div class="section-title">
+                        <h2>Promoção</h2>
+                        <p>
+                            Durante o período, toda cobrança nova deste plano (contratação ou renovação) sai pelo preço
+                            promocional, e a página inicial mostra o preço normal riscado. No dia seguinte ao fim, volta
+                            sozinho ao preço normal. Para tirar a promoção, apague os três campos.
+                        </p>
+                    </div>
+                    {% if promocao_encerrada %}
+                        <p class="nota-admin">
+                            A última promoção ({{ plano.preco_promocional|moeda }}, de
+                            {{ plano.promocao_inicio.strftime('%d/%m/%Y') }} a {{ plano.promocao_fim.strftime('%d/%m/%Y') }})
+                            já terminou.
+                        </p>
+                    {% endif %}
+                    <div class="form-detalhes form-promocao">
+                        <div class="grupo-input">
+                            <label for="plano-preco-promocional">Preço promocional</label>
+                            <input id="plano-preco-promocional"
+                                   type="text"
+                                   name="preco_promocional"
+                                   value="{{ valores.preco_promocional or '' }}"
+                                   inputmode="decimal"
+                                   placeholder="Ex.: 60,00"
+                                   aria-describedby="plano-preco-promocional-ajuda">
+                            <small id="plano-preco-promocional-ajuda">Menor que o preço normal.</small>
+                        </div>
+                        <div class="grupo-input">
+                            <label for="plano-promocao-inicio">Começa em</label>
+                            <input id="plano-promocao-inicio"
+                                   type="date"
+                                   name="promocao_inicio"
+                                   value="{{ valores.promocao_inicio or '' }}">
+                        </div>
+                        <div class="grupo-input">
+                            <label for="plano-promocao-fim">Termina em</label>
+                            <input id="plano-promocao-fim"
+                                   type="date"
+                                   name="promocao_fim"
+                                   value="{{ valores.promocao_fim or '' }}"
+                                   aria-describedby="plano-promocao-fim-ajuda">
+                            <small id="plano-promocao-fim-ajuda">Último dia com o preço promocional.</small>
+                        </div>
+                    </div>
+                </section>
+                <div class="form-actions">
+                    <button type="submit" class="btn-salvar" data-texto-enviando="Salvando...">Salvar plano</button>
+                    <a href="/admin#planos" class="btn-voltar">Voltar ao painel</a>
+                </div>
+            </form>
+        </div>
+    </main>
+{% endblock %}

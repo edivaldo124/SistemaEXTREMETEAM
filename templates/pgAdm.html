@@ -122,27 +122,63 @@
                 </label>
                 <button type="submit" class="btn-cadastrar">Cadastrar plano</button>
             </form>
-            <div class="plan-list">
-                {% for plano in planos %}
-                    <article>
-                        <div>
-                            <span>{{ plano.duracao_dias }} dias de acesso</span>
-                            <strong>{{ plano.nome_plano }}</strong>
-                            <p>
-                                <b class="preco-plano" data-preco="{{ plano.preco_plano }}">{{ plano.preco_plano|moeda }}</b>
-                            </p>
-                            {% if plano.destaque %}<span class="status status-pago">Em destaque na página inicial</span>{% endif %}
-                        </div>
-                        <div class="plano-acoes">
+            {#- Cada ficha: nome, preço (com a promoção, se houver) e ações. "Excluir" só
+                aparece em plano nunca usado; os demais saem de venda por "Arquivar". -#}
+            {% macro ficha_plano(plano, arquivado=false) %}
+                {% set em_uso = plano.id in planos_em_uso %}
+                <article class="{{ 'plano-arquivado' if arquivado }}">
+                    <div>
+                        <span>{{ plano.duracao_dias }} {{ 'dia' if plano.duracao_dias == 1 else 'dias' }} de acesso</span>
+                        <strong>{{ plano.nome_plano }}</strong>
+                        <p>
+                            {% if not arquivado and plano.promocao_ativa() %}
+                                <s>{{ plano.preco_plano|moeda }}</s>
+                                <b>{{ plano.preco_promocional|moeda }}</b>
+                            {% else %}
+                                <b>{{ plano.preco_plano|moeda }}</b>
+                            {% endif %}
+                        </p>
+                        {% if not arquivado and (plano.destaque or plano.promocao_ativa() or plano.promocao_agendada()) %}
+                            <div class="plano-etiquetas">
+                                {% if plano.destaque %}<span class="status status-pago">Em destaque na página inicial</span>{% endif %}
+                                {% if plano.promocao_ativa() %}
+                                    <span class="status status-pendente">Promoção até {{ plano.promocao_fim.strftime('%d/%m/%Y') }}</span>
+                                {% elif plano.promocao_agendada() %}
+                                    <span class="status status-em_processamento">Promoção a partir de {{ plano.promocao_inicio.strftime('%d/%m/%Y') }}</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="plano-acoes">
+                        {% if arquivado %}
+                            <form action="/admin/planos/{{ plano.id }}/reativar" method="POST" class="form-inline">
+                                {% include "components/csrf_field.html" %}
+                                <button type="submit" class="btn">Reativar</button>
+                            </form>
+                        {% else %}
+                            <a class="btn" href="/admin/planos/{{ plano.id }}/editar">Editar</a>
                             <form action="/admin/planos/{{ plano.id }}/destaque" method="POST" class="form-inline">
                                 {% include "components/csrf_field.html" %}
                                 {% if plano.destaque %}
                                     <input type="hidden" name="acao" value="remover">
                                     <button type="submit" class="btn">Tirar destaque</button>
                                 {% else %}
-                                    <button type="submit" class="btn">Destacar na página inicial</button>
+                                    <button type="submit" class="btn">Destacar</button>
                                 {% endif %}
                             </form>
+                            <form action="/admin/planos/{{ plano.id }}/arquivar"
+                                  method="POST"
+                                  class="form-inline"
+                                  data-confirm-modal
+                                  data-modal-eyebrow="Arquivar plano"
+                                  data-modal-title="Arquivar o plano {{ plano.nome_plano }}?"
+                                  data-modal-message="Ele sai da página inicial, do perfil dos alunos e dos formulários, e não recebe cobranças novas. Mensalidades e histórico continuam. Quem está nele mantém o período já pago e escolhe outro plano na renovação. Dá para reativar depois."
+                                  data-modal-confirm="Arquivar plano">
+                                {% include "components/csrf_field.html" %}
+                                <button type="submit" class="btn">Arquivar</button>
+                            </form>
+                        {% endif %}
+                        {% if not em_uso %}
                             <form action="/admin/remover_plano/{{ plano.id }}"
                                   method="POST"
                                   class="form-inline"
@@ -150,17 +186,35 @@
                                   data-modal-variant="danger"
                                   data-modal-eyebrow="Excluir plano"
                                   data-modal-title="Excluir o plano {{ plano.nome_plano }}?"
-                                  data-modal-message="O plano deixará de estar disponível para novas contratações. Confirme antes de continuar."
+                                  data-modal-message="Nenhuma mensalidade ou aluno usa este plano, então ele será apagado de vez. Não dá para desfazer."
                                   data-modal-confirm="Excluir plano">
                                 {% include "components/csrf_field.html" %}
                                 <button type="submit" class="btn btn-remover">Excluir</button>
                             </form>
-                        </div>
-                    </article>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endmacro %}
+            <div class="plan-list">
+                {% for plano in planos %}
+                    {{ ficha_plano(plano) }}
                 {% else %}
-                    <p class="empty-state">Nenhum plano cadastrado. Use o formulário acima para criar o primeiro.</p>
+                    <p class="empty-state">Nenhum plano à venda. Use o formulário acima para criar um{{ ' ou reative um arquivado' if planos_arquivados }}.</p>
                 {% endfor %}
             </div>
+            {% if planos_arquivados %}
+                <details class="et-acordeao planos-arquivados">
+                    <summary>Planos arquivados ({{ planos_arquivados|length }})</summary>
+                    <div class="et-acordeao-corpo">
+                        <p>Fora de venda: não aparecem para os alunos e não recebem cobranças novas. O histórico deles continua no financeiro.</p>
+                        <div class="plan-list">
+                            {% for plano in planos_arquivados %}
+                                {{ ficha_plano(plano, arquivado=true) }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </details>
+            {% endif %}
         </section>
         <section class="secao">
             <div class="section-heading">

@@ -245,7 +245,8 @@ class AlunoDAO:
                     plano = Plano.query.filter_by(id=int(plano_escolhido)).first()
                 except (TypeError, ValueError):
                     plano = None
-                if not plano:
+                # Plano arquivado só fica se já era o do aluno: ninguém entra nele.
+                if not plano or (plano.arquivado and plano.id != aluno.plano_id):
                     return False
             aluno.plano_id = plano.id if plano else None
 

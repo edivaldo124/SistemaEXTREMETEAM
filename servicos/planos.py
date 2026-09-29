@@ -53,7 +53,15 @@ def duracao_dias(plano):
     return max(dias, 1)
 
 
-def preco(plano):
+def preco(plano, hoje=None):
+    """Preço de uma cobrança criada `hoje`: o promocional enquanto a promoção vale."""
+    preco_em = getattr(plano, 'preco_em', None)
+    valor = preco_em(hoje) if preco_em else getattr(plano, 'preco_plano', 0)
+    return Decimal(str(valor or 0))
+
+
+def preco_cheio(plano):
+    """Preço de tabela, sem promoção."""
     return Decimal(str(getattr(plano, 'preco_plano', 0) or 0))
 
 
@@ -360,40 +368,72 @@ def _duracao_por_extenso(plano):
     return '1 mês' if meses == 1 else f'{meses} meses'
 
 
-def vitrine_planos(planos, url_matricula):
+def cartao_do_plano(plano, hoje=None):
+    """Campos de `components/cartao_plano.html` para um plano: os mesmos na home e na
+    área do aluno. O template não faz conta.
+
+    Plano de menos de um mês mostra o preço pelo próprio período ("por 7 dias"): dividir
+    por um mês arredondado para cima o anunciava como mensalidade.
+    Em promoção, `preco_*` já é o promocional e `preco_mes_cheio` traz o "de".
+    """
+    hoje = hoje or date.today()
+    dias = duracao_dias(plano)
+    curto = dias < DIAS_POR_MES
+    divisor = 1 if curto else _meses(plano)
+    total = preco(plano, hoje)
+    cheio = preco_cheio(plano)
+    em_promocao = total < cheio
+    if curto:
+        unidade = 'por dia' if dias == 1 else f'por {dias} dias'
+    else:
+        unidade = 'por mês'
+    return {
+        'id': plano.id,
+        'nome': plano.nome_plano,
+        'preco_total': total,
+        'preco_mes': (total / divisor).quantize(Decimal('0.01')),
+        'unidade': unidade,
+        'meses': divisor,
+        'duracao_texto': _duracao_por_extenso(plano),
+        'preco_mes_cheio': (cheio / divisor).quantize(Decimal('0.01')) if em_promocao else None,
+        'promocao_ate': getattr(plano, 'promocao_fim', None) if em_promocao else None,
+    }
+
+
+def vitrine_planos(planos, url_matricula, hoje=None):
     """Planos da página inicial, prontos para `components/cartao_plano.html`.
 
-    O preço por mês e a economia são calculados aqui, a partir de `preco_plano` e
-    `duracao_dias` - o template não faz conta. A economia compara com o plano de 30 dias
-    (se existir): quanto se pagaria renovando ele mês a mês pelo mesmo período.
+    O preço por mês e a economia são calculados aqui, a partir do preço que vale hoje
+    (promocional, se houver) e de `duracao_dias` - o template não faz conta. A economia
+    compara com o plano de 30 dias (se existir): quanto se pagaria renovando ele mês a
+    mês pelo mesmo período; plano de menos de um mês não tem economia.
     O destaque é o plano que o admin marcou; sem marcação, o de menor preço por mês.
     """
-    planos = sorted(planos, key=lambda p: (duracao_dias(p), preco(p)))
+    hoje = hoje or date.today()
+    planos = sorted(planos, key=lambda p: (duracao_dias(p), preco(p, hoje)))
     if not planos:
         return []
     mensal = next((p for p in planos if duracao_dias(p) == DIAS_POR_MES), None)
 
     itens = []
     for plano in planos:
-        meses = _meses(plano)
-        total = preco(plano)
+        item = cartao_do_plano(plano, hoje)
         economia = None
-        if mensal is not None and plano is not mensal:
-            diferenca = preco(mensal) * meses - total
+        if mensal is not None and plano is not mensal and duracao_dias(plano) >= DIAS_POR_MES:
+            diferenca = preco(mensal, hoje) * item['meses'] - item['preco_total']
             economia = diferenca if diferenca > 0 else None
-        itens.append({
-            'id': plano.id,
-            'nome': plano.nome_plano,
-            'preco_total': total,
-            'preco_mes': (total / meses).quantize(Decimal('0.01')),
-            'meses': meses,
-            'duracao_texto': _duracao_por_extenso(plano),
+        item.update({
             'economia': economia,
             'recomendado': bool(getattr(plano, 'destaque', False)),
             'url_matricula': url_matricula,
             'texto_botao': 'Matricular agora',
         })
+        itens.append(item)
 
     if not any(item['recomendado'] for item in itens):
-        min(itens, key=lambda item: (item['preco_mes'], -item['meses']))['recomendado'] = True
+        # Uma diária custa pouco "por período" e não é a melhor compra: o padrão só
+        # compara planos de um mês ou mais, quando existem.
+        candidatos = [item for item, plano in zip(itens, planos)
+                      if duracao_dias(plano) >= DIAS_POR_MES] or itens
+        min(candidatos, key=lambda item: (item['preco_mes'], -item['meses']))['recomendado'] = True
     return itens

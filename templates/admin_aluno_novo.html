@@ -127,7 +127,7 @@
                             {% for p in planos %}
                                 <option value="{{ p.id }}"
                                         {% if dados.plano_id == p.id|string %}selected{% endif %}>
-                                    {{ p.nome_plano }} — {{ p.preco_plano|moeda }}
+                                    {{ p.nome_plano }} — {{ p.preco_atual|moeda }}{{ ' (promoção)' if p.promocao_ativa() }}
                                 </option>
                             {% endfor %}
                         </select>

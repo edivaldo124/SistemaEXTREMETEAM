@@ -50,7 +50,7 @@ def painel_adm():
         busca=(request.args.get('busca') or '').strip() or None,
     )
     pendentes = AlunoDAO.listar_pendentes()
-    lista_planos = PlanoDAO.listar_todos()
+    lista_planos = PlanoDAO.listar_ativos()
     token_exclusao = session.get('token_exclusao')
 
     if not token_exclusao:
@@ -65,6 +65,8 @@ def painel_adm():
         busca=(request.args.get('busca') or '').strip(),
         pendentes=pendentes,
         planos=lista_planos,
+        planos_arquivados=PlanoDAO.listar_arquivados(),
+        planos_em_uso=PlanoDAO.ids_em_uso(),
         token_exclusao=token_exclusao
     )
 
@@ -135,30 +137,129 @@ def desativar_aluno(aluno_id):
     return redirect('/admin')
 
 
+PRECO_MAXIMO = Decimal('99999999.99')
+
+
+def _valor_em_reais(texto):
+    """'80', '80.5', '80,50' ou '1.234,56' -> Decimal. None se vazio; ValueError se inválido."""
+    texto = (texto or '').strip().replace('R$', '').strip()
+    if not texto:
+        return None
+    if ',' in texto:
+        texto = texto.replace('.', '').replace(',', '.')
+    try:
+        valor = Decimal(texto)
+    except InvalidOperation:
+        raise ValueError(texto)
+    if not valor.is_finite():
+        raise ValueError(texto)
+    return valor
+
+
+def _ler_plano(form):
+    """Nome, preço e duração do formulário de plano: `(campos, None)` ou `(None, erro)`."""
+    nome = (form.get('nome_plano') or '').strip()
+    try:
+        preco = _valor_em_reais(form.get('preco_plano'))
+        duracao = int(form.get('duracao_dias') or 0)
+    except (TypeError, ValueError):
+        return None, 'Preço ou duração inválidos.'
+    if not nome or len(nome) > 100 or preco is None or preco <= 0 or preco > PRECO_MAXIMO \
+            or not 1 <= duracao <= 3650:
+        return None, 'Informe um plano com nome, preço positivo e duração entre 1 e 3650 dias.'
+    return {'nome': nome, 'preco': preco, 'duracao': duracao}, None
+
+
+def _ler_promocao(form, preco, *, hoje=None):
+    """Preço promocional e período: `(campos, None)` ou `(None, erro)`.
+
+    Os três campos vazios tiram a promoção. Preenchida, ela precisa ser mais barata que
+    o preço normal e ter as duas datas, sem ter terminado.
+    """
+    hoje = hoje or date.today()
+    texto_preco = (form.get('preco_promocional') or '').strip()
+    texto_inicio = (form.get('promocao_inicio') or '').strip()
+    texto_fim = (form.get('promocao_fim') or '').strip()
+    vazia = {'preco_promocional': None, 'promocao_inicio': None, 'promocao_fim': None}
+    if not (texto_preco or texto_inicio or texto_fim):
+        return vazia, None
+    try:
+        preco_promocional = _valor_em_reais(texto_preco)
+        inicio = date.fromisoformat(texto_inicio) if texto_inicio else None
+        fim = date.fromisoformat(texto_fim) if texto_fim else None
+    except ValueError:
+        return None, 'Preço ou datas da promoção inválidos.'
+    if preco_promocional is None or not inicio or not fim:
+        return None, 'Para a promoção, informe o preço promocional e as datas de início e fim.'
+    if not 0 < preco_promocional < preco:
+        return None, 'O preço promocional precisa ser maior que zero e menor que o preço normal.'
+    if fim < inicio:
+        return None, 'A promoção precisa terminar depois de começar.'
+    if fim < hoje:
+        return None, 'Essa promoção já terminou. Escolha outra data final ou apague os campos da promoção.'
+    return {'preco_promocional': preco_promocional, 'promocao_inicio': inicio, 'promocao_fim': fim}, None
+
+
 @admin_bp.route("/admin/cadastrar_plano", methods=["POST"])
 def cadastrar_plano():
     if not usuario_e_admin():
         return redirect('/login')
 
-    nome_plano = request.form.get("nome_plano")
-    preco_plano = request.form.get("preco_plano")
-    duracao_dias = request.form.get("duracao_dias")  # Captura os dias
-
-    try:
-        preco = Decimal((preco_plano or '').strip())
-        duracao = int(duracao_dias or 0)
-    except (InvalidOperation, TypeError, ValueError):
-        flash('Preço ou duração inválidos.', 'erro')
+    campos, erro = _ler_plano(request.form)
+    if erro:
+        flash(erro, 'erro')
         return redirect('/admin')
-    if not nome_plano or not preco.is_finite() or preco <= 0 or preco > Decimal('99999999.99') or not 1 <= duracao <= 3650:
-        flash('Informe um plano com nome, preço positivo e duração entre 1 e 3650 dias.', 'erro')
-        return redirect('/admin')
-    novo_plano = Plano(nome_plano=nome_plano.strip(), preco_plano=preco, duracao_dias=duracao)
+    novo_plano = Plano(nome_plano=campos['nome'], preco_plano=campos['preco'], duracao_dias=campos['duracao'])
     PlanoDAO.salvar(novo_plano)
     if request.form.get('destaque') == 'sim':
         PlanoDAO.definir_destaque(novo_plano.id)
 
     return redirect('/admin')
+
+
+@admin_bp.route('/admin/planos/<int:plano_id>/editar', methods=['GET', 'POST'])
+def editar_plano(plano_id):
+    """Nome, preço, duração e promoção. Vale para as cobranças criadas daqui em diante:
+    as mensalidades já lançadas guardam o próprio valor e não mudam."""
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    plano = PlanoDAO.buscar_por_id(plano_id)
+    if not plano:
+        flash('Plano não encontrado.', 'erro')
+        return redirect('/admin#planos')
+
+    if request.method == 'POST':
+        campos, erro = _ler_plano(request.form)
+        promocao = None
+        if not erro:
+            promocao, erro = _ler_promocao(request.form, campos['preco'])
+        if erro:
+            return render_template(
+                'admin_plano_editar.html', plano=plano, valores=request.form, erro=erro,
+            ), 400
+        PlanoDAO.atualizar(plano.id, **campos, **promocao)
+        flash(f'Alterações salvas em {campos["nome"]}.', 'sucesso')
+        return redirect('/admin#planos')
+
+    # Uma promoção que já terminou não volta preenchida: salvar a página de novo sem
+    # mexer nela recusaria o formulário por uma data que o admin nem tocou.
+    promocao_encerrada = plano.tem_promocao and plano.promocao_fim < date.today()
+    valores = {
+        'nome_plano': plano.nome_plano,
+        'preco_plano': f'{plano.preco_plano:.2f}'.replace('.', ','),
+        'duracao_dias': plano.duracao_dias,
+    }
+    if plano.tem_promocao and not promocao_encerrada:
+        valores.update({
+            'preco_promocional': f'{plano.preco_promocional:.2f}'.replace('.', ','),
+            'promocao_inicio': plano.promocao_inicio.isoformat(),
+            'promocao_fim': plano.promocao_fim.isoformat(),
+        })
+    return render_template(
+        'admin_plano_editar.html', plano=plano, valores=valores,
+        promocao_encerrada=promocao_encerrada,
+    )
 
 
 @admin_bp.route('/admin/planos/<int:plano_id>/destaque', methods=['POST'])
@@ -209,17 +310,52 @@ def remover_usuario(aluno_id):
 
 @admin_bp.route('/admin/remover_plano/<int:plano_id>', methods=["POST"])
 def remover_plano(plano_id):
+    """Apaga só plano que nunca foi usado. Com mensalidades, alunos ou pedidos de troca
+    apontando para ele, o caminho é arquivar: apagar levaria o histórico junto."""
     if not usuario_e_admin():
         return redirect('/login')
 
     resultado = PlanoDAO.remover(plano_id)
     if resultado is True:
-        flash('Plano removido com sucesso.', 'sucesso')
+        flash('Plano excluído.', 'sucesso')
     elif resultado is None:
         flash('Plano não encontrado.', 'erro')
     else:
-        flash('Não foi possível remover: existem mensalidades vinculadas a esse plano.', 'erro')
-    return redirect('/admin')
+        flash('Este plano já tem mensalidades ou alunos e não pode ser excluído. Use "Arquivar" '
+              'para tirá-lo de venda sem perder o histórico.', 'erro')
+    return redirect('/admin#planos')
+
+
+@admin_bp.route('/admin/planos/<int:plano_id>/arquivar', methods=['POST'])
+def arquivar_plano(plano_id):
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    resultado = PlanoDAO.arquivar(plano_id, ator=session.get('usuario'))
+    if not resultado:
+        flash('Plano não encontrado.', 'erro')
+        return redirect('/admin#planos')
+    plano, pedidos_cancelados = resultado
+    mensagem = (f'{plano.nome_plano} foi arquivado e saiu de venda. O histórico continua, e quem '
+                'está nele mantém o período pago.')
+    if pedidos_cancelados:
+        mensagem += (f' {pedidos_cancelados} pedido(s) de troca para este plano foram cancelados; '
+                     'esses alunos escolhem outro plano na renovação.')
+    flash(mensagem, 'sucesso')
+    return redirect('/admin#planos')
+
+
+@admin_bp.route('/admin/planos/<int:plano_id>/reativar', methods=['POST'])
+def reativar_plano(plano_id):
+    if not usuario_e_admin():
+        return redirect('/login')
+
+    plano = PlanoDAO.reativar(plano_id)
+    if not plano:
+        flash('Plano não encontrado.', 'erro')
+    else:
+        flash(f'{plano.nome_plano} voltou a ser oferecido aos alunos.', 'sucesso')
+    return redirect('/admin#planos')
 
 
 def _aluno_do_cpf_ou_painel(cpf):
@@ -241,7 +377,7 @@ def cadastrar_aluno():
     if not usuario_e_admin():
         return redirect('/login')
 
-    planos = PlanoDAO.listar_todos()
+    planos = PlanoDAO.listar_ativos()
 
     if request.method == "POST":
         dados = {
@@ -296,7 +432,7 @@ def cadastrar_aluno():
             plano_id = int(dados['plano_id']) if dados['plano_id'] else None
         except ValueError:
             return recusar('Selecione um plano válido.')
-        plano = PlanoDAO.buscar_por_id(plano_id) if plano_id is not None else None
+        plano = PlanoDAO.buscar_ativo_por_id(plano_id) if plano_id is not None else None
         if dados['plano_id'] and not plano:
             return recusar('Selecione um plano válido.')
 
@@ -439,11 +575,14 @@ def detalhes_usuario(cpf):
         return redirect('/admin')
 
     PagamentoDAO.efetivar_mudancas_por_prazo(aluno)
-    planos = PlanoDAO.listar_todos()
+    planos = PlanoDAO.listar_ativos()
     pagamentos = PagamentoDAO.listar_por_aluno(aluno.id)
     solicitacao = SolicitacaoPlanoDAO.pendente_do_aluno(aluno.id)
     return render_template(
         "dt_aluno.html", u=aluno, planos=planos, pagamentos=pagamentos,
+        # O cadastro de quem está num plano arquivado continua mostrando esse plano:
+        # sem ele na lista, salvar a ficha trocaria o plano do aluno sem ninguém pedir.
+        plano_cadastro_arquivado=aluno.plano if aluno.plano and aluno.plano.arquivado else None,
         situacao=regras_plano.situacao_plano(aluno, pagamentos, solicitacao_mudanca=solicitacao),
         solicitacoes=SolicitacaoPlanoDAO.listar_do_aluno(aluno.id),
         rotulo_status=rotulo_status, formatar_competencia=formatar_competencia,
@@ -525,8 +664,13 @@ def cadastrar_pagamento(cpf):
     if status not in STATUS_VALIDOS or not forma_pagamento_aceita(forma_pagamento):
         flash('Status ou forma de pagamento inválidos.', 'erro')
         return redirect(f'/admin/usuario/{cpf}')
-    if not valor_decimal.is_finite() or valor_decimal <= 0 or valor_decimal > Decimal('99999999.99'):
+    if not valor_decimal.is_finite() or valor_decimal <= 0 or valor_decimal > PRECO_MAXIMO:
         flash('O valor deve ser positivo e estar dentro do limite permitido.', 'erro')
+        return redirect(f'/admin/usuario/{cpf}')
+
+    if plano and plano.arquivado:
+        flash(f'O plano {plano.nome_plano} está arquivado e não recebe mensalidades novas. '
+              'Reative-o no painel se precisar lançar nele.', 'erro')
         return redirect(f'/admin/usuario/{cpf}')
 
     if aluno and plano and vencimento:

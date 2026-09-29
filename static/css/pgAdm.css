@@ -101,7 +101,8 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 .plan-list article > a,
 .plan-list article > .plano-acoes,
 .plan-list article > .acoes-turma { margin-top:auto; }
-.plan-list article span {
+/* Só o rótulo de duração: as etiquetas de situação (.status) têm estilo próprio. */
+.plan-list article > div > span {
   display:block; color:var(--text-2);
   font:700 var(--fs-micro) var(--body);
   letter-spacing:.06em; text-transform:uppercase;
@@ -116,6 +117,16 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
   font-size:var(--fs-xs); font-variant-numeric:tabular-nums;
 }
 .plan-list .empty-state { grid-column:1/-1; }
+/* Em promoção: o preço de tabela riscado antes do promocional. */
+.plan-list article p s { margin-right:var(--sp-2); color:var(--text-3); }
+.plano-etiquetas { display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-3); }
+
+/* Arquivados: recolhidos embaixo da lista, com as fichas apagadas. */
+.planos-arquivados { margin-top:var(--sp-5); }
+.planos-arquivados .et-acordeao-corpo > p { margin:0; }
+.planos-arquivados .plan-list { margin-top:var(--sp-4); }
+.plan-list .plano-arquivado { background:var(--surface-2); }
+.plan-list .plano-arquivado strong { color:var(--text-2); }
 
 .acoes-turma { display:flex; flex-wrap:wrap; gap:var(--sp-2); }
 
@@ -158,8 +169,11 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 /* Ação de um formulário que ocupa a largura toda do painel. */
 .form-plano .form-actions,.form-turma .form-actions { grid-column:1/-1; margin-top:0; }
 
-/* Ações de um plano: destaque e exclusão lado a lado, embaixo do cartão. */
-.plano-acoes { display:flex; flex-wrap:wrap; gap:var(--sp-2); }
+/* Ações de um plano (editar, destacar, arquivar, excluir), embaixo do cartão: grade de
+   duas colunas para os botões não quebrarem em linhas de tamanhos diferentes. */
+.plano-acoes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-2); }
+.plano-acoes > .btn,
+.plano-acoes > form .btn { width:100%; }
 
 /* ------------------------------------------ tabelas da administração --- */
 /* .tabela-admin acompanha .et-tabela nas tabelas que têm menu de ações por
@@ -222,4 +236,13 @@ a.pessoa-linha:focus-visible { outline:2px solid var(--focus-ink); outline-offse
   .tabela-admin tbody tr:last-child td:first-child { border-bottom-left-radius:calc(var(--et-radius-card) - 1px); }
   .tabela-admin tbody tr:last-child td:last-child { border-bottom-right-radius:calc(var(--et-radius-card) - 1px); }
   .tabela-admin:has(.paginacao) tbody tr:last-child td { border-radius:0; }
+}
+
+/* ------------------------------------------------- edição de um plano --- */
+/* admin_plano_editar.html: dois painéis (dados e promoção) num formulário só. */
+.plano-editar > .form-actions { margin-top:var(--sp-6); }
+.form-detalhes.form-promocao { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.detail-section > .nota-admin { margin:0 0 var(--sp-5); }
+@media (max-width:720px) {
+  .form-detalhes.form-promocao { grid-template-columns:minmax(0,1fr); }
 }
