@@ -320,6 +320,12 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   font-variant-numeric:tabular-nums;
 }
 .et-plano-unidade { font-size:var(--fs-sm); color:var(--et-text-muted); }
+/* Promoção: o preço de tabela riscado ocupa a linha de cima, o promocional segue
+   grande embaixo. */
+.et-plano-de {
+  flex-basis:100%; font-size:var(--fs-sm); color:var(--et-text-muted);
+  font-variant-numeric:tabular-nums;
+}
 .et-plano-total { margin:0; font-size:var(--fs-sm); color:var(--et-text-muted); }
 .et-plano-economia { margin:0; font-size:var(--fs-sm); font-weight:600; color:var(--et-ok-ink); }
 .et-plano-botao { align-self:stretch; margin-top:auto; }
@@ -334,6 +340,7 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 }
 .et-plano--destaque .et-plano-valor { color:var(--et-gold); }
 .et-plano--destaque .et-plano-unidade,
+.et-plano--destaque .et-plano-de,
 .et-plano--destaque .et-plano-total { color:var(--et-text-on-dark-muted); }
 .et-plano--destaque .et-plano-economia { color:var(--et-ok-ink-dark); }
 .et-plano-selo {
@@ -341,6 +348,8 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   border:1px solid var(--et-line-dark-strong); border-radius:var(--et-radius-pill);
   color:var(--et-gold); font-size:var(--fs-micro); font-weight:600; line-height:1.4;
 }
+.et-plano-selo--promo { border-color:transparent; color:var(--et-warn-ink); background:var(--et-warn-bg); }
+.et-plano--destaque .et-plano-selo--promo { color:var(--et-warn-ink-dark); background:var(--et-warn-bg-dark); }
 
 /* Grade: uma coluna no celular com o destaque no topo; faixa de 2+ colunas no
    tablet com o destaque ocupando a linha de cima; no desktop, uma linha só na

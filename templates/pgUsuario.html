@@ -404,7 +404,16 @@
             {% set solicitacao = situacao.solicitacao_mudanca %}
             {% set id_plano_vigente = situacao.plano.id if situacao.plano else None %}
             {% set plano_renovacao = situacao.plano_proxima_renovacao %}
-            {% if situacao.ativo %}
+            {# Plano que saiu de venda: termina o período pago e o aluno escolhe outro. Um
+               pedido de troca já em andamento resolve a renovação, então não há o que avisar. #}
+            {% set plano_saiu_de_venda = plano_renovacao is not none and plano_renovacao.arquivado and solicitacao is none %}
+            {% if situacao.ativo and plano_saiu_de_venda %}
+                <p class="planos-aviso" role="status">
+                    O plano <strong>{{ plano_renovacao.nome_plano }}</strong> saiu de venda e não pode ser renovado.
+                    O período que você pagou continua valendo até <strong>{{ situacao.valido_ate.strftime('%d/%m/%Y') }}</strong>;
+                    escolha abaixo o plano que vem depois dele. Nada é cobrado agora.
+                </p>
+            {% elif situacao.ativo %}
                 <p class="planos-aviso" role="status">
                     Seu plano está pago até
                     <strong>{{ situacao.valido_ate.strftime('%d/%m/%Y') }}</strong>
@@ -416,6 +425,10 @@
                 <p class="planos-aviso" role="status">
                     Há um pagamento aguardando análise. A escolha de plano fica travada até a administração decidir, assim você não paga duas vezes.
                 </p>
+            {% elif plano_saiu_de_venda %}
+                <p class="planos-aviso" role="status">
+                    O plano <strong>{{ plano_renovacao.nome_plano }}</strong> saiu de venda. Para continuar, escolha um dos planos abaixo.
+                </p>
             {% endif %}
             {% if planos %}
                 <div class="et-planos planos-aluno">
@@ -426,29 +439,14 @@
                         {# Quem "renova" é o plano da PRÓXIMA renovação: quando o aluno já
                            pagou o período seguinte em outro plano, é esse que se repete. #}
                         {% set e_renovavel = situacao.e_plano_da_proxima_renovacao(plano) %}
-                        {# Mesmos campos que servicos/planos.vitrine_planos entrega à home
-                           (sem a economia, que depende do plano mensal de referência). #}
-                        {% set dias = plano.duracao_dias or 30 %}
-                        {% set meses = [(dias / 30)|round|int, 1]|max %}
-                        {% if dias % 365 == 0 %}
-                            {% set duracao = '1 ano' if dias == 365 else '%d anos'|format(dias // 365) %}
-                        {% else %}
-                            {% set duracao = '1 mês' if meses == 1 else '%d meses'|format(meses) %}
-                        {% endif %}
+                        {# Mesmos campos da home (servicos/planos.cartao_do_plano), já com a
+                           promoção de hoje; sem a economia, que depende do plano mensal. #}
+                        {% set cartao = cartoes_planos[plano.id] %}
                         {% set selos = [] %}
                         {% if e_vigente %}{% set selos = selos + [('Plano atual', 'atual')] %}{% endif %}
                         {% if e_renovavel and not e_vigente %}{% set selos = selos + [('Próxima renovação', 'destino')] %}{% endif %}
                         {% if e_destino %}{% set selos = selos + [('Mudança agendada', 'destino')] %}{% endif %}
                         {% set em_destaque = plano.destaque and not e_vigente and not e_destino and not e_renovavel %}
-                        {% set cartao = {
-                            'id': plano.id,
-                            'nome': plano.nome_plano,
-                            'preco_total': plano.preco_plano,
-                            'preco_mes': plano.preco_plano / meses,
-                            'meses': meses,
-                            'duracao_texto': duracao,
-                            'economia': none,
-                        } %}
                         {% call cartao_plano(cartao, destaque=em_destaque, selos=selos,
                                              classe=('plano-atual' if e_vigente else '') ~ (' plano-destino' if e_destino else '')) %}
                             {% if situacao.aguardando_decisao %}
@@ -468,7 +466,7 @@
                                           data-confirm-modal
                                           data-modal-eyebrow="Renovação antecipada"
                                           data-modal-title="Pagar já o próximo período em {{ plano.nome_plano }}?"
-                                          data-modal-message="O pagamento é do próximo período, que começa em {{ situacao.proximo_periodo_inicio.strftime('%d/%m/%Y') }}, no valor de {{ plano.preco_plano|moeda }}. Seu período atual continua valendo até {{ situacao.valido_ate.strftime('%d/%m/%Y') }}."
+                                          data-modal-message="O pagamento é do próximo período, que começa em {{ situacao.proximo_periodo_inicio.strftime('%d/%m/%Y') }}, no valor de {{ cartao.preco_total|moeda }}. Seu período atual continua valendo até {{ situacao.valido_ate.strftime('%d/%m/%Y') }}."
                                           data-modal-confirm="Pagar próximo período"
                                           data-loading-text="Processando…">
                                         {% include "components/csrf_field.html" %}
@@ -524,7 +522,9 @@
                                 {% endif %}
                             {% elif situacao.ativo %}
                                 <p class="plano-nota">
-                                    {% if plano_renovacao and plano.preco_plano < plano_renovacao.preco_plano %}
+                                    {% if plano_saiu_de_venda %}
+                                        Substitui o {{ plano_renovacao.nome_plano }}, que saiu de venda.
+                                    {% elif plano_renovacao and plano.preco_plano < plano_renovacao.preco_plano %}
                                         Mais barato que o {{ plano_renovacao.nome_plano }}, o plano da sua próxima renovação.
                                     {% else %}
                                         Diferente do {{ plano_renovacao.nome_plano if plano_renovacao else 'seu plano atual' }}, o plano da sua próxima renovação.

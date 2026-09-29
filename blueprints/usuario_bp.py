@@ -33,6 +33,7 @@ from dao.financeiroDAO import (
     CONTRATACAO_MUDANCA_CONFLITANTE,
     CONTRATACAO_MUDANCA_JA_EXISTE,
     CONTRATACAO_MUDANCA_SEM_VIGENCIA,
+    CONTRATACAO_PLANO_INDISPONIVEL,
     CONTRATACAO_RENOVACAO_CRIADA,
     PagamentoDAO,
     SolicitacaoPlanoDAO,
@@ -434,6 +435,7 @@ MENSAGENS_CONTRATACAO = {
     CONTRATACAO_MUDANCA_CONFLITANTE: ('Você já tem uma mudança de plano agendada. Cancele a solicitação atual antes de pedir outra.', 'erro'),
     CONTRATACAO_MUDANCA_SEM_VIGENCIA: ('Você não tem um período pago em curso, então basta contratar o plano desejado.', 'erro'),
     CONTRATACAO_MESMO_PLANO: ('Este já é o seu plano atual.', 'erro'),
+    CONTRATACAO_PLANO_INDISPONIVEL: ('Este plano não está mais disponível. Escolha um dos planos da lista.', 'erro'),
 }
 
 
@@ -442,7 +444,8 @@ def _plano_do_formulario():
         plano_id = int(request.form.get("plano") or 0)
     except (TypeError, ValueError):
         return None
-    return PlanoDAO.buscar_por_id(plano_id) if plano_id else None
+    # Plano arquivado não é oferecido nem aceito: nenhuma cobrança nova nasce nele.
+    return PlanoDAO.buscar_ativo_por_id(plano_id) if plano_id else None
 
 
 def _turma_do_formulario():
@@ -502,7 +505,7 @@ def pagina_perfil():
     # muda o plano do cadastro, mas não libera período nenhum sem pagamento.
     PagamentoDAO.efetivar_mudancas_por_prazo(aluno_dados)
 
-    lista_planos = PlanoDAO.listar_todos()
+    lista_planos = PlanoDAO.listar_ativos()
     turmas_disponiveis = Turma.query.order_by(Turma.nome, Turma.horario).all()
     pagamentos = PagamentoDAO.listar_por_aluno(aluno_dados.id)
     solicitacao = SolicitacaoPlanoDAO.pendente_do_aluno(aluno_dados.id)
@@ -523,6 +526,7 @@ def pagina_perfil():
         "pgUsuario.html",
         usuario=aluno_dados,
         planos=lista_planos,
+        cartoes_planos={plano.id: regras_plano.cartao_do_plano(plano) for plano in lista_planos},
         turmas_disponiveis=turmas_disponiveis,
         pagamentos=pagamentos,
         situacao=situacao,

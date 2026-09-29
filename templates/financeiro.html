@@ -161,7 +161,7 @@
                             {% for p in planos %}
                                 <option value="{{ p.id }}"
                                         {% if filtros.get('plano_id') == p.id|string %}selected{% endif %}>
-                                    {{ p.nome_plano }}
+                                    {{ p.nome_plano }}{{ ' (arquivado)' if p.arquivado }}
                                 </option>
                             {% endfor %}
                         </select>

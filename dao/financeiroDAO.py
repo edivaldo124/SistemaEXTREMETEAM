@@ -190,6 +190,7 @@ CONTRATACAO_MUDANCA_JA_EXISTE = 'mudanca_ja_existe'
 CONTRATACAO_MUDANCA_CONFLITANTE = 'mudanca_conflitante'
 CONTRATACAO_MUDANCA_SEM_VIGENCIA = 'mudanca_sem_vigencia'
 CONTRATACAO_MESMO_PLANO = 'mesmo_plano'
+CONTRATACAO_PLANO_INDISPONIVEL = 'plano_indisponivel'
 
 ACAO_CONTRATAR = 'contratar'
 ACAO_RENOVAR = 'renovar'
@@ -289,7 +290,8 @@ class PagamentoDAO:
             aluno_id=aluno.id,
             plano_id=plano.id,
             # O preço vem sempre do plano persistido - o navegador não envia valor nenhum.
-            valor=regras_plano.preco(plano),
+            # Promoção valendo hoje entra aqui; a cobrança guarda o valor e não muda mais.
+            valor=regras_plano.preco(plano, hoje),
             # Vence no primeiro dia do período que ela paga: uma renovação antecipada
             # nasce com vencimento futuro e por isso não entra como "Vencida".
             vencimento=inicio,
@@ -317,7 +319,7 @@ class PagamentoDAO:
         demais = [p for p in pagamentos if p.id != pagamento.id]
         inicio, fim = regras_plano.periodo_para_nova_cobranca(demais, plano, hoje=hoje)
         pagamento.plano_id = plano.id
-        pagamento.valor = regras_plano.preco(plano)
+        pagamento.valor = regras_plano.preco(plano, hoje)
         pagamento.vencimento = inicio
         pagamento.competencia = inicio.strftime('%Y-%m')
         pagamento.vigencia_inicio = inicio
@@ -426,6 +428,8 @@ class PagamentoDAO:
                 return ResultadoContratacao(
                     CONTRATACAO_COBRANCA_REUTILIZADA, pagamento=cobranca, solicitacao=solicitacao,
                 )
+            if plano_alvo.arquivado:
+                return ResultadoContratacao(CONTRATACAO_PLANO_INDISPONIVEL, solicitacao=solicitacao)
             if PagamentoDAO._cobranca_online_ativa(cobranca):
                 return ResultadoContratacao(
                     CONTRATACAO_COBRANCA_EM_ANDAMENTO, pagamento=cobranca, solicitacao=solicitacao,
@@ -458,6 +462,8 @@ class PagamentoDAO:
             )
             if PagamentoDAO._conflita_com_agendamento(plano, solicitacao, situacao, cobranca=None):
                 return ResultadoContratacao(CONTRATACAO_MUDANCA_CONFLITANTE, solicitacao=solicitacao)
+            if plano_alvo.arquivado:
+                return ResultadoContratacao(CONTRATACAO_PLANO_INDISPONIVEL, solicitacao=solicitacao)
 
             pagamento = PagamentoDAO._nova_cobranca(
                 aluno=aluno, plano=plano_alvo, pagamentos=pagamentos, hoje=hoje, ator=ator,
@@ -484,6 +490,10 @@ class PagamentoDAO:
         plano_alvo, solicitacao_aplicavel = PagamentoDAO._plano_da_proxima_cobranca(
             plano, solicitacao, cobranca_inicio=hoje, hoje=hoje,
         )
+        if plano_alvo.arquivado:
+            # Plano fora de venda não recebe cobrança nova, nem de quem já estava nele:
+            # esse aluno termina o período pago e escolhe um plano ativo.
+            return ResultadoContratacao(CONTRATACAO_PLANO_INDISPONIVEL, solicitacao=solicitacao)
         pagamento = PagamentoDAO._nova_cobranca(
             aluno=aluno, plano=plano_alvo, pagamentos=pagamentos, hoje=hoje, ator=ator,
             tipo_evento='plano_contratado',
@@ -536,6 +546,8 @@ class PagamentoDAO:
 
     @staticmethod
     def _agendar_mudanca(*, aluno, plano, situacao, solicitacao, pagamentos, hoje, ator):
+        if plano.arquivado:
+            return ResultadoContratacao(CONTRATACAO_PLANO_INDISPONIVEL, solicitacao=solicitacao)
         if not situacao.ativo:
             # Sem período pago em curso não há o que preservar: escolher o plano já vale
             # como contratação, e agendar só adiaria o acesso sem motivo.
@@ -552,8 +564,11 @@ class PagamentoDAO:
                 return ResultadoContratacao(CONTRATACAO_MUDANCA_JA_EXISTE, solicitacao=solicitacao)
             return ResultadoContratacao(CONTRATACAO_MUDANCA_CONFLITANTE, solicitacao=solicitacao)
 
-        valor_origem = regras_plano.preco(plano_vigente) if plano_vigente else None
-        valor_destino = regras_plano.preco(plano)
+        # Os valores são os do dia em que a troca passa a valer: uma promoção que acaba
+        # antes disso não pode entrar na conta (nem no valor mostrado ao aluno).
+        a_partir_de = regras_plano.inicio_proximo_periodo(pagamentos, hoje=hoje)
+        valor_origem = regras_plano.preco(plano_vigente, a_partir_de) if plano_vigente else None
+        valor_destino = regras_plano.preco(plano, a_partir_de)
         tipo = TIPO_DOWNGRADE if valor_origem is not None and valor_destino < valor_origem else TIPO_UPGRADE
 
         nova = SolicitacaoMudancaPlano(
@@ -565,7 +580,7 @@ class PagamentoDAO:
             tipo=tipo,
             # Vale a partir do primeiro dia livre: tudo que já foi pago (ou está em
             # análise) continua valendo no plano contratado, sem reembolso nem perda.
-            vigencia_a_partir_de=regras_plano.inicio_proximo_periodo(pagamentos, hoje=hoje),
+            vigencia_a_partir_de=a_partir_de,
             criado_por=ator,
         )
         db.session.add(nova)

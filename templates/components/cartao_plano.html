@@ -10,7 +10,10 @@
 
 {# `plano`: dict com
      nome, preco_total, preco_mes, meses, duracao_texto ('3 meses'),
-     economia (número ou none), url_matricula, texto_botao
+     economia (número ou none), url_matricula, texto_botao;
+     opcionais: unidade ('por mês' se ausente; 'por 7 dias' em plano curto),
+     preco_mes_cheio e promocao_ate (promoção valendo: mostra o "de" riscado e o
+     selo com a data final)
    `destaque=true`: cartão escuro, maior, com selo "Recomendado", botão primário
    dourado e a borda brilhante. Sem destaque: cartão claro e botão secundário.
    Plano de 1 mês não repete o total (seria o mesmo número do preço por mês).
@@ -33,10 +36,16 @@
     {%- for texto, tom in selos %}
     <p class="et-plano-selo et-plano-selo--{{ tom }}">{{ texto }}</p>
     {%- endfor %}
+    {%- if plano.promocao_ate %}
+    <p class="et-plano-selo et-plano-selo--promo">Promoção até {{ plano.promocao_ate.strftime('%d/%m') }}</p>
+    {%- endif %}
     <h3 class="et-plano-nome">{{ plano.nome }}</h3>
     <p class="et-plano-preco">
+        {%- if plano.preco_mes_cheio %}
+        <s class="et-plano-de"><span class="sr-only">De </span>{{ plano.preco_mes_cheio|moeda }}<span class="sr-only"> por</span></s>
+        {%- endif %}
         <span class="et-plano-valor">{{ plano.preco_mes|moeda }}</span>
-        <span class="et-plano-unidade">por mês</span>
+        <span class="et-plano-unidade">{{ plano.unidade or 'por mês' }}</span>
     </p>
     {%- if _meses > 1 %}
     <p class="et-plano-total">{{ plano.preco_total|moeda }} no total por {{ _duracao }}</p>
