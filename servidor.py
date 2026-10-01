@@ -26,6 +26,7 @@ from blueprints.checkout_bp import checkout_bp
 from blueprints.academia_bp import academia_bp
 from blueprints.mercado_pago_oauth_bp import mercado_pago_oauth_bp
 from blueprints.gmail_oauth_bp import gmail_oauth_bp
+from blueprints.google_login import google_auth_bp
 from blueprints.seo_bp import seo_bp
 from modelos.academia import Academia
 from modelos.email_pendente import EmailPendente
@@ -164,6 +165,7 @@ app.register_blueprint(checkout_bp)
 app.register_blueprint(academia_bp)
 app.register_blueprint(mercado_pago_oauth_bp)
 app.register_blueprint(gmail_oauth_bp)
+app.register_blueprint(google_auth_bp)
 app.register_blueprint(seo_bp)
 
 

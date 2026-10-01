@@ -41,32 +41,11 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
   margin-top:var(--sp-2);
 }
 
-.container-admin > .msg { margin-top:var(--sp-6); }
 
 /* ------------------------------------------------- painéis de conteúdo -- */
 
-.secao {
-  margin-top:var(--sp-7); padding:var(--sp-7);
-  border:1px solid var(--line); border-radius:var(--radius-lg);
-  background:var(--surface); box-shadow:var(--shadow-card);
-}
-
-.section-heading {
-  display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
-  gap:var(--sp-5); margin-bottom:var(--sp-6);
-  padding-bottom:var(--sp-4); border-bottom:1px solid var(--line);
-}
-.section-heading h2 { margin:0; font:700 var(--h2)/1.1 var(--display); text-transform:uppercase; }
-.section-heading > p {
-  max-width:46ch; margin:0;
-  color:var(--text-2); font-size:var(--fs-xs); line-height:1.6;
-}
-.section-heading > #contador-alunos {
-  padding:var(--sp-2) var(--sp-4); border-radius:var(--radius-pill);
-  background:var(--surface-2);
-  color:var(--text-2); font:700 var(--fs-xs) var(--body);
-  font-variant-numeric:tabular-nums; white-space:nowrap;
-}
+.secao { margin-top:var(--sp-7); }
+#contador-alunos { font-variant-numeric:tabular-nums; }
 
 /* -------------------------------------------- formulário de cadastro ---- */
 /* Faixa acima da lista que ele alimenta: preencher e cadastrar na mesma linha. */
@@ -77,7 +56,6 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
   padding:var(--sp-5);
 }
 .form-plano .field-full,.form-plano .field-wide { grid-column:1/-1; }
-.form-plano .btn-cadastrar { box-shadow:none; }
 /* "Destacar na página inicial": linha própria embaixo, para o botão continuar ao lado
    dos campos no desktop. */
 .form-plano .plano-destaque-opcao { grid-column:1/-1; grid-row:2; min-height:44px; }
@@ -101,7 +79,7 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 .plan-list article > a,
 .plan-list article > .plano-acoes,
 .plan-list article > .acoes-turma { margin-top:auto; }
-/* Só o rótulo de duração: as etiquetas de situação (.status) têm estilo próprio. */
+/* Só o rótulo de duração: as etiquetas de situação são .et-selo. */
 .plan-list article > div > span {
   display:block; color:var(--text-2);
   font:700 var(--fs-micro) var(--body);
@@ -144,11 +122,9 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
   .form-plano { grid-template-columns:1fr 1fr; }
   .form-plano .plano-destaque-opcao { grid-row:auto; }
   .form-plano .field:first-child { grid-column:1/-1; }
-  .secao { padding:var(--sp-5); }
 }
 @media (max-width:720px) {
   .admin-intro { flex-direction:column; align-items:stretch; gap:var(--sp-5); }
-  .section-heading { flex-direction:column; align-items:flex-start; gap:var(--sp-2); }
 }
 @media (max-width:540px) {
   .form-plano { grid-template-columns:1fr; }
@@ -163,7 +139,7 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
   }
   .admin-metricas .et-metrica-valor { font-size:34px; }
   .admin-metricas .et-metrica-detalhe { flex-basis:100%; }
-  .secao { margin-top:var(--sp-5); padding:var(--sp-4); border-radius:var(--radius-card); }
+  .secao { margin-top:var(--sp-5); }
 }
 
 /* Ação de um formulário que ocupa a largura toda do painel. */
@@ -172,8 +148,8 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 /* Ações de um plano (editar, destacar, arquivar, excluir), embaixo do cartão: grade de
    duas colunas para os botões não quebrarem em linhas de tamanhos diferentes. */
 .plano-acoes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-2); }
-.plano-acoes > .btn,
-.plano-acoes > form .btn { width:100%; }
+.plano-acoes > .et-botao,
+.plano-acoes > form .et-botao { width:100%; }
 
 /* ------------------------------------------ tabelas da administração --- */
 /* .tabela-admin acompanha .et-tabela nas tabelas que têm menu de ações por
@@ -208,25 +184,19 @@ a.pessoa-linha:focus-visible { outline:2px solid var(--focus-ink); outline-offse
 .form-busca-aluno {
   flex:1 1 320px; display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2);
 }
-.form-busca-aluno input {
-  flex:1 1 200px; min-width:0; min-height:44px; padding:0 var(--sp-4);
-  border:1px solid var(--line-strong); border-radius:var(--et-radius-control);
-  background:var(--surface); font-size:var(--fs-sm);
-}
-.form-busca-aluno input::placeholder { color:var(--text-3); }
-.form-busca-aluno input:focus-visible { outline:2px solid var(--focus-ink); outline-offset:2px; }
-.form-busca-aluno .btn { min-height:44px; }
+.form-busca-aluno .et-campo { flex:1 1 200px; width:auto; }
+.form-busca-aluno .et-campo,.form-busca-aluno .et-botao { min-height:44px; }
 
 @media (max-width:640px) {
   /* Linhas em cartão: a moldura da tabela sai e cada cartão traz a sua. */
   .tabela-admin { border:0; background:transparent; }
   .tabela-admin .et-tabela-ferramentas { padding:0 0 var(--sp-4); border:0; background:transparent; }
-  .tabela-admin .et-tabela-ferramentas > .button-primary { width:100%; justify-content:center; }
+  .tabela-admin .et-tabela-ferramentas > .et-botao { width:100%; }
   .tabela-admin .paginacao { padding-inline:0; border-top:0; }
   .tabela-admin td.celula-menu { width:auto; }
   .table-stack.et-tabela-rolagem td.celula-menu { margin-top:var(--sp-2); padding-top:var(--sp-3); }
-  .form-busca-aluno input { flex:1 1 100%; }
-  .form-busca-aluno .btn { flex:1 1 auto; justify-content:center; }
+  .form-busca-aluno .et-campo { flex:1 1 100%; }
+  .form-busca-aluno .et-botao { flex:1 1 auto; }
   .tabela-admin .acao-cell > .form-inline + .form-inline { margin-left:0; }
   .tabela-admin .acao-cell { white-space:normal; }
 }

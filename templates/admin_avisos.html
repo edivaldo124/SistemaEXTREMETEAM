@@ -3,7 +3,6 @@
 {% block titulo %}Avisos e cobranças | Extreme Team{% endblock %}
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
 {% endblock %}
 {% block conteudo %}
     <main id="conteudo" class="container-admin">
@@ -30,14 +29,14 @@
                 {% endif %}
             </div>
         </section>
-        <section class="secao">
-            <div class="section-heading">
-                <h2>Enviar comunicado</h2>
-                <p>O texto é enviado como e-mail para os alunos escolhidos. Cada linha vira um parágrafo.</p>
+        <section class="et-cartao secao">
+            <div class="et-cartao-cabeca">
+                <h2 class="et-cartao-titulo">Enviar comunicado</h2>
+                <p class="et-cartao-descricao">O texto é enviado como e-mail para os alunos escolhidos. Cada linha vira um parágrafo.</p>
             </div>
             <div class="atalhos-aviso">
                 <span>Preencher com um modelo</span>
-                <button type="button" class="btn btn-status" id="atalho-sem-treino">Não vai ter treino</button>
+                <button type="button" class="et-botao et-botao--contorno et-botao--pequeno" id="atalho-sem-treino">Não vai ter treino</button>
             </div>
             <form action="/admin/avisos"
                   method="POST"
@@ -48,7 +47,7 @@
                 <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
                 <div class="field">
                     <label for="assunto">Assunto</label>
-                    <input id="assunto"
+                    <input class="et-campo" id="assunto"
                            type="text"
                            name="assunto"
                            placeholder="Ex.: Aula cancelada nesta sexta"
@@ -56,24 +55,24 @@
                 </div>
                 <div class="field">
                     <label for="destinatarios">Destinatários</label>
-                    <select id="destinatarios" name="destinatarios">
+                    <select class="et-campo" id="destinatarios" name="destinatarios">
                         <option value="todos">Todos os alunos ativos</option>
                         <option value="inadimplentes">Somente com mensalidade pendente</option>
                     </select>
                 </div>
                 <div class="field field-full">
                     <label for="mensagem">Mensagem</label>
-                    <textarea id="mensagem" name="mensagem" rows="5" placeholder="Escreva o aviso para os alunos…" required></textarea>
+                    <textarea class="et-campo" id="mensagem" name="mensagem" rows="5" placeholder="Escreva o aviso para os alunos…" required></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn-cadastrar" data-texto-enviando="Enviando aviso...">Enviar aviso</button>
+                    <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Enviando aviso...">Enviar aviso</button>
                 </div>
             </form>
         </section>
-        <section class="secao">
-            <div class="section-heading">
-                <h2>Cobrança de mensalidades</h2>
-                <p>Envia um lembrete por e-mail para todos os alunos ativos com mensalidade em aberto.</p>
+        <section class="et-cartao secao">
+            <div class="et-cartao-cabeca">
+                <h2 class="et-cartao-titulo">Cobrança de mensalidades</h2>
+                <p class="et-cartao-descricao">Envia um lembrete por e-mail para todos os alunos ativos com mensalidade em aberto.</p>
             </div>
             <form action="/admin/avisos/cobranca"
                   method="POST"
@@ -86,7 +85,7 @@
                   data-enviando>
                 {% include "components/csrf_field.html" %}
                 <input type="hidden" name="token_aviso" value="{{ token_aviso }}">
-                <button type="submit" class="btn btn-status" data-texto-enviando="Enviando cobranças...">Enviar cobrança para {{ total_cobraveis }} aluno{{ "" if total_cobraveis == 1 else "s" }}</button>
+                <button type="submit" class="et-botao et-botao--contorno et-botao--pequeno" data-texto-enviando="Enviando cobranças...">Enviar cobrança para {{ total_cobraveis }} aluno{{ "" if total_cobraveis == 1 else "s" }}</button>
             </form>
         </section>
     </main>

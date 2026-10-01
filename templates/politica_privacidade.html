@@ -16,7 +16,7 @@
             <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team">
             <span>Centro de treinamento<br><strong>Extreme Team</strong></span>
         </a>
-        <a href="{{ url_for('auth.pagina_login') }}">Entrar</a>
+        <a class="et-botao et-botao--contorno et-botao--pequeno et-botao--pilula" href="{{ url_for('auth.pagina_login') }}">Entrar</a>
     </header>
     <main class="termos-page-shell">
         <article id="politica" class="termos-documento" aria-labelledby="politica-titulo">
@@ -87,12 +87,12 @@
                     <p><strong>Base legal, retenção e transferência:</strong> consentimento (art. 7º, I, da LGPD). Os dados de cada visita ficam no Google Analytics pelo prazo configurado pela academia (2 ou 14 meses; relatórios agregados, sem identificação, podem ficar por mais tempo) e são tratados pelo Google, que pode armazená-los fora do Brasil conforme a <a href="https://policies.google.com/privacy">política de privacidade do Google</a>.</p>
                     <p><strong>Como mudar de ideia:</strong> use "Preferências de cookies", no rodapé da página inicial{% if analytics_ativo() %}, ou o botão abaixo{% endif %}. Ao recusar, a coleta para e os cookies do Analytics são apagados deste navegador.</p>
                     {% if analytics_ativo() %}
-                        <p><button type="button" class="button-secondary" data-consentimento-abrir>Rever minha escolha</button></p>
+                        <p><button type="button" class="et-botao et-botao--contorno" data-consentimento-abrir>Rever minha escolha</button></p>
                     {% endif %}
                 </div>
             </details>
 
-            <p class="termos-nota">Esta página pode ser atualizada quando houver mudança relevante no tratamento de dados.</p>
+            <p class="et-aviso et-aviso--ok termos-nota">Esta página pode ser atualizada quando houver mudança relevante no tratamento de dados.</p>
         </article>
     </main>
 {% endblock %}

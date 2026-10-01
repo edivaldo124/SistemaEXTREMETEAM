@@ -2,10 +2,8 @@
 .professor-editor { max-width:1160px; }
 .professor-editor .et-breadcrumb { margin-bottom:var(--sp-4); }
 
-.professor-form {
-  margin-top:var(--sp-6); border:1px solid var(--line);
-  background:var(--surface); border-radius:var(--radius-lg); box-shadow:var(--shadow-card);
-}
+/* .et-cartao dividido em seções, cada uma com o próprio respiro. */
+.professor-form { margin-top:var(--sp-6); padding:0; }
 .editor-section {
   display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); gap:var(--sp-7);
   padding:var(--sp-7); border-bottom:1px solid var(--line);
@@ -18,19 +16,10 @@
 .editor-field-full { grid-column:1/-1; }
 .professor-form .field { min-width:0; }
 .professor-form .field > label:not(.editor-check) { display:block; margin-bottom:var(--sp-2); font-size:var(--fs-sm); font-weight:600; }
-.professor-form .field > input:not([type="checkbox"]), .professor-form textarea {
-  display:block; width:100%; min-height:var(--control-h); padding:var(--sp-3);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
-  color:var(--text); background:var(--surface); font:400 var(--fs-md)/1.5 var(--body);
-}
-.professor-form textarea { resize:vertical; }
 .professor-form .field-help { margin:var(--sp-2) 0 0; color:var(--text-2); font-size:var(--fs-xs); line-height:1.65; }
 .professor-form .editor-check {
   display:flex; align-items:center; gap:var(--sp-3); min-height:44px; margin-top:var(--sp-2);
   font:500 var(--fs-sm)/1.5 var(--body); cursor:pointer;
-}
-.professor-form .editor-check input {
-  flex:0 0 auto; width:18px; height:18px; margin:0; accent-color:var(--ink);
 }
 .editor-photo { display:flex; align-items:flex-start; gap:var(--sp-5); min-width:0; }
 .editor-photo-upload { flex:1 1 auto; width:100%; min-width:0; }

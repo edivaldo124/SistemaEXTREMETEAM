@@ -32,7 +32,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
   color:var(--ink); background:var(--yellow);
   font:700 30px/1 var(--display); font-variant-numeric:tabular-nums;
 }
-.container-detalhes > .msg { margin-top:var(--sp-6); }
+.container-detalhes > .et-aviso { margin-top:var(--sp-6); }
 
 /* Trilha (components/breadcrumb.html) acima do título. */
 .container-detalhes > .et-breadcrumb { margin-bottom:var(--sp-4); color:var(--text-2); }
@@ -52,21 +52,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 
 /* ------------------------------------------------- painéis de conteúdo -- */
 
-.detail-section,.secao-pagamentos {
-  margin-top:var(--sp-6); padding:var(--sp-7);
-  border:1px solid var(--line); border-radius:var(--radius-lg);
-  background:var(--surface); box-shadow:var(--shadow-card);
-}
-
-.section-title {
-  margin-bottom:var(--sp-6);
-  padding-bottom:var(--sp-4); border-bottom:1px solid var(--line);
-}
-.section-title h2 { margin:0; font:700 var(--h2)/1.1 var(--display); text-transform:uppercase; }
-.section-title p {
-  max-width:70ch; margin:var(--sp-2) 0 0;
-  color:var(--text-2); font-size:var(--fs-xs); line-height:1.6;
-}
+.detail-section,.secao-pagamentos { margin-top:var(--sp-6); }
 
 /* --------------------------------------------------- formulários -------- */
 
@@ -74,15 +60,6 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 .form-detalhes .form-actions { grid-column:1/-1; }
 .campo-largo { grid-column:1/-1; }
 
-.btn-voltar {
-  display:inline-flex; align-items:center; justify-content:center;
-  min-height:var(--control-h); padding:0 var(--sp-5);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
-  color:var(--text); background:var(--surface);
-  font-size:var(--fs-sm); font-weight:600; text-decoration:none;
-  transition:border-color .16s ease, background .16s ease;
-}
-.btn-voltar:hover { border-color:var(--text); background:var(--surface-2); }
 
 /* Faixa de lançamento acima da tabela que ela alimenta. */
 .form-pagamento {
@@ -90,7 +67,6 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
   gap:var(--sp-4); align-items:end;
   padding:var(--sp-5);
 }
-.form-pagamento .btn-salvar { margin:0; box-shadow:none; }
 .form-pagamento .form-actions { grid-column:1/-1; margin-top:0; }
 
 .tabela-pagamentos,.tabela-mensalidades-aluno { margin-top:var(--sp-6); }
@@ -102,18 +78,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
   .form-status { flex-wrap:nowrap; }
   .secao-pagamentos td.acao-cell { min-width:340px; }
 }
-.form-status select,.form-status button {
-  min-height:var(--control-h-sm); padding:0 var(--sp-3);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
-  background:var(--surface); font-size:var(--fs-xs);
-}
-.form-status select { max-width:140px; }
-.form-status button {
-  padding-inline:var(--sp-4);
-  border-color:var(--text); color:var(--surface); background:var(--text);
-  font-weight:600; cursor:pointer;
-}
-.form-status button:hover { background:var(--ink-2); }
+.form-status .et-campo { width:auto; max-width:140px; }
 
 /* --------------------------------------------------------- foto ------- */
 
@@ -136,12 +101,8 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 .revisao-comprovante a { color:var(--text); font-weight:600; text-underline-offset:3px; }
 
 .form-revisao { display:flex; flex-wrap:wrap; gap:var(--sp-2); }
-.form-revisao input,.form-revisao select {
-  min-height:var(--control-h-sm); padding:0 var(--sp-3);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
-  background:var(--surface); font-size:var(--fs-xs);
-}
-.form-revisao input[type=text] { min-width:180px; }
+.form-revisao .et-campo { width:auto; }
+.form-revisao input.et-campo[type=text] { min-width:180px; }
 
 .linha-comprovante-manual td { padding:0 !important; border:0 !important; background:transparent !important; }
 .table-stack .linha-comprovante-manual td { display:block !important; text-align:left !important; }
@@ -160,7 +121,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 }
 .situacao-plano-admin p { margin:0 0 var(--sp-2); font-size:var(--fs-md); line-height:1.7; }
 .situacao-plano-admin p:last-child { margin-bottom:0; }
-.situacao-plano-admin .status { margin-right:var(--sp-2); }
+.situacao-plano-admin .et-selo { margin-right:var(--sp-2); }
 
 .mudanca-plano-admin {
   display:flex; flex-direction:column; gap:var(--sp-3);
@@ -176,21 +137,14 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 @media (max-width:900px) {
   .form-pagamento { grid-template-columns:1fr 1fr; }
   .form-detalhes { grid-template-columns:1fr; }
-  .detail-section,.secao-pagamentos { padding:var(--sp-5); }
-}
-/* Telas de toque: os controles da linha também chegam aos 44px. */
-@media (max-width:1023px) {
-  .form-status select,.form-status button,
-  .form-revisao input,.form-revisao select,.form-revisao button { min-height:44px; }
 }
 @media (max-width:540px) {
   .detail-intro > span:not(.et-avatar) { width:58px; height:58px; font-size:23px; }
   .form-pagamento { grid-template-columns:1fr; }
-  .detail-section,.secao-pagamentos { padding:var(--sp-4); border-radius:var(--radius-card); }
   .foto-perfil-area { flex-direction:column; align-items:flex-start; }
   .foto-perfil-acoes { width:100%; }
-  .form-status select { max-width:none; flex:1 1 100%; }
-  .form-status button { flex:1 1 100%; min-height:44px; }
+  .form-status .et-campo { max-width:none; flex:1 1 100%; }
+  .form-status .et-botao { flex:1 1 100%; }
   .form-revisao > * { flex:1 1 100%; }
   .form-revisao button { min-height:44px; }
 }
@@ -198,7 +152,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 /* Formulário de um campo só: a ação fica ao lado dele, não numa linha própria. */
 .form-pagamento .form-actions-inline { grid-column:auto; align-self:end; margin-top:0; }
 @media (max-width:540px) {
-  .form-pagamento .form-actions-inline .btn-salvar { width:100%; }
+  .form-pagamento .form-actions-inline .et-botao { width:100%; }
 }
 
 /* ------------------------------- mensalidades na ficha do aluno --------- */
@@ -216,10 +170,10 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
   }
   .tabela-mensalidades-aluno td.acao-cell > * + * { margin-left:0; }
   .tabela-mensalidades-aluno td.acao-cell .form-inline { display:flex; }
-  .tabela-mensalidades-aluno td.acao-cell .btn { width:100%; }
+  .tabela-mensalidades-aluno td.acao-cell .et-botao { width:100%; }
   .tabela-mensalidades-aluno .form-status { flex-wrap:wrap; }
-  .tabela-mensalidades-aluno .form-status select { flex:1 1 96px; max-width:none; }
-  .tabela-mensalidades-aluno .form-status button { flex:1 1 100%; }
+  .tabela-mensalidades-aluno .form-status .et-campo { flex:1 1 96px; max-width:none; }
+  .tabela-mensalidades-aluno .form-status .et-botao { flex:1 1 100%; }
   /* "Setembro de 2026" pode ocupar duas linhas; datas e valores, não. */
   .tabela-mensalidades-aluno td:nth-child(2) { white-space:normal; }
 }

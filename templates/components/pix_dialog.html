@@ -1,14 +1,15 @@
-<dialog class="pix-dialog" id="pix-dialog" aria-labelledby="pix-dialog-title">
-    <div class="pix-accent" aria-hidden="true"></div>
-    <button type="button" class="pix-fechar" data-pix-fechar aria-label="Fechar" data-tooltip>&times;</button>
-    <p class="eyebrow">Pagamento via Pix</p>
-    <h2 id="pix-dialog-title">Pagar mensalidade</h2>
+<dialog class="et-dialogo pix-dialog" id="pix-dialog" aria-labelledby="pix-dialog-title">
+    <button type="button" class="et-dialogo-fechar et-botao et-botao--fantasma et-botao--icone et-botao--pequeno" data-pix-fechar aria-label="Fechar" data-tooltip><svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
+    <div class="et-dialogo-cabeca">
+        <p class="eyebrow">Pagamento via Pix</p>
+        <h2 class="et-dialogo-titulo" id="pix-dialog-title">Pagar mensalidade</h2>
+    </div>
     <div class="pix-corpo" data-pix-estado="carregando">
         <p class="pix-carregando" role="status" aria-live="polite">Gerando cobrança Pix...</p>
     </div>
     <div class="pix-corpo" data-pix-estado="erro" hidden>
-        <p class="alert" data-pix-erro-msg role="alert">Não foi possível gerar o Pix. Tente novamente.</p>
-        <button type="button" class="button-secondary" data-pix-tentar-novamente>Tentar novamente</button>
+        <p class="et-aviso et-aviso--perigo" data-pix-erro-msg role="alert">Não foi possível gerar o Pix. Tente novamente.</p>
+        <button type="button" class="et-botao et-botao--contorno" data-pix-tentar-novamente>Tentar novamente</button>
     </div>
     <div class="pix-corpo" data-pix-estado="pronto" hidden>
         <div class="pix-resumo">
@@ -27,13 +28,13 @@
         </div>
         <label for="pix-copia-cola">Pix copia e cola</label>
         <div class="pix-copia-linha">
-            <input id="pix-copia-cola"
+            <input class="et-campo" id="pix-copia-cola"
                    type="text"
                    readonly
                    data-pix-copia-cola
                    aria-label="Código Pix copia e cola">
-            <button type="button" class="button-secondary" data-pix-copiar>Copiar código</button>
+            <button type="button" class="et-botao et-botao--contorno" data-pix-copiar>Copiar código</button>
         </div>
-        <p class="pix-status" data-pix-status role="status" aria-live="polite">Aguardando pagamento…</p>
+        <p class="et-aviso et-aviso--alerta pix-status" data-pix-status role="status" aria-live="polite">Aguardando pagamento…</p>
     </div>
 </dialog>

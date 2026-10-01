@@ -16,7 +16,7 @@
             <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="Extreme Team">
             <span>Centro de treinamento<br><strong>Extreme Team</strong></span>
         </a>
-        <a href="{{ url_for('auth.pagina_login') }}">Entrar</a>
+        <a class="et-botao et-botao--contorno et-botao--pequeno et-botao--pilula" href="{{ url_for('auth.pagina_login') }}">Entrar</a>
     </header>
     <main class="termos-page-shell">
         <article id="termos-servico" class="termos-documento" aria-labelledby="termos-servico-titulo">
@@ -72,7 +72,7 @@
                 </div>
             </details>
 
-            <p class="termos-nota">Ao utilizar o sistema, você declara que leu e concorda com estes termos.</p>
+            <p class="et-aviso et-aviso--ok termos-nota">Ao utilizar o sistema, você declara que leu e concorda com estes termos.</p>
         </article>
     </main>
 {% endblock %}

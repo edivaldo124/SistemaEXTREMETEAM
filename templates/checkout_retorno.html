@@ -22,7 +22,7 @@
                         <p class="eyebrow">Situação do pagamento</p>
                         <h1>{{ pagamento.plano.nome_plano if pagamento.plano else 'Mensalidade' }}</h1>
                     </div>
-                    <span class="status status-{{ pagamento.status }}" data-status-badge>{{ rotulo_status(pagamento.status) }}</span>
+                    <span class="et-selo et-selo--situacao" data-situacao="{{ pagamento.status }}" data-status-badge>{{ rotulo_status(pagamento.status) }}</span>
                 </div>
                 <p class="pagamento-valor-destaque">{{ pagamento.valor|moeda }}</p>
                 <div class="pagamento-resumo-grid">
@@ -62,7 +62,7 @@
                     <span class="pagamento-icone pagamento-icone-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8 12.5 2.8 2.8L16.5 9M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></span>
                     <h2>Pagamento confirmado</h2>
                     <p>O Mercado Pago confirmou o recebimento e esta mensalidade já está quitada.</p>
-                    <a class="button-primary"
+                    <a class="et-botao et-botao--principal"
                        href="{{ url_for('auth.comprovante_mensalidade', pagamento_id=pagamento.id) }}">
                         Ver comprovante
                     </a>
@@ -102,7 +102,7 @@
                     <h2>Prefere tentar por outro caminho?</h2>
                     <p>Enquanto a mensalidade não é confirmada, as duas opções continuam disponíveis.</p>
                     <div class="retorno-botoes">
-                        <a class="button-primary"
+                        <a class="et-botao et-botao--principal"
                            href="{{ url_for('auth.pagina_pagamento', pagamento_id=pagamento.id) }}">
                             Pagar com Pix
                         </a>
@@ -110,7 +110,7 @@
                               method="POST"
                               action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">
                 {% include "components/csrf_field.html" %}
-                            <button type="submit" class="button-secondary" data-checkout-abrir>Outras formas de pagamento</button>
+                            <button type="submit" class="et-botao et-botao--contorno" data-checkout-abrir>Outras formas de pagamento</button>
                         </form>
                     </div>
                 </section>

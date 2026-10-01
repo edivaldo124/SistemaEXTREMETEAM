@@ -24,13 +24,13 @@
   display:flex; align-items:center; gap:var(--sp-4); min-width:0;
 }
 
-.app-header nav a,.admin-header a,.detail-header a,.account-header a {
+.app-header nav a,.admin-header a,.detail-header a:not(.et-botao),.account-header a:not(.et-botao) {
   color:var(--text-on-ink-2);
   font-size:var(--fs-sm); font-weight:500; text-decoration:none;
   transition:color .16s ease;
 }
-.app-header nav a:hover,.admin-header a:hover,.detail-header a:hover,
-.account-header a:hover { color:var(--yellow); }
+.app-header nav a:hover,.admin-header a:hover,.detail-header a:not(.et-botao):hover,
+.account-header a:not(.et-botao):hover { color:var(--yellow); }
 
 /* Item ativo: pastilha amarela. A cor sozinha nunca basta, então o item
    ativo também carrega aria-current. */
@@ -39,33 +39,8 @@
   padding:var(--sp-2) var(--sp-4); border-radius:var(--radius-pill);
 }
 
-/* Sair e voltar: ação de saída, tratada como secundária. */
-.app-header #link-sair,.link-logout,
-.detail-header > a:last-child,.account-header > a:last-child {
-  display:inline-flex; align-items:center; gap:var(--sp-2);
-  padding:var(--sp-2) var(--sp-4);
-  border:1px solid var(--ink-4); border-radius:var(--radius-pill);
-  color:var(--text-on-ink); background:transparent;
-  font-size:var(--fs-xs); font-weight:600; cursor:pointer;
-  transition:border-color .16s ease, color .16s ease, background .16s ease;
-}
-.app-header #link-sair:hover,.link-logout:hover,
-.detail-header > a:last-child:hover,.account-header > a:last-child:hover {
-  border-color:var(--yellow); color:var(--yellow); background:rgba(253,207,23,.08);
-}
+/* Sair, voltar e entrar nos cabeçalhos são .et-botao pequenos em pílula. */
 .logout-form { margin:0; }
-.logout-form button { font-family:inherit; }
-
-.nav-login {
-  display:inline-flex; align-items:center; gap:var(--sp-2);
-  min-height:44px; padding:0 var(--sp-5);
-  border:1px solid var(--yellow); border-radius:var(--radius-pill);
-  color:var(--ink); background:var(--yellow);
-  font-size:var(--fs-sm); font-weight:700; white-space:nowrap; cursor:pointer;
-  transition:background .16s ease, border-color .16s ease;
-}
-.nav-login:hover { background:var(--gold); border-color:var(--gold); }
-.nav-login .icone { width:17px; height:17px; }
 
 /* Cargo de quem está logado, ao lado do botão de sair. */
 .admin-header > div > span,.app-header > div > span {
@@ -133,7 +108,7 @@ body.admin-shell {
 .admin-nav-scroll a.is-active:hover { color:var(--ink); background:var(--yellow); }
 
 .admin-header .logout-form { width:100%; }
-.admin-header .link-logout { width:100%; justify-content:flex-start; min-height:48px; border-radius:var(--radius); }
+.admin-header .logout-form .et-botao { --botao-raio:var(--et-radius-btn); width:100%; justify-content:flex-start; min-height:48px; }
 
 @media (max-width:1023px) {
   body.admin-shell { grid-template-columns:minmax(0,1fr); gap:0; padding:0; }
@@ -158,7 +133,7 @@ body.admin-shell {
   }
   .admin-nav-scroll a.link-turmas { min-height:44px; padding-inline:var(--sp-4); white-space:nowrap; }
   .admin-header .logout-form { width:auto; }
-  .admin-header .link-logout { width:auto; min-height:44px; border-radius:var(--radius-pill); }
+  .admin-header .logout-form .et-botao { --botao-raio:var(--et-radius-pill); width:auto; min-height:44px; }
 }
 /* Entre o celular e o desktop há espaço para as seções em duas linhas —
    melhor do que cortar a última no fim do rolamento. */
@@ -184,7 +159,7 @@ body.admin-shell {
     scroll-snap-align:start; scroll-margin-inline:var(--sp-4);
   }
   .admin-nav-scroll a.link-turmas .icone { width:18px; height:18px; }
-  .admin-header .link-logout { padding-inline:var(--sp-3); }
+  .admin-header .logout-form .et-botao { padding-inline:var(--sp-3); }
 
   .admin-nav-scroll[data-rolagem="inicio"] {
     -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);
@@ -264,16 +239,9 @@ body.admin-shell {
 td.empty-state::before,tr .empty-state::before,.table-stack .empty-state::before { display:none; }
 td.empty-state,tr .empty-state { padding-top:var(--sp-8); }
 
-/* ------------------------------------------------- modais e diálogos ---- */
-
-.confirm-dialog,.modal-conteudo,.pix-dialog,.modal-dialog { border-top:4px solid var(--yellow); }
-.confirm-dialog[data-variant="danger"] { border-top-color:var(--red); }
-
 /* --------------------------------------------------------- responsivo --- */
 
 @media (max-width:1023px) {
-  .app-header #link-sair,.link-logout,
-  .detail-header > a:last-child,.account-header > a:last-child { min-height:44px; }
   .app-header .student-avatar { width:44px; height:44px; font-size:19px; }
   .app-header nav a { display:inline-flex; align-items:center; min-height:44px; }
 }

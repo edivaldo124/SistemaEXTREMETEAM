@@ -24,7 +24,7 @@
                         <p class="eyebrow">Resumo da mensalidade</p>
                         <h1>{{ pagamento.plano.nome_plano if pagamento.plano else 'Mensalidade' }}</h1>
                     </div>
-                    <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
+                    <span class="et-selo et-selo--situacao" data-situacao="{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
                 </div>
                 <p class="pagamento-valor-destaque">{{ pagamento.valor|moeda }}</p>
                 <div class="pagamento-resumo-grid">
@@ -50,8 +50,8 @@
                 <p class="pagamento-carregando" role="status" aria-live="polite">Carregando dados do pagamento…</p>
             </section>
             <section class="pagamento-metodo" data-estado="erro" hidden>
-                <p class="alert" data-erro-msg role="alert">Não foi possível carregar o pagamento.</p>
-                <button type="button" class="button-primary" data-tentar-novamente>Tentar novamente</button>
+                <p class="et-aviso et-aviso--perigo" data-erro-msg role="alert">Não foi possível carregar o pagamento.</p>
+                <button type="button" class="et-botao et-botao--principal" data-tentar-novamente>Tentar novamente</button>
             </section>
             <section class="pagamento-metodo pagamento-pix" data-estado="pix" hidden>
                 <h2 class="pagamento-metodo-titulo">Pagar com Pix</h2>
@@ -61,12 +61,12 @@
                 </div>
                 <label for="pagamento-copia-cola">Pix copia e cola</label>
                 <div class="pix-copia-linha">
-                    <input id="pagamento-copia-cola"
+                    <input class="et-campo" id="pagamento-copia-cola"
                            type="text"
                            readonly
                            data-copia-cola
                            aria-label="Código Pix copia e cola">
-                    <button type="button" class="button-primary" data-copiar>
+                    <button type="button" class="et-botao et-botao--principal" data-copiar>
                         <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9h9v11H9zM6 15H5V4h9v1" /></svg>
                         Copiar código
                     </button>
@@ -78,13 +78,13 @@
                     Válido até
                     <strong data-expiracao>—</strong>
                 </p>
-                <p class="pix-status" role="status" aria-live="polite">
+                <p class="et-aviso et-aviso--alerta pix-status" role="status" aria-live="polite">
                     <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3.5 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                     Aguardando pagamento. Esta página atualiza sozinha assim que o Pix for confirmado.
                 </p>
                 <div class="pagamento-selo-seguranca">
-                    <span class="selo selo-mercadopago">
-                        <svg class="selo-icone"
+                    <span class="et-selo selo-mercadopago">
+                        <svg
                              viewBox="0 0 24 24"
                              fill="none"
                              stroke="currentColor"
@@ -97,8 +97,8 @@
                         </svg>
                         Mercado Pago
                     </span>
-                    <span class="selo selo-pix">
-                        <svg class="selo-icone"
+                    <span class="et-selo selo-pix">
+                        <svg
                              viewBox="0 0 24 24"
                              fill="none"
                              stroke="currentColor"
@@ -154,7 +154,7 @@
                 </span>
                 <h2>QR Code expirado</h2>
                 <p>Esse código Pix não é mais válido. Gere um novo código para continuar.</p>
-                <button type="button" class="button-primary" data-tentar-novamente>Gerar novo código Pix</button>
+                <button type="button" class="et-botao et-botao--principal" data-tentar-novamente>Gerar novo código Pix</button>
             </section>
             <section class="pagamento-metodo pagamento-estado-info"
                      data-estado="recusado"
@@ -164,7 +164,7 @@
                 </span>
                 <h2>Pagamento recusado</h2>
                 <p>O Mercado Pago não conseguiu aprovar esse pagamento. Você pode tentar novamente.</p>
-                <button type="button" class="button-primary" data-tentar-novamente>Tentar novamente</button>
+                <button type="button" class="et-botao et-botao--principal" data-tentar-novamente>Tentar novamente</button>
             </section>
             <section class="pagamento-metodo pagamento-estado-info"
                      data-estado="encerrado"
@@ -186,7 +186,7 @@
                               method="POST"
                               action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">
                 {% include "components/csrf_field.html" %}
-                            <button type="submit" class="button-secondary linha-acao" data-checkout-abrir>
+                            <button type="submit" class="et-botao et-botao--contorno linha-acao" data-checkout-abrir>
                                 <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18M3 10.5V7a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6.5ZM6.5 14h4" /></svg>
                                 <span>Ir para outras formas de pagamento</span>
                                 <svg class="icone linha-acao-seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
@@ -229,7 +229,7 @@
                                 <div class="et-upload-previa" data-upload-previa hidden></div>
                                 <p class="et-upload-erro" data-upload-erro role="alert" hidden></p>
                             </div>
-                            <button type="submit" class="button-secondary" data-texto-enviando="Enviando…">Enviar comprovante</button>
+                            <button type="submit" class="et-botao et-botao--contorno" data-texto-enviando="Enviando…">Enviar comprovante</button>
                         </form>
                     </details>
                 </section>

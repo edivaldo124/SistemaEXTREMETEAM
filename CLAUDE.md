@@ -1,3 +1,7 @@
+## Design
+
+Antes de mexer em template, CSS ou JS de interface, leia o `DESIGN.md` da raiz: ele descreve tokens, tipografia, componentes `.et-*` e as regras visuais da Extreme Team.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

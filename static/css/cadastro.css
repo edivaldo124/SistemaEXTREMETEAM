@@ -97,11 +97,6 @@
   color: var(--et-text-on-dark-muted);
 }
 
-.termos-aceite .opcao-inline input[type="checkbox"] {
-  margin-top: 3px;
-  flex-shrink: 0;
-}
-
 .termos-aceite a {
   color: var(--et-gold);
   font-weight: 600;
@@ -151,17 +146,6 @@
   line-height: 1.7;
 }
 
-.termos-nota {
-  margin: var(--sp-4) 0 0;
-  padding: var(--sp-4);
-  border-radius: var(--et-radius-control);
-  color: var(--et-ok-ink-dark);
-  background: var(--et-ok-bg-dark);
-  border: 1px solid rgba(34, 164, 93, 0.3);
-  font-size: var(--fs-sm);
-  font-weight: 500;
-}
-
 .account-header {
   display: flex;
   align-items: center;
@@ -185,17 +169,6 @@
   width: 44px;
   height: 44px;
   border-radius: var(--et-radius-control);
-}
-
-.account-header a:last-child {
-  color: var(--et-gold-dark);
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.account-header a:last-child:hover {
-  text-decoration: underline;
 }
 
 @media (max-width: 560px) {

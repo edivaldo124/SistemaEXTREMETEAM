@@ -17,12 +17,12 @@
                 </div>
             </div>
             {% if erro %}
-                <div class="msg msg-erro" role="alert">{{ erro }}</div>
+                <div class="et-aviso et-aviso--perigo" role="alert">{{ erro }}</div>
             {% endif %}
-            <section class="detail-section">
-                <div class="section-title">
-                    <h2>Dados do aluno</h2>
-                    <p>Só o necessário para identificar a pessoa e controlar as mensalidades dela.</p>
+            <section class="et-cartao detail-section">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Dados do aluno</h2>
+                    <p class="et-cartao-descricao">Só o necessário para identificar a pessoa e controlar as mensalidades dela.</p>
                 </div>
                 <form action="{{ url_for('admin_blueprint.cadastrar_aluno') }}"
                       method="POST"
@@ -31,7 +31,7 @@
                     {% include "components/csrf_field.html" %}
                     <div class="grupo-input">
                         <label for="novo-nome">Nome completo</label>
-                        <input id="novo-nome"
+                        <input class="et-campo" id="novo-nome"
                                type="text"
                                name="nome"
                                value="{{ dados.nome or '' }}"
@@ -42,7 +42,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="novo-cpf">CPF</label>
-                        <input id="novo-cpf"
+                        <input class="et-campo" id="novo-cpf"
                                type="text"
                                name="cpf"
                                value="{{ dados.cpf or '' }}"
@@ -56,7 +56,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="novo-nascimento">Data de nascimento</label>
-                        <input id="novo-nascimento"
+                        <input class="et-campo" id="novo-nascimento"
                                type="date"
                                name="datanascimento"
                                value="{{ dados.datanascimento or '' }}"
@@ -67,7 +67,7 @@
                             Telefone
                             <small>Opcional</small>
                         </label>
-                        <input id="novo-telefone"
+                        <input class="et-campo" id="novo-telefone"
                                type="tel"
                                name="telefone"
                                value="{{ dados.telefone or '' }}"
@@ -81,7 +81,7 @@
                             Graduação ou nível
                             <small>Opcional</small>
                         </label>
-                        <input id="novo-graduacao"
+                        <input class="et-campo" id="novo-graduacao"
                                type="text"
                                name="graduacao"
                                value="{{ dados.graduacao or '' }}"
@@ -93,7 +93,7 @@
                             E-mail
                             <small>Opcional</small>
                         </label>
-                        <input id="novo-email"
+                        <input class="et-campo" id="novo-email"
                                type="email"
                                name="email"
                                value="{{ dados.email or '' }}"
@@ -110,7 +110,7 @@
                             Observações de saúde
                             <small>Opcional</small>
                         </label>
-                        <input id="novo-descricao"
+                        <input class="et-campo" id="novo-descricao"
                                type="text"
                                name="descricao"
                                value="{{ dados.descricao or '' }}"
@@ -122,7 +122,7 @@
                             Plano
                             <small>Opcional</small>
                         </label>
-                        <select id="novo-plano" name="plano_id" aria-describedby="novo-plano-ajuda">
+                        <select class="et-campo" id="novo-plano" name="plano_id" aria-describedby="novo-plano-ajuda">
                             <option value="">Sem plano</option>
                             {% for p in planos %}
                                 <option value="{{ p.id }}"
@@ -137,7 +137,7 @@
                     </div>
                     <div class="grupo-input">
                         <label class="opcao-inline" for="novo-gerar-mensalidade">
-                            <input id="novo-gerar-mensalidade"
+                            <input class="et-caixa" id="novo-gerar-mensalidade"
                                    type="checkbox"
                                    name="gerar_mensalidade"
                                    value="sim"
@@ -151,15 +151,15 @@
                         </small>
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="btn-salvar" data-texto-enviando="Matriculando...">Matricular aluno</button>
-                        <a href="/admin" class="btn-voltar">Voltar ao painel</a>
+                        <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Matriculando...">Matricular aluno</button>
+                        <a href="/admin" class="et-botao et-botao--contorno">Voltar ao painel</a>
                     </div>
                 </form>
             </section>
-            <section class="detail-section">
-                <div class="section-title">
-                    <h2>E o acesso ao sistema?</h2>
-                    <p>Fica para depois, e só se o aluno quiser.</p>
+            <section class="et-cartao detail-section">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">E o acesso ao sistema?</h2>
+                    <p class="et-cartao-descricao">Fica para depois, e só se o aluno quiser.</p>
                 </div>
                 <p class="nota-admin">
                     O aluno é matriculado com o acesso desligado: você lança e baixa mensalidades normalmente, e ele não

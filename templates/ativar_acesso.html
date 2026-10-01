@@ -49,7 +49,7 @@
                         </p>
                     </div>
                     {% if erro %}
-                        <div class="alert msg" role="alert">{{ erro }}</div>
+                        <div class="et-aviso et-aviso--perigo" role="alert">{{ erro }}</div>
                     {% endif %}
                     <form id="ativacao-form"
                           action="{{ url_for('auth.ativar_acesso', token=token) }}"
@@ -57,7 +57,7 @@
                         {% include "components/csrf_field.html" %}
                         <div class="field">
                             <label for="loginusuario">Nome de usuário</label>
-                            <input id="loginusuario"
+                            <input class="et-campo" id="loginusuario"
                                    type="text"
                                    name="loginusuario"
                                    maxlength="50"
@@ -71,7 +71,7 @@
                                 Senha
                                 <small>Mínimo 8 caracteres</small>
                             </label>
-                            <input id="senhausuario"
+                            <input class="et-campo" id="senhausuario"
                                    type="password"
                                    name="senhausuario"
                                    minlength="8"
@@ -82,7 +82,7 @@
                         </div>
                         <div class="field">
                             <label for="confirmarsenhausuario">Confirmar senha</label>
-                            <input id="confirmarsenhausuario"
+                            <input class="et-campo" id="confirmarsenhausuario"
                                    type="password"
                                    name="confirmarsenhausuario"
                                    minlength="8"
@@ -102,7 +102,7 @@
                                 Telefone
                                 <small>Opcional</small>
                             </label>
-                            <input id="telefoneusuario"
+                            <input class="et-campo" id="telefoneusuario"
                                    type="tel"
                                    name="telefoneusuario"
                                    maxlength="15"
@@ -111,7 +111,7 @@
                                    placeholder="(00) 00000-0000"
                                    data-mask="phone">
                         </div>
-                        <button class="button-primary auth-submit-btn" type="submit">Ativar meu acesso</button>
+                        <button class="et-botao et-botao--principal et-botao--grande et-botao--largo auth-submit-btn" type="submit">Ativar meu acesso</button>
                     </form>
                 </div>
             {% endif %}

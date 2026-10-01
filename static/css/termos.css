@@ -9,12 +9,6 @@
   max-width: calc(68ch + 2 * clamp(var(--sp-6), 5vw, var(--sp-9)));
 }
 
-.account-header a:last-child {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-
 .termos-page-shell {
   max-width: calc(68ch + 2 * clamp(var(--sp-6), 5vw, var(--sp-9)));
   margin: var(--sp-6) auto var(--sp-9);
@@ -110,48 +104,15 @@
 }
 
 /* --------------------------------------------------- Acordeões de seção -- */
+/* Estrutura, chevron e animação vêm de componentes.css; aqui só as cores do fundo
+   escuro e o título da seção. */
 .termos-documento .et-acordeao {
-  margin-top: var(--sp-3);
-  border: 1px solid var(--et-line-dark);
-  border-radius: var(--et-radius-btn);
-  background: var(--et-surface-dark-2);
-  overflow: hidden;
-  transition: border-color var(--dur-rapida) var(--ease), box-shadow var(--dur-rapida) var(--ease);
-}
-
-.termos-documento .et-acordeao:first-of-type {
-  margin-top: var(--sp-5);
-}
-
-.termos-documento .et-acordeao[open] {
-  border-color: var(--et-line-dark-strong);
-  box-shadow: var(--et-shadow-dark);
-}
-
-.termos-documento .et-acordeao > summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 44px;
-  padding: var(--sp-3) var(--sp-4);
-  color: var(--et-text-on-dark);
-  cursor: pointer;
-  user-select: none;
-  list-style: none;
-  transition: background var(--dur-rapida) var(--ease);
-}
-
-.termos-documento .et-acordeao > summary::-webkit-details-marker {
-  display: none;
-}
-
-.termos-documento .et-acordeao > summary:hover {
-  background: var(--et-surface-dark);
-}
-
-.termos-documento .et-acordeao > summary:focus-visible {
-  outline: 2px solid var(--et-focus-on-dark);
-  outline-offset: -2px;
+  --acordeao-linha: var(--et-line-dark);
+  --acordeao-titulo: var(--et-text-on-dark);
+  --acordeao-texto: var(--et-text-on-dark-muted);
+  --acordeao-seta: var(--et-text-on-dark-muted);
+  --acordeao-seta-aberta: var(--et-gold);
+  --focus-ink: var(--et-focus-on-dark);
 }
 
 .termos-documento .et-acordeao > summary h2 {
@@ -165,22 +126,7 @@
   color: var(--et-gold);
 }
 
-.termos-documento .et-acordeao > summary::after {
-  border-right-color: var(--et-text-on-dark-muted);
-  border-bottom-color: var(--et-text-on-dark-muted);
-}
-
-.termos-documento .et-acordeao[open] > summary::after {
-  border-right-color: var(--et-gold);
-  border-bottom-color: var(--et-gold);
-}
-
 .termos-documento .et-acordeao-corpo {
-  padding: var(--sp-4);
-  border-top: 1px solid var(--et-line-dark);
-  color: var(--et-text-on-dark-muted);
-  font-family: var(--et-font-body);
-  font-size: var(--fs-sm);
   line-height: 1.7;
 }
 
@@ -199,21 +145,11 @@
 /* ----------------------------------------------------------- Nota final -- */
 .termos-documento .termos-nota {
   margin: var(--sp-6) 0 0;
-  padding: var(--sp-4);
-  border: 1px solid var(--et-line-dark);
-  border-radius: var(--et-radius-control);
-  color: var(--et-ok-ink-dark);
-  background: var(--et-ok-bg-dark);
-  font-family: var(--et-font-body);
-  font-size: var(--fs-sm);
   font-weight: 500;
-  line-height: 1.6;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .termos-sumario a,
-  .termos-documento .et-acordeao,
-  .termos-documento .et-acordeao > summary {
+  .termos-sumario a {
     transition: none;
   }
 }

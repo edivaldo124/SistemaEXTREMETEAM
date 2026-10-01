@@ -14,8 +14,8 @@
     <div class="et-toast et-toast--{{ tipo }}" role="{{ 'alert' if tipo == 'erro' else 'status' }}" data-toast{% if tipo != 'erro' %} data-toast-some{% endif %}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ _icones[tipo] }}" /></svg>
         <p>{{ mensagem }}</p>
-        <button type="button" class="et-toast-fechar" data-toast-fechar aria-label="Fechar aviso">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        <button type="button" class="et-toast-fechar et-botao et-botao--fantasma et-botao--icone et-botao--pequeno" data-toast-fechar aria-label="Fechar aviso">
+            <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
     </div>
     {%- endfor %}

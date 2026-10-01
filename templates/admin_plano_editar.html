@@ -17,25 +17,25 @@
                 </div>
             </div>
             {% if erro %}
-                <div class="msg msg-erro" role="alert">{{ erro }}</div>
+                <div class="et-aviso et-aviso--perigo" role="alert">{{ erro }}</div>
             {% endif %}
             {% if plano.arquivado %}
-                <div class="msg msg-info" role="status">Este plano está arquivado: os alunos não o veem e ele não recebe cobranças novas. Reative-o no painel para voltar a vendê-lo.</div>
+                <div class="et-aviso et-aviso--info" role="status">Este plano está arquivado: os alunos não o veem e ele não recebe cobranças novas. Reative-o no painel para voltar a vendê-lo.</div>
             {% endif %}
             <form action="{{ url_for('admin_blueprint.editar_plano', plano_id=plano.id) }}"
                   method="POST"
                   class="plano-editar"
                   data-enviando>
                 {% include "components/csrf_field.html" %}
-                <section class="detail-section">
-                    <div class="section-title">
-                        <h2>Dados do plano</h2>
-                        <p>O que o aluno vê na página inicial e na área dele.</p>
+                <section class="et-cartao detail-section">
+                    <div class="et-cartao-cabeca">
+                        <h2 class="et-cartao-titulo">Dados do plano</h2>
+                        <p class="et-cartao-descricao">O que o aluno vê na página inicial e na área dele.</p>
                     </div>
                     <div class="form-detalhes">
                         <div class="grupo-input campo-largo">
                             <label for="plano-nome">Nome do plano</label>
-                            <input id="plano-nome"
+                            <input class="et-campo" id="plano-nome"
                                    type="text"
                                    name="nome_plano"
                                    value="{{ valores.nome_plano or '' }}"
@@ -44,7 +44,7 @@
                         </div>
                         <div class="grupo-input">
                             <label for="plano-preco">Preço normal</label>
-                            <input id="plano-preco"
+                            <input class="et-campo" id="plano-preco"
                                    type="text"
                                    name="preco_plano"
                                    value="{{ valores.preco_plano or '' }}"
@@ -54,7 +54,7 @@
                         </div>
                         <div class="grupo-input">
                             <label for="plano-duracao">Duração em dias</label>
-                            <input id="plano-duracao"
+                            <input class="et-campo" id="plano-duracao"
                                    type="number"
                                    name="duracao_dias"
                                    value="{{ valores.duracao_dias or '' }}"
@@ -64,10 +64,10 @@
                         </div>
                     </div>
                 </section>
-                <section class="detail-section">
-                    <div class="section-title">
-                        <h2>Promoção</h2>
-                        <p>
+                <section class="et-cartao detail-section">
+                    <div class="et-cartao-cabeca">
+                        <h2 class="et-cartao-titulo">Promoção</h2>
+                        <p class="et-cartao-descricao">
                             Durante o período, toda cobrança nova deste plano (contratação ou renovação) sai pelo preço
                             promocional, e a página inicial mostra o preço normal riscado. No dia seguinte ao fim, volta
                             sozinho ao preço normal. Para tirar a promoção, apague os três campos.
@@ -83,7 +83,7 @@
                     <div class="form-detalhes form-promocao">
                         <div class="grupo-input">
                             <label for="plano-preco-promocional">Preço promocional</label>
-                            <input id="plano-preco-promocional"
+                            <input class="et-campo" id="plano-preco-promocional"
                                    type="text"
                                    name="preco_promocional"
                                    value="{{ valores.preco_promocional or '' }}"
@@ -94,14 +94,14 @@
                         </div>
                         <div class="grupo-input">
                             <label for="plano-promocao-inicio">Começa em</label>
-                            <input id="plano-promocao-inicio"
+                            <input class="et-campo" id="plano-promocao-inicio"
                                    type="date"
                                    name="promocao_inicio"
                                    value="{{ valores.promocao_inicio or '' }}">
                         </div>
                         <div class="grupo-input">
                             <label for="plano-promocao-fim">Termina em</label>
-                            <input id="plano-promocao-fim"
+                            <input class="et-campo" id="plano-promocao-fim"
                                    type="date"
                                    name="promocao_fim"
                                    value="{{ valores.promocao_fim or '' }}"
@@ -111,8 +111,8 @@
                     </div>
                 </section>
                 <div class="form-actions">
-                    <button type="submit" class="btn-salvar" data-texto-enviando="Salvando...">Salvar plano</button>
-                    <a href="/admin#planos" class="btn-voltar">Voltar ao painel</a>
+                    <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Salvando...">Salvar plano</button>
+                    <a href="/admin#planos" class="et-botao et-botao--contorno">Voltar ao painel</a>
                 </div>
             </form>
         </div>

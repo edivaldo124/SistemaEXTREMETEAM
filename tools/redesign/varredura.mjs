@@ -284,7 +284,7 @@ const ir = (p, u) => p.goto(BASE + u, { waitUntil: 'networkidle' });
 await fluxo('login com senha errada mostra erro', async (p) => {
   await ir(p, '/login'); await p.fill('#loginusuario', 'aluno1'); await p.fill('#senhausuario', 'errada-123');
   await Promise.all([p.waitForNavigation({ waitUntil: 'networkidle' }), p.click('.auth-submit-btn')]);
-  const t = await p.locator('.alert').first().innerText().catch(() => ''); if (!t.trim()) return 'nenhuma mensagem de erro visível'; if (!p.url().includes('/login')) return `foi para ${p.url()}`;
+  const t = await p.locator('[role="alert"]').first().innerText().catch(() => ''); if (!t.trim()) return 'nenhuma mensagem de erro visível'; if (!p.url().includes('/login')) return `foi para ${p.url()}`;
 });
 await fluxo('mostrar/ocultar senha alterna o tipo', async (p) => {
   await ir(p, '/login'); const t0 = await p.getAttribute('#senhausuario', 'type'); await p.click('.password-toggle'); const t1 = await p.getAttribute('#senhausuario', 'type'); await p.click('.password-toggle'); const t2 = await p.getAttribute('#senhausuario', 'type');
@@ -305,13 +305,13 @@ await fluxo('"lembrar meu usuário" guarda e preenche o usuário (nunca a senha)
   const v1 = await p.inputValue('#loginusuario'); if (v1 !== 'aluno1') return `usuário não preenchido após recarregar: "${v1}"`;
 });
 await fluxo('modal de login da landing entra como aluno', async (p) => {
-  await ir(p, '/'); await p.click('.nav-login'); await p.waitForTimeout(400);
+  await ir(p, '/'); await p.click('.home-header [data-abrir-login]'); await p.waitForTimeout(400);
   await p.fill('#inputnome', 'aluno1'); await p.fill('#senhausuario', 'senha123');
   await Promise.all([p.waitForNavigation({ waitUntil: 'networkidle' }), p.click('#meuModal button[type=submit]')]);
   if (!p.url().includes('/perfil')) return `foi para ${p.url()}`;
 });
 await fluxo('botão "ver" da senha no modal da landing alterna', async (p) => {
-  await ir(p, '/'); await p.click('.nav-login'); await p.waitForTimeout(400); const t0 = await p.getAttribute('#meuModal #senhausuario', 'type');
+  await ir(p, '/'); await p.click('.home-header [data-abrir-login]'); await p.waitForTimeout(400); const t0 = await p.getAttribute('#meuModal #senhausuario', 'type');
   await p.click('#iconeSenha'); const t1 = await p.getAttribute('#meuModal #senhausuario', 'type'); if (!(t0 === 'password' && t1 === 'text')) return `${t0} -> ${t1}`;
 });
 await fluxo('cadastro: senhas diferentes mostram o aviso e bloqueiam o envio', async (p) => {

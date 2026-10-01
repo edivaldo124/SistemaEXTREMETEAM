@@ -290,58 +290,13 @@ body.auth-page {
   pointer-events: none;
 }
 
-.field input[type="text"],
-.field input[type="password"],
-.field input[type="email"],
-.field input[type="tel"],
-.field input[type="date"],
-.field textarea {
-  width: 100%;
-  min-height: 50px;
-  padding: 0 var(--sp-4);
-  border: 1px solid var(--et-line-dark);
-  border-radius: var(--et-radius-control);
-  color: var(--et-text-on-dark);
-  background: var(--et-surface-dark-2);
-  font-family: var(--et-font-body);
-  font-size: var(--fs-md);
-  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+/* O campo é o .et-campo; aqui só o recuo para o ícone e para o "mostrar senha". */
+.input-wrap .et-campo {
+  padding-left: 50px;
 }
 
-.input-wrap input {
-  padding-left: 48px;
-  padding-right: 50px;
-}
-
-.field input::placeholder,
-.field textarea::placeholder {
-  color: var(--et-text-on-dark-muted);
-  opacity: 0.7;
-}
-
-.field input:hover,
-.field textarea:hover {
-  border-color: var(--et-line-dark-strong);
-}
-
-.field input:focus,
-.field textarea:focus {
-  outline: none;
-  border-color: var(--et-gold);
-  background: var(--et-black);
-  box-shadow: 0 0 0 3px rgba(245, 185, 20, 0.28);
-}
-
-.field input:focus-visible,
-.field textarea:focus-visible {
-  outline: 2px solid var(--et-gold);
-  outline-offset: 1px;
-}
-
-.field textarea {
-  min-height: 84px;
-  padding: var(--sp-3) var(--sp-4);
-  resize: vertical;
+.input-wrap:has(.password-toggle) .et-campo {
+  padding-right: 56px;
 }
 
 /* ------------------------------------------------------ Botão de Senha --- */
@@ -407,13 +362,6 @@ body.auth-page {
   user-select: none;
 }
 
-.checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--et-gold);
-  cursor: pointer;
-}
-
 .checkbox-label span {
   line-height: 1.4;
 }
@@ -423,63 +371,17 @@ body.auth-page {
 }
 
 /* ------------------------------------------------------ Alertas / Erro --- */
-.alert,
-.msg {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
+/* O aviso é o .et-aviso de perigo, que no .auth-shell usa o tom escuro. */
+.auth-form-wrap .et-aviso {
   margin-bottom: var(--sp-5);
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid rgba(229, 57, 53, 0.4);
-  border-radius: var(--et-radius-control);
-  color: var(--et-bad-ink-dark);
-  background: var(--et-bad-bg-dark);
-  font-size: var(--fs-sm);
-}
-
-.alert svg,
-.msg svg {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-  fill: none;
 }
 
 /* ---------------------------------------------------- Botões de Ação --- */
-.button-primary.auth-submit-btn {
+/* O botão de envio é o .et-botao principal, grande e largo; aqui só o respiro. Em
+   bloco (flex), a margem colapsa com a da seção anterior em vez de somar. */
+.auth-submit-btn {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 50px;
   margin-top: var(--sp-6);
-  border: 0;
-  border-radius: var(--et-radius-btn);
-  color: var(--et-black);
-  background: var(--et-gold-gradient);
-  font-family: var(--et-font-body);
-  font-size: var(--fs-md);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(245, 185, 20, 0.25);
-  transition: transform 160ms var(--ease), box-shadow 160ms var(--ease);
-}
-
-.button-primary.auth-submit-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(245, 185, 20, 0.35);
-}
-
-.button-primary.auth-submit-btn:active {
-  transform: translateY(1px);
-}
-
-.button-primary.auth-submit-btn:focus-visible {
-  outline: 2px solid var(--et-gold);
-  outline-offset: 3px;
 }
 
 .auth-footer-prompt {
@@ -604,8 +506,7 @@ body.auth-page {
 
 @media (prefers-reduced-motion: reduce) {
   .auth-shell,
-  .flow-swap-btn,
-  .button-primary.auth-submit-btn {
+  .flow-swap-btn {
     transition: none !important;
   }
 }

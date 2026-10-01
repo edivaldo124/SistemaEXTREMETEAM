@@ -6,7 +6,6 @@
 {% endblock %}
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
 {% endblock %}
 {% block conteudo %}
     {% from "components/ui.html" import metrica with context %}
@@ -24,10 +23,10 @@
             </div>
         </section>
         {% if pendentes %}
-            <section class="secao">
-                <div class="section-heading">
-                    <h2>Cadastros pendentes</h2>
-                    <p>Aprove ou recuse novos cadastros de alunos.</p>
+            <section class="et-cartao secao">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Cadastros pendentes</h2>
+                    <p class="et-cartao-descricao">Aprove ou recuse novos cadastros de alunos.</p>
                 </div>
                 <div class="et-tabela tabela-admin">
                     <div class="et-tabela-rolagem table-stack" role="region" aria-label="Cadastros pendentes">
@@ -57,7 +56,7 @@
                                                   method="POST"
                                                   class="form-inline">
                                                 {% include "components/csrf_field.html" %}
-                                                <button type="submit" class="btn btn-principal">Aprovar</button>
+                                                <button type="submit" class="et-botao et-botao--confirmar et-botao--pequeno">Aprovar</button>
                                             </form>
                                             <form action="{{ url_for('admin_blueprint.recusar_aluno', aluno_id=u.id) }}"
                                                   method="POST"
@@ -69,7 +68,7 @@
                                                   data-modal-message="O aluno não poderá entrar no sistema. Você pode aprovar o cadastro depois, se mudar de ideia."
                                                   data-modal-confirm="Recusar cadastro">
                                                 {% include "components/csrf_field.html" %}
-                                                <button type="submit" class="btn btn-remover">Recusar</button>
+                                                <button type="submit" class="et-botao et-botao--perigo et-botao--pequeno">Recusar</button>
                                             </form>
                                         </td>
                                     </tr>
@@ -80,10 +79,10 @@
                 </div>
             </section>
         {% endif %}
-        <section class="secao" id="planos">
-            <div class="section-heading">
-                <h2>Planos da academia</h2>
-                <p>Cadastre e organize as opções disponíveis aos alunos.</p>
+        <section class="et-cartao secao" id="planos">
+            <div class="et-cartao-cabeca">
+                <h2 class="et-cartao-titulo">Planos da academia</h2>
+                <p class="et-cartao-descricao">Cadastre e organize as opções disponíveis aos alunos.</p>
             </div>
             <form action="/admin/cadastrar_plano"
                   method="POST"
@@ -92,7 +91,7 @@
                 {% include "components/csrf_field.html" %}
                 <div class="field">
                     <label for="nome-plano">Nome do plano</label>
-                    <input id="nome-plano"
+                    <input class="et-campo" id="nome-plano"
                            type="text"
                            name="nome_plano"
                            placeholder="Ex.: Plano anual"
@@ -100,7 +99,7 @@
                 </div>
                 <div class="field">
                     <label for="preco-plano">Preço</label>
-                    <input type="text"
+                    <input class="et-campo" type="text"
                            name="preco_plano"
                            id="preco-plano"
                            inputmode="decimal"
@@ -109,7 +108,7 @@
                 </div>
                 <div class="field">
                     <label for="duracao-dias">Duração</label>
-                    <input type="number"
+                    <input class="et-campo" type="number"
                            name="duracao_dias"
                            id="duracao-dias"
                            min="1"
@@ -117,10 +116,10 @@
                            required>
                 </div>
                 <label class="checkbox-label plano-destaque-opcao" for="destaque-plano">
-                    <input type="checkbox" id="destaque-plano" name="destaque" value="sim">
+                    <input class="et-caixa" type="checkbox" id="destaque-plano" name="destaque" value="sim">
                     <span>Destacar na página inicial</span>
                 </label>
-                <button type="submit" class="btn-cadastrar">Cadastrar plano</button>
+                <button type="submit" class="et-botao et-botao--principal">Cadastrar plano</button>
             </form>
             {#- Cada ficha: nome, preço (com a promoção, se houver) e ações. "Excluir" só
                 aparece em plano nunca usado; os demais saem de venda por "Arquivar". -#}
@@ -140,11 +139,11 @@
                         </p>
                         {% if not arquivado and (plano.destaque or plano.promocao_ativa() or plano.promocao_agendada()) %}
                             <div class="plano-etiquetas">
-                                {% if plano.destaque %}<span class="status status-pago">Em destaque na página inicial</span>{% endif %}
+                                {% if plano.destaque %}<span class="et-selo et-selo--situacao et-selo--ok">Em destaque na página inicial</span>{% endif %}
                                 {% if plano.promocao_ativa() %}
-                                    <span class="status status-pendente">Promoção até {{ plano.promocao_fim.strftime('%d/%m/%Y') }}</span>
+                                    <span class="et-selo et-selo--situacao et-selo--alerta">Promoção até {{ plano.promocao_fim.strftime('%d/%m/%Y') }}</span>
                                 {% elif plano.promocao_agendada() %}
-                                    <span class="status status-em_processamento">Promoção a partir de {{ plano.promocao_inicio.strftime('%d/%m/%Y') }}</span>
+                                    <span class="et-selo et-selo--situacao et-selo--info">Promoção a partir de {{ plano.promocao_inicio.strftime('%d/%m/%Y') }}</span>
                                 {% endif %}
                             </div>
                         {% endif %}
@@ -153,17 +152,17 @@
                         {% if arquivado %}
                             <form action="/admin/planos/{{ plano.id }}/reativar" method="POST" class="form-inline">
                                 {% include "components/csrf_field.html" %}
-                                <button type="submit" class="btn">Reativar</button>
+                                <button type="submit" class="et-botao et-botao--contorno et-botao--pequeno">Reativar</button>
                             </form>
                         {% else %}
-                            <a class="btn" href="/admin/planos/{{ plano.id }}/editar">Editar</a>
+                            <a class="et-botao et-botao--contorno et-botao--pequeno" href="/admin/planos/{{ plano.id }}/editar">Editar</a>
                             <form action="/admin/planos/{{ plano.id }}/destaque" method="POST" class="form-inline">
                                 {% include "components/csrf_field.html" %}
                                 {% if plano.destaque %}
                                     <input type="hidden" name="acao" value="remover">
-                                    <button type="submit" class="btn">Tirar destaque</button>
+                                    <button type="submit" class="et-botao et-botao--contorno et-botao--pequeno">Tirar destaque</button>
                                 {% else %}
-                                    <button type="submit" class="btn">Destacar</button>
+                                    <button type="submit" class="et-botao et-botao--contorno et-botao--pequeno">Destacar</button>
                                 {% endif %}
                             </form>
                             <form action="/admin/planos/{{ plano.id }}/arquivar"
@@ -175,7 +174,7 @@
                                   data-modal-message="Ele sai da página inicial, do perfil dos alunos e dos formulários, e não recebe cobranças novas. Mensalidades e histórico continuam. Quem está nele mantém o período já pago e escolhe outro plano na renovação. Dá para reativar depois."
                                   data-modal-confirm="Arquivar plano">
                                 {% include "components/csrf_field.html" %}
-                                <button type="submit" class="btn">Arquivar</button>
+                                <button type="submit" class="et-botao et-botao--contorno et-botao--pequeno">Arquivar</button>
                             </form>
                         {% endif %}
                         {% if not em_uso %}
@@ -189,7 +188,7 @@
                                   data-modal-message="Nenhuma mensalidade ou aluno usa este plano, então ele será apagado de vez. Não dá para desfazer."
                                   data-modal-confirm="Excluir plano">
                                 {% include "components/csrf_field.html" %}
-                                <button type="submit" class="btn btn-remover">Excluir</button>
+                                <button type="submit" class="et-botao et-botao--perigo et-botao--pequeno">Excluir</button>
                             </form>
                         {% endif %}
                     </div>
@@ -216,10 +215,10 @@
                 </details>
             {% endif %}
         </section>
-        <section class="secao">
-            <div class="section-heading">
-                <h2>Alunos</h2>
-                <span id="contador-alunos">
+        <section class="et-cartao secao">
+            <div class="et-cartao-cabeca">
+                <h2 class="et-cartao-titulo">Alunos</h2>
+                <span class="et-cartao-acao et-selo" id="contador-alunos">
                     {%- if busca -%}
                         {{ pagina.total }} de {{ total_alunos }} aluno{{ "" if total_alunos == 1 else "s" }}
                     {%- else -%}
@@ -234,18 +233,18 @@
                 <div class="et-tabela-ferramentas">
                     <form class="form-busca-aluno" method="get" action="{{ url_for('admin_blueprint.painel_adm') }}" role="search">
                         <label class="sr-only" for="busca-aluno">Buscar aluno</label>
-                        <input type="search"
+                        <input class="et-campo et-campo--pequeno" type="search"
                                id="busca-aluno"
                                name="busca"
                                value="{{ busca }}"
                                placeholder="Buscar aluno por nome ou CPF…"
                                autocomplete="off">
-                        <button type="submit" class="btn">Buscar</button>
+                        <button type="submit" class="et-botao et-botao--contorno et-botao--pequeno">Buscar</button>
                         {% if busca %}
-                            <a class="btn" href="{{ url_for('admin_blueprint.painel_adm') }}">Limpar busca</a>
+                            <a class="et-botao et-botao--contorno et-botao--pequeno" href="{{ url_for('admin_blueprint.painel_adm') }}">Limpar busca</a>
                         {% endif %}
                     </form>
-                    <a href="{{ url_for('admin_blueprint.cadastrar_aluno') }}" class="button-primary">Matricular aluno</a>
+                    <a href="{{ url_for('admin_blueprint.cadastrar_aluno') }}" class="et-botao et-botao--principal">Matricular aluno</a>
                 </div>
                 <div class="et-tabela-rolagem table-stack" role="region" aria-label="Alunos cadastrados">
                     <table>
@@ -267,16 +266,16 @@
                                         </a>
                                     </td>
                                     <td data-label="Situação">
-                                        <span class="status {{ 'status-pago' if u.ativo else 'status-cancelado' }}">
+                                        <span class="et-selo et-selo--situacao {{ 'et-selo--ok' if u.ativo else 'et-selo--neutro' }}">
                                             {{ 'Ativo' if u.ativo else 'Inativo' }}
                                         </span>
                                     </td>
                                     <td data-label="Acesso">
-                                        <span class="status status-acesso-{{ u.estado_acesso }}">{{ u.rotulo_acesso }}</span>
+                                        <span class="et-selo et-selo--situacao" data-situacao="acesso-{{ u.estado_acesso }}">{{ u.rotulo_acesso }}</span>
                                     </td>
                                     <td data-label="Ações" class="celula-menu">
                                         <div class="et-menu" data-menu>
-                                            <button type="button" class="et-menu-botao" aria-haspopup="menu" aria-expanded="false"
+                                            <button type="button" class="et-menu-botao et-botao et-botao--fantasma et-botao--icone et-botao--pequeno" aria-haspopup="menu" aria-expanded="false"
                                                     aria-controls="menu-aluno-{{ u.id }}" aria-label="Ações de {{ u.nome }}" data-tooltip>
                                                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
                                             </button>

@@ -36,13 +36,13 @@
                     </p>
                 </div>
                 {% if erro %}
-                    <div class="alert msg" role="alert">{{ erro }}</div>
+                    <div class="et-aviso et-aviso--perigo" role="alert">{{ erro }}</div>
                 {% endif %}
                 <form id="recuperar-form" action="/recuperar_senha" method="post">
                     {% include "components/csrf_field.html" %}
                     <div class="field">
                         <label for="cpf">CPF</label>
-                        <input id="cpf"
+                        <input class="et-campo" id="cpf"
                                type="text"
                                name="cpf"
                                maxlength="14"
@@ -55,14 +55,14 @@
                     </div>
                     <div class="field">
                         <label for="email">E-mail cadastrado</label>
-                        <input id="email"
+                        <input class="et-campo" id="email"
                                type="email"
                                name="email"
                                autocomplete="email"
                                placeholder="seu.email@exemplo.com"
                                required>
                     </div>
-                    <button class="button-primary auth-submit-btn" type="submit">Enviar link de recuperação</button>
+                    <button class="et-botao et-botao--principal et-botao--grande et-botao--largo auth-submit-btn" type="submit">Enviar link de recuperação</button>
                 </form>
             </div>
             <footer>

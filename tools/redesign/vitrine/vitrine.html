@@ -7,7 +7,7 @@
         .vitrine { max-width:1120px; margin:0 auto; padding:var(--sp-8) var(--sp-4) var(--sp-10); display:grid; gap:var(--sp-8); }
         .vitrine-secao { display:grid; gap:var(--sp-4); padding:var(--sp-6); border:1px solid var(--line); border-radius:var(--et-radius-card); background:var(--surface); }
         .vitrine-secao > h2 { margin:0; font-family:var(--et-font-display); font-weight:400; font-size:32px; }
-        .vitrine-escuro { --focus-ink:var(--yellow); --focus-halo:rgba(253,207,23,.3); background:var(--et-black); color:var(--et-text-on-dark); border-color:var(--et-line-dark); }
+        .vitrine-escuro { background:var(--et-black); color:var(--et-text-on-dark); border-color:var(--et-line-dark); }
         .vitrine-linha { display:flex; flex-wrap:wrap; gap:var(--sp-3); align-items:center; }
     </style>
 {% endblock %}
@@ -15,13 +15,105 @@
     <main id="conteudo" class="vitrine">
         <h1 class="page-title">Vitrine de componentes</h1>
 
+        {% set seta %}<svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>{% endset %}
+        <section class="vitrine-secao" id="botao">
+            <h2>Botão</h2>
+            <div class="vitrine-linha">
+                <button type="button" class="et-botao et-botao--principal">Principal</button>
+                <button type="button" class="et-botao et-botao--secundario">Secundário</button>
+                <button type="button" class="et-botao et-botao--contorno">Contorno</button>
+                <button type="button" class="et-botao et-botao--fantasma">Fantasma</button>
+                <button type="button" class="et-botao et-botao--perigo">Perigo</button>
+                <button type="button" class="et-botao et-botao--confirmar">Confirmar</button>
+                <button type="button" class="et-botao et-botao--link">Link</button>
+            </div>
+            <div class="vitrine-linha">
+                <button type="button" class="et-botao et-botao--principal et-botao--grande">Grande</button>
+                <button type="button" class="et-botao et-botao--principal">Padrão</button>
+                <button type="button" class="et-botao et-botao--principal et-botao--pequeno">Pequeno</button>
+                <button type="button" class="et-botao et-botao--contorno">Com ícone {{ seta }}</button>
+                <button type="button" class="et-botao et-botao--contorno et-botao--icone" aria-label="Avançar">{{ seta }}</button>
+                <button type="button" class="et-botao et-botao--contorno et-botao--pequeno et-botao--pilula">Pílula</button>
+                <button type="button" class="et-botao et-botao--principal" disabled>Desabilitado</button>
+            </div>
+        </section>
+
+        <section class="vitrine-secao vitrine-escuro et-escuro" id="botao-escuro">
+            <h2>Botão sobre o escuro</h2>
+            <div class="vitrine-linha">
+                <button type="button" class="et-botao et-botao--principal">Principal</button>
+                <button type="button" class="et-botao et-botao--secundario">Secundário</button>
+                <button type="button" class="et-botao et-botao--contorno">Contorno</button>
+                <button type="button" class="et-botao et-botao--fantasma">Fantasma</button>
+                <button type="button" class="et-botao et-botao--link">Link</button>
+                <button type="button" class="et-botao et-botao--contorno et-botao--pequeno et-botao--pilula">Sair</button>
+            </div>
+        </section>
+
+        <section class="vitrine-secao" id="campos">
+            <h2>Campo, caixa e selo</h2>
+            <div class="vitrine-linha" style="align-items:flex-start">
+                <div class="grupo-input" style="flex:1 1 220px"><label for="v-nome">Nome</label><input class="et-campo" id="v-nome" placeholder="Nome completo"><small>Como aparece na carteirinha.</small></div>
+                <div class="grupo-input" style="flex:1 1 220px"><label for="v-plano">Plano</label><select class="et-campo" id="v-plano"><option>Mensal</option><option>Trimestral</option></select></div>
+                <div class="grupo-input" style="flex:1 1 220px"><label for="v-cpf">CPF</label><input class="et-campo" id="v-cpf" aria-invalid="true" value="123"><p class="field-erro">CPF incompleto.</p></div>
+                <div class="grupo-input" style="flex:1 1 220px"><label for="v-bloq">Matrícula</label><input class="et-campo et-campo--bloqueado" id="v-bloq" value="00012" readonly></div>
+            </div>
+            <div class="vitrine-linha">
+                <input class="et-campo et-campo--pequeno" style="max-width:240px" placeholder="Busca compacta">
+                <label class="opcao-inline"><input type="checkbox" class="et-caixa" checked> Marcado</label>
+                <label class="opcao-inline"><input type="checkbox" class="et-caixa"> Desmarcado</label>
+                <label class="opcao-inline"><input type="radio" class="et-caixa" name="v-r" checked> Opção A</label>
+                <label class="opcao-inline"><input type="radio" class="et-caixa" name="v-r"> Opção B</label>
+            </div>
+            <div class="vitrine-linha">
+                <span class="et-selo">Neutro</span>
+                <span class="et-selo et-selo--ok">Conectada</span>
+                <span class="et-selo et-selo--info">Credencial do servidor</span>
+                <span class="et-selo et-selo--alerta">Reconexão necessária</span>
+                <span class="et-selo et-selo--perigo">Falhou</span>
+                <span class="et-selo et-selo--destaque">Recomendado</span>
+                <span class="et-selo et-selo--situacao" data-situacao="pago">Pago</span>
+                <span class="et-selo et-selo--situacao" data-situacao="pendente">Pendente</span>
+                <span class="et-selo et-selo--situacao" data-situacao="atrasado">Atrasado</span>
+                <span class="et-selo et-selo--situacao" data-situacao="acesso-nao_ativado">Acesso não ativado</span>
+            </div>
+        </section>
+
+        <section class="vitrine-secao" id="avisos">
+            <h2>Aviso</h2>
+            <div class="et-aviso"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5m0 3.5v.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg><p class="et-aviso-titulo">Aviso neutro</p><p>Com ícone, título e descrição.</p></div>
+            <div class="et-aviso et-aviso--ok"><p>Pagamento confirmado.</p></div>
+            <div class="et-aviso et-aviso--info"><p>Este plano está arquivado: os alunos não o veem.</p></div>
+            <div class="et-aviso et-aviso--alerta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5m0 3.5v.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg><p><strong>A autorização não voltou.</strong> Confira a URL de redirecionamento.</p></div>
+            <div class="et-aviso et-aviso--perigo" role="alert"><p>Usuário ou senha incorretos.</p></div>
+        </section>
+
+        <section class="vitrine-secao vitrine-escuro et-escuro" id="avisos-escuro">
+            <h2>Aviso e caixa sobre o escuro</h2>
+            <div class="et-aviso et-aviso--perigo"><p>Link inválido ou expirado.</p></div>
+            <div class="et-aviso et-aviso--ok"><p>Ao utilizar o sistema, você declara que leu os termos.</p></div>
+            <div class="vitrine-linha">
+                <label class="opcao-inline"><input type="checkbox" class="et-caixa" checked> Lembrar meu usuário</label>
+                <label class="opcao-inline"><input type="checkbox" class="et-caixa"> Desmarcado</label>
+            </div>
+        </section>
+
+        <section class="et-cartao" id="cartao">
+            <div class="et-cartao-cabeca">
+                <h2 class="et-cartao-titulo">Cartão</h2>
+                <p class="et-cartao-descricao">Painel de seção: título, descrição e uma ação opcional à direita.</p>
+                <span class="et-cartao-acao et-selo">7 alunos</span>
+            </div>
+            <p style="margin:0">Conteúdo do cartão.</p>
+        </section>
+
         <section class="vitrine-secao" id="toast">
             <h2>Toast</h2>
             <div class="vitrine-linha">
-                <button type="button" class="button-secondary" data-demo-toast="sucesso">Aviso de sucesso</button>
-                <button type="button" class="button-secondary" data-demo-toast="info">Informação</button>
-                <button type="button" class="button-secondary" data-demo-toast="aviso">Atenção</button>
-                <button type="button" class="button-secondary" data-demo-toast="erro">Erro (não some sozinho)</button>
+                <button type="button" class="et-botao et-botao--contorno" data-demo-toast="sucesso">Aviso de sucesso</button>
+                <button type="button" class="et-botao et-botao--contorno" data-demo-toast="info">Informação</button>
+                <button type="button" class="et-botao et-botao--contorno" data-demo-toast="aviso">Atenção</button>
+                <button type="button" class="et-botao et-botao--contorno" data-demo-toast="erro">Erro (não some sozinho)</button>
             </div>
         </section>
 
@@ -29,7 +121,7 @@
             <h2>Botão com carregamento + toast de flash</h2>
             <form method="post" action="/_vitrine/enviar" data-enviando class="vitrine-linha">
                 {% include "components/csrf_field.html" %}
-                <button type="submit" class="button-primary" data-texto-enviando="Enviando...">Enviar formulário</button>
+                <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Enviando...">Enviar formulário</button>
             </form>
         </section>
 

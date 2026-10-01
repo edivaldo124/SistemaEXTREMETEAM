@@ -8,7 +8,7 @@
                     <h2>{{ 'Plano atual' if situacao.ativo else 'Meu plano' }}</h2>
                     <p class="resumo-plano-nome">{{ situacao.plano.nome_plano if situacao.plano else 'Nenhum plano contratado' }}</p>
                 </div>
-                <span class="status status-plano-{{ situacao.estado }}">{{ situacao.rotulo }}</span>
+                <span class="et-selo et-selo--situacao" data-situacao="plano-{{ situacao.estado }}">{{ situacao.rotulo }}</span>
             </div>
             <p class="plano-situacao-descricao">{{ situacao.descricao }}</p>
             {% if validade or situacao.plano %}
@@ -51,7 +51,7 @@
                 </div>
             {% endif %}
             {% if situacao.proximo_periodo_pago %}
-                <p class="plano-aviso plano-aviso-info">
+                <p class="et-aviso et-aviso--info">
                     Seu próximo período <strong>já está pago</strong>: a partir de
                     <time datetime="{{ situacao.proximo_periodo_pago.vigencia_inicio.isoformat() }}">{{ situacao.proximo_periodo_pago.vigencia_inicio.strftime('%d/%m/%Y') }}</time>
                     você segue no plano {{ situacao.proximo_periodo_pago.plano.nome_plano }}
@@ -59,7 +59,7 @@
                 </p>
             {% endif %}
             {% if situacao.renovacao_antecipada %}
-                <p class="plano-aviso plano-aviso-info">
+                <p class="et-aviso et-aviso--info">
                     A cobrança em aberto é da
                     <strong>renovação antecipada</strong>
                     e paga o período que começa em
@@ -68,7 +68,7 @@
                 </p>
             {% endif %}
             {% if situacao.aguardando_decisao %}
-                <p class="plano-aviso plano-aviso-analise">
+                <p class="et-aviso et-aviso--alerta">
                     Seu comprovante está em análise pela administração.
                     <strong>Não é preciso pagar de novo</strong>.
                     Avisaremos assim que houver uma decisão.
@@ -119,7 +119,7 @@
                           data-modal-message="Sua próxima renovação voltará a ser no plano atual."
                           data-modal-confirm="Cancelar mudança">
                     {% include "components/csrf_field.html" %}
-                        <button type="submit" class="button-secondary">Cancelar mudança</button>
+                        <button type="submit" class="et-botao et-botao--contorno">Cancelar mudança</button>
                     </form>
                 </div>
             {% endif %}

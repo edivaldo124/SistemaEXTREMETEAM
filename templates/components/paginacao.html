@@ -1,9 +1,9 @@
 {#
   Navegação de páginas das tabelas administrativas.
 
-  Reaproveita `.btn` do tema em vez de criar um controle novo: a paginação é uma ação
-  secundária de tabela, igual a "Ver aluno" ou "Sincronizar" na mesma linha. O amarelo
-  continua reservado à ação principal da tela, então nada aqui o usa.
+  Usa o .et-botao pequeno de contorno em vez de criar um controle novo: a paginação é
+  uma ação secundária de tabela, igual a "Ver aluno" ou "Sincronizar" na mesma linha. O
+  dourado continua reservado à ação principal da tela, então nada aqui o usa.
 
   Espera `pagina` (dao.financeiroDAO.Pagina) e preserva os filtros da URL atual.
 #}
@@ -15,12 +15,12 @@
     </p>
     <div class="paginacao-controles">
         {% if pagina.tem_anterior %}
-            <a class="btn" rel="prev"
+            <a class="et-botao et-botao--contorno et-botao--pequeno" rel="prev"
                href="{{ url_for(request.endpoint, **dict(request.args.to_dict(), pagina=pagina.pagina - 1)) }}">
                 Página anterior
             </a>
         {% else %}
-            <span class="btn" aria-disabled="true">Página anterior</span>
+            <span class="et-botao et-botao--contorno et-botao--pequeno" aria-disabled="true">Página anterior</span>
         {% endif %}
 
         <span class="paginacao-posicao">
@@ -28,12 +28,12 @@
         </span>
 
         {% if pagina.tem_proxima %}
-            <a class="btn" rel="next"
+            <a class="et-botao et-botao--contorno et-botao--pequeno" rel="next"
                href="{{ url_for(request.endpoint, **dict(request.args.to_dict(), pagina=pagina.pagina + 1)) }}">
                 Próxima página
             </a>
         {% else %}
-            <span class="btn" aria-disabled="true">Próxima página</span>
+            <span class="et-botao et-botao--contorno et-botao--pequeno" aria-disabled="true">Próxima página</span>
         {% endif %}
     </div>
 </nav>

@@ -1,4 +1,9 @@
-{% macro acao(pagamento, rotulo_status, classe_botao) %}
+{#
+  Ações de uma mensalidade. `classe_botao` é o .et-botao da ação principal (Pix ou
+  comprovante); `classe_extra` completa o contorno de "Outras formas de pagamento"
+  com o tamanho ou a largura do lugar onde a macro entra.
+#}
+{% macro acao(pagamento, rotulo_status, classe_botao, classe_extra='') %}
     {% set status = pagamento.status %}
     <div class="mensalidade-acao">
         {% if status in ('pendente', 'atrasado', 'recusado') %}
@@ -11,7 +16,7 @@
                   method="POST"
                   action="{{ url_for('checkout.abrir_checkout', pagamento_id=pagamento.id) }}">
                     {% include "components/csrf_field.html" %}
-                <button type="submit" class="mensalidade-acao-extra" data-checkout-abrir>
+                <button type="submit" class="et-botao et-botao--contorno {{ classe_extra }} mensalidade-acao-extra" data-checkout-abrir>
                     <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18M3 10.5V7a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6.5ZM6.5 14h4" /></svg>
                     <span data-rotulo>Outras formas de pagamento</span>
                 </button>

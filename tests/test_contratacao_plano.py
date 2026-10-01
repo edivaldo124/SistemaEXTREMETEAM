@@ -124,7 +124,7 @@ def test_plano_atual_continua_disponivel_para_gerar_cobranca(
 
     assert resposta.status_code == 200
     assert b'Pagar plano atual' not in resposta.data  # texto é aplicado pelo JS
-    assert b'class="btn-escolher"' in resposta.data
+    assert b'class="et-botao et-botao--principal et-botao--largo"' in resposta.data
     assert b'disabled' not in resposta.data
 
 

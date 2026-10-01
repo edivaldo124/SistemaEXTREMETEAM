@@ -298,7 +298,7 @@ def test_indicadores_e_tabela_concordam_na_primeira_abertura(
     pagina = client.get('/admin/financeiro').get_data(as_text=True)
 
     # A cobrança vencida conta como atrasada nos dois lugares, já na primeira abertura.
-    assert 'status-atrasado' in pagina
+    assert 'data-situacao="atrasado"' in pagina
     indicadores = PagamentoDAO.totais_periodo()
     assert indicadores['qtd_vencido'] == 1
     assert indicadores['qtd_pendente'] == 0

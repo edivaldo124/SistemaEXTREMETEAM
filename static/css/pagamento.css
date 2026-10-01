@@ -6,7 +6,6 @@
 
 .pagamento-page { max-width:620px; margin:0 auto; padding:var(--sp-6) clamp(var(--sp-4),4vw,var(--sp-5)) var(--sp-10); }
 .pagamento-container { display:flex; flex-direction:column; gap:var(--sp-4); }
-.pagamento-page > .msg { max-width:620px; margin:0 auto var(--sp-4); }
 
 /* ------------------------------------------------------------- resumo --- */
 /* O bloco escuro é o valor a pagar: é o que a pessoa veio conferir. */
@@ -85,14 +84,9 @@
 
 /* Selos de quem processa o pagamento. */
 .pagamento-selo-seguranca { display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-5); }
-.selo {
-  display:inline-flex; align-items:center; gap:var(--sp-2);
-  padding:var(--sp-1) var(--sp-3); border:1px solid transparent; border-radius:var(--radius-pill);
-  font-size:var(--fs-micro); font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-}
-.selo-icone { flex:0 0 auto; width:15px; height:15px; }
-.selo-mercadopago { border-color:#00618F; color:#FFFFFF; background:#00618F; }
-.selo-pix { border-color:#15665B; color:#FFFFFF; background:#15665B; }
+/* .et-selo nas cores de cada marca. */
+.selo-mercadopago { --selo-tinta:#FFFFFF; --selo-fundo:#00618F; --selo-borda:#00618F; }
+.selo-pix { --selo-tinta:#FFFFFF; --selo-fundo:#15665B; --selo-borda:#15665B; }
 .pagamento-seguranca-texto { max-width:60ch; margin:var(--sp-3) 0 0; color:var(--text-2); font-size:var(--fs-xs); line-height:1.6; }
 .pagamento-expiracao { margin:var(--sp-4) 0 0; color:var(--text-2); font-size:var(--fs-xs); text-align:center; }
 .pix-falha-copiar { margin:var(--sp-3) 0 0; }
@@ -125,8 +119,7 @@
 .pagamento-estado-info[data-tom="erro"]   { border-top-color:var(--et-bad-ink); }
 .pagamento-estado-info[data-tom="neutro"] { border-top-color:var(--et-neutral-ink); }
 .pagamento-estado-info p { max-width:46ch; margin:0; color:var(--text-2); font-size:var(--fs-sm); line-height:1.65; }
-.pagamento-estado-info .button-primary,
-.pagamento-estado-info .button-secondary { margin-top:var(--sp-3); }
+.pagamento-estado-info .et-botao { margin-top:var(--sp-3); }
 
 /* ------------------------------------------------- comprovante manual --- */
 
@@ -158,8 +151,8 @@
 .retorno-acoes p { max-width:60ch; margin:0 0 var(--sp-4); color:var(--text-2); font-size:var(--fs-sm); line-height:1.6; }
 .retorno-botoes { display:flex; flex-wrap:wrap; gap:var(--sp-3); }
 .retorno-botoes .form-outras-formas { margin:0; width:100%; }
-/* checkout.js acrescenta ao formulário um aviso .alert que só aparece na falha
-   (escondido com [hidden]: regra .alert[hidden] em theme.css). */
+/* checkout.js acrescenta ao formulário um .et-aviso que só aparece na falha
+   (escondido com [hidden]). */
 .form-outras-formas [data-checkout-erro] { margin:var(--sp-3) 0 0; font-size:var(--fs-xs); }
 
 /* Linha de ação com ícone à esquerda e seta à direita. */
@@ -185,5 +178,5 @@
   .pagamento-resumo,.pagamento-metodo { border-radius:var(--radius-card); }
   .pagamento-estado-info { padding:var(--sp-8) var(--sp-5); }
   .retorno-botoes > * { flex:1 1 100%; }
-  .retorno-botoes .button-primary,.retorno-botoes .button-secondary { width:100%; }
+  .retorno-botoes .et-botao { width:100%; }
 }
