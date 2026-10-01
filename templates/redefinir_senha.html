@@ -33,7 +33,7 @@
                     <p class="page-subtitle">Escolha uma nova senha segura para sua conta (mínimo de 8 caracteres).</p>
                 </div>
                 {% if erro %}
-                    <div class="alert msg" role="alert">{{ erro }}</div>
+                    <div class="et-aviso et-aviso--perigo" role="alert">{{ erro }}</div>
                 {% endif %}
                 <form id="redefinir-form"
                       action="{{ url_for('auth.redefinir_senha', token=token) }}"
@@ -41,7 +41,7 @@
                     {% include "components/csrf_field.html" %}
                     <div class="field">
                         <label for="nova_senha">Nova senha</label>
-                        <input id="nova_senha"
+                        <input class="et-campo" id="nova_senha"
                                type="password"
                                name="nova_senha"
                                autocomplete="new-password"
@@ -50,7 +50,7 @@
                                required
                                autofocus>
                     </div>
-                    <button class="button-primary auth-submit-btn" type="submit">Salvar nova senha</button>
+                    <button class="et-botao et-botao--principal et-botao--grande et-botao--largo auth-submit-btn" type="submit">Salvar nova senha</button>
                 </form>
             </div>
             <footer>

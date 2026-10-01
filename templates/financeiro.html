@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/financeiro.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pix.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
 {% endblock %}
 {% block conteudo %}
     <main id="conteudo">
@@ -96,12 +95,12 @@
             {% if filtros.get('busca_aluno') %}
                 {{ filtros_ativos.append(('Aluno', filtros['busca_aluno'])) or '' }}
             {% endif %}
-            <section class="detail-section secao-filtros">
-                <div class="section-title">
-                    <h2>Filtros</h2>
-                    <p>Refine por período, turma, plano, método, situação ou nome do aluno.</p>
+            <section class="et-cartao detail-section secao-filtros">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Filtros</h2>
+                    <p class="et-cartao-descricao">Refine por período, turma, plano, método, situação ou nome do aluno.</p>
                     <button type="button"
-                            class="btn filtros-alternar"
+                            class="et-cartao-acao et-botao et-botao--contorno et-botao--pequeno filtros-alternar"
                             data-filtros-alternar
                             aria-expanded="true"
                             aria-controls="filtros-financeiro"
@@ -121,7 +120,7 @@
                                 </li>
                             {% endfor %}
                         </ul>
-                        <a href="/admin/financeiro" class="btn filtros-ativos-limpar">Limpar</a>
+                        <a href="/admin/financeiro" class="et-botao et-botao--contorno et-botao--pequeno filtros-ativos-limpar">Limpar</a>
                     </div>
                 {% endif %}
                 <form method="GET"
@@ -130,21 +129,21 @@
                       class="form-filtros-financeiro">
                     <div class="grupo-input">
                         <label for="f-inicio">De</label>
-                        <input id="f-inicio"
+                        <input class="et-campo" id="f-inicio"
                                type="date"
                                name="inicio"
                                value="{{ filtros.get('inicio', '') }}">
                     </div>
                     <div class="grupo-input">
                         <label for="f-fim">Até</label>
-                        <input id="f-fim"
+                        <input class="et-campo" id="f-fim"
                                type="date"
                                name="fim"
                                value="{{ filtros.get('fim', '') }}">
                     </div>
                     <div class="grupo-input">
                         <label for="f-turma">Turma</label>
-                        <select id="f-turma" name="turma_id">
+                        <select class="et-campo" id="f-turma" name="turma_id">
                             <option value="">Todas</option>
                             {% for t in turmas %}
                                 <option value="{{ t.id }}"
@@ -156,7 +155,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="f-plano">Plano</label>
-                        <select id="f-plano" name="plano_id">
+                        <select class="et-campo" id="f-plano" name="plano_id">
                             <option value="">Todos</option>
                             {% for p in planos %}
                                 <option value="{{ p.id }}"
@@ -168,7 +167,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="f-forma">Método</label>
-                        <select id="f-forma" name="forma_pagamento">
+                        <select class="et-campo" id="f-forma" name="forma_pagamento">
                             <option value="">Todos</option>
                             {% for forma in ['pix', 'dinheiro', 'transferencia', 'cartao_credito', 'cartao_debito', 'boleto', 'saldo_mercado_pago'] %}
                                 <option value="{{ forma }}"
@@ -180,7 +179,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="f-status">Situação</label>
-                        <select id="f-status" name="status">
+                        <select class="et-campo" id="f-status" name="status">
                             <option value="">Todas</option>
                             {% for status in ['pendente', 'atrasado', 'em_processamento', 'em_analise', 'pago', 'recusado', 'reembolsado', 'cancelado'] %}
                                 <option value="{{ status }}"
@@ -192,22 +191,22 @@
                     </div>
                     <div class="grupo-input campo-largo">
                         <label for="f-busca">Aluno</label>
-                        <input id="f-busca"
+                        <input class="et-campo" id="f-busca"
                                type="search"
                                name="busca_aluno"
                                value="{{ filtros.get('busca_aluno', '') }}"
                                placeholder="Buscar por nome…">
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="button-primary btn-salvar">Aplicar filtros</button>
-                        <a href="/admin/financeiro" class="btn-voltar">Limpar filtros</a>
+                        <button type="submit" class="et-botao et-botao--principal">Aplicar filtros</button>
+                        <a href="/admin/financeiro" class="et-botao et-botao--contorno">Limpar filtros</a>
                     </div>
                 </form>
             </section>
-            <section class="secao-pagamentos">
-                <div class="section-title">
-                    <h2>Mensalidades</h2>
-                    <p>{{ pagina.total }} resultado{{ "" if pagina.total == 1 else "s" }} com os filtros atuais.</p>
+            <section class="et-cartao secao-pagamentos">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Mensalidades</h2>
+                    <p class="et-cartao-descricao">{{ pagina.total }} resultado{{ "" if pagina.total == 1 else "s" }} com os filtros atuais.</p>
                 </div>
                 <div class="et-tabela">
                     <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Mensalidades">
@@ -254,7 +253,7 @@
                                         <td data-label="Ações">
                                             <div class="et-menu" data-menu>
                                                 <button type="button"
-                                                        class="et-menu-botao"
+                                                        class="et-menu-botao et-botao et-botao--fantasma et-botao--icone et-botao--pequeno"
                                                         aria-haspopup="menu"
                                                         aria-expanded="false"
                                                         aria-controls="menu-pagamento-{{ pagamento.id }}"

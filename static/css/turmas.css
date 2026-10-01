@@ -8,8 +8,6 @@
   padding:var(--sp-5);
 }
 .form-turma .field-wide { grid-column:1/-1; }
-.form-turma .btn-cadastrar,
-.form-turma .button-primary { box-shadow:none; }
 
 /* Dias da semana: cada dia é um alvo de toque próprio. */
 .dias-semana { display:flex; flex-wrap:wrap; gap:var(--sp-2); }
@@ -27,7 +25,6 @@
   outline:2px solid var(--focus-ink); outline-offset:2px;
   box-shadow:0 0 0 5px var(--focus-halo);
 }
-.dias-semana .dia-opcao input { margin:0; }
 
 /* fieldset sem a moldura padrão do navegador: o grupo já está delimitado pela
    faixa do formulário. */
@@ -55,7 +52,7 @@ fieldset.field > legend {
   transition:background .16s ease;
 }
 .marcar-presenca:hover { background:var(--surface-2); }
-.marcar-presenca input { width:26px; height:26px; accent-color:var(--et-ok-ink); }
+.marcar-presenca .et-caixa { --caixa-tamanho:26px; --caixa-marcada:var(--et-ok-ink); }
 .marcar-presenca:has(input:focus-visible) {
   outline:2px solid var(--focus-ink); outline-offset:2px;
   box-shadow:0 0 0 5px var(--focus-halo);
@@ -65,8 +62,6 @@ fieldset.field > legend {
 .tabela-presenca tr:has(input:checked) td { background:var(--et-ok-bg); }
 
 .barra-salvar-presenca { margin-top:var(--sp-5); }
-.barra-salvar-presenca .btn-salvar,
-.barra-salvar-presenca .button-primary { min-height:54px; padding-inline:var(--sp-7); font-size:var(--fs-md); }
 
 @media (max-width:640px) {
   .tabela-presenca tbody tr {
@@ -79,8 +74,7 @@ fieldset.field > legend {
   .tabela-presenca .celula-ordem { justify-content:center; font-size:var(--fs-xs); }
   .tabela-presenca .celula-presenca { width:auto; }
   .barra-salvar-presenca { position:sticky; bottom:var(--sp-3); z-index:5; }
-  .barra-salvar-presenca .btn-salvar,
-  .barra-salvar-presenca .button-primary { width:100%; box-shadow:var(--shadow-raised); }
+  .barra-salvar-presenca .et-botao { width:100%; box-shadow:var(--shadow-raised); }
 }
 @media (max-width:900px) {
   .form-turma { grid-template-columns:1fr 1fr; }
@@ -88,6 +82,5 @@ fieldset.field > legend {
 }
 @media (max-width:540px) {
   .form-turma { grid-template-columns:1fr; }
-  .form-turma .btn-cadastrar,
-  .form-turma .button-primary { width:100%; }
+  .form-turma .et-botao--principal { width:100%; }
 }

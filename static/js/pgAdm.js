@@ -36,7 +36,7 @@ if (formularioPlano) {
 
         campoPreco.value = preco.toFixed(2);
 
-        const botao = formularioPlano.querySelector('.btn-cadastrar');
+        const botao = formularioPlano.querySelector('[type="submit"]');
         botao.disabled = true;
         botao.textContent = 'Cadastrando...';
     });

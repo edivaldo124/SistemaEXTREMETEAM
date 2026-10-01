@@ -64,37 +64,6 @@
   color: var(--et-gold);
 }
 
-.nav-login {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-height: 44px;
-  padding: 0 var(--sp-5);
-  border: 1px solid var(--et-gold);
-  border-radius: var(--et-radius-btn);
-  color: var(--et-gold);
-  background: transparent;
-  font-family: var(--et-font-body);
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 160ms ease, color 160ms ease;
-}
-
-.nav-login:hover {
-  color: var(--et-black);
-  background: var(--et-gold);
-}
-
-.nav-login .icone {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-}
-
 /* ----------------------------------------------------------------- Hero -- */
 .hero {
   position: relative;
@@ -147,53 +116,6 @@
   align-items: center;
   gap: var(--sp-4);
   margin-top: var(--sp-6);
-}
-
-.hero-actions .button-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 52px;
-  padding: 0 var(--sp-7);
-  border: 0;
-  border-radius: var(--et-radius-btn);
-  color: var(--et-black);
-  background: var(--et-gold-gradient);
-  font-family: var(--et-font-body);
-  font-size: var(--fs-md);
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  box-shadow: 0 4px 18px rgba(245, 185, 20, 0.3);
-  transition: transform 160ms var(--ease), box-shadow 160ms var(--ease);
-}
-
-.hero-actions .button-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(245, 185, 20, 0.4);
-}
-
-.hero-student-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 52px;
-  padding: 0 var(--sp-7);
-  border: 1px solid var(--et-line-dark-strong);
-  border-radius: var(--et-radius-btn);
-  color: var(--et-text-on-dark);
-  background: transparent;
-  font-family: var(--et-font-body);
-  font-size: var(--fs-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
-}
-
-.hero-student-btn:hover {
-  border-color: var(--et-gold);
-  color: var(--et-gold);
-  background: rgba(245, 185, 20, 0.08);
 }
 
 /* ------------------------------------------- Dragão Hero (Visual) -------- */
@@ -629,91 +551,7 @@
 }
 
 /* --------------------------------------------------- Modal de Login ----- */
-.modal[hidden] {
-  display: none;
-}
-
-.modal {
-  position: fixed;
-  z-index: 100;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: var(--sp-5);
-}
-
-.modal-backdrop {
-  position: absolute;
-  inset: 0;
-  /* O conteúdo continua reconhecível atrás do diálogo. Desfoque forte transforma
-     a página em uma mancha e compete com a leitura do formulário. */
-  background: rgba(0, 0, 0, 0.64);
-}
-
-.modal-conteudo {
-  position: relative;
-  width: min(480px, 100%);
-  max-height: calc(100dvh - 40px);
-  overflow-y: auto;
-  padding: var(--sp-8);
-  border: 1px solid rgba(245, 185, 20, 0.48);
-  border-radius: var(--et-radius-card);
-  background: var(--et-surface-dark);
-  color: var(--et-text-on-dark);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.54);
-  animation: login-modal-in var(--dur-media) var(--ease);
-}
-
-/* Faixa de marca: dá acabamento ao painel sem recorrer a brilho difuso. */
-.modal-conteudo::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: var(--sp-7);
-  left: var(--sp-7);
-  height: 3px;
-  border-radius: 0 0 999px 999px;
-  background: var(--et-gold);
-}
-
-@keyframes login-modal-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.fechar-modal {
-  position: absolute;
-  top: var(--sp-4);
-  right: var(--sp-4);
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border: 0;
-  border-radius: 50%;
-  color: var(--et-text-on-dark-muted);
-  background: var(--et-surface-dark-2);
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  transition: color 160ms ease, background 160ms ease;
-}
-
-.fechar-modal:hover {
-  color: var(--et-text-on-dark);
-  background: rgba(245, 185, 20, 0.2);
-}
-
-.fechar-modal:focus-visible {
-  outline: 2px solid var(--et-gold);
-}
-
+/* A casca é o .et-dialogo escuro (componentes.css); aqui só o conteúdo. */
 .modal-header-brand {
   display: flex;
   align-items: center;
@@ -726,67 +564,31 @@
   background: var(--et-black);
 }
 
-.modal h2 {
-  margin: 0;
-  font-family: var(--et-font-display);
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 1.05;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  color: var(--et-text-on-dark);
-}
-
-.modal-intro {
-  margin: var(--sp-2) 0 var(--sp-6);
-  color: var(--et-text-on-dark-muted);
-  font-size: var(--fs-sm);
-}
-
-.modal .field + .field {
+.login-dialogo .field + .field {
   margin-top: var(--sp-4);
 }
 
-.modal .field label {
+.login-dialogo .field label {
   color: var(--et-text-on-dark);
   font-size: var(--fs-sm);
   font-weight: 500;
 }
 
-.modal .field input {
-  width: 100%;
-  min-height: 48px;
-  padding: 0 var(--sp-4);
-  border: 1px solid var(--et-line-dark);
-  border-radius: var(--et-radius-control);
-  color: var(--et-text-on-dark);
-  background: var(--et-surface-dark-2);
-  font-family: var(--et-font-body);
-  font-size: var(--fs-md);
-  transition: border-color 160ms ease;
-}
-
-.modal .field input:focus {
-  outline: none;
-  border-color: var(--et-gold);
-  box-shadow: 0 0 0 3px rgba(245, 185, 20, 0.25);
-}
-
-.modal .label-row {
+.login-dialogo .label-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-3);
 }
 
-.modal .label-row a {
+.login-dialogo .label-row a {
   color: var(--et-gold);
   font-size: var(--fs-xs);
   font-weight: 500;
   text-decoration: none;
 }
 
-.modal .label-row a:hover {
+.login-dialogo .label-row a:hover {
   text-decoration: underline;
 }
 
@@ -794,8 +596,8 @@
   position: relative;
 }
 
-.campo-senha input {
-  padding-right: 76px !important;
+.campo-senha .et-campo {
+  padding-right: 76px;
 }
 
 .icone-senha {
@@ -823,30 +625,9 @@
   margin-top: var(--sp-4);
 }
 
-.modal .button-primary {
-  width: 100%;
-  min-height: 48px;
+/* O botão é o .et-botao principal e largo; aqui só o respiro acima dele. */
+.login-dialogo .et-botao--principal {
   margin-top: var(--sp-5);
-  border: 0;
-  border-radius: var(--et-radius-btn);
-  color: var(--et-black);
-  background: var(--et-gold-gradient);
-  font-family: var(--et-font-body);
-  font-size: var(--fs-md);
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: none;
-  transition: transform 160ms var(--ease), background 160ms ease;
-}
-
-.modal .button-primary:hover {
-  background: #f8c62f;
-  transform: translateY(-1px);
-}
-
-.modal .button-primary:focus-visible {
-  outline: 2px solid var(--et-text-on-dark);
-  outline-offset: 3px;
 }
 
 .modal-signup {
@@ -864,16 +645,6 @@
 
 .modal-signup a:hover {
   text-decoration: underline;
-}
-
-body.modal-open {
-  overflow: hidden;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .modal-conteudo {
-    animation: none;
-  }
 }
 
 /* --------------------------------------------------- Movimento Único Hero */
@@ -996,8 +767,7 @@ body.modal-open {
     flex-direction: column;
     align-items: stretch;
   }
-  .hero-actions .button-primary,
-  .hero-student-btn {
+  .hero-actions .et-botao {
     width: 100%;
   }
   .method-grid {

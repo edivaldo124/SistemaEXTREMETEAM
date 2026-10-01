@@ -19,6 +19,9 @@
         accept.textContent = target.dataset.modalConfirm || 'Confirmar';
         accept.disabled = false;
         dialog.dataset.variant = target.dataset.modalVariant || 'default';
+        const destrutiva = dialog.dataset.variant === 'danger';
+        accept.classList.toggle('et-botao--destrutivo', destrutiva);
+        accept.classList.toggle('et-botao--principal', !destrutiva);
         if (!dialog.open) dialog.showModal();
         cancel.focus();
     }

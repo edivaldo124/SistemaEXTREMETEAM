@@ -177,6 +177,8 @@ def pagina_login():
         aluno = AlunoDAO.autenticar(login, senha)
         if aluno:
             if aluno.status_cadastro == 'pendente':
+                if not getattr(aluno, 'email_verificado', False):
+                    return render_template('login.html', msg='Confirme seu e-mail (link enviado no cadastro) antes de prosseguir com a análise.')
                 return render_template('login.html', msg='Seu cadastro ainda está em análise pela administração.')
             if aluno.status_cadastro == 'recusado':
                 return render_template('login.html', msg='Seu cadastro não foi aprovado. Fale com a administração.')
@@ -345,6 +347,13 @@ def pagina_cadastro():
             termos_responsabilidade_versao=VERSAO_TERMOS_RESPONSABILIDADE,
             termos_responsabilidade_aceito_em=datetime.now(timezone.utc),
         )
+        veio_do_google = 'google_cadastro_email' in session and session['google_cadastro_email'] == email
+        if veio_do_google:
+            novo_aluno.email_verificado = True
+            
+        token = secrets.token_urlsafe(32)
+        novo_aluno.token_verificacao_hash = hashlib.sha256(token.encode()).hexdigest()
+        novo_aluno.token_verificacao_expira = datetime.utcnow() + timedelta(hours=24)
 
         try:
             AlunoDAO.salvar(novo_aluno)
@@ -352,41 +361,54 @@ def pagina_cadastro():
             db.session.rollback()
             return render_template("cadastro.html", erro="Erro: Não foi possível cadastrar. Verifique se os dados já estão em uso.", dados=dados_formulario)
 
-        fila_email.enfileirar_transacional(
-            f'cadastro-recebido:{novo_aluno.id}',
-            destinatario=email, nome_destinatario=nome,
-            assunto='Cadastro recebido — Extreme Team', titulo='Recebemos seu cadastro',
-            paragrafos=[
-                f'Olá, {nome.split()[0]}!',
-                'Seu cadastro na Extreme Team foi recebido e está em análise pela nossa administração.',
-                'Assim que for aprovado, você poderá entrar com seu usuário e senha.',
-            ],
-        )
-
-        admin_email = os.environ.get('ADMIN_EMAIL')
-        if admin_email:
+        if veio_do_google:
+            session.pop('google_cadastro_nome', None)
+            session.pop('google_cadastro_email', None)
+            admin_email = os.environ.get('ADMIN_EMAIL')
+            if admin_email:
+                try:
+                    link_admin = url_publica('admin_blueprint.painel_adm')
+                    fila_email.enfileirar_transacional(
+                        f'cadastro-aviso-admin:{novo_aluno.id}',
+                        destinatario=admin_email, nome_destinatario='Administração',
+                        assunto='Novo cadastro aguardando aprovação — Extreme Team', titulo='Novo cadastro pendente',
+                        paragrafos=[
+                            f'O aluno {novo_aluno.nome} acabou de se cadastrar (via Google) e está aguardando aprovação.',
+                            f'E-mail: {novo_aluno.email}',
+                            f'Telefone: {novo_aluno.telefone}',
+                            'Acesse o painel administrativo para aprovar ou recusar o cadastro.',
+                        ],
+                        link_url=link_admin,
+                        link_texto='Abrir painel administrativo',
+                    )
+                except URLPublicaInvalida:
+                    pass
+        else:
             try:
-                link_admin = url_publica('admin_blueprint.painel_adm')
-            except URLPublicaInvalida:
-                logger.error('APP_BASE_URL inválida; aviso de novo cadastro não foi enviado ao administrador.')
-            else:
+                link_verificacao = url_publica('auth.verificar_email_cadastro', token=token)
                 fila_email.enfileirar_transacional(
-                    f'cadastro-aviso-admin:{novo_aluno.id}',
-                    destinatario=admin_email, nome_destinatario='Administração',
-                    assunto='Novo cadastro aguardando aprovação — Extreme Team', titulo='Novo cadastro pendente',
+                    f'cadastro-recebido:{novo_aluno.id}',
+                    destinatario=email, nome_destinatario=nome,
+                    assunto='Verifique seu e-mail — Extreme Team', titulo='Falta pouco para finalizar!',
                     paragrafos=[
-                        f'O aluno {nome} acabou de se cadastrar e está aguardando aprovação.',
-                        f'E-mail: {email}',
-                        f'Telefone: {telefone}',
-                        'Acesse o painel administrativo para aprovar ou recusar o cadastro.',
+                        f'Olá, {nome.split()[0]}!',
+                        'Seu cadastro na Extreme Team foi recebido com sucesso.',
+                        'Para enviá-lo para a análise da nossa administração, precisamos apenas que você verifique este e-mail clicando no link abaixo:',
                     ],
-                    link_url=link_admin,
-                    link_texto='Abrir painel administrativo',
+                    link_url=link_verificacao,
+                    link_texto='Verificar Meu E-mail'
                 )
+            except URLPublicaInvalida:
+                logger.error('APP_BASE_URL inválida; e-mail de verificação não enviado para %s.', email)
 
         return _cadastro_recebido()
 
-    return render_template("cadastro.html")
+    dados_iniciais = {}
+    if 'google_cadastro_nome' in session:
+        dados_iniciais['nome'] = session.get('google_cadastro_nome')
+        dados_iniciais['email'] = session.get('google_cadastro_email')
+        
+    return render_template("cadastro.html", dados=dados_iniciais, from_google=bool(dados_iniciais))
 
 
 @auth_bp.route('/cadastro/obrigado')
@@ -1231,3 +1253,44 @@ def ver_comprovante_manual(pagamento_id):
         as_attachment=extensao == 'pdf',
         download_name=f'comprovante-{pagamento.id}.{extensao}',
     )
+
+@auth_bp.route("/cadastro/verificar/<token>")
+def verificar_email_cadastro(token):
+    aluno = _aluno_por_token(Aluno.token_verificacao_hash, token)
+    
+    if not aluno:
+        flash("Link de verificação inválido ou já utilizado.", "erro")
+        return redirect(url_for('auth.login'))
+        
+    if aluno.token_verificacao_expira and aluno.token_verificacao_expira < datetime.utcnow():
+        flash("Este link de verificação expirou. Por favor, solicite um novo.", "erro")
+        return redirect(url_for('auth.login'))
+        
+    aluno.email_verificado = True
+    aluno.token_verificacao_hash = None
+    aluno.token_verificacao_expira = None
+    db.session.commit()
+    
+    # Agora que o email foi verificado, avisamos o admin
+    admin_email = os.environ.get('ADMIN_EMAIL')
+    if admin_email:
+        try:
+            link_admin = url_publica('admin_blueprint.painel_adm')
+            fila_email.enfileirar_transacional(
+                f'cadastro-aviso-admin:{aluno.id}',
+                destinatario=admin_email, nome_destinatario='Administração',
+                assunto='Novo cadastro aguardando aprovação — Extreme Team', titulo='Novo cadastro pendente',
+                paragrafos=[
+                    f'O aluno {aluno.nome} confirmou o e-mail e seu cadastro está aguardando aprovação.',
+                    f'E-mail: {aluno.email}',
+                    f'Telefone: {aluno.telefone}',
+                    'Acesse o painel administrativo para aprovar ou recusar o cadastro.',
+                ],
+                link_url=link_admin,
+                link_texto='Abrir painel administrativo',
+            )
+        except URLPublicaInvalida:
+            logger.error('APP_BASE_URL inválida; aviso de novo cadastro não foi enviado ao administrador.')
+            
+    flash("E-mail verificado com sucesso! Seu cadastro já foi enviado para análise da administração.", "sucesso")
+    return redirect(url_for('auth.login'))

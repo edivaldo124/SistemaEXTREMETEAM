@@ -31,13 +31,13 @@
 {%- set _duracao = plano.duracao_texto or (('%d meses'|format(_meses)) if _meses > 1 else '1 mês') -%}
 <article class="et-plano{{ ' et-plano--destaque et-borda-brilho' if destaque }}{{ ' ' ~ classe if classe }}"{% if plano.id %} data-plano-id="{{ plano.id }}"{% endif %}>
     {%- if destaque %}
-    <p class="et-plano-selo">Recomendado</p>
+    <p class="et-selo et-selo--destaque">Recomendado</p>
     {%- endif %}
     {%- for texto, tom in selos %}
-    <p class="et-plano-selo et-plano-selo--{{ tom }}">{{ texto }}</p>
+    <p class="et-selo et-selo--{{ tom }}">{{ texto }}</p>
     {%- endfor %}
     {%- if plano.promocao_ate %}
-    <p class="et-plano-selo et-plano-selo--promo">Promoção até {{ plano.promocao_ate.strftime('%d/%m') }}</p>
+    <p class="et-selo et-selo--alerta">Promoção até {{ plano.promocao_ate.strftime('%d/%m') }}</p>
     {%- endif %}
     <h3 class="et-plano-nome">{{ plano.nome }}</h3>
     <p class="et-plano-preco">
@@ -56,7 +56,7 @@
     {%- if caller is defined %}
     <div class="et-plano-acao">{{ caller() }}</div>
     {%- else %}
-    <a class="{{ 'button-primary' if destaque else 'button-secondary' }} et-plano-botao" href="{{ plano.url_matricula }}">{{ plano.texto_botao or 'Escolher este plano' }}</a>
+    <a class="et-botao {{ 'et-botao--principal' if destaque else 'et-botao--contorno' }} et-plano-botao" href="{{ plano.url_matricula }}">{{ plano.texto_botao or 'Escolher este plano' }}</a>
     {%- endif %}
 </article>
 {%- endmacro %}

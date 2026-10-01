@@ -5,7 +5,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dt_aluno.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pix.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
 {% endblock %}
 {% block conteudo %}
     <main id="conteudo">
@@ -31,10 +30,10 @@
                     <button type="button" role="tab" id="aba-turmas" aria-controls="painel-turmas" aria-selected="false" tabindex="-1">Turmas</button>
                 </div>
                 <div class="et-tabs-painel" role="tabpanel" id="painel-dados" aria-labelledby="aba-dados" tabindex="0">
-            <section class="detail-section">
-                <div class="section-title">
-                    <h2>Foto do aluno</h2>
-                    <p>JPEG, PNG ou WebP, até 5 MB. A imagem é recortada em formato quadrado.</p>
+            <section class="et-cartao detail-section">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Foto do aluno</h2>
+                    <p class="et-cartao-descricao">JPEG, PNG ou WebP, até 5 MB. A imagem é recortada em formato quadrado.</p>
                 </div>
                 <div class="foto-perfil-area">
                     {{ avatar(u.nome, foto_aluno, 'lg') }}
@@ -50,7 +49,7 @@
                                    name="foto"
                                    accept="image/jpeg,image/png,image/webp"
                                    required>
-                            <button type="submit" class="button-secondary">{{ 'Substituir foto' if u.foto_arquivo else 'Enviar foto' }}</button>
+                            <button type="submit" class="et-botao et-botao--contorno">{{ 'Substituir foto' if u.foto_arquivo else 'Enviar foto' }}</button>
                         </form>
                         {% if u.foto_arquivo %}
                             <form action="{{ url_for('admin_blueprint.remover_foto_aluno', cpf=u.cpf) }}"
@@ -62,16 +61,16 @@
                                   data-modal-message="O perfil voltará a mostrar as iniciais do aluno."
                                   data-modal-confirm="Remover foto">
                 {% include "components/csrf_field.html" %}
-                                <button type="submit" class="button-secondary">Remover foto</button>
+                                <button type="submit" class="et-botao et-botao--contorno">Remover foto</button>
                             </form>
                         {% endif %}
                     </div>
                 </div>
             </section>
-            <section class="detail-section">
-                <div class="section-title">
-                    <h2>Dados do perfil</h2>
-                    <p>Informações cadastrais e vínculo com a academia.</p>
+            <section class="et-cartao detail-section">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Dados do perfil</h2>
+                    <p class="et-cartao-descricao">Informações cadastrais e vínculo com a academia.</p>
                 </div>
                 <form action="/admin/usuario/{{ u.cpf }}"
                       method="POST"
@@ -80,14 +79,14 @@
                 {% include "components/csrf_field.html" %}
                     <div class="grupo-input">
                         <label for="dt-nome">Nome completo</label>
-                        <input id="dt-nome" type="text" name="nome" value="{{ u.nome }}" required>
+                        <input class="et-campo" id="dt-nome" type="text" name="nome" value="{{ u.nome }}" required>
                     </div>
                     <div class="grupo-input">
                         <label for="dt-login">
                             Nome de usuário
                             {% if not u.acesso_ativado %}<small>Opcional</small>{% endif %}
                         </label>
-                        <input id="dt-login"
+                        <input class="et-campo" id="dt-login"
                                type="text"
                                name="login"
                                value="{{ u.login or '' }}"
@@ -99,7 +98,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dt-nascimento">Data de nascimento</label>
-                        <input id="dt-nascimento"
+                        <input class="et-campo" id="dt-nascimento"
                                type="text"
                                name="datanascimento"
                                value="{{ u.datanascimento }}"
@@ -114,7 +113,7 @@
                                maxlength="14"
                                data-mask="cpf"
                                readonly
-                               class="input-bloqueado"
+                               class="et-campo et-campo--bloqueado"
                                aria-describedby="dt-cpf-ajuda">
                         <small id="dt-cpf-ajuda">O CPF não pode ser alterado.</small>
                     </div>
@@ -123,7 +122,7 @@
                             E-mail
                             {% if not u.acesso_ativado %}<small>Opcional</small>{% endif %}
                         </label>
-                        <input id="dt-email"
+                        <input class="et-campo" id="dt-email"
                                type="email"
                                name="email"
                                value="{{ u.email or '' }}"
@@ -135,7 +134,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dt-telefone">Telefone</label>
-                        <input id="dt-telefone"
+                        <input class="et-campo" id="dt-telefone"
                                type="tel"
                                name="telefone"
                                value="{{ u.telefone }}"
@@ -147,7 +146,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dt-descricao">Observações de saúde (opcional)</label>
-                        <input id="dt-descricao"
+                        <input class="et-campo" id="dt-descricao"
                                type="text"
                                name="descricao"
                                value="{{ u.descricao or '' }}"
@@ -156,7 +155,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dt-graduacao">Graduação ou nível</label>
-                        <input id="dt-graduacao"
+                        <input class="et-campo" id="dt-graduacao"
                                type="text"
                                name="graduacao"
                                value="{{ u.graduacao or '' }}"
@@ -169,7 +168,7 @@
                                type="text"
                                value="{{ situacao.rotulo }}{% if situacao.valido_ate %} (válido até {{ situacao.valido_ate.strftime('%d/%m/%Y') }}){% endif %}"
                                readonly
-                               class="input-bloqueado"
+                               class="et-campo et-campo--bloqueado"
                                aria-describedby="dt-mensalidade-ajuda">
                         <small id="dt-mensalidade-ajuda">
                             Calculada a partir das mensalidades pagas. Para alterá-la, lance ou atualize uma mensalidade em "Controle de mensalidades".
@@ -177,7 +176,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dt-plano">Plano contratado</label>
-                        <select id="dt-plano" name="plano_id" aria-describedby="dt-plano-ajuda">
+                        <select class="et-campo" id="dt-plano" name="plano_id" aria-describedby="dt-plano-ajuda">
                             <option value="Nenhum">Sem Plano</option>
                             {% for p in planos %}
                                 <option value="{{ p.id }}" {% if u.plano_id == p.id %}selected{% endif %}>{{ p.nome_plano }}</option>
@@ -191,19 +190,19 @@
                         </small>
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="btn-salvar" data-texto-enviando="Salvando...">Salvar alterações</button>
-                        <a href="/admin" class="btn-voltar">Voltar ao painel</a>
+                        <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Salvando...">Salvar alterações</button>
+                        <a href="/admin" class="et-botao et-botao--contorno">Voltar ao painel</a>
                     </div>
                 </form>
             </section>
-            <section class="detail-section">
-                <div class="section-title">
-                    <h2>Acesso ao sistema</h2>
-                    <p>Se o aluno entra na área do aluno. Não tem relação com a matrícula nem com as mensalidades.</p>
+            <section class="et-cartao detail-section">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Acesso ao sistema</h2>
+                    <p class="et-cartao-descricao">Se o aluno entra na área do aluno. Não tem relação com a matrícula nem com as mensalidades.</p>
                 </div>
                 <div class="situacao-plano-admin">
                     <p>
-                        <span class="status status-acesso-{{ u.estado_acesso }}">{{ u.rotulo_acesso }}</span>
+                        <span class="et-selo et-selo--situacao" data-situacao="acesso-{{ u.estado_acesso }}">{{ u.rotulo_acesso }}</span>
                         {% if u.acesso_ativado %}
                             <strong>{{ u.login }}</strong>
                         {% elif u.convite_pendente and u.convite_enviado_em %}
@@ -236,14 +235,14 @@
                           class="form-revisao">
                 {% include "components/csrf_field.html" %}
                         <label class="sr-only" for="convite-email">E-mail para enviar o convite</label>
-                        <input id="convite-email"
+                        <input class="et-campo et-campo--pequeno" id="convite-email"
                                type="email"
                                name="email"
                                value="{{ u.email or '' }}"
                                maxlength="150"
                                placeholder="E-mail do aluno"
                                required>
-                        <button type="submit" class="btn btn-principal">
+                        <button type="submit" class="et-botao et-botao--confirmar et-botao--pequeno">
                             {{ 'Reenviar convite' if u.convite_pendente else 'Enviar convite de acesso' }}
                         </button>
                     </form>
@@ -258,21 +257,21 @@
                               data-modal-message="O link enviado deixa de funcionar. O cadastro e as mensalidades não mudam."
                               data-modal-confirm="Cancelar convite">
                 {% include "components/csrf_field.html" %}
-                            <button type="submit" class="btn btn-remover">Cancelar convite</button>
+                            <button type="submit" class="et-botao et-botao--perigo et-botao--pequeno">Cancelar convite</button>
                         </form>
                     {% endif %}
                 {% endif %}
             </section>
                 </div>
                 <div class="et-tabs-painel" role="tabpanel" id="painel-pagamentos" aria-labelledby="aba-pagamentos" tabindex="0" hidden>
-            <section class="detail-section">
-                <div class="section-title">
-                    <h2>Situação do plano</h2>
-                    <p>Período pago em curso e mudanças agendadas para a próxima renovação.</p>
+            <section class="et-cartao detail-section">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Situação do plano</h2>
+                    <p class="et-cartao-descricao">Período pago em curso e mudanças agendadas para a próxima renovação.</p>
                 </div>
                 <div class="situacao-plano-admin">
                     <p>
-                        <span class="status status-plano-{{ situacao.estado }}">{{ situacao.rotulo }}</span>
+                        <span class="et-selo et-selo--situacao" data-situacao="plano-{{ situacao.estado }}">{{ situacao.rotulo }}</span>
                         {% if situacao.plano %}
                             <strong>{{ situacao.plano.nome_plano }}</strong>
                         {% else %}
@@ -328,12 +327,12 @@
                               data-modal-message="A próxima renovação do aluno voltará a ser no plano atual."
                               data-modal-confirm="Cancelar mudança">
                 {% include "components/csrf_field.html" %}
-                            <input type="text"
+                            <input class="et-campo et-campo--pequeno" type="text"
                                    name="observacao"
                                    maxlength="255"
                                    aria-label="Motivo do cancelamento"
                                    placeholder="Motivo (opcional)">
-                            <button type="submit" class="btn btn-remover">Cancelar mudança</button>
+                            <button type="submit" class="et-botao et-botao--perigo et-botao--pequeno">Cancelar mudança</button>
                         </form>
                     </div>
                 {% endif %}
@@ -359,7 +358,7 @@
                                         <td data-label="Novo valor" class="celula-numero">{{ s.valor_destino|moeda }}</td>
                                         <td data-label="A partir de" class="celula-numero">{{ s.vigencia_a_partir_de.strftime('%d/%m/%Y') if s.vigencia_a_partir_de else '—' }}</td>
                                         <td data-label="Situação">
-                                            <span class="status {{ 'status-pago' if s.status == 'efetivada' else 'status-cancelado' }}">
+                                            <span class="et-selo et-selo--situacao {{ 'et-selo--ok' if s.status == 'efetivada' else 'et-selo--neutro' }}">
                                                 {{ 'Efetivada' if s.status == 'efetivada' else 'Cancelada' }}
                                             </span>
                                         </td>
@@ -371,17 +370,17 @@
                     </div>
                 {% endif %}
             </section>
-            <section class="secao-pagamentos">
-                <div class="section-title">
-                    <h2>Controle de mensalidades</h2>
-                    <p>Lance cobranças e atualize pagamentos do aluno.</p>
+            <section class="et-cartao secao-pagamentos">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Controle de mensalidades</h2>
+                    <p class="et-cartao-descricao">Lance cobranças e atualize pagamentos do aluno.</p>
                 </div>
                 {% if not situacao.ativo and not situacao.aguardando_decisao %}
                     <form action="/admin/usuario/{{ u.cpf }}/cobrar"
                           method="POST"
                           class="form-inline">
                 {% include "components/csrf_field.html" %}
-                        <button type="submit" class="btn btn-status">Enviar cobrança por e-mail</button>
+                        <button type="submit" class="et-botao et-botao--contorno et-botao--pequeno">Enviar cobrança por e-mail</button>
                     </form>
                 {% endif %}
                 <form action="/admin/usuario/{{ u.cpf }}/pagamentos"
@@ -391,7 +390,7 @@
                 {% include "components/csrf_field.html" %}
                     <div class="grupo-input">
                         <label for="plano-pagamento">Plano</label>
-                        <select name="plano_id" id="plano-pagamento" required>
+                        <select class="et-campo" name="plano_id" id="plano-pagamento" required>
                             <option value="">Selecione</option>
                             {% for p in planos %}
                                 <option value="{{ p.id }}"
@@ -402,7 +401,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="valor-pagamento">Valor</label>
-                        <input type="number"
+                        <input class="et-campo" type="number"
                                name="valor"
                                id="valor-pagamento"
                                min="0.01"
@@ -411,18 +410,18 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dt-vencimento">Vencimento</label>
-                        <input id="dt-vencimento" type="date" name="vencimento" required>
+                        <input class="et-campo" id="dt-vencimento" type="date" name="vencimento" required>
                     </div>
                     <div class="grupo-input">
                         <label for="dt-competencia">Competência</label>
-                        <input id="dt-competencia"
+                        <input class="et-campo" id="dt-competencia"
                                type="month"
                                name="competencia"
                                placeholder="AAAA-MM">
                     </div>
                     <div class="grupo-input">
                         <label for="status-pagamento">Situação</label>
-                        <select name="status" id="status-pagamento">
+                        <select class="et-campo" name="status" id="status-pagamento">
                             <option value="pendente">Pendente</option>
                             <option value="pago">Pago</option>
                             <option value="atrasado">Atrasado</option>
@@ -431,11 +430,11 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dt-data-pagamento">Data do pagamento</label>
-                        <input id="dt-data-pagamento" type="date" name="data_pagamento">
+                        <input class="et-campo" id="dt-data-pagamento" type="date" name="data_pagamento">
                     </div>
                     <div class="grupo-input">
                         <label for="dt-forma-pagamento">Forma de pagamento</label>
-                        <select id="dt-forma-pagamento" name="forma_pagamento">
+                        <select class="et-campo" id="dt-forma-pagamento" name="forma_pagamento">
                             <option value="">Não informada</option>
                             <option value="pix">Pix</option>
                             <option value="dinheiro">Dinheiro</option>
@@ -446,14 +445,14 @@
                     </div>
                     <div class="grupo-input campo-largo">
                         <label for="dt-observacao">Observação <small>Opcional</small></label>
-                        <input id="dt-observacao"
+                        <input class="et-campo" id="dt-observacao"
                                type="text"
                                name="observacao"
                                maxlength="255"
                                placeholder="Ex.: recebido em espécie na recepção">
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="btn-salvar" data-texto-enviando="Lançando...">Lançar mensalidade</button>
+                        <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Lançando...">Lançar mensalidade</button>
                     </div>
                 </form>
                 <div class="et-tabela tabela-admin tabela-mensalidades-aluno">
@@ -483,7 +482,7 @@
                                         {{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}
                                     </td>
                                     <td data-label="Status">
-                                        <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
+                                        <span class="et-selo et-selo--situacao" data-situacao="{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
                                     </td>
                                     <td data-label="Forma">{{ pagamento.forma_pagamento|forma_pagamento }}</td>
                                     <td data-label="Origem">
@@ -503,7 +502,7 @@
                                         {% set pode_sincronizar = pagamento.provider_payment_id or pagamento.checkout_external_reference %}
                                         {% if pode_pix or pode_sincronizar %}
                                             <div class="et-menu" data-menu>
-                                                <button type="button" class="et-menu-botao" aria-haspopup="menu" aria-expanded="false"
+                                                <button type="button" class="et-menu-botao et-botao et-botao--fantasma et-botao--icone et-botao--pequeno" aria-haspopup="menu" aria-expanded="false"
                                                         aria-controls="menu-pagamento-{{ pagamento.id }}"
                                                         aria-label="Mais ações da mensalidade de {{ formatar_competencia(pagamento.competencia) }}" data-tooltip>
                                                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
@@ -530,7 +529,7 @@
                                               method="POST"
                                               class="form-status">
                 {% include "components/csrf_field.html" %}
-                                            <select name="status"
+                                            <select class="et-campo et-campo--pequeno" name="status"
                                                     aria-label="Situação da mensalidade de {{ formatar_competencia(pagamento.competencia) }}">
                                                 {% for status in ['pendente', 'pago', 'atrasado', 'em_processamento', 'em_analise', 'recusado', 'cancelado', 'reembolsado'] %}
                                                     <option value="{{ status }}"
@@ -539,7 +538,7 @@
                                                     </option>
                                                 {% endfor %}
                                             </select>
-                                            <select name="forma_pagamento"
+                                            <select class="et-campo et-campo--pequeno" name="forma_pagamento"
                                                     aria-label="Forma de pagamento da mensalidade de {{ formatar_competencia(pagamento.competencia) }}">
                                                 <option value="">Forma</option>
                                                 {% set formas_painel = [('pix', 'Pix'), ('dinheiro', 'Dinheiro'), ('transferencia', 'Transferência'), ('cartao_credito', 'Crédito'), ('cartao_debito', 'Débito'), ('boleto', 'Boleto')] %}
@@ -555,7 +554,7 @@
                                                     <option value="{{ pagamento.forma_pagamento }}" selected>{{ pagamento.forma_pagamento|forma_pagamento }}</option>
                                                 {% endif %}
                                             </select>
-                                            <button type="submit">Atualizar</button>
+                                            <button type="submit" class="et-botao et-botao--contorno et-botao--pequeno">Atualizar</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -574,30 +573,30 @@
                                                       method="POST"
                                                       class="form-revisao">
                 {% include "components/csrf_field.html" %}
-                                                    <input type="date"
+                                                    <input class="et-campo et-campo--pequeno" type="date"
                                                            name="data_pagamento"
                                                            aria-label="Data do pagamento">
-                                                    <select name="forma_pagamento" aria-label="Forma de pagamento">
+                                                    <select class="et-campo et-campo--pequeno" name="forma_pagamento" aria-label="Forma de pagamento">
                                                         <option value="transferencia">Transferência</option>
                                                         <option value="dinheiro">Dinheiro</option>
                                                     </select>
-                                                    <input type="text"
+                                                    <input class="et-campo et-campo--pequeno" type="text"
                                                            name="observacao"
                                                            maxlength="255"
                                                            aria-label="Observação sobre a aprovação"
                                                            placeholder="Observação (opcional)">
-                                                    <button type="submit" class="btn btn-principal">Aprovar</button>
+                                                    <button type="submit" class="et-botao et-botao--confirmar et-botao--pequeno">Aprovar</button>
                                                 </form>
                                                 <form action="{{ url_for('admin_blueprint.rejeitar_comprovante_manual', pagamento_id=pagamento.id) }}"
                                                       method="POST"
                                                       class="form-revisao">
                 {% include "components/csrf_field.html" %}
-                                                    <input type="text"
+                                                    <input class="et-campo et-campo--pequeno" type="text"
                                                            name="observacao"
                                                            maxlength="255"
                                                            aria-label="Motivo da rejeição"
                                                            placeholder="Motivo da rejeição">
-                                                    <button type="submit" class="btn btn-remover">Rejeitar</button>
+                                                    <button type="submit" class="et-botao et-botao--perigo et-botao--pequeno">Rejeitar</button>
                                                 </form>
                                             </div>
                                         </td>
@@ -615,10 +614,10 @@
             </section>
                 </div>
                 <div class="et-tabs-painel" role="tabpanel" id="painel-turmas" aria-labelledby="aba-turmas" tabindex="0" hidden>
-            <section class="detail-section">
-                <div class="section-title">
-                    <h2>Turmas</h2>
-                    <p>Turmas em que este aluno está matriculado.</p>
+            <section class="et-cartao detail-section">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo">Turmas</h2>
+                    <p class="et-cartao-descricao">Turmas em que este aluno está matriculado.</p>
                 </div>
                 <div class="et-tabela tabela-admin">
                     <div class="et-tabela-rolagem table-stack" role="region" aria-label="Turmas do aluno">

@@ -5,7 +5,6 @@
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_academia.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
 {% endblock %}
 {% block conteudo %}
     <main id="conteudo" class="container-admin academia-editor">
@@ -14,7 +13,7 @@
                 <h1>Configurações da academia</h1>
                 <p>O contato exibido no site e as contas que recebem as mensalidades e enviam os avisos.</p>
             </div>
-            <a href="{{ url_for('home') }}#contato" class="button-secondary">Ver no site</a>
+            <a href="{{ url_for('home') }}#contato" class="et-botao et-botao--contorno">Ver no site</a>
         </header>
         {# Abas por grupo de configuração. data-tabs-lembrar (admin_nav.js) volta à
            última aba aberta: conectar o Mercado Pago ou o Gmail sai do site e o
@@ -26,7 +25,7 @@
                 <button type="button" role="tab" id="aba-gmail" aria-controls="painel-gmail" aria-selected="false" tabindex="-1">Gmail</button>
             </div>
             <div class="et-tabs-painel" role="tabpanel" id="painel-contato" aria-labelledby="aba-contato" tabindex="0">
-                <form class="academia-form" method="POST" action="{{ url_for('academia.configuracoes') }}" data-enviando>
+                <form class="et-cartao academia-form" method="POST" action="{{ url_for('academia.configuracoes') }}" data-enviando>
                     {% include 'components/csrf_field.html' %}
                     <fieldset class="academia-grupo">
                         <legend>Canais oficiais</legend>
@@ -34,17 +33,17 @@
                         <div class="academia-campos">
                             <div class="field">
                                 <label for="instagram">Instagram</label>
-                                <input id="instagram" name="instagram" type="text" maxlength="200" value="{{ dados.instagram or '' if dados else '' }}" placeholder="@usuario" aria-describedby="instagram-ajuda">
+                                <input class="et-campo" id="instagram" name="instagram" type="text" maxlength="200" value="{{ dados.instagram or '' if dados else '' }}" placeholder="@usuario" aria-describedby="instagram-ajuda">
                                 <small id="instagram-ajuda">Informe o @ ou o link do perfil.</small>
                             </div>
                             <div class="field">
                                 <label for="whatsapp">WhatsApp de atendimento</label>
-                                <input id="whatsapp" name="whatsapp" type="tel" maxlength="30" value="{{ ('+' if dados is not mapping else '') ~ dados.whatsapp if dados and dados.whatsapp else '' }}" placeholder="(81) 99999-9999" aria-describedby="whatsapp-ajuda">
+                                <input class="et-campo" id="whatsapp" name="whatsapp" type="tel" maxlength="30" value="{{ ('+' if dados is not mapping else '') ~ dados.whatsapp if dados and dados.whatsapp else '' }}" placeholder="(81) 99999-9999" aria-describedby="whatsapp-ajuda">
                                 <small id="whatsapp-ajuda">Inclua o DDD. Para outro país, use + e o código do país.</small>
                             </div>
                             <div class="field academia-linha">
                                 <label for="email">E-mail de contato</label>
-                                <input id="email" name="email" type="email" maxlength="150" value="{{ dados.email or '' if dados else '' }}" autocomplete="email">
+                                <input class="et-campo" id="email" name="email" type="email" maxlength="150" value="{{ dados.email or '' if dados else '' }}" autocomplete="email">
                             </div>
                         </div>
                     </fieldset>
@@ -53,43 +52,43 @@
                         <div class="academia-campos">
                             <div class="field academia-linha">
                                 <label for="endereco">Endereço completo</label>
-                                <input id="endereco" name="endereco" type="text" maxlength="300" value="{{ dados.endereco or '' if dados else '' }}" aria-describedby="endereco-ajuda">
+                                <input class="et-campo" id="endereco" name="endereco" type="text" maxlength="300" value="{{ dados.endereco or '' if dados else '' }}" aria-describedby="endereco-ajuda">
                                 <small id="endereco-ajuda">Rua, número, bairro, cidade, estado e CEP. O botão “Como chegar” abre este endereço no mapa.</small>
                             </div>
                             <div class="field academia-linha">
                                 <label for="complemento">Complemento ou ponto de referência</label>
-                                <input id="complemento" name="complemento" type="text" maxlength="150" value="{{ dados.complemento or '' if dados else '' }}">
+                                <input class="et-campo" id="complemento" name="complemento" type="text" maxlength="150" value="{{ dados.complemento or '' if dados else '' }}">
                             </div>
                             <div class="field academia-linha">
                                 <label for="horarios">Horários de funcionamento</label>
-                                <textarea id="horarios" name="horarios" rows="4" maxlength="1000" aria-describedby="horarios-ajuda">{{ dados.horarios or '' if dados else '' }}</textarea>
+                                <textarea class="et-campo" id="horarios" name="horarios" rows="4" maxlength="1000" aria-describedby="horarios-ajuda">{{ dados.horarios or '' if dados else '' }}</textarea>
                                 <small id="horarios-ajuda">Você pode usar uma linha para cada dia ou intervalo de dias.</small>
                             </div>
                         </div>
                     </fieldset>
                     <div class="academia-acoes">
-                        <button type="submit" class="button-primary" data-texto-enviando="Salvando...">Salvar informações</button>
+                        <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Salvando...">Salvar informações</button>
                         <span>As alterações ficam visíveis no site após salvar. Deixe em branco os canais que não deseja divulgar.</span>
                     </div>
                 </form>
             </div>
             <div class="et-tabs-painel" role="tabpanel" id="painel-mp" aria-labelledby="aba-mp" tabindex="0" hidden>
-                <section class="mp-conexao" aria-labelledby="mp-titulo">
-                    <div class="mp-cabecalho">
-                        <h2 id="mp-titulo">Recebimento de mensalidades</h2>
+                <section class="et-cartao mp-conexao" aria-labelledby="mp-titulo">
+                    <div class="et-cartao-cabeca">
+                        <h2 class="et-cartao-titulo" id="mp-titulo">Recebimento de mensalidades</h2>
                         {% if mp.conectada and mp.precisa_reconectar %}
-                            <span class="mp-selo mp-selo-atencao">Reconexão necessária</span>
+                            <span class="et-cartao-acao et-selo et-selo--alerta">Reconexão necessária</span>
                         {% elif mp.conectada %}
-                            <span class="mp-selo mp-selo-ok">Conectada</span>
+                            <span class="et-cartao-acao et-selo et-selo--ok">Conectada</span>
                         {% elif mp.usa_credencial_do_servidor %}
-                            <span class="mp-selo mp-selo-info">Credencial do servidor</span>
+                            <span class="et-cartao-acao et-selo et-selo--info">Credencial do servidor</span>
                         {% else %}
-                            <span class="mp-selo mp-selo-neutro">Não conectada</span>
+                            <span class="et-cartao-acao et-selo et-selo--neutro">Não conectada</span>
                         {% endif %}
                     </div>
 
                     {% if mp_sem_retorno and mp.oauth_disponivel %}
-                        <div class="msg msg-aviso mp-aviso" role="status">
+                        <div class="et-aviso et-aviso--alerta mp-aviso" role="status">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5m0 3.5v.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                             <p><strong>A autorização não voltou do Mercado Pago.</strong> Se apareceu um erro por lá, quase sempre é a URL de redirecionamento ou o PKCE do aplicativo. Confira a configuração abaixo e clique em Conectar de novo.</p>
                         </div>
@@ -120,7 +119,7 @@
                     {% if mp.oauth_disponivel or mp.conectada %}
                         <div class="mp-acoes">
                             {% if mp.oauth_disponivel %}
-                                <a class="{{ 'button-secondary' if mp.conectada and not mp.precisa_reconectar else 'button-primary' }}"
+                                <a class="et-botao {{ 'et-botao--contorno' if mp.conectada and not mp.precisa_reconectar else 'et-botao--principal' }}"
                                    href="{{ url_for('mercado_pago_oauth.conectar') }}">
                                     {{ 'Conectar Mercado Pago' if not mp.conectada else 'Reconectar' }}
                                 </a>
@@ -133,7 +132,7 @@
                                       data-modal-message="O pagamento online das mensalidades deixa de funcionar até você conectar uma conta de novo. Cobranças já abertas não serão confirmadas automaticamente."
                                       data-modal-confirm="Sim, desconectar">
                                     {% include 'components/csrf_field.html' %}
-                                    <button type="submit" class="button-secondary">Desconectar</button>
+                                    <button type="submit" class="et-botao et-botao--contorno">Desconectar</button>
                                 </form>
                             {% endif %}
                         </div>
@@ -171,16 +170,16 @@
                 </section>
             </div>
             <div class="et-tabs-painel" role="tabpanel" id="painel-gmail" aria-labelledby="aba-gmail" tabindex="0" hidden>
-                <section class="mp-conexao" aria-labelledby="gmail-titulo">
-                    <div class="mp-cabecalho">
-                        <h2 id="gmail-titulo">Envio de avisos por e-mail</h2>
-                        {% if gmail.conectada %}<span class="mp-selo mp-selo-ok">Conectado</span>
-                        {% else %}<span class="mp-selo mp-selo-neutro">Não conectado</span>{% endif %}
+                <section class="et-cartao mp-conexao" aria-labelledby="gmail-titulo">
+                    <div class="et-cartao-cabeca">
+                        <h2 class="et-cartao-titulo" id="gmail-titulo">Envio de avisos por e-mail</h2>
+                        {% if gmail.conectada %}<span class="et-cartao-acao et-selo et-selo--ok">Conectado</span>
+                        {% else %}<span class="et-cartao-acao et-selo et-selo--neutro">Não conectado</span>{% endif %}
                     </div>
                     {% if gmail.conectada %}
                         <p class="mp-texto">Os avisos são enviados pela conta <strong>{{ gmail.email }}</strong>.</p>
                         <div class="mp-acoes">
-                            <a class="button-secondary" href="{{ url_for('gmail_oauth.conectar') }}">Trocar conta Gmail</a>
+                            <a class="et-botao et-botao--contorno" href="{{ url_for('gmail_oauth.conectar') }}">Trocar conta Gmail</a>
                             <form method="POST" action="{{ url_for('gmail_oauth.desconectar') }}"
                                   data-confirm-modal
                                   data-modal-eyebrow="Gmail"
@@ -188,13 +187,13 @@
                                   data-modal-message="Os avisos e as cobranças por e-mail deixam de ser enviados até você conectar uma conta de novo."
                                   data-modal-confirm="Sim, desconectar">
                                 {% include 'components/csrf_field.html' %}
-                                <button type="submit" class="button-secondary">Desconectar Gmail</button>
+                                <button type="submit" class="et-botao et-botao--contorno">Desconectar Gmail</button>
                             </form>
                         </div>
                     {% elif gmail.oauth_disponivel %}
                         <p class="mp-texto">Conecte o Gmail do administrador para enviar notificações. O Google pedirá autorização uma única vez.</p>
                         <div class="mp-acoes">
-                            <a class="button-primary" href="{{ url_for('gmail_oauth.conectar') }}">Conectar Gmail</a>
+                            <a class="et-botao et-botao--principal" href="{{ url_for('gmail_oauth.conectar') }}">Conectar Gmail</a>
                         </div>
                     {% else %}
                         <p class="mp-texto">Configure GMAIL_CLIENT_ID e GMAIL_CLIENT_SECRET no ambiente do servidor para habilitar a conexão.</p>

@@ -1,77 +1,14 @@
 /* =========================================================================
-   Diálogos de conteúdo: Pix, detalhe de turma, histórico de presença.
-   Mesmo invólucro do diálogo de confirmação, com corpo maior.
+   Conteúdo do Pix (diálogo e página de pagamento). A casca dos diálogos é o
+   .et-dialogo de componentes.css.
    ========================================================================= */
 
-.btn-pagar-pix { min-height:var(--control-h-sm); padding:0 var(--sp-4); font-size:var(--fs-xs); }
-@media (max-width:1023px) { .btn-pagar-pix { min-height:44px; } }
-
-.pix-dialog,.modal-dialog {
-  position:fixed; width:min(470px,calc(100% - 32px));
-  padding:var(--sp-7);
-  border:0; border-radius:var(--radius-lg);
-  color:var(--text); background:var(--surface);
-  box-shadow:var(--shadow-dialogo); overflow:visible;
-  /* Saída no desktop: fade e desliza 8px para baixo */
-  opacity:0; translate:0 8px;
-  transition:
-    opacity 200ms var(--ease-saida),
-    translate 200ms var(--ease-saida),
-    overlay 200ms var(--ease-saida) allow-discrete,
-    display 200ms var(--ease-saida) allow-discrete;
-}
-.pix-dialog[open],.modal-dialog[open] {
-  opacity:1; translate:0 0;
-  transition:
-    opacity 280ms var(--ease),
-    translate 280ms var(--ease),
-    overlay 280ms var(--ease) allow-discrete,
-    display 280ms var(--ease) allow-discrete;
-}
-@starting-style {
-  .pix-dialog[open],.modal-dialog[open] { opacity:0; translate:0 16px; }
-  .pix-dialog[open]::backdrop,.modal-dialog[open]::backdrop { opacity:0; }
-}
-.pix-dialog::backdrop,.modal-dialog::backdrop {
-  background:rgba(0,0,0,.74); backdrop-filter:blur(4px);
-  opacity:0;
-  transition:
-    opacity 200ms var(--ease-saida),
-    overlay 200ms var(--ease-saida) allow-discrete,
-    display 200ms var(--ease-saida) allow-discrete;
-}
-.pix-dialog[open]::backdrop,.modal-dialog[open]::backdrop {
-  opacity:1;
-  transition:
-    opacity 280ms var(--ease),
-    overlay 280ms var(--ease) allow-discrete,
-    display 280ms var(--ease) allow-discrete;
-}
-.pix-accent,.modal-accent { display:none; }
-
-.pix-fechar,.modal-fechar {
-  position:absolute; top:var(--sp-4); right:var(--sp-4);
-  display:grid; place-items:center;
-  width:38px; height:38px;
-  border:0; border-radius:var(--radius-pill);
-  color:var(--text-2); background:var(--surface-2);
-  font-size:22px; line-height:1; cursor:pointer;
-  transition:color .16s ease, background .16s ease;
-}
-.pix-fechar:hover,.modal-fechar:hover { color:var(--text); background:var(--paper-2); }
-
-.pix-dialog .eyebrow,.modal-dialog .eyebrow { margin-bottom:var(--sp-2); }
-.pix-dialog h2,.modal-dialog h2 {
-  margin:0 0 var(--sp-5);
-  font:700 var(--h2)/1.1 var(--display);
-  letter-spacing:-.01em; text-transform:uppercase;
-}
 
 /* ------------------------------------------------------------- estados -- */
 
 .pix-carregando { margin:0; padding:var(--sp-8) 0; color:var(--text-2); font-size:var(--fs-sm); text-align:center; }
 .pix-corpo[hidden] { display:none; }
-.pix-corpo .alert { margin-bottom:var(--sp-4); }
+.pix-corpo .et-aviso { margin-bottom:var(--sp-4); }
 
 /* ---------------------------------------------------------- conteúdo ---- */
 
@@ -96,79 +33,25 @@
 .pix-qr-area img { width:100%; max-width:230px; height:auto; }
 .pix-sem-qr { margin:0; max-width:34ch; color:var(--text-2); font-size:var(--fs-xs); line-height:1.6; text-align:center; }
 
-.pix-dialog label,.modal-dialog label,.pagamento-pix label {
+.et-dialogo label,.pagamento-pix label {
   display:block; margin-bottom:var(--sp-2);
   color:var(--text); font-size:var(--fs-sm); font-weight:600;
 }
 .pix-copia-linha { display:flex; gap:var(--sp-2); }
-.pix-copia-linha input {
-  flex:1; min-width:0; min-height:var(--control-h); padding:0 var(--sp-4);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
-  color:var(--text); background:var(--surface-2); font-size:var(--fs-xs);
-}
-.pix-copia-linha button { flex:0 0 auto; min-height:var(--control-h); padding:0 var(--sp-5); }
+.pix-copia-linha .et-campo { flex:1; background-color:var(--surface-2); font-size:var(--fs-xs); }
+.pix-copia-linha .et-botao { flex:0 0 auto; }
 
+/* .et-aviso de alerta que o pix.js troca para ok quando o pagamento cai. */
 .pix-status {
   display:flex; align-items:center; justify-content:center; gap:var(--sp-2);
-  margin:var(--sp-4) 0 0; padding:var(--sp-3) var(--sp-4);
-  border:1px solid var(--amber); border-radius:var(--radius);
-  color:var(--amber-ink); background:var(--amber-bg);
-  font-size:var(--fs-xs); font-weight:600; text-align:center;
+  margin:var(--sp-4) 0 0; font-size:var(--fs-xs); font-weight:600; text-align:center;
 }
-.pix-status .icone { width:17px; height:17px; }
-.pix-status-aprovado { border-color:var(--green); color:var(--green-ink); background:var(--green-bg); }
-
-/* Celular: bottom sheet colado embaixo */
-@media (max-width:640px) {
-  .pix-dialog,.modal-dialog {
-    width:100%; max-width:100%;
-    margin:auto 0 0;
-    border-radius:var(--radius-lg) var(--radius-lg) 0 0;
-    padding:var(--sp-6) var(--sp-5);
-    padding-bottom:calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
-    max-height:88dvh; overflow-y:auto;
-    opacity:1; translate:0 100%;
-  }
-  .pix-dialog[open],.modal-dialog[open] {
-    opacity:1; translate:0 0;
-  }
-  @starting-style {
-    .pix-dialog[open],.modal-dialog[open] {
-      opacity:1; translate:0 100%;
-    }
-  }
-  .pix-dialog::before,.modal-dialog::before {
-    content:""; display:block;
-    width:36px; height:4px; margin:0 auto var(--sp-4);
-    border-radius:var(--radius-pill); background:var(--line);
-    pointer-events:none;
-  }
-}
+/* Linha centralizada: o ícone acompanha o texto em vez de ir para a margem do aviso. */
+.pix-status.et-aviso:has(> svg:first-child) { padding-left:var(--sp-4); }
+.pix-status > svg:first-child { position:static; width:17px; height:17px; }
 
 @media (max-width:480px) {
   .pix-copia-linha { flex-direction:column; }
-  .pix-copia-linha button { width:100%; }
+  .pix-copia-linha .et-botao { width:100%; }
 }
 
-@media (prefers-reduced-motion:reduce) {
-  .pix-dialog,.modal-dialog,
-  .pix-dialog[open],.modal-dialog[open] {
-    translate:none;
-    transition:
-      opacity 120ms ease,
-      overlay 120ms allow-discrete,
-      display 120ms allow-discrete;
-  }
-  @starting-style {
-    .pix-dialog[open],.modal-dialog[open] {
-      opacity:0; translate:none;
-    }
-  }
-  .pix-dialog::backdrop,.modal-dialog::backdrop,
-  .pix-dialog[open]::backdrop,.modal-dialog[open]::backdrop {
-    transition:
-      opacity 120ms ease,
-      overlay 120ms allow-discrete,
-      display 120ms allow-discrete;
-  }
-}

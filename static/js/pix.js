@@ -112,7 +112,7 @@
         elSemQr.hidden = true;
         elCopiaCola.value = '';
         elStatus.textContent = 'Aguardando pagamento…';
-        elStatus.classList.remove('pix-status-aprovado');
+        elStatus.classList.replace('et-aviso--ok', 'et-aviso--alerta');
         elErroMsg.textContent = MENSAGEM_ERRO_PADRAO;
     }
 
@@ -153,7 +153,7 @@
     function atualizarStatusTexto(status) {
         if (status === 'pago') {
             elStatus.textContent = 'Pagamento aprovado! Atualizando a página...';
-            elStatus.classList.add('pix-status-aprovado');
+            elStatus.classList.replace('et-aviso--alerta', 'et-aviso--ok');
         } else {
             const mensagens = {
                 cancelado: 'Pagamento cancelado.',
@@ -162,7 +162,7 @@
                 em_analise: 'Comprovante em análise pela administração.',
             };
             elStatus.textContent = mensagens[status] || 'Aguardando pagamento…';
-            elStatus.classList.remove('pix-status-aprovado');
+            elStatus.classList.replace('et-aviso--ok', 'et-aviso--alerta');
         }
     }
 

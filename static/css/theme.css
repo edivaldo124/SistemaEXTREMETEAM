@@ -83,6 +83,7 @@
   /* ---- Altura de controles: 44px é o alvo mínimo de toque ---- */
   --control-h:48px;
   --control-h-sm:40px;
+  --control-h-lg:54px;
 
   /* ---- Foco: anel de dois tons, legível em fundo claro e escuro ---- */
   --focus-ink:#000000;
@@ -103,13 +104,36 @@
   --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
 }
 
-/* Blocos de fundo escuro invertem o anel de foco para continuar visível. */
+/* Blocos de fundo escuro invertem o anel de foco para continuar visível. Bloco
+   escuro novo: ponha .et-escuro nele em vez de crescer estas listas. */
 .home-header,.app-header,.admin-header,.detail-header,.account-header,
 .auth-shell,.hero,.bottom-nav,
 .home-footer,.app-footer,.aluno-hero,.mensalidade-card,.plano-situacao-card,
-.et-plano--destaque,.et-toasts,.erro-cartao {
+.et-plano--destaque,.et-toasts,.erro-cartao,.et-escuro {
   --focus-ink:var(--yellow);
   --focus-halo:rgba(253,207,23,.3);
+}
+
+/* Botões e caixas sobre fundo escuro (.et-botao e .et-caixa, em componentes.css):
+   contorno, fantasma, secundário e link passam a texto claro, borda dourada discreta
+   e realce dourado; a caixa marcada fica dourada com o sinal preto. */
+.home-header,.app-header,.admin-header,.detail-header,.account-header,
+.auth-shell,.hero,.home-footer,.app-footer,.aluno-hero,.erro-cartao,
+.et-plano--destaque,.et-cta-fixo,.et-consentimento,.et-toasts,.et-escuro,
+.mensalidade-card[data-status="pendente"],.mensalidade-card[data-status="atrasado"],
+.mensalidade-card[data-status="recusado"] {
+  --botao-tinta:var(--et-text-on-dark);
+  --botao-tinta-forte:var(--et-gold);
+  --botao-borda:var(--et-line-dark-strong);
+  --botao-borda-forte:var(--et-gold);
+  --botao-fundo:transparent;
+  --botao-suave:rgba(245,185,20,.08);
+  --botao-suave-forte:rgba(245,185,20,.16);
+  --caixa-borda:var(--et-line-dark-strong);
+  --caixa-fundo:transparent;
+  --caixa-marcada:var(--et-gold);
+  --caixa-ponto:var(--ink);
+  --caixa-sinal:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 }
 
 /* ---------------------------------------------------------------- base -- */
@@ -218,51 +242,8 @@ td,th,.tabular,.metric-value,.summary-grid strong,.stat-value { font-variant-num
   font-size:var(--fs-xs); font-weight:400;
 }
 
-/* Caixas de seleção e botões de opção ficam de fora: não são campos de texto e
-   não devem herdar largura total nem altura de controle. */
-.field input:not([type="checkbox"]):not([type="radio"]),
-.field select,.field textarea,
-.grupo-input input:not([type="checkbox"]):not([type="radio"]),
-.grupo-input select,.grupo-input textarea {
-  width:100%; min-height:var(--control-h); padding:0 var(--sp-4);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
-  color:var(--text); background:var(--surface);
-  font-size:var(--fs-md);
-  transition:border-color .16s ease, box-shadow .16s ease;
-}
-.field textarea,.grupo-input textarea { min-height:120px; padding-block:var(--sp-3); line-height:1.6; resize:vertical; }
-.field select,.grupo-input select { padding-right:var(--sp-3); cursor:pointer; }
-
-.field input:not([type="checkbox"]):not([type="radio"]):hover,
-.field select:hover,.field textarea:hover,
-.grupo-input input:not([type="checkbox"]):not([type="radio"]):hover,
-.grupo-input select:hover { border-color:#A79F8B; }
-
-.field input:not([type="checkbox"]):not([type="radio"]):focus,
-.field select:focus,.field textarea:focus,
-.grupo-input input:not([type="checkbox"]):not([type="radio"]):focus,
-.grupo-input select:focus,.grupo-input textarea:focus {
-  border-color:var(--text); outline:none; box-shadow:0 0 0 3px rgba(253,207,23,.5);
-}
-/* No teclado o anel completo volta: o Chrome descarta o box-shadow em campos de
-   data e hora quando o foco entra nas partes internas do controle. */
-.field input:not([type="checkbox"]):not([type="radio"]):focus-visible,
-.field select:focus-visible,.field textarea:focus-visible,
-.grupo-input input:not([type="checkbox"]):not([type="radio"]):focus-visible,
-.grupo-input select:focus-visible,.grupo-input textarea:focus-visible {
-  outline:2px solid var(--focus-ink); outline-offset:2px;
-  box-shadow:0 0 0 5px var(--focus-halo);
-}
-.field input::placeholder,.grupo-input input::placeholder,textarea::placeholder { color:var(--text-3); }
-
-.field input:not([type="checkbox"]):not([type="radio"]):disabled,
-.field select:disabled,.field textarea:disabled,
-.grupo-input input:not([type="checkbox"]):not([type="radio"]):disabled,
-.grupo-input select:disabled,
-.input-bloqueado {
-  color:var(--text-2); background:var(--surface-2); border-color:var(--line);
-  cursor:not-allowed;
-}
+/* O controle em si é o .et-campo / .et-caixa de componentes.css; aqui ficam o
+   rótulo, a ajuda, o erro e o input de arquivo. */
 input[type="file"] {
   padding:var(--sp-2); font-size:var(--fs-xs);
   border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--surface);
@@ -272,7 +253,6 @@ input[type="file"]::file-selector-button {
   border:1px solid var(--line-strong); border-radius:var(--radius-sm);
   background:var(--surface-2); font:inherit; font-size:var(--fs-xs); font-weight:600; cursor:pointer;
 }
-input[type="checkbox"],input[type="radio"] { width:20px; height:20px; accent-color:var(--ink); cursor:pointer; }
 
 /* Texto de apoio abaixo de um campo. */
 .grupo-input small,.field-hint {
@@ -288,77 +268,16 @@ input[type="checkbox"],input[type="radio"] { width:20px; height:20px; accent-col
 /* O atributo `hidden` do HTML vale menos que qualquer regra de classe com `display`.
    Sem esta linha a mensagem de erro aparecia já no carregamento da página. */
 .field-erro[hidden] { display:none; }
-.field input[aria-invalid="true"],.grupo-input input[aria-invalid="true"] { border-color:var(--red); }
 
 /* Rótulo de caixa de seleção: o texto acompanha a caixa em vez de ficar acima dela. */
 .opcao-inline {
   display:flex; align-items:flex-start; gap:var(--sp-3);
   margin-bottom:0; font-weight:500; line-height:1.5; cursor:pointer;
 }
-.opcao-inline input { flex:0 0 auto; margin-top:2px; }
+.opcao-inline .et-caixa { margin-top:2px; }
 
 /* ------------------------------------------------------------- botões -- */
-
-/* Ação principal da tela. Uma por bloco. */
-.button-primary,.btn-salvar,.btn-cadastrar,.btn-escolher {
-  display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-2);
-  min-height:var(--control-h); padding:0 var(--sp-6);
-  border:1px solid var(--et-gold-dark); border-radius:var(--et-radius-btn);
-  color:var(--ink); background:var(--et-gold-gradient);
-  font-size:var(--fs-sm); font-weight:700; letter-spacing:.02em;
-  text-decoration:none; cursor:pointer;
-  transition:filter .16s ease, transform .1s ease, box-shadow .16s ease;
-}
-.button-primary:hover,.btn-salvar:hover,.btn-cadastrar:hover,.btn-escolher:hover {
-  filter:brightness(1.07) saturate(1.05);
-  box-shadow:0 8px 22px -12px rgba(245,185,20,.7);
-}
-.button-primary:active,.btn-salvar:active,.btn-cadastrar:active,.btn-escolher:active { transform:translateY(1px); }
-
-/* Ação secundária. */
-.button-secondary {
-  display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-2);
-  min-height:var(--control-h); padding:0 var(--sp-5);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
-  color:var(--text); background:var(--surface);
-  font-size:var(--fs-sm); font-weight:600;
-  text-decoration:none; cursor:pointer;
-  transition:border-color .16s ease, background .16s ease;
-}
-.button-secondary:hover { border-color:var(--text); background:var(--surface-2); }
-
-.button-primary:disabled,.button-secondary:disabled,
-.btn:disabled,.btn-salvar:disabled,.btn-cadastrar:disabled,.btn-escolher:disabled {
-  border-color:var(--line); color:var(--text-3); background:var(--surface-2);
-  cursor:not-allowed; transform:none;
-}
-
-/* Botão compacto para linhas de tabela e listas. */
-.btn {
-  display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-2);
-  min-height:var(--control-h-sm); padding:0 var(--sp-4);
-  border:1px solid var(--line-strong); border-radius:var(--radius);
-  color:var(--text); background:var(--surface);
-  font-size:var(--fs-xs); font-weight:600; white-space:nowrap;
-  text-decoration:none; cursor:pointer;
-  transition:border-color .16s ease, background .16s ease, color .16s ease;
-}
-.btn:hover { border-color:var(--text); background:var(--surface-2); }
-.btn-status { color:var(--text); }
-/* Ação esperada de uma linha (aprovar um cadastro, por exemplo): verde de
-   confirmação, distinta da recusa sem gastar o amarelo, que é da ação
-   principal da tela. */
-.btn-principal { border-color:var(--green); color:var(--green-ink); background:var(--green-bg); font-weight:700; }
-.btn-principal:hover { border-color:var(--green); color:var(--surface); background:var(--green); }
-.btn-remover { border-color:#DCC0BA; color:var(--red-ink); background:var(--red-bg); }
-.btn-remover:hover { border-color:var(--red); color:var(--surface); background:var(--red); }
-
-/* Ação em destaque dentro de uma tabela: usada quando a linha exige decisão
-   (comprovante em análise). */
-.btn-destaque {
-  border-color:var(--yellow); color:var(--ink); background:var(--yellow); font-weight:700;
-}
-.btn-destaque:hover { border-color:var(--gold); color:var(--ink); background:var(--gold); }
+/* O botão é o .et-botao de componentes.css. Aqui só o que envolve botões. */
 
 .form-inline,.form-remover { display:inline-flex; }
 .form-inline button,.form-remover button { font-family:inherit; }
@@ -385,55 +304,10 @@ input[type="checkbox"],input[type="radio"] { width:20px; height:20px; accent-col
 
 /* -------------------------------------------------- avisos e mensagens -- */
 
-/* Aviso escondido pelo JS com `hidden` não pode ser reaberto pelo display:flex abaixo. */
-.alert[hidden],.msg[hidden] { display:none; }
-.alert,.msg {
-  display:flex; align-items:flex-start; gap:var(--sp-3);
-  padding:var(--sp-4) var(--sp-5);
-  border:1px solid var(--red); border-left-width:5px; border-radius:var(--radius);
-  color:var(--red-ink); background:var(--red-bg);
-  font-size:var(--fs-sm); line-height:1.55;
-}
-.msg-sucesso { border-color:var(--green); color:var(--green-ink); background:var(--green-bg); }
-.msg-info    { border-color:var(--blue);  color:var(--blue-ink);  background:var(--blue-bg); }
-.msg-aviso   { border-color:var(--amber); color:var(--amber-ink); background:var(--amber-bg); }
-.alert svg,.msg svg { flex:0 0 auto; width:20px; height:20px; margin-top:1px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+/* Avisos em linha: .et-aviso de componentes.css. */
 
-/* Etiqueta de situação. Sempre cor mais texto, nunca só cor. */
-.status {
-  display:inline-flex; align-items:center; gap:var(--sp-2);
-  padding:5px var(--sp-3); border-radius:var(--radius-pill);
-  font-size:var(--fs-micro); font-weight:700; line-height:1.4;
-  letter-spacing:.04em; text-transform:uppercase; white-space:nowrap;
-}
-.status::before { content:""; flex:0 0 auto; width:7px; height:7px; border-radius:50%; background:currentColor; }
-
-/* Situação de uma mensalidade. */
-.status-pago            { color:var(--green-ink); background:var(--green-bg); }
-.status-pendente        { color:var(--amber-ink); background:var(--amber-bg); }
-.status-atrasado,
-.status-vencido         { color:var(--red-ink);   background:var(--red-bg); }
-.status-cancelado       { color:var(--slate-ink); background:var(--slate-bg); }
-.status-reembolsado     { color:var(--blue-ink);  background:var(--blue-bg); }
-.status-em_processamento{ color:var(--blue-ink);  background:var(--blue-bg); }
-.status-em_analise      { color:var(--amber-ink); background:var(--amber-bg); }
-.status-recusado        { color:var(--red-ink);   background:var(--red-bg); }
-
-/* Situação do PLANO (vigência), diferente do status de uma mensalidade. */
-.status-plano-ativo              { color:var(--green-ink); background:var(--green-bg); }
-.status-plano-aguardando_analise { color:var(--amber-ink); background:var(--amber-bg); }
-.status-plano-em_processamento   { color:var(--blue-ink);  background:var(--blue-bg); }
-.status-plano-a_pagar            { color:var(--amber-ink); background:var(--amber-bg); }
-.status-plano-recusado,
-.status-plano-vencido            { color:var(--red-ink);   background:var(--red-bg); }
-.status-plano-sem_plano          { color:var(--slate-ink); background:var(--slate-bg); }
-
-/* Estado da CONTA de acesso. Tem paleta própria de propósito: "Acesso não ativado"
-   é uma situação neutra do cadastro, não uma pendência financeira nem uma matrícula
-   inativa - pintar de vermelho misturaria três leituras diferentes na mesma tabela. */
-.status-acesso-ativado         { color:var(--green-ink); background:var(--green-bg); }
-.status-acesso-convite_enviado { color:var(--blue-ink);  background:var(--blue-bg); }
-.status-acesso-nao_ativado     { color:var(--slate-ink); background:var(--slate-bg); }
+/* Etiqueta de situação: é o .et-selo de componentes.css (sempre cor mais texto,
+   nunca só cor). */
 
 /* Estado vazio: diz o que falta e, quando cabe, como resolver. */
 .empty-state {
@@ -454,25 +328,10 @@ input[type="checkbox"],input[type="radio"] { width:20px; height:20px; accent-col
 
 /* ------------------------------------------------------------ tabelas -- */
 
-.table-container,.tabela-pagamentos {
-  width:100%; overflow-x:auto;
-  border:1px solid var(--line); border-radius:var(--radius-card);
-  background:var(--surface); -webkit-overflow-scrolling:touch;
-}
-table { width:100%; border-collapse:collapse; background:var(--surface); }
+/* A tabela é o .et-tabela de componentes.css (cabeçalho, linhas, rolagem, busca e
+   ordenação); aqui só o comportamento de qualquer <table>. */
+table { width:100%; border-collapse:collapse; }
 caption { padding:var(--sp-3) var(--sp-5); color:var(--text-2); font-size:var(--fs-xs); text-align:left; }
-
-th,td { padding:var(--sp-4) var(--sp-5); text-align:left; font-size:var(--fs-sm); vertical-align:middle; }
-th {
-  position:sticky; top:0; z-index:1;
-  border-bottom:1px solid var(--line-strong);
-  color:var(--text-2); background:var(--surface-2);
-  font-size:var(--fs-micro); font-weight:700;
-  letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
-}
-td { border-bottom:1px solid var(--line); }
-tbody tr:last-child td { border-bottom:0; }
-tbody tr:hover td { background:#FCFAF2; }
 td strong { font-weight:600; }
 
 /* Célula com uma pessoa: avatar e nome na mesma linha de base. */
@@ -510,31 +369,7 @@ td .student-avatar { vertical-align:middle; }
 .entra-4 { animation-delay:220ms; }
 .entra-5 { animation-delay:280ms; }
 
-/* Resposta ao toque: o controle afunda um pouco e volta. */
-.button-primary,.button-secondary,.btn,.btn-salvar,.btn-cadastrar,.btn-escolher,
-.submit-button,.nav-login,.link-logout,.text-button,.confirm-actions button {
-  transition:background var(--dur-rapida) ease, border-color var(--dur-rapida) ease,
-             color var(--dur-rapida) ease, transform 90ms var(--ease-saida),
-             box-shadow var(--dur-rapida) ease;
-}
-.button-primary:active,.button-secondary:active,.btn:active,.btn-salvar:active,
-.btn-cadastrar:active,.btn-escolher:active,.submit-button:active,.nav-login:active,
-.link-logout:active,.text-button:active,.confirm-actions button:active {
-  transform:scale(.98);
-}
-.button-primary:disabled:active,.button-secondary:disabled:active,.btn:disabled:active,
-.btn-salvar:disabled:active,.btn-cadastrar:disabled:active,.btn-escolher:disabled:active,
-.submit-button:disabled:active { transform:none; }
 
-/* Campos: a borda e o anel acompanham o foco sem piscar. */
-.field input,.field select,.field textarea,
-.grupo-input input,.grupo-input select,.grupo-input textarea {
-  transition:border-color var(--dur-rapida) ease, box-shadow var(--dur-rapida) ease,
-             background var(--dur-rapida) ease;
-}
-
-/* Mensagens de erro e sucesso chegam de cima, curto. */
-.msg,.alert { animation:entra var(--dur-media) var(--ease) both; }
 
 /* ------------------------------------------------- deslize entre telas -- */
 /* Trocar de seção é a outra exceção à regra da entrada única: o conteúdo desliza
@@ -590,8 +425,7 @@ html[data-deslize]::view-transition-new(conteudo) {
   ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*) { animation:none !important; }
 }
 
-/* Selo de situação e linha de tabela mudam de cor sem salto. */
-.status { transition:background var(--dur-rapida) ease, color var(--dur-rapida) ease; }
+/* Linha de tabela muda de cor sem salto (o selo tem a própria transição). */
 tbody tr td { transition:background var(--dur-rapida) ease; }
 
 /* ------------------------------------------------ botão em operação ---- */
@@ -612,12 +446,10 @@ tbody tr td { transition:background var(--dur-rapida) ease; }
 @media (prefers-reduced-motion:reduce) {
   html { scroll-behavior:auto; }
   *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
-  .entra,.entra-1,.entra-2,.entra-3,.entra-4,.entra-5,.msg,.alert {
+  .entra,.entra-1,.entra-2,.entra-3,.entra-4,.entra-5,.et-aviso {
     animation:none !important; opacity:1; transform:none;
   }
-  .button-primary:active,.button-secondary:active,.btn:active,.btn-salvar:active,
-  .btn-cadastrar:active,.btn-escolher:active,.submit-button:active,.nav-login:active,
-  .link-logout:active,.text-button:active,.confirm-actions button:active { transform:none; }
+  .et-botao:active { transform:none; }
   /* O giro vira um traço parado: continua dizendo "em andamento" sem se mexer. */
   [data-ocupado="true"]::after,
   .form-outras-formas[aria-busy="true"] [data-checkout-abrir]::after {
@@ -664,8 +496,6 @@ tbody tr td { transition:background var(--dur-rapida) ease; }
   }
   .table-stack td.acao-cell::before { margin-bottom:var(--sp-1); }
   .table-stack td.acao-cell > * + * { margin-left:0; }
-  /* No toque a área precisa dos 44px. */
-  .table-stack .btn,.table-stack .button-secondary { min-height:44px; }
   /* Linha vazia continua sendo um aviso, não um cartão. */
   .table-stack tbody tr:has(> td.empty-state) { padding:0; border-style:dashed; box-shadow:none; background:transparent; }
   .table-stack td.empty-state { display:block; text-align:center; }
@@ -748,8 +578,7 @@ tbody tr td { transition:background var(--dur-rapida) ease; }
   .table-stack td.acao-cell .form-inline,
   .table-stack td.acao-cell .form-remover { display:block; width:100%; }
   .table-stack td.acao-cell form button,
-  .table-stack td.acao-cell .btn,
-  .table-stack td.acao-cell .button-secondary { width:100%; }
+  .table-stack td.acao-cell .et-botao { width:100%; }
 }
 
 /* ------------------------------------------- alvos de toque no celular -- */
@@ -760,18 +589,15 @@ tbody tr td { transition:background var(--dur-rapida) ease; }
    navegação, botões compactos e as ações em texto que ficam sozinhas. */
 @media (max-width:1023px) {
   .site-brand { min-width:44px; min-height:44px; }
-  .btn { min-height:44px; padding-inline:var(--sp-5); }
-  .form-status select,.form-status button,
-  .form-revisao input,.form-revisao select,.form-revisao button { min-height:44px; }
 }
 @media (max-width:720px) {
   .bottom-nav a { min-height:54px; }
 }
 
 /* Paginação de tabela ------------------------------------------------------
-   Ação secundária: herda `.btn` inteiro e só resolve o arranjo. O estado sem
-   destino usa o mesmo cinza de `.btn:disabled`, para "não há página anterior"
-   parecer o que é - um botão apagado, não um link que não responde. */
+   Os controles são .et-botao pequenos de contorno; aqui só o arranjo. O estado
+   sem destino leva aria-disabled e fica apagado como um botão desabilitado, para
+   "não há página anterior" parecer o que é, não um link que não responde. */
 .paginacao {
   display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
   gap:var(--sp-3); margin-top:var(--sp-5);
@@ -781,17 +607,13 @@ tbody tr td { transition:background var(--dur-rapida) ease; }
 .paginacao-intervalo strong { color:var(--text); font-weight:600; }
 .paginacao-controles { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); }
 .paginacao-posicao { color:var(--text-2); font-size:var(--fs-xs); font-variant-numeric:tabular-nums; }
-.paginacao .btn[aria-disabled="true"] {
-  border-color:var(--line); color:var(--text-3); background:var(--surface-2);
-  cursor:not-allowed; pointer-events:none;
-}
 
 @media (max-width:560px) {
   .paginacao { justify-content:center; text-align:center; }
   /* Numa coluna só: "Página 2 de 3" fica acima dos botões em vez de espremida
      entre eles, e cada botão ganha a linha inteira como alvo de toque. */
   .paginacao-controles { flex-direction:column; width:100%; align-items:stretch; }
-  .paginacao-controles .btn { width:100%; }
+  .paginacao-controles .et-botao { width:100%; }
   /* Só o indicador sobe; "anterior" e "próxima" mantêm a ordem de leitura. */
   .paginacao-posicao { order:-1; }
 }

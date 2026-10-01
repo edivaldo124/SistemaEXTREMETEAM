@@ -46,6 +46,12 @@ class Aluno(db.Model):
 
     # RF: troca de e-mail pelo próprio aluno só é aplicada após confirmação por link
     # enviado ao novo endereço (evita apontar a conta para um e-mail que não é do dono).
+
+    # RF: verificação do endereço de e-mail ao criar o cadastro
+    email_verificado = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
+    token_verificacao_hash = db.Column(db.String(64), nullable=True, index=True)
+    token_verificacao_expira = db.Column(db.DateTime, nullable=True)
+
     email_pendente = db.Column(db.String(150), nullable=True)
     token_email_hash = db.Column(db.String(64), nullable=True, index=True)
     token_email_expira = db.Column(db.DateTime, nullable=True)
@@ -67,7 +73,7 @@ class Aluno(db.Model):
     def __init__(self, nome, datanascimento, cpf, login=None, email=None, telefone=None, senha=None,
                  descricao=None, mensalidade='pendente', plano_id=None, data_vencimento=None,
                  status_cadastro='pendente', ativo=True, graduacao=None,
-                 termos_responsabilidade_versao=None, termos_responsabilidade_aceito_em=None):
+                 termos_responsabilidade_versao=None, termos_responsabilidade_aceito_em=None, email_verificado=False):
         self.nome = nome
         self.login = login or None
         self.datanascimento = datanascimento
@@ -85,6 +91,7 @@ class Aluno(db.Model):
         self.status_cadastro = status_cadastro
         self.ativo = ativo
         self.graduacao = graduacao
+        self.email_verificado = email_verificado
 
     @property
     def iniciais(self):

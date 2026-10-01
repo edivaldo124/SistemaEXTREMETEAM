@@ -29,8 +29,8 @@
                     Disciplina, evolução e resultados reais. Aqui você encontra mais que treino: encontra uma equipe.
                 </p>
                 <div class="hero-actions entra-4">
-                    <a class="button-primary" href="/cadastrar">Criar minha conta</a>
-                    <button class="button-secondary hero-student-btn" type="button" data-abrir-login>Já sou aluno</button>
+                    <a class="et-botao et-botao--principal et-botao--grande" href="/cadastrar">Criar minha conta</a>
+                    <button class="et-botao et-botao--contorno et-botao--grande" type="button" data-abrir-login>Já sou aluno</button>
                 </div>
             </div>
             <div class="hero-visual entra-3" aria-hidden="true">
@@ -182,70 +182,64 @@
     {% if mostrar_cta_fixo %}{% include 'components/cta_fixo.html' %}{% endif %}
 {% endblock %}
 {% block fim_corpo %}
-    <div id="meuModal"
-         class="modal"
-         role="dialog"
-         aria-modal="true"
-         aria-labelledby="modal-title"
-         hidden>
-        <div class="modal-backdrop" data-fechar-login></div>
-        <div class="modal-conteudo">
-            <button type="button"
-                    class="fechar-modal"
-                    data-fechar-login
-                    aria-label="Fechar login" data-tooltip>×</button>
+    <dialog id="meuModal"
+            class="et-dialogo et-dialogo--escuro et-escuro login-dialogo"
+            aria-labelledby="modal-title">
+        <button type="button"
+                class="et-dialogo-fechar et-botao et-botao--fantasma et-botao--icone et-botao--pequeno"
+                data-fechar-login
+                aria-label="Fechar login" data-tooltip><svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
+        <div class="et-dialogo-cabeca">
             <div class="modal-header-brand">
                 <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}"
                      alt=""
                      width="44"
                      height="44">
-                <div>
-                    <h2 id="modal-title">Acesse sua conta</h2>
+                <h2 class="et-dialogo-titulo" id="modal-title">Acesse sua conta</h2>
+            </div>
+            <p class="et-dialogo-descricao">Entre com seu usuário e senha para continuar sua evolução.</p>
+        </div>
+        <form action="/login" method="post">
+            {% include "components/csrf_field.html" %}
+            <div class="field">
+                <label for="inputnome">Usuário</label>
+                <input class="et-campo" type="text"
+                       id="inputnome"
+                       name="loginusuario"
+                       autocomplete="username"
+                       placeholder="Seu usuário cadastrado"
+                       required>
+            </div>
+            <div class="field">
+                <div class="label-row">
+                    <label for="senhausuario">Senha</label>
+                    <a href="/recuperar_senha">Esqueci a senha</a>
+                </div>
+                <div class="campo-senha">
+                    <input class="et-campo" type="password"
+                           id="senhausuario"
+                           name="senhausuario"
+                           autocomplete="current-password"
+                           placeholder="Sua senha"
+                           required>
+                    <button type="button"
+                            id="iconeSenha"
+                            class="icone-senha"
+                            data-alternar-senha
+                            aria-label="Mostrar senha">Ver</button>
                 </div>
             </div>
-            <p class="modal-intro">Entre com seu usuário e senha para continuar sua evolução.</p>
-            <form action="/login" method="post">
-                {% include "components/csrf_field.html" %}
-                <div class="field">
-                    <label for="inputnome">Usuário</label>
-                    <input type="text"
-                           id="inputnome"
-                           name="loginusuario"
-                           autocomplete="username"
-                           placeholder="Seu usuário cadastrado"
-                           required>
-                </div>
-                <div class="field">
-                    <div class="label-row">
-                        <label for="senhausuario">Senha</label>
-                        <a href="/recuperar_senha">Esqueci a senha</a>
-                    </div>
-                    <div class="campo-senha">
-                        <input type="password"
-                               id="senhausuario"
-                               name="senhausuario"
-                               autocomplete="current-password"
-                               placeholder="Sua senha"
-                               required>
-                        <button type="button"
-                                id="iconeSenha"
-                                class="icone-senha"
-                                data-alternar-senha
-                                aria-label="Mostrar senha">Ver</button>
-                    </div>
-                </div>
-                <div class="modal-remember-row">
-                    <label class="checkbox-label" for="modal_lembrar_usuario">
-                        <input type="checkbox" id="modal_lembrar_usuario" name="lembrar_usuario">
-                        <span>Lembrar meu usuário neste aparelho</span>
-                    </label>
-                </div>
-                <button class="button-primary" type="submit">Entrar na minha conta</button>
-            </form>
-            <p class="modal-signup">
-                Novo por aqui?
-                <a href="/cadastrar">Crie sua conta</a>
-            </p>
-        </div>
-    </div>
+            <div class="modal-remember-row">
+                <label class="checkbox-label" for="modal_lembrar_usuario">
+                    <input class="et-caixa" type="checkbox" id="modal_lembrar_usuario" name="lembrar_usuario">
+                    <span>Lembrar meu usuário neste aparelho</span>
+                </label>
+            </div>
+            <button class="et-botao et-botao--principal et-botao--largo" type="submit">Entrar na minha conta</button>
+        </form>
+        <p class="modal-signup">
+            Novo por aqui?
+            <a href="/cadastrar">Crie sua conta</a>
+        </p>
+    </dialog>
 {% endblock %}

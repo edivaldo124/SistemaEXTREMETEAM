@@ -35,7 +35,7 @@
 }
 .et-vazio-titulo { margin:0; font-weight:700; }
 .et-vazio-texto { margin:0; color:var(--text-2); max-width:56ch; }
-.et-vazio .button-secondary { margin-top:var(--sp-2); }
+.et-vazio .et-botao { margin-top:var(--sp-2); }
 
 /* ------------------------------------------------------ anel de progresso -- */
 
@@ -69,7 +69,7 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 .et-toast {
   display:flex; align-items:flex-start; gap:var(--sp-3);
   padding:var(--sp-3) var(--sp-2) var(--sp-3) var(--sp-4);
-  border:1px solid var(--et-line-dark); border-left:4px solid var(--et-toast-cor, var(--et-gold));
+  border:1px solid var(--et-line-dark);
   border-radius:var(--et-radius-btn);
   color:var(--et-text-on-dark); background:var(--et-surface-dark-2);
   box-shadow:var(--et-shadow-dark);
@@ -86,14 +86,8 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   fill:none; stroke:var(--et-toast-cor); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
 }
 .et-toast p { flex:1; margin:2px 0 0; }
-.et-toast-fechar {
-  flex:0 0 auto; display:grid; place-items:center; width:44px; height:44px; margin:-10px 0 -10px 0;
-  border:0; border-radius:var(--et-radius-control); color:var(--et-text-on-dark-muted); background:transparent;
-  cursor:pointer;
-}
-.et-toast-fechar:hover { color:var(--et-text-on-dark); background:rgba(255,255,255,.06); }
-.et-toast-fechar:focus-visible { outline:2px solid var(--focus-ink); outline-offset:-2px; }
-.et-toast-fechar svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+/* O fechar é um .et-botao fantasma de ícone (cores do escuro vêm de theme.css). */
+.et-toast-fechar { margin:-8px 0; }
 .et-toast.saindo { animation:et-toast-sai var(--dur-rapida) var(--ease-saida) both; }
 
 @keyframes et-toast-entra { from { opacity:0; transform:translateY(8px); } }
@@ -126,15 +120,7 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
     backdrop-filter:blur(10px);
     box-shadow:var(--et-shadow-dark);
   }
-  .et-cta-fixo a { flex:1 1 0; min-width:0; min-height:48px; padding:0 var(--sp-3); white-space:nowrap; }
-  .et-cta-fixo .button-secondary {
-    border-color:var(--et-line-dark); color:var(--et-text-on-dark); background:transparent;
-  }
-  .et-cta-fixo .button-secondary:hover { border-color:var(--et-text-on-dark); background:rgba(255,255,255,.06); }
-  .et-cta-fixo .icone {
-    width:20px; height:20px; flex:0 0 auto;
-    fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
-  }
+  .et-cta-fixo .et-botao { flex:1 1 0; min-width:0; padding:0 var(--sp-3); white-space:nowrap; }
   /* Barra de 64px (48 + 2x8 de respiro) a 12px do fim, mais uma folga. */
   body.has-cta-fixo { padding-bottom:calc(92px + var(--safe-b, 0px)); }
   html:has(body.has-cta-fixo) { scroll-padding-bottom:calc(92px + var(--safe-b, 0px)); }
@@ -167,11 +153,7 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 .et-consentimento p { margin:0; color:var(--et-text-on-dark-muted); font-size:var(--fs-sm); line-height:1.5; }
 .et-consentimento a { color:var(--et-gold); font-weight:600; text-underline-offset:3px; }
 .et-consentimento-acoes { display:flex; flex:1 1 220px; gap:var(--sp-2); }
-.et-consentimento-acoes .button-secondary {
-  flex:1 1 0; min-height:44px;
-  border-color:var(--et-line-dark); color:var(--et-text-on-dark); background:transparent;
-}
-.et-consentimento-acoes .button-secondary:hover { border-color:var(--et-text-on-dark); background:rgba(255,255,255,.06); }
+.et-consentimento-acoes .et-botao { flex:1 1 0; }
 
 @media (max-width:768px) {
   body.has-cta-fixo .et-consentimento { bottom:calc(92px + var(--safe-b, 0px)); }
@@ -343,13 +325,10 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 .et-plano--destaque .et-plano-de,
 .et-plano--destaque .et-plano-total { color:var(--et-text-on-dark-muted); }
 .et-plano--destaque .et-plano-economia { color:var(--et-ok-ink-dark); }
-.et-plano-selo {
-  margin:0 0 var(--sp-1); padding:var(--sp-1) var(--sp-3);
-  border:1px solid var(--et-line-dark-strong); border-radius:var(--et-radius-pill);
-  color:var(--et-gold); font-size:var(--fs-micro); font-weight:600; line-height:1.4;
+.et-plano .et-selo { margin:0 0 var(--sp-1); }
+.et-plano--destaque .et-selo--alerta {
+  --selo-tinta:var(--et-warn-ink-dark); --selo-fundo:var(--et-warn-bg-dark); --selo-borda:transparent;
 }
-.et-plano-selo--promo { border-color:transparent; color:var(--et-warn-ink); background:var(--et-warn-bg); }
-.et-plano--destaque .et-plano-selo--promo { color:var(--et-warn-ink-dark); background:var(--et-warn-bg-dark); }
 
 /* Grade: uma coluna no celular com o destaque no topo; faixa de 2+ colunas no
    tablet com o destaque ocupando a linha de cima; no desktop, uma linha só na
@@ -413,6 +392,8 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
    ========================================================================= */
 
 /* ----------------------------------------------------------------- Tabs -- */
+/* Tabs do shadcn/ui: controle segmentado; a aba ativa é a "pastilha" clara sobre
+   o trilho. Comportamento (setas, Home/End) em componentes.js via [data-tabs]. */
 .et-tabs {
   display: flex;
   flex-direction: column;
@@ -420,10 +401,14 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 }
 
 .et-tabs-lista {
-  display: flex;
-  align-items: stretch;
-  gap: var(--sp-2);
-  border-bottom: 1px solid var(--line);
+  display: inline-flex;
+  align-self: flex-start;
+  max-width: 100%;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--et-radius-btn);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -435,40 +420,46 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 
 .et-tabs-lista [role="tab"] {
   display: inline-flex;
+  flex: 1 0 auto;
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  min-height: 44px;
-  min-width: 44px;
-  padding: var(--sp-2) var(--sp-4);
-  border: 0;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  min-height: 40px;
+  padding: 0 var(--sp-4);
+  border: 1px solid transparent;
+  border-radius: calc(var(--et-radius-btn) - 3px);
   background: transparent;
-  color: var(--et-text-muted);
+  color: var(--text-2);
   font-family: var(--et-font-body);
   font-size: var(--fs-sm);
   font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: color var(--dur-rapida) var(--ease), border-color var(--dur-rapida) var(--ease);
+  transition: color var(--dur-rapida) var(--ease), background-color var(--dur-rapida) var(--ease),
+              box-shadow var(--dur-rapida) var(--ease);
 }
 
 .et-tabs-lista [role="tab"]:hover {
-  color: var(--et-text);
+  color: var(--text);
 }
 
 .et-tabs-lista [role="tab"][aria-selected="true"] {
-  color: var(--et-text);
+  border-color: var(--line);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(26, 22, 10, .08);
   font-weight: 600;
-  border-bottom-color: var(--et-gold);
 }
 
 .et-tabs-lista [role="tab"]:focus-visible {
-  outline:2px solid var(--focus-ink);
-  outline-offset: -2px;
-  border-radius: var(--et-radius-control);
+  outline: 2px solid var(--focus-ink);
+  outline-offset: 2px;
+  border-radius: calc(var(--et-radius-btn) - 3px);
+}
+
+@media (max-width: 1023px) {
+  .et-tabs-lista [role="tab"] { min-height: 44px; }
 }
 
 .et-tabs-painel {
@@ -494,45 +485,20 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   display: inline-flex;
 }
 
-.et-menu-botao {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--et-radius-control);
-  background: var(--surface);
-  color: var(--et-text);
-  cursor: pointer;
-  transition: background var(--dur-rapida) var(--ease), border-color var(--dur-rapida) var(--ease), color var(--dur-rapida) var(--ease);
-}
-
-.et-menu-botao:hover {
-  background: var(--surface-2);
-  border-color: var(--line-strong);
-}
-
+/* O gatilho é um .et-botao fantasma de ícone; aqui só o estado aberto e os pontos. */
 .et-menu-botao[aria-expanded="true"] {
-  background: var(--surface-2);
-  border-color: var(--et-gold);
-}
-
-.et-menu-botao:focus-visible {
-  outline:2px solid var(--focus-ink);
-  outline-offset: 2px;
+  color: var(--botao-tinta-forte, var(--text));
+  background: var(--botao-suave, var(--surface-2));
 }
 
 .et-menu-botao svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   fill: currentColor;
-  flex-shrink: 0;
 }
 
+/* DropdownMenu do shadcn/ui: lista flutuante com itens de texto; o perigo fica em
+   vermelho e <hr> separa grupos. */
 .et-menu-lista {
   position: absolute;
   top: calc(100% + var(--sp-1));
@@ -540,24 +506,23 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   z-index: 100;
   display: flex;
   flex-direction: column;
-  min-width: 180px;
+  min-width: 190px;
   max-width: calc(100vw - var(--sp-6));
   padding: var(--sp-1);
   border: 1px solid var(--line);
   border-radius: var(--et-radius-btn);
   background: var(--surface);
   box-shadow: var(--shadow-raised);
+  transform-origin: top right;
   animation: et-menu-entra var(--dur-rapida) var(--ease);
 }
+
+.et-menu-lista--esquerda { transform-origin: top left; }
 
 @keyframes et-menu-entra {
   from {
     opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: scale(.96) translateY(-4px);
   }
 }
 
@@ -566,52 +531,55 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 }
 
 .et-menu-lista form {
-  margin: 0;
-  padding: 0;
   display: block;
   width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.et-menu-lista hr {
+  margin: var(--sp-1) calc(-1 * var(--sp-1));
+  border: 0;
+  border-top: 1px solid var(--line);
 }
 
 .et-menu-lista [role="menuitem"] {
   display: flex;
   align-items: center;
+  gap: var(--sp-2);
   width: 100%;
-  min-height: 44px;
-  padding: var(--sp-2) var(--sp-3);
-  box-sizing: border-box;
+  min-height: 40px;
+  padding: 0 var(--sp-3);
   border: 0;
   border-radius: var(--et-radius-control);
   background: transparent;
-  color: var(--et-text);
+  color: var(--text);
   font-family: var(--et-font-body);
   font-size: var(--fs-sm);
   font-weight: 500;
-  text-decoration: none;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
-  transition: background var(--dur-rapida) var(--ease), color var(--dur-rapida) var(--ease);
+  transition: background-color var(--dur-rapida) var(--ease), color var(--dur-rapida) var(--ease);
 }
 
 .et-menu-lista [role="menuitem"]:hover,
 .et-menu-lista [role="menuitem"]:focus-visible {
   background: var(--surface-2);
-  color: var(--et-text);
-  outline: none;
 }
 
 .et-menu-lista [role="menuitem"]:focus-visible {
-  outline:2px solid var(--focus-ink);
+  outline: 2px solid var(--focus-ink);
   outline-offset: -2px;
 }
 
-.et-menu-lista .et-menu-perigo {
-  color: var(--et-bad-ink);
-}
+.et-menu-lista .et-menu-perigo { color: var(--red-ink); }
 
 .et-menu-lista .et-menu-perigo:hover,
-.et-menu-lista .et-menu-perigo:focus-visible {
-  background: var(--et-bad-bg);
-  color: var(--et-bad-ink);
+.et-menu-lista .et-menu-perigo:focus-visible { background: var(--red-bg); }
+
+@media (max-width: 1023px) {
+  .et-menu-lista [role="menuitem"] { min-height: 44px; }
 }
 
 /* ------------------------------------------------------------- Tooltip -- */
@@ -633,49 +601,50 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   box-shadow: var(--et-shadow-dark);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(4px);
+  transform: scale(.96);
   transition: opacity var(--dur-rapida) var(--ease), transform var(--dur-rapida) var(--ease), visibility var(--dur-rapida) var(--ease);
 }
 
 .et-tooltip.et-tooltip--visivel {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: none;
 }
 
 /* ----------------------------------------------------------- Accordion -- */
+/* Visual do accordion do shadcn/ui sobre <details> nativo: itens separados por
+   linhas (sem cartão), chevron que gira e altura animada. Um acordeão sozinho, ou o
+   primeiro de uma sequência, ganha também a linha de cima para não ficar solto.
+   Fundo escuro: redefina as --acordeao-* (ver termos.css). */
 .et-acordeao {
+  --acordeao-linha: var(--line);
+  --acordeao-titulo: var(--et-text);
+  --acordeao-texto: var(--text-2);
+  --acordeao-seta: var(--et-text-muted);
+  --acordeao-seta-aberta: var(--et-gold-dark);  /* --et-gold some no fundo claro */
   display: block;
-  border: 1px solid var(--line);
-  border-radius: var(--et-radius-btn);
-  background: var(--surface);
-  overflow: hidden;
-  transition: border-color var(--dur-rapida) var(--ease), box-shadow var(--dur-rapida) var(--ease);
+  border-bottom: 1px solid var(--acordeao-linha);
 }
 
-.et-acordeao + .et-acordeao {
-  margin-top: var(--sp-2);
-}
-
-.et-acordeao[open] {
-  border-color: var(--line-strong);
-  box-shadow: var(--shadow-card);
+.et-acordeao:not(.et-acordeao + .et-acordeao) {
+  border-top: 1px solid var(--acordeao-linha);
 }
 
 .et-acordeao > summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--sp-4);
   min-height: 44px;
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-4) 0;
   font-family: var(--et-font-body);
   font-size: var(--fs-md);
   font-weight: 600;
-  color: var(--et-text);
+  color: var(--acordeao-titulo);
   cursor: pointer;
   user-select: none;
   list-style: none;
-  transition: background var(--dur-rapida) var(--ease);
+  text-underline-offset: 4px;
 }
 
 .et-acordeao > summary::-webkit-details-marker {
@@ -683,40 +652,702 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 }
 
 .et-acordeao > summary:hover {
-  background: var(--surface-2);
+  text-decoration: underline;
 }
 
 .et-acordeao > summary:focus-visible {
-  outline:2px solid var(--focus-ink);
-  outline-offset: -2px;
+  outline: 2px solid var(--focus-ink);
+  outline-offset: 2px;
+  border-radius: var(--et-radius-control);
 }
 
-/* Seta indicadora via CSS (details[open] > summary) */
+/* chevron-down do Lucide (o ícone do shadcn), pintado pela máscara com a cor da seta */
 .et-acordeao > summary::after {
   content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid var(--et-text-muted);
-  border-bottom: 2px solid var(--et-text-muted);
-  transform: rotate(45deg);
-  transition: transform var(--dur-rapida) var(--ease), border-color var(--dur-rapida) var(--ease);
-  margin-left: var(--sp-3);
   flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  background-color: var(--acordeao-seta);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform var(--dur-media) var(--ease), background-color var(--dur-media) var(--ease);
 }
 
 .et-acordeao[open] > summary::after {
-  transform: rotate(-135deg);
-  border-color: var(--et-gold);
+  transform: rotate(180deg);
+  background-color: var(--acordeao-seta-aberta);
 }
 
 .et-acordeao-corpo {
-  padding: var(--sp-4);
-  border-top: 1px solid var(--line);
+  padding: 0 0 var(--sp-4);
+  color: var(--acordeao-texto);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+/* Altura animada ao abrir e fechar. Onde o navegador não anima até "auto", o
+   <details> abre na hora, como antes. overflow-y (e não overflow) para não cortar
+   anel de foco nem sombra de cartão nas laterais. */
+@supports (interpolate-size: allow-keywords) and selector(::details-content) {
+  .et-acordeao {
+    interpolate-size: allow-keywords;
+  }
+
+  .et-acordeao::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition: block-size var(--dur-media) var(--ease), content-visibility var(--dur-media) allow-discrete;
+  }
+
+  .et-acordeao[open]::details-content {
+    block-size: auto;
+  }
+
+  /* Fica aqui, e não na lista de movimento reduzido do fim do arquivo: um seletor
+     desconhecido derrubaria a lista inteira. */
+  @media (prefers-reduced-motion: reduce) {
+    .et-acordeao::details-content { transition: none; }
+  }
+}
+
+/* ---------------------------------------------------------------- Botão -- */
+/* O Button do shadcn/ui com a marca: uma base, uma variante de cor e, se preciso,
+   um tamanho. É o único botão do sistema; não crie regra de botão por página, só
+   de layout (largura, margem).
+     class="et-botao et-botao--principal"                  ação principal do bloco
+     class="et-botao et-botao--contorno et-botao--pequeno"  ação de linha de tabela
+   Variantes: principal, secundario, contorno, fantasma, perigo, confirmar, link.
+   Tamanhos: pequeno, grande, icone. Forma: pilula. Largura: largo.
+   Em bloco de fundo escuro (theme.css) o contorno, o fantasma, o secundário e o link
+   leem as --botao-* de lá. */
+.et-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--control-h);
+  padding: 0 var(--sp-5);
+  border: 1px solid transparent;
+  border-radius: var(--botao-raio, var(--et-radius-btn));
+  font-family: var(--et-font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-rapida) var(--ease), border-color var(--dur-rapida) var(--ease),
+              color var(--dur-rapida) var(--ease), box-shadow var(--dur-rapida) var(--ease),
+              filter var(--dur-rapida) var(--ease), transform 90ms var(--ease-saida);
+}
+.et-botao:active { transform: scale(.98); }
+/* O :focus-visible global (theme.css, que importa este arquivo e por isso vence no
+   empate) arredonda o foco em 8px; o botão mantém a própria forma. */
+.et-botao:focus-visible { border-radius: var(--botao-raio, var(--et-radius-btn)); }
+.et-botao:disabled,
+.et-botao[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+.et-botao .icone { width: 16px; height: 16px; }
+
+.et-botao--principal {
+  border-color: var(--et-gold-dark);
+  color: var(--ink);
+  background: var(--et-gold-gradient);
+  font-weight: 700;
+  letter-spacing: .02em;
+  box-shadow: 0 1px 2px rgba(26, 22, 10, .08);
+}
+.et-botao--principal:hover {
+  filter: brightness(1.07) saturate(1.05);
+  box-shadow: 0 8px 22px -12px rgba(245, 185, 20, .7);
+}
+
+.et-botao--secundario {
+  color: var(--botao-tinta, var(--text));
+  background: var(--botao-suave, var(--surface-2));
+}
+.et-botao--secundario:hover { background: var(--botao-suave-forte, var(--line)); }
+
+.et-botao--contorno {
+  border-color: var(--botao-borda, var(--line-strong));
+  color: var(--botao-tinta, var(--text));
+  background: var(--botao-fundo, var(--surface));
+}
+.et-botao--contorno:hover {
+  border-color: var(--botao-borda-forte, var(--text));
+  color: var(--botao-tinta-forte, var(--text));
+  background: var(--botao-suave, var(--surface-2));
+}
+
+.et-botao--fantasma { color: var(--botao-tinta, var(--text)); background: transparent; }
+.et-botao--fantasma:hover {
+  color: var(--botao-tinta-forte, var(--text));
+  background: var(--botao-suave, var(--surface-2));
+}
+
+.et-botao--perigo {
+  border-color: color-mix(in srgb, var(--red) 30%, var(--red-bg));
+  color: var(--red-ink);
+  background: var(--red-bg);
+}
+.et-botao--perigo:hover { border-color: var(--red); color: var(--surface); background: var(--red); }
+/* Destrutivo: o vermelho cheio da confirmação final (diálogo). Em linhas de tabela,
+   use o --perigo, mais leve. */
+.et-botao--destrutivo { border-color: var(--red); color: var(--surface); background: var(--red); font-weight: 700; }
+.et-botao--destrutivo:hover { border-color: var(--red-ink); background: var(--red-ink); }
+
+/* Ação esperada de uma linha (aprovar um cadastro): o verde confirma sem gastar o
+   dourado, que é da ação principal da tela. */
+.et-botao--confirmar {
+  border-color: var(--green);
+  color: var(--green-ink);
+  background: var(--green-bg);
+  font-weight: 700;
+}
+.et-botao--confirmar:hover { color: var(--surface); background: var(--green); }
+
+.et-botao--link {
+  padding-inline: 0;
+  color: var(--botao-tinta, var(--text));
+  background: transparent;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+}
+.et-botao--link:hover { text-decoration-color: currentColor; }
+
+.et-botao--pequeno {
+  min-height: var(--control-h-sm);
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+.et-botao--grande {
+  min-height: var(--control-h-lg);
+  padding: 0 var(--sp-7);
+  font-size: var(--fs-md);
+}
+.et-botao--icone { width: var(--control-h); padding: 0; }
+.et-botao--icone.et-botao--pequeno { width: var(--control-h-sm); }
+.et-botao--pilula { --botao-raio: var(--et-radius-pill); }
+.et-botao--largo { width: 100%; }
+
+/* No toque, 44px é o mínimo confortável. */
+@media (max-width: 1023px) {
+  .et-botao--pequeno { min-height: 44px; }
+  .et-botao--icone.et-botao--pequeno { width: 44px; }
+}
+
+/* ---------------------------------------------------------------- Campo -- */
+/* Input, Select e Textarea do shadcn/ui com a marca. A classe vai no próprio
+   controle; rótulo, ajuda e erro continuam em .field / .grupo-input (theme.css).
+     <input class="et-campo">   <select class="et-campo">   <textarea class="et-campo">
+   Tamanho: --pequeno (barras de ferramentas e linhas de tabela). Não editável de
+   propósito: --bloqueado. Inválido: aria-invalid="true". */
+.et-campo {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control-h);
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--et-radius-btn);
+  color: var(--text);
+  background-color: var(--surface);
+  box-shadow: 0 1px 2px rgba(26, 22, 10, .05);
+  font-family: var(--et-font-body);
+  font-size: var(--fs-md);
+  transition: border-color var(--dur-rapida) var(--ease), box-shadow var(--dur-rapida) var(--ease);
+}
+.et-campo::placeholder { color: var(--text-3); }
+.et-campo:hover { border-color: color-mix(in srgb, var(--line-strong), var(--text) 25%); }
+.et-campo:focus {
+  border-color: var(--et-gold-dark);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(245, 185, 20, .35);
+}
+/* No teclado o anel completo volta: o Chrome descarta o box-shadow em campos de
+   data e hora quando o foco entra nas partes internas do controle. */
+.et-campo:focus-visible {
+  border-radius: var(--et-radius-btn);
+  outline: 2px solid var(--focus-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--focus-halo);
+}
+.et-campo[aria-invalid="true"] {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 18%, transparent);
+}
+.et-campo:disabled { opacity: .5; cursor: not-allowed; }
+.et-campo--bloqueado {
+  border-color: var(--line);
+  color: var(--text-2);
+  background-color: var(--surface-2);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+textarea.et-campo {
+  min-height: 120px;
+  padding-block: var(--sp-3);
+  line-height: 1.6;
+  resize: vertical;
+}
+/* Select nativo com o chevron do shadcn no lugar da seta de cada sistema. */
+select.et-campo {
+  padding-right: calc(var(--sp-4) + 24px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgb(76,81,85)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--sp-3) center;
+  background-size: 16px;
+  appearance: none;
+  cursor: pointer;
+}
+.et-campo--pequeno {
+  min-height: var(--control-h-sm);
+  padding-inline: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+select.et-campo--pequeno { padding-right: calc(var(--sp-3) + 24px); }
+@media (max-width: 1023px) {
+  .et-campo--pequeno { min-height: 44px; }
+}
+
+/* ---------------------------------------------------------------- Caixa -- */
+/* Checkbox e radio do shadcn/ui: <input type="checkbox" class="et-caixa">. Tamanho e
+   cor de marcado vêm de --caixa-* (a lista de presença usa uma caixa maior e verde;
+   no escuro, theme.css troca para o dourado). */
+.et-caixa {
+  flex: 0 0 auto;
+  width: var(--caixa-tamanho, 20px);
+  height: var(--caixa-tamanho, 20px);
+  margin: 0;
+  border: 1px solid var(--caixa-borda, var(--line-strong));
+  border-radius: 6px;
+  background: var(--caixa-fundo, var(--surface)) center / 70% no-repeat;
+  box-shadow: 0 1px 2px rgba(26, 22, 10, .05);
+  appearance: none;
+  cursor: pointer;
+  transition: background-color var(--dur-rapida) var(--ease), border-color var(--dur-rapida) var(--ease);
+}
+.et-caixa[type="radio"] { border-radius: 50%; }
+.et-caixa:focus-visible { border-radius: 6px; }
+.et-caixa[type="radio"]:focus-visible { border-radius: 50%; }
+.et-caixa:hover { border-color: var(--caixa-marcada, var(--ink)); }
+.et-caixa:checked {
+  border-color: var(--caixa-marcada, var(--ink));
+  background-color: var(--caixa-marcada, var(--ink));
+  background-image: var(--caixa-sinal, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"));
+}
+.et-caixa[type="radio"]:checked {
+  background-image: radial-gradient(circle, var(--caixa-ponto, var(--surface)) 0 30%, transparent 34%);
+  background-size: 100%;
+}
+.et-caixa[aria-invalid="true"] { border-color: var(--red); }
+.et-caixa:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ----------------------------------------------------------------- Selo -- */
+/* Badge do shadcn/ui com a marca: <span class="et-selo et-selo--ok">Conectada</span>.
+   Tons: ok, alerta, perigo, info, neutro, destaque. Situação de mensalidade, plano
+   ou acesso: et-selo--situacao (ponto e maiúsculas) + data-situacao="<estado>"; o
+   tom de cada estado é decidido só aqui, e o JS só troca o atributo. */
+.et-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 3px var(--sp-2);
+  border: 1px solid var(--selo-borda, var(--line-strong));
+  border-radius: 6px;
+  color: var(--selo-tinta, var(--text));
+  background: var(--selo-fundo, var(--surface));
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: background-color var(--dur-rapida) var(--ease), color var(--dur-rapida) var(--ease),
+              border-color var(--dur-rapida) var(--ease);
+}
+.et-selo svg { flex: 0 0 auto; width: 14px; height: 14px; }
+.et-selo--situacao {
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.et-selo--situacao::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.et-selo--ok,
+.et-selo[data-situacao="pago"],
+.et-selo[data-situacao="plano-ativo"],
+.et-selo[data-situacao="acesso-ativado"] {
+  --selo-tinta: var(--green-ink);
+  --selo-fundo: var(--green-bg);
+  --selo-borda: color-mix(in srgb, var(--green) 25%, var(--green-bg));
+}
+.et-selo--alerta,
+.et-selo[data-situacao="pendente"],
+.et-selo[data-situacao="em_analise"],
+.et-selo[data-situacao="plano-aguardando_analise"],
+.et-selo[data-situacao="plano-a_pagar"] {
+  --selo-tinta: var(--amber-ink);
+  --selo-fundo: var(--amber-bg);
+  --selo-borda: color-mix(in srgb, var(--amber) 25%, var(--amber-bg));
+}
+.et-selo--perigo,
+.et-selo[data-situacao="atrasado"],
+.et-selo[data-situacao="vencido"],
+.et-selo[data-situacao="recusado"],
+.et-selo[data-situacao="plano-recusado"],
+.et-selo[data-situacao="plano-vencido"] {
+  --selo-tinta: var(--red-ink);
+  --selo-fundo: var(--red-bg);
+  --selo-borda: color-mix(in srgb, var(--red) 25%, var(--red-bg));
+}
+.et-selo--info,
+.et-selo[data-situacao="reembolsado"],
+.et-selo[data-situacao="em_processamento"],
+.et-selo[data-situacao="plano-em_processamento"],
+.et-selo[data-situacao="acesso-convite_enviado"] {
+  --selo-tinta: var(--blue-ink);
+  --selo-fundo: var(--blue-bg);
+  --selo-borda: color-mix(in srgb, var(--blue) 25%, var(--blue-bg));
+}
+/* "Acesso não ativado" é uma situação neutra do cadastro, não uma pendência
+   financeira: pintar de vermelho misturaria leituras diferentes na mesma tabela. */
+.et-selo--neutro,
+.et-selo[data-situacao="cancelado"],
+.et-selo[data-situacao="plano-sem_plano"],
+.et-selo[data-situacao="acesso-nao_ativado"] {
+  --selo-tinta: var(--slate-ink);
+  --selo-fundo: var(--slate-bg);
+  --selo-borda: color-mix(in srgb, var(--slate) 25%, var(--slate-bg));
+}
+.et-selo--destaque {
+  --selo-tinta: var(--et-gold-dark);
+  --selo-fundo: transparent;
+  --selo-borda: var(--et-gold-dark);
+}
+.et-escuro .et-selo--destaque,
+.et-plano--destaque .et-selo--destaque {
+  --selo-tinta: var(--et-gold);
+  --selo-borda: var(--et-line-dark-strong);
+}
+
+/* ---------------------------------------------------------------- Aviso -- */
+/* Alert do shadcn/ui com a marca: <div class="et-aviso et-aviso--perigo" role="alert">.
+   Um <svg> como primeiro filho vira a coluna do ícone; .et-aviso-titulo é o título
+   opcional. Tons: ok, info, alerta, perigo (sem tom: neutro). Sobre fundo escuro
+   (login, termos, .et-escuro) os tons usam as versões escuras. */
+.et-aviso {
+  position: relative;
+  display: block;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--aviso-borda, var(--line-strong));
+  border-radius: var(--et-radius-btn);
+  color: var(--aviso-tinta, var(--text));
+  background: var(--aviso-fundo, var(--surface));
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  animation: entra var(--dur-media) var(--ease) both;
+}
+/* `hidden` vale menos que o display:block acima: o JS esconde e reabre avisos. */
+.et-aviso[hidden] { display: none; }
+/* Bloco comum, e não grade: há avisos com texto corrido e <strong> soltos, que
+   numa grade virariam um item (e uma linha) cada. O ícone fica na margem recuada. */
+.et-aviso:has(> svg:first-child) { padding-left: calc(var(--sp-4) + 20px + var(--sp-3)); }
+.et-aviso > svg:first-child {
+  position: absolute;
+  top: calc(var(--sp-3) + 2px);
+  left: var(--sp-4);
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.et-aviso > p { margin: 0; }
+.et-aviso > p + p { margin-top: 2px; }
+.et-aviso-titulo { font-weight: 600; }
+
+.et-aviso--ok {
+  --aviso-tinta: var(--green-ink);
+  --aviso-fundo: var(--green-bg);
+  --aviso-borda: color-mix(in srgb, var(--green) 35%, var(--green-bg));
+}
+.et-aviso--info {
+  --aviso-tinta: var(--blue-ink);
+  --aviso-fundo: var(--blue-bg);
+  --aviso-borda: color-mix(in srgb, var(--blue) 35%, var(--blue-bg));
+}
+.et-aviso--alerta {
+  --aviso-tinta: var(--amber-ink);
+  --aviso-fundo: var(--amber-bg);
+  --aviso-borda: color-mix(in srgb, var(--amber) 35%, var(--amber-bg));
+}
+.et-aviso--perigo {
+  --aviso-tinta: var(--red-ink);
+  --aviso-fundo: var(--red-bg);
+  --aviso-borda: color-mix(in srgb, var(--red) 35%, var(--red-bg));
+}
+:is(.auth-shell, .termos-page-shell, .et-escuro) .et-aviso--ok {
+  --aviso-tinta: var(--et-ok-ink-dark); --aviso-fundo: var(--et-ok-bg-dark); --aviso-borda: var(--et-ok-bg-dark);
+}
+:is(.auth-shell, .termos-page-shell, .et-escuro) .et-aviso--info {
+  --aviso-tinta: var(--et-info-ink-dark); --aviso-fundo: var(--et-info-bg-dark); --aviso-borda: var(--et-info-bg-dark);
+}
+:is(.auth-shell, .termos-page-shell, .et-escuro) .et-aviso--alerta {
+  --aviso-tinta: var(--et-warn-ink-dark); --aviso-fundo: var(--et-warn-bg-dark); --aviso-borda: var(--et-warn-bg-dark);
+}
+:is(.auth-shell, .termos-page-shell, .et-escuro) .et-aviso--perigo {
+  --aviso-tinta: var(--et-bad-ink-dark); --aviso-fundo: var(--et-bad-bg-dark); --aviso-borda: rgba(229, 57, 53, .4);
+}
+
+/* --------------------------------------------------------------- Cartão -- */
+/* Card do shadcn/ui com a marca: o painel claro de cada seção.
+     <section class="et-cartao">
+       <div class="et-cartao-cabeca">
+         <h2 class="et-cartao-titulo">Planos</h2>
+         <p class="et-cartao-descricao">Cadastre e organize…</p>
+         <a class="et-cartao-acao et-botao …">Novo</a>        (opcional)
+       </div>
+       …conteúdo…
+     </section>
+   Margem entre cartões é da página, não do cartão. A cabeça também serve a seções
+   que não são cartão (área do aluno), com a mesma hierarquia. */
+.et-cartao {
+  padding: clamp(var(--sp-5), 3vw, var(--sp-7));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.et-cartao-cabeca {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-5);
+  margin-bottom: var(--sp-6);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.et-cartao-cabeca > :not(.et-cartao-acao) { grid-column: 1; }
+.et-cartao-acao { grid-column: 2; grid-row: 1 / span 3; justify-self: end; }
+.et-cartao-titulo {
+  margin: 0;
+  font: 400 var(--h2)/1.1 var(--et-font-display);
+  text-transform: uppercase;
+}
+.et-cartao-descricao {
+  max-width: 70ch;
+  margin: 0;
   color: var(--text-2);
   font-size: var(--fs-sm);
   line-height: 1.6;
 }
+@media (max-width: 540px) {
+  .et-cartao { border-radius: var(--radius-card); }
+  .et-cartao-cabeca { margin-bottom: var(--sp-5); }
+}
+
+/* -------------------------------------------------------------- Diálogo -- */
+/* Dialog / AlertDialog do shadcn/ui com a marca, sobre <dialog> nativo (foco preso,
+   Esc e fundo inerte vêm do navegador):
+     <dialog class="et-dialogo">
+       <button class="et-dialogo-fechar et-botao et-botao--fantasma et-botao--icone et-botao--pequeno" aria-label="Fechar">…X…</button>
+       <div class="et-dialogo-cabeca">
+         <p class="eyebrow">…</p> <h2 class="et-dialogo-titulo">…</h2> <p class="et-dialogo-descricao">…</p>
+       </div>
+       …corpo…
+       <div class="et-dialogo-rodape"> cancelar (contorno) · ação </div>
+     </dialog>
+   Largura: --dialogo-largura. Escuro (login): --escuro. No celular vira folha que
+   sobe de baixo. */
+.et-dialogo {
+  position: fixed;
+  width: min(var(--dialogo-largura, 480px), calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: var(--sp-7);
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--et-gold);  /* acabamento de marca de todo diálogo */
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-dialogo);
+  /* Saída: some e encolhe um pouco, rápido. */
+  opacity: 0;
+  scale: .96;
+  transition:
+    opacity 180ms var(--ease-saida),
+    scale 180ms var(--ease-saida),
+    overlay 180ms var(--ease-saida) allow-discrete,
+    display 180ms var(--ease-saida) allow-discrete;
+}
+.et-dialogo[open] {
+  opacity: 1;
+  scale: 1;
+  transition:
+    opacity 240ms var(--ease),
+    scale 240ms var(--ease),
+    overlay 240ms var(--ease) allow-discrete,
+    display 240ms var(--ease) allow-discrete;
+}
+@starting-style {
+  .et-dialogo[open] { opacity: 0; scale: .96; }
+  .et-dialogo[open]::backdrop { opacity: 0; }
+}
+.et-dialogo::backdrop {
+  background: rgba(0, 0, 0, .7);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition:
+    opacity 180ms var(--ease-saida),
+    overlay 180ms var(--ease-saida) allow-discrete,
+    display 180ms var(--ease-saida) allow-discrete;
+}
+.et-dialogo[open]::backdrop {
+  opacity: 1;
+  transition:
+    opacity 240ms var(--ease),
+    overlay 240ms var(--ease) allow-discrete,
+    display 240ms var(--ease) allow-discrete;
+}
+
+.et-dialogo-fechar { position: absolute; top: var(--sp-4); right: var(--sp-4); }
+.et-dialogo-cabeca { margin-bottom: var(--sp-5); padding-right: var(--sp-8); }
+.et-dialogo-cabeca .eyebrow { margin-bottom: var(--sp-2); }
+.et-dialogo-titulo {
+  margin: 0;
+  font: 400 var(--h2)/1.1 var(--et-font-display);
+  text-transform: uppercase;
+}
+.et-dialogo-descricao {
+  max-width: 52ch;
+  margin: var(--sp-3) 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.65;
+}
+/* Ícone do AlertDialog: âmbar; vermelho quando a ação é destrutiva. */
+.et-dialogo-icone {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--sp-5);
+  border-radius: var(--et-radius-pill);
+  color: var(--amber-ink);
+  background: var(--amber-bg);
+}
+.et-dialogo-icone svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.et-dialogo[data-variant="danger"] { border-top-color: var(--red); }
+.et-dialogo[data-variant="danger"] .et-dialogo-icone { color: var(--red-ink); background: var(--red-bg); }
+/* A ação que a pessoa veio fazer fica à direita. */
+.et-dialogo-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  margin-top: var(--sp-7);
+}
+
+.et-dialogo--escuro {
+  border-color: rgba(245, 185, 20, .48);
+  border-top-color: var(--et-gold);
+  color: var(--et-text-on-dark);
+  background: var(--et-surface-dark);
+}
+.et-dialogo--escuro .et-dialogo-titulo { color: var(--et-text-on-dark); }
+.et-dialogo--escuro .et-dialogo-descricao { color: var(--et-text-on-dark-muted); }
+
+/* Celular: folha colada embaixo, com a alça. */
+@media (max-width: 640px) {
+  .et-dialogo {
+    width: 100%;
+    max-width: 100%;
+    max-height: 88dvh;
+    margin: auto 0 0;
+    padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    opacity: 1;
+    scale: 1;
+    translate: 0 100%;
+    transition:
+      translate 200ms var(--ease-saida),
+      overlay 200ms var(--ease-saida) allow-discrete,
+      display 200ms var(--ease-saida) allow-discrete;
+  }
+  .et-dialogo[open] {
+    translate: 0 0;
+    transition:
+      translate 280ms var(--ease),
+      overlay 280ms var(--ease) allow-discrete,
+      display 280ms var(--ease) allow-discrete;
+  }
+  @starting-style {
+    .et-dialogo[open] { translate: 0 100%; }
+  }
+  .et-dialogo::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto var(--sp-4);
+    border-radius: var(--et-radius-pill);
+    background: var(--line);
+    pointer-events: none;
+  }
+  .et-dialogo--escuro::before { background: var(--et-line-dark-strong); }
+}
+@media (max-width: 480px) {
+  .et-dialogo-rodape { flex-direction: column-reverse; }
+  .et-dialogo-rodape > .et-botao,
+  .et-dialogo-rodape > form,
+  .et-dialogo-rodape > form > .et-botao { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .et-dialogo,
+  .et-dialogo[open] {
+    scale: none;
+    translate: none;
+    transition: opacity 120ms ease, overlay 120ms allow-discrete, display 120ms allow-discrete;
+  }
+  @starting-style {
+    .et-dialogo[open] { opacity: 0; scale: none; translate: none; }
+  }
+  .et-dialogo::backdrop,
+  .et-dialogo[open]::backdrop {
+    transition: opacity 120ms ease, overlay 120ms allow-discrete, display 120ms allow-discrete;
+  }
+}
+
+/* ------------------------------------------------------------ Separador -- */
+/* Separator do shadcn/ui com rótulo: <p class="et-separador">ou use seu usuário</p>.
+   Sobre o escuro (login, cadastro, .et-escuro) o texto e as linhas clareiam. */
+.et-separador {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin: var(--sp-5) 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+.et-separador::before,
+.et-separador::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+:is(.auth-shell, .et-escuro) .et-separador { color: var(--et-text-on-dark-muted); }
+:is(.auth-shell, .et-escuro) .et-separador::before,
+:is(.auth-shell, .et-escuro) .et-separador::after { background: var(--et-line-dark-strong); }
 
 /* --------------------------------------------- Botão com carregamento -- */
 .et-carregando {
@@ -774,35 +1405,9 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   max-width: 320px;
 }
 
-.et-tabela-busca input[type="search"] {
-  width: 100%;
+.et-tabela-busca .et-campo {
   min-height: 44px;
-  padding: var(--sp-2) var(--sp-4);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--et-radius-control);
-  background: var(--surface-2);
-  color: var(--et-text);
-  font-family: var(--et-font-body);
-  font-size: var(--fs-sm);
-  transition: border-color var(--dur-rapida) var(--ease), box-shadow var(--dur-rapida) var(--ease);
-}
-
-.et-tabela-busca input[type="search"]::placeholder {
-  color: var(--text-3);
-}
-
-.et-tabela-busca input[type="search"]:hover {
-  border-color: var(--et-text-muted);
-}
-
-.et-tabela-busca input[type="search"]:focus {
-  border-color: var(--et-text);
-  outline: none;
-}
-
-.et-tabela-busca input[type="search"]:focus-visible {
-  outline:2px solid var(--focus-ink);
-  outline-offset: 2px;
+  background-color: var(--surface-2);
 }
 
 /* Cabeçalho fixo (position:sticky no th dentro de .et-tabela-rolagem)
@@ -878,39 +1483,40 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   outline-offset: -2px;
 }
 
-/* Seta de ordenação via th[aria-sort] */
+/* Ordenação (th[aria-sort]): ícones do Lucide pintados pela máscara, como no
+   DataTable do shadcn: setas duplas apagadas até a coluna ser escolhida. */
 .et-tabela th[aria-sort] button::after {
   content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg);
-  opacity: 0.25;
-  transition: transform var(--dur-rapida) var(--ease), opacity var(--dur-rapida) var(--ease), border-color var(--dur-rapida) var(--ease);
-  margin-left: var(--sp-2);
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-left: var(--sp-2);
+  background-color: currentColor;
+  opacity: .35;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 15 5 5 5-5M7 9l5-5 5 5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 15 5 5 5-5M7 9l5-5 5 5'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: opacity var(--dur-rapida) var(--ease);
 }
 
-.et-tabela th[aria-sort="ascending"] {
-  color: var(--et-text);
-}
-
-.et-tabela th[aria-sort="ascending"] button::after {
-  transform: rotate(-135deg) translateY(-2px);
-  opacity: 1;
-  border-color: var(--et-gold-dark);
-}
-
+.et-tabela th[aria-sort="ascending"],
 .et-tabela th[aria-sort="descending"] {
   color: var(--et-text);
 }
 
+.et-tabela th[aria-sort="ascending"] button::after,
 .et-tabela th[aria-sort="descending"] button::after {
-  transform: rotate(45deg) translateY(-2px);
+  background-color: var(--et-gold-dark);
   opacity: 1;
-  border-color: var(--et-gold-dark);
+}
+
+.et-tabela th[aria-sort="ascending"] button::after {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m18 15-6-6-6 6'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m18 15-6-6-6 6'/%3E%3C/svg%3E");
+}
+
+.et-tabela th[aria-sort="descending"] button::after {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 
 .et-tabela td {
@@ -925,8 +1531,12 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   font-variant-numeric: tabular-nums;
 }
 
-.et-tabela td .btn {
+.et-tabela td .et-botao--pequeno {
   min-height: 44px;
+}
+
+.et-tabela td .et-botao--icone.et-botao--pequeno {
+  width: 44px;
 }
 
 .et-tabela tbody tr:last-child td {
@@ -1051,8 +1661,7 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   word-break: break-all;
 }
 
-.et-upload-previa button,
-.et-upload-previa .btn {
+.et-upload-previa button {
   min-height: 44px;
 }
 
@@ -1083,19 +1692,8 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   font-weight: 600;
 }
 .et-copiavel-linha { display: flex; gap: var(--sp-2); }
-.et-copiavel-linha input {
-  flex: 1;
-  min-width: 0;
-  min-height: var(--control-h);
-  padding: 0 var(--sp-4);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  color: var(--text);
-  background: var(--surface-2);
-  font-size: var(--fs-xs);
-}
-.et-copiavel-linha input:focus-visible { outline: 2px solid var(--focus-ink); outline-offset: 1px; }
-.et-copiavel-linha button { flex: 0 0 auto; min-height: var(--control-h); }
+.et-copiavel-linha .et-campo { flex: 1; background-color: var(--surface-2); font-size: var(--fs-xs); }
+.et-copiavel-linha .et-botao { flex: 0 0 auto; }
 .et-copiavel-ajuda { margin: var(--sp-2) 0 0; color: var(--text-2); font-size: var(--fs-xs); line-height: 1.5; }
 
 @media (max-width: 600px) {
@@ -1110,6 +1708,10 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   .et-tooltip,
   .et-acordeao,
   .et-acordeao *,
+  .et-acordeao > summary::after,
+  .et-campo,
+  .et-caixa,
+  .et-aviso,
   .et-carregando,
   .et-carregando::before,
   .et-tabela,
@@ -1124,9 +1726,8 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
 /* Menu perto da borda esquerda da tela: componentes.js troca o alinhamento. */
 .et-menu-lista.et-menu-lista--esquerda { right:auto; left:0; }
 
-/* O input de arquivo do upload fica escondido (o rótulo é o alvo). Regras de formulário
-   como `.field input:not([type="checkbox"]):not([type="radio"])` são mais específicas que
-   .sr-only e o esticavam para fora da tela, criando rolagem horizontal. */
+/* O input de arquivo do upload fica escondido (o rótulo é o alvo). A regra global de
+   input[type="file"] (theme.css) tem borda e padding que .sr-only sozinho não zera. */
 .et-upload .et-upload-alvo input[type="file"].sr-only {
   position:absolute; width:1px; height:1px; padding:0; margin:-1px;
   overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;

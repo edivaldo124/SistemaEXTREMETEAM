@@ -48,7 +48,7 @@ class AlunoDAO:
 
     @staticmethod
     def listar_pendentes():
-        return Aluno.query.filter_by(status_cadastro='pendente').all()
+        return Aluno.query.filter_by(status_cadastro='pendente', email_verificado=True).all()
 
     @staticmethod
     def contar_cadastrados():

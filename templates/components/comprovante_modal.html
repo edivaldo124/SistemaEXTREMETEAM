@@ -1,13 +1,14 @@
-<dialog class="pix-dialog comprovante-dialog"
+<dialog class="et-dialogo comprovante-dialog"
         id="comprovante-dialog"
         aria-labelledby="comprovante-dialog-title">
-    <div class="pix-accent" aria-hidden="true"></div>
     <button type="button"
-            class="pix-fechar"
+            class="et-dialogo-fechar et-botao et-botao--fantasma et-botao--icone et-botao--pequeno"
             data-comprovante-fechar
-            aria-label="Fechar" data-tooltip>&times;</button>
-    <p class="eyebrow">Comprovante em análise</p>
-    <h2 id="comprovante-dialog-title">Revisar comprovante</h2>
+            aria-label="Fechar" data-tooltip><svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
+    <div class="et-dialogo-cabeca">
+        <p class="eyebrow">Comprovante em análise</p>
+        <h2 class="et-dialogo-titulo" id="comprovante-dialog-title">Revisar comprovante</h2>
+    </div>
     <div class="comprovante-resumo">
         <div>
             <span>Aluno</span>
@@ -35,7 +36,7 @@
            href="#"
            target="_blank"
            rel="noopener"
-           class="button-secondary">Abrir em nova aba</a>
+           class="et-botao et-botao--contorno">Abrir em nova aba</a>
     </div>
     <div class="comprovante-acoes">
         <form data-comprovante-form-aprovar
@@ -43,29 +44,29 @@
               action=""
               class="form-revisao">
                     {% include "components/csrf_field.html" %}
-            <input type="date" name="data_pagamento" aria-label="Data do pagamento">
-            <select name="forma_pagamento" aria-label="Forma de pagamento">
+            <input class="et-campo et-campo--pequeno" type="date" name="data_pagamento" aria-label="Data do pagamento">
+            <select class="et-campo et-campo--pequeno" name="forma_pagamento" aria-label="Forma de pagamento">
                 <option value="transferencia">Transferência</option>
                 <option value="dinheiro">Dinheiro</option>
             </select>
-            <input type="text"
+            <input class="et-campo et-campo--pequeno" type="text"
                    name="observacao"
                    maxlength="255"
                    aria-label="Observação sobre a aprovação"
                    placeholder="Observação (opcional)">
-            <button type="submit" class="btn btn-principal">Aprovar</button>
+            <button type="submit" class="et-botao et-botao--confirmar et-botao--pequeno">Aprovar</button>
         </form>
         <form data-comprovante-form-rejeitar
               method="POST"
               action=""
               class="form-revisao">
                     {% include "components/csrf_field.html" %}
-            <input type="text"
+            <input class="et-campo et-campo--pequeno" type="text"
                    name="observacao"
                    maxlength="255"
                    aria-label="Motivo da rejeição"
                    placeholder="Motivo da rejeição">
-            <button type="submit" class="btn btn-remover">Rejeitar</button>
+            <button type="submit" class="et-botao et-botao--perigo et-botao--pequeno">Rejeitar</button>
         </form>
     </div>
 </dialog>

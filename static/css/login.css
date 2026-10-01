@@ -9,10 +9,6 @@
   -webkit-backdrop-filter: blur(14px);
 }
 
-.login-shell .field .input-wrap input {
-  padding-left: 50px;
-}
-
 .login-shell .auth-remember-row {
   margin-top: var(--sp-4);
 }

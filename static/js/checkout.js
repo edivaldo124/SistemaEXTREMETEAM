@@ -16,7 +16,7 @@
         const botao = form.querySelector('[data-checkout-abrir]');
         if (!botao) return null;
         const mensagem = document.createElement('p');
-        mensagem.className = 'alert';
+        mensagem.className = 'et-aviso et-aviso--perigo';
         mensagem.setAttribute('role', 'alert');
         mensagem.setAttribute('data-checkout-erro', '');
         mensagem.hidden = true;
@@ -158,7 +158,7 @@
 
             if (badge && dados.status_rotulo) {
                 badge.textContent = dados.status_rotulo;
-                badge.className = `status status-${dados.status}`;
+                badge.dataset.situacao = dados.status;
             }
 
             // O texto explicativo é montado no servidor: em vez de reescrevê-lo aqui

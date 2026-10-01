@@ -5,7 +5,6 @@
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/turmas.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
 {% endblock %}
 {% block conteudo %}
     <main id="conteudo" class="container-admin">
@@ -15,33 +14,33 @@
                 <p>Cadastre professores e turmas, defina horários e gerencie matrículas.</p>
             </div>
         </section>
-        <section class="secao">
-            <div class="section-heading">
+        <section class="et-cartao secao">
+            <div class="et-cartao-cabeca">
                 <div>
-                    <h2>Professores</h2>
+                    <h2 class="et-cartao-titulo">Professores</h2>
                 </div>
-                <p>Crie o acesso e edite a apresentação pública de cada professor.</p>
+                <p class="et-cartao-descricao">Crie o acesso e edite a apresentação pública de cada professor.</p>
             </div>
             <form action="/admin/professores" method="POST" class="form-plano" data-enviando>
                 {% include "components/csrf_field.html" %}
                 <div class="field">
                     <label for="prof-nome">Nome</label>
-                    <input id="prof-nome" type="text" name="nome" required>
+                    <input class="et-campo" id="prof-nome" type="text" name="nome" required>
                 </div>
                 <div class="field">
                     <label for="prof-login">Login</label>
-                    <input id="prof-login" type="text" name="login" required>
+                    <input class="et-campo" id="prof-login" type="text" name="login" required>
                 </div>
                 <div class="field">
                     <label for="prof-senha">Senha</label>
-                    <input id="prof-senha"
+                    <input class="et-campo" id="prof-senha"
                            type="password"
                            name="senha"
                            minlength="8"
                            autocomplete="new-password"
                            required>
                 </div>
-                <button type="submit" class="button-primary btn-cadastrar" data-texto-enviando="Cadastrando...">Cadastrar professor</button>
+                <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Cadastrando...">Cadastrar professor</button>
             </form>
             <div class="et-tabela">
                 <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Professores cadastrados">
@@ -70,7 +69,7 @@
                                     <td>
                                         <div class="et-menu" data-menu>
                                             <button type="button"
-                                                    class="et-menu-botao"
+                                                    class="et-menu-botao et-botao et-botao--fantasma et-botao--icone et-botao--pequeno"
                                                     aria-haspopup="menu"
                                                     aria-expanded="false"
                                                     aria-controls="menu-prof-{{ p.id }}"
@@ -109,18 +108,18 @@
                 </div>
             </div>
         </section>
-        <section class="secao">
-            <div class="section-heading">
+        <section class="et-cartao secao">
+            <div class="et-cartao-cabeca">
                 <div>
-                    <h2>Turmas da academia</h2>
+                    <h2 class="et-cartao-titulo">Turmas da academia</h2>
                 </div>
-                <p>Defina dias, horário, professor e limite de alunos.</p>
+                <p class="et-cartao-descricao">Defina dias, horário, professor e limite de alunos.</p>
             </div>
             <form action="/admin/turmas/cadastrar" method="POST" class="form-turma" data-enviando>
                 {% include "components/csrf_field.html" %}
                 <div class="field">
                     <label for="turma-nome">Nome da turma</label>
-                    <input id="turma-nome"
+                    <input class="et-campo" id="turma-nome"
                            type="text"
                            name="nome"
                            placeholder="Ex.: Muay Thai iniciante"
@@ -131,7 +130,7 @@
                     <div class="dias-semana">
                         {% for dia in ['Seg','Ter','Qua','Qui','Sex','Sab','Dom'] %}
                             <label class="dia-opcao">
-                                <input type="checkbox" name="dias_semana" value="{{ dia }}">
+                                <input class="et-caixa" type="checkbox" name="dias_semana" value="{{ dia }}">
                                 {{ dia }}
                             </label>
                         {% endfor %}
@@ -139,11 +138,11 @@
                 </fieldset>
                 <div class="field">
                     <label for="turma-horario">Horário</label>
-                    <input id="turma-horario" type="time" name="horario" required>
+                    <input class="et-campo" id="turma-horario" type="time" name="horario" required>
                 </div>
                 <div class="field">
                     <label for="turma-professor">Professor</label>
-                    <select id="turma-professor" name="professor_id" required>
+                    <select class="et-campo" id="turma-professor" name="professor_id" required>
                         <option value="">Selecione</option>
                         {% for p in professores %}
                             <option value="{{ p.id }}">{{ p.nome }}</option>
@@ -152,14 +151,14 @@
                 </div>
                 <div class="field">
                     <label for="turma-limite">Limite de alunos</label>
-                    <input id="turma-limite"
+                    <input class="et-campo" id="turma-limite"
                            type="number"
                            name="limite_alunos"
                            min="1"
                            value="20"
                            required>
                 </div>
-                <button type="submit" class="button-primary btn-cadastrar" data-texto-enviando="Cadastrando...">Cadastrar turma</button>
+                <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Cadastrando...">Cadastrar turma</button>
             </form>
             <div class="et-tabela">
                 <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Turmas da academia">
@@ -183,7 +182,7 @@
                                     <td>
                                         <div class="et-menu" data-menu>
                                             <button type="button"
-                                                    class="et-menu-botao"
+                                                    class="et-menu-botao et-botao et-botao--fantasma et-botao--icone et-botao--pequeno"
                                                     aria-haspopup="menu"
                                                     aria-expanded="false"
                                                     aria-controls="menu-turma-{{ t.id }}"

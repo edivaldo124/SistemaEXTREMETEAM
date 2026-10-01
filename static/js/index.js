@@ -1,4 +1,5 @@
-// Controle do modal de login e comportamentos da página inicial
+// Controle do modal de login e comportamentos da página inicial. O modal é um
+// <dialog>: foco preso, Esc e fundo inerte vêm do navegador.
 const modal = document.getElementById('meuModal');
 const input_senha = document.getElementById('senhausuario');
 const icone_senha = document.getElementById('iconeSenha');
@@ -9,8 +10,7 @@ function abrirmodal(evento) {
   ultimoGatilhoModal = evento && evento.currentTarget instanceof HTMLElement
     ? evento.currentTarget
     : document.activeElement;
-  modal.hidden = false;
-  document.body.classList.add('modal-open');
+  if (!modal.open) modal.showModal();
   const inputNome = document.getElementById('inputnome');
   if (inputNome) {
     // Carrega usuário lembrado, se existir e campo vazio
@@ -27,12 +27,20 @@ function abrirmodal(evento) {
 }
 
 function fechar() {
-  if (!modal) return;
-  modal.hidden = true;
-  document.body.classList.remove('modal-open');
-  if (ultimoGatilhoModal instanceof HTMLElement) {
-    ultimoGatilhoModal.focus();
-  }
+  if (modal && modal.open) modal.close();
+}
+
+// Fechado por Esc, pelo X ou pelo clique fora: o foco volta a quem abriu.
+if (modal) {
+  modal.addEventListener('close', function () {
+    if (ultimoGatilhoModal instanceof HTMLElement) ultimoGatilhoModal.focus();
+  });
+  modal.addEventListener('click', function (evento) {
+    const caixa = modal.getBoundingClientRect();
+    const fora = evento.clientX < caixa.left || evento.clientX > caixa.right
+      || evento.clientY < caixa.top || evento.clientY > caixa.bottom;
+    if (fora) fechar();
+  });
 }
 
 function mostrarSenha() {
@@ -47,28 +55,6 @@ function mostrarSenha() {
     icone_senha.setAttribute('aria-label', 'Mostrar senha');
   }
 }
-
-document.addEventListener('keydown', function (evento) {
-  if (evento.key === 'Escape' && modal && !modal.hidden) fechar();
-
-  if (evento.key !== 'Tab' || !modal || modal.hidden) return;
-  const focoPossivel = Array.from(modal.querySelectorAll(
-    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-  )).filter(function (elemento) {
-    return elemento.offsetParent !== null;
-  });
-  if (!focoPossivel.length) return;
-
-  const primeiro = focoPossivel[0];
-  const ultimo = focoPossivel[focoPossivel.length - 1];
-  if (evento.shiftKey && document.activeElement === primeiro) {
-    evento.preventDefault();
-    ultimo.focus();
-  } else if (!evento.shiftKey && document.activeElement === ultimo) {
-    evento.preventDefault();
-    primeiro.focus();
-  }
-});
 
 document.querySelectorAll('[data-abrir-login]').forEach(function (botao) {
   botao.addEventListener('click', abrirmodal);

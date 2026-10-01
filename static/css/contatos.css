@@ -66,27 +66,8 @@
   margin-top: var(--sp-1);
 }
 
-.academy-contact-location .button-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-height: 44px;
+.academy-contact-location .et-botao {
   margin-top: var(--sp-4);
-  padding: 0 var(--sp-5);
-  border: 0;
-  border-radius: var(--et-radius-btn);
-  color: var(--et-black);
-  background: var(--et-gold-gradient);
-  font-family: var(--et-font-body);
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(245, 185, 20, 0.25);
-}
-
-.academy-contact-location .button-primary:hover {
-  box-shadow: 0 6px 18px rgba(245, 185, 20, 0.35);
 }
 
 .academy-contact-hours p {

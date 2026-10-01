@@ -55,10 +55,10 @@
     p.textContent = texto;
     const fechar = document.createElement('button');
     fechar.type = 'button';
-    fechar.className = 'et-toast-fechar';
+    fechar.className = 'et-toast-fechar et-botao et-botao--fantasma et-botao--icone et-botao--pequeno';
     fechar.setAttribute('data-toast-fechar', '');
     fechar.setAttribute('aria-label', 'Fechar aviso');
-    fechar.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>';
+    fechar.innerHTML = '<svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>';
     const icone = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     icone.setAttribute('viewBox', '0 0 24 24');
     icone.setAttribute('aria-hidden', 'true');
@@ -379,7 +379,7 @@
       info.textContent = `${arquivo.name} · ${formatoTamanho.format(arquivo.size / 1048576)} MB`;
       const trocar = document.createElement('button');
       trocar.type = 'button';
-      trocar.className = 'button-secondary';
+      trocar.className = 'et-botao et-botao--contorno';
       trocar.textContent = 'Trocar arquivo';
       trocar.addEventListener('click', () => campo.click());
       previa.append(info, trocar);

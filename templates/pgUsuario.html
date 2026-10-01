@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pgUsuario.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/planos.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pix.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/contatos.css') }}">
 {% endblock %}
 {% block atributos_body %} class="has-bottom-nav"{% endblock %}
@@ -47,7 +46,7 @@
                   data-modal-message="Sua sessão será encerrada e você voltará para a página inicial."
                   data-modal-confirm="Sim, sair">
                 {% include "components/csrf_field.html" %}
-                <button type="submit" id="link-sair">Sair</button>
+                <button type="submit" id="link-sair" class="et-botao et-botao--contorno et-botao--pequeno et-botao--pilula">Sair</button>
             </form>
         </nav>
     </header>
@@ -152,7 +151,7 @@
                                 <h2>{{ titulo_cobranca }}</h2>
                                 <p class="resumo-plano-nome">{{ mensalidade_atual.plano.nome_plano if mensalidade_atual.plano else 'Cobrança do plano' }}</p>
                             </div>
-                            <span class="status status-{{ mensalidade_atual.status }}">{{ rotulo_status(mensalidade_atual.status) }}</span>
+                            <span class="et-selo et-selo--situacao" data-situacao="{{ mensalidade_atual.status }}">{{ rotulo_status(mensalidade_atual.status) }}</span>
                         </div>
                         <div class="mensalidade-card-dados">
                             <div>
@@ -181,7 +180,7 @@
                                 Seu plano atual{{ ' (' ~ situacao.plano.nome_plano ~ ')' if situacao.plano else '' }} já está pago até {{ situacao.valido_ate.strftime('%d/%m/%Y') }}.
                             </p>
                         {% endif %}
-                        {{ mensalidade_acao.acao(mensalidade_atual, rotulo_status, 'button-primary mensalidade-card-botao') }}
+                        {{ mensalidade_acao.acao(mensalidade_atual, rotulo_status, 'et-botao et-botao--principal et-botao--grande mensalidade-card-botao', 'et-botao--largo') }}
                     </article>
                 {% else %}
                     <article class="mensalidade-card mensalidade-card-vazio">
@@ -219,92 +218,96 @@
                  id="turmas"
                  data-menu-panel
                  tabindex="-1">
-            <div class="section-heading">
+            <div class="et-cartao-cabeca">
                 <div>
                     <p class="eyebrow">Meus treinos</p>
-                    <h2>Minhas turmas</h2>
+                    <h2 class="et-cartao-titulo">Minhas turmas</h2>
                 </div>
-                <p>Dias, horários e frequência nas suas aulas.</p>
+                <p class="et-cartao-descricao">Dias, horários e frequência nas suas aulas.</p>
             </div>
-            <div class="table-container table-stack">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Turma</th>
-                            <th scope="col">Professor</th>
-                            <th scope="col">Dias</th>
-                            <th scope="col">Horário</th>
-                            <th scope="col">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for m in matriculas %}
-                            <tr>
-                                <td data-label="Turma">
-                                    <strong>{{ m.turma.nome }}</strong>
-                                </td>
-                                <td data-label="Professor">
-                                    {{ m.turma.professor.nome_exibicao }}
-                                    {% if m.turma.professor.perfil_publico %}
-                                        <a class="student-professor-link" href="/#professor-{{ m.turma.professor.id }}">Conhecer professor<span class="sr-only"> {{ m.turma.professor.nome_exibicao }}</span></a>
-                                    {% endif %}
-                                </td>
-                                <td data-label="Dias">{{ m.turma.dias_semana|replace(',', ', ') }}</td>
-                                <td data-label="Horário">{{ m.turma.horario }}</td>
-                                <td data-label="Ação">
-                                    <button type="button"
-                                            class="button-secondary"
-                                            data-abrir-turma
-                                            data-turma-nome="{{ m.turma.nome }}"
-                                            data-turma-professor="{{ m.turma.professor.nome_exibicao }}"
-                                            data-turma-dias="{{ m.turma.dias_semana|replace(',', ', ') }}"
-                                            data-turma-horario="{{ m.turma.horario }}">Detalhes</button>
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td colspan="5" class="empty-state">Você ainda não está matriculado em nenhuma turma.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% if presencas %}
-                <div class="table-container table-stack tabela-presencas-recente">
+            <div class="et-tabela">
+                <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Turmas matriculadas">
                     <table>
                         <thead>
                             <tr>
-                                <th scope="col">Data</th>
                                 <th scope="col">Turma</th>
-                                <th scope="col">Presença</th>
+                                <th scope="col">Professor</th>
+                                <th scope="col">Dias</th>
+                                <th scope="col">Horário</th>
+                                <th scope="col">Ação</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for p in presencas[:15] %}
+                            {% for m in matriculas %}
                                 <tr>
-                                    <td data-label="Data" class="celula-numero">{{ p.data_aula.strftime('%d/%m/%Y') }}</td>
-                                    <td data-label="Turma">{{ p.turma.nome }}</td>
-                                    <td data-label="Presença">
-                                        <span class="status {{ 'status-pago' if p.presente else 'status-atrasado' }}">
-                                            {{ 'Presente' if p.presente else 'Faltou' }}
-                                        </span>
-                                        {% if p.presente and not p.confirmada_aluno %}
-                                            <form action="{{ url_for('auth.confirmar_presenca', presenca_id=p.id) }}" method="POST">
-                {% include "components/csrf_field.html" %}
-                                                <button type="submit" class="button-secondary">Confirmar frequência</button>
-                                            </form>
-                                        {% elif p.confirmada_aluno %}
-                                            <small>Confirmada por você</small>
+                                    <td data-label="Turma">
+                                        <strong>{{ m.turma.nome }}</strong>
+                                    </td>
+                                    <td data-label="Professor">
+                                        {{ m.turma.professor.nome_exibicao }}
+                                        {% if m.turma.professor.perfil_publico %}
+                                            <a class="student-professor-link" href="/#professor-{{ m.turma.professor.id }}">Conhecer professor<span class="sr-only"> {{ m.turma.professor.nome_exibicao }}</span></a>
                                         {% endif %}
                                     </td>
+                                    <td data-label="Dias">{{ m.turma.dias_semana|replace(',', ', ') }}</td>
+                                    <td data-label="Horário">{{ m.turma.horario }}</td>
+                                    <td data-label="Ação">
+                                        <button type="button"
+                                                class="et-botao et-botao--contorno"
+                                                data-abrir-turma
+                                                data-turma-nome="{{ m.turma.nome }}"
+                                                data-turma-professor="{{ m.turma.professor.nome_exibicao }}"
+                                                data-turma-dias="{{ m.turma.dias_semana|replace(',', ', ') }}"
+                                                data-turma-horario="{{ m.turma.horario }}">Detalhes</button>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="empty-state">Você ainda não está matriculado em nenhuma turma.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+            </div>
+            {% if presencas %}
+                <div class="et-tabela tabela-presencas-recente">
+                    <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Presenças recentes">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Data</th>
+                                    <th scope="col">Turma</th>
+                                    <th scope="col">Presença</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in presencas[:15] %}
+                                    <tr>
+                                        <td data-label="Data" class="celula-numero">{{ p.data_aula.strftime('%d/%m/%Y') }}</td>
+                                        <td data-label="Turma">{{ p.turma.nome }}</td>
+                                        <td data-label="Presença">
+                                            <span class="et-selo et-selo--situacao {{ 'et-selo--ok' if p.presente else 'et-selo--perigo' }}">
+                                                {{ 'Presente' if p.presente else 'Faltou' }}
+                                            </span>
+                                            {% if p.presente and not p.confirmada_aluno %}
+                                                <form action="{{ url_for('auth.confirmar_presenca', presenca_id=p.id) }}" method="POST">
+                    {% include "components/csrf_field.html" %}
+                                                    <button type="submit" class="et-botao et-botao--contorno">Confirmar frequência</button>
+                                                </form>
+                                            {% elif p.confirmada_aluno %}
+                                                <small>Confirmada por você</small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 {% if presencas|length > 15 %}
                     <button type="button"
-                            class="button-secondary btn-ver-historico-presencas"
+                            class="et-botao et-botao--contorno btn-ver-historico-presencas"
                             data-abrir-presencas>Ver histórico completo ({{ presencas|length }} aulas)</button>
                 {% endif %}
             {% endif %}
@@ -313,18 +316,18 @@
                  id="mensalidades"
                  data-menu-panel
                  tabindex="-1">
-            <div class="section-heading">
+            <div class="et-cartao-cabeca">
                 <div>
                     <p class="eyebrow">Financeiro</p>
-                    <h2>Histórico de mensalidades</h2>
+                    <h2 class="et-cartao-titulo">Histórico de mensalidades</h2>
                 </div>
-                <p>Consulte seus pagamentos e vencimentos.</p>
+                <p class="et-cartao-descricao">Consulte seus pagamentos e vencimentos.</p>
             </div>
             {% if pagamentos %}
                 <div class="et-tabela tabela-mensalidades" data-tabela>
                     <div class="et-tabela-ferramentas filtros-mensalidades">
                         <label class="sr-only" for="filtro-status-mensalidade">Filtrar por situação</label>
-                        <select id="filtro-status-mensalidade">
+                        <select class="et-campo et-campo--pequeno" id="filtro-status-mensalidade">
                             <option value="">Todas as situações</option>
                             <option value="pendente">Pendente</option>
                             <option value="atrasado">Vencida</option>
@@ -336,10 +339,10 @@
                             <option value="cancelado">Cancelada</option>
                         </select>
                         <label class="sr-only" for="filtro-competencia-mensalidade">Filtrar por competência</label>
-                        <input type="month" id="filtro-competencia-mensalidade">
+                        <input class="et-campo et-campo--pequeno" type="month" id="filtro-competencia-mensalidade">
                         <button type="button"
                                 id="limpar-filtros-mensalidade"
-                                class="button-secondary">Limpar filtros</button>
+                                class="et-botao et-botao--contorno et-botao--pequeno">Limpar filtros</button>
                     </div>
                     <div class="et-tabela-rolagem tabela-pagamentos table-stack"
                          tabindex="0"
@@ -373,11 +376,11 @@
                                             {{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}
                                         </td>
                                         <td data-label="Status" data-valor="{{ rotulo_status(pagamento.status) }}">
-                                            <span class="status status-{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
+                                            <span class="et-selo et-selo--situacao" data-situacao="{{ pagamento.status }}">{{ rotulo_status(pagamento.status) }}</span>
                                         </td>
                                         <td data-label="Forma">{{ pagamento.forma_pagamento|forma_pagamento }}</td>
                                         <td data-label="Ação" class="acao-cell">
-                                            {{ mensalidade_acao.acao(pagamento, rotulo_status, 'button-secondary btn-acao-mensalidade') }}
+                                            {{ mensalidade_acao.acao(pagamento, rotulo_status, 'et-botao et-botao--contorno et-botao--pequeno', 'et-botao--pequeno') }}
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -394,12 +397,12 @@
                  id="planos"
                  data-menu-panel
                  tabindex="-1">
-            <div class="section-heading">
+            <div class="et-cartao-cabeca">
                 <div>
                     <p class="eyebrow">Contratação</p>
-                    <h2>Planos disponíveis</h2>
+                    <h2 class="et-cartao-titulo">Planos disponíveis</h2>
                 </div>
-                <p>Você pode alterar seu plano quando precisar.</p>
+                <p class="et-cartao-descricao">Você pode alterar seu plano quando precisar.</p>
             </div>
             {% set solicitacao = situacao.solicitacao_mudanca %}
             {% set id_plano_vigente = situacao.plano.id if situacao.plano else None %}
@@ -408,13 +411,13 @@
                pedido de troca já em andamento resolve a renovação, então não há o que avisar. #}
             {% set plano_saiu_de_venda = plano_renovacao is not none and plano_renovacao.arquivado and solicitacao is none %}
             {% if situacao.ativo and plano_saiu_de_venda %}
-                <p class="planos-aviso" role="status">
+                <p class="et-aviso et-aviso--ok planos-aviso" role="status">
                     O plano <strong>{{ plano_renovacao.nome_plano }}</strong> saiu de venda e não pode ser renovado.
                     O período que você pagou continua valendo até <strong>{{ situacao.valido_ate.strftime('%d/%m/%Y') }}</strong>;
                     escolha abaixo o plano que vem depois dele. Nada é cobrado agora.
                 </p>
             {% elif situacao.ativo %}
-                <p class="planos-aviso" role="status">
+                <p class="et-aviso et-aviso--ok planos-aviso" role="status">
                     Seu plano está pago até
                     <strong>{{ situacao.valido_ate.strftime('%d/%m/%Y') }}</strong>
                     e trocar de plano agora
@@ -422,11 +425,11 @@
                     porque a mudança só passa a valer na próxima renovação.
                 </p>
             {% elif situacao.aguardando_decisao %}
-                <p class="planos-aviso" role="status">
+                <p class="et-aviso et-aviso--ok planos-aviso" role="status">
                     Há um pagamento aguardando análise. A escolha de plano fica travada até a administração decidir, assim você não paga duas vezes.
                 </p>
             {% elif plano_saiu_de_venda %}
-                <p class="planos-aviso" role="status">
+                <p class="et-aviso et-aviso--ok planos-aviso" role="status">
                     O plano <strong>{{ plano_renovacao.nome_plano }}</strong> saiu de venda. Para continuar, escolha um dos planos abaixo.
                 </p>
             {% endif %}
@@ -443,9 +446,9 @@
                            promoção de hoje; sem a economia, que depende do plano mensal. #}
                         {% set cartao = cartoes_planos[plano.id] %}
                         {% set selos = [] %}
-                        {% if e_vigente %}{% set selos = selos + [('Plano atual', 'atual')] %}{% endif %}
-                        {% if e_renovavel and not e_vigente %}{% set selos = selos + [('Próxima renovação', 'destino')] %}{% endif %}
-                        {% if e_destino %}{% set selos = selos + [('Mudança agendada', 'destino')] %}{% endif %}
+                        {% if e_vigente %}{% set selos = selos + [('Plano atual', 'ok')] %}{% endif %}
+                        {% if e_renovavel and not e_vigente %}{% set selos = selos + [('Próxima renovação', 'alerta')] %}{% endif %}
+                        {% if e_destino %}{% set selos = selos + [('Mudança agendada', 'alerta')] %}{% endif %}
                         {% set em_destaque = plano.destaque and not e_vigente and not e_destino and not e_renovavel %}
                         {% call cartao_plano(cartao, destaque=em_destaque, selos=selos,
                                              classe=('plano-atual' if e_vigente else '') ~ (' plano-destino' if e_destino else '')) %}
@@ -472,7 +475,7 @@
                                         {% include "components/csrf_field.html" %}
                                         <input type="hidden" name="plano" value="{{ plano.id }}">
                                         <input type="hidden" name="acao" value="renovar">
-                                        <button type="submit" class="btn-escolher">Pagar próximo período</button>
+                                        <button type="submit" class="et-botao et-botao--principal et-botao--largo">Pagar próximo período</button>
                                     </form>
                                 {% endif %}
                                 <form action="{{ url_for('auth.cancelar_mudanca_plano', solicitacao_id=solicitacao.id) }}"
@@ -483,7 +486,7 @@
                                       data-modal-message="Sua próxima renovação voltará a ser no plano atual."
                                       data-modal-confirm="Cancelar mudança">
                                     {% include "components/csrf_field.html" %}
-                                    <button type="submit" class="btn-escolher button-secondary">Cancelar mudança</button>
+                                    <button type="submit" class="et-botao et-botao--contorno et-botao--largo">Cancelar mudança</button>
                                 </form>
                             {% elif solicitacao is not none %}
                                 <p class="plano-nota">
@@ -495,7 +498,7 @@
                                         Você já tem uma mudança agendada para o plano {{ solicitacao.plano_destino.nome_plano }}. Cancele-a para escolher outro.
                                     {% endif %}
                                 </p>
-                                <button type="button" class="btn-escolher button-secondary" disabled aria-disabled="true">Indisponível agora</button>
+                                <button type="button" class="et-botao et-botao--contorno et-botao--largo" disabled aria-disabled="true">Indisponível agora</button>
                             {% elif situacao.ativo and e_renovavel %}
                                 <p class="plano-nota">
                                     {% if e_vigente %}
@@ -517,7 +520,7 @@
                                         {% include "components/csrf_field.html" %}
                                         <input type="hidden" name="plano" value="{{ plano.id }}">
                                         <input type="hidden" name="acao" value="renovar">
-                                        <button type="submit" class="btn-escolher button-secondary">Renovar próximo período</button>
+                                        <button type="submit" class="et-botao et-botao--contorno et-botao--largo">Renovar próximo período</button>
                                     </form>
                                 {% endif %}
                             {% elif situacao.ativo %}
@@ -543,7 +546,7 @@
                                     {% include "components/csrf_field.html" %}
                                     <input type="hidden" name="plano" value="{{ plano.id }}">
                                     <input type="hidden" name="acao" value="agendar_mudanca">
-                                    <button type="submit" class="btn-escolher{{ '' if em_destaque else ' button-secondary' }}">Agendar mudança</button>
+                                    <button type="submit" class="et-botao {{ 'et-botao--principal' if em_destaque else 'et-botao--contorno' }} et-botao--largo">Agendar mudança</button>
                                 </form>
                             {% else %}
                                 <form action="{{ url_for('auth.pagina_perfil') }}"
@@ -560,7 +563,7 @@
                                     <input type="hidden" name="plano" value="{{ plano.id }}">
                                     <input type="hidden" name="acao" value="contratar">
                                     <label for="turma-plano-{{ plano.id }}">Turma</label>
-                                    <select id="turma-plano-{{ plano.id }}" name="turma_id" required>
+                                    <select class="et-campo" id="turma-plano-{{ plano.id }}" name="turma_id" required>
                                         <option value="">Escolha sua turma</option>
                                         {% for turma in turmas_disponiveis %}
                                             <option value="{{ turma.id }}" {% if turma.matriculas|length >= turma.limite_alunos %}disabled{% endif %}>
@@ -568,7 +571,7 @@
                                             </option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="btn-escolher">
+                                    <button type="submit" class="et-botao et-botao--principal et-botao--largo">
                                         {{ 'Continuar pagamento' if e_cobranca_aberta else 'Escolher plano' }}
                                     </button>
                                 </form>
@@ -584,12 +587,12 @@
                  id="meus-dados"
                  data-menu-panel
                  tabindex="-1">
-            <div class="section-heading">
+            <div class="et-cartao-cabeca">
                 <div>
                     <p class="eyebrow">Minha conta</p>
-                    <h2>Meus dados</h2>
+                    <h2 class="et-cartao-titulo">Meus dados</h2>
                 </div>
-                <p>
+                <p class="et-cartao-descricao">
                     Toda alteração pede sua senha atual. A troca de e-mail só é aplicada depois de confirmada por um link enviado ao novo endereço.
                 </p>
             </div>
@@ -610,7 +613,7 @@
                                        accept="image/jpeg,image/png,image/webp"
                                        required
                                        id="input-foto-perfil">
-                                <button type="submit" class="button-secondary">
+                                <button type="submit" class="et-botao et-botao--contorno">
                                     {{ 'Substituir foto' if usuario.foto_arquivo else 'Enviar foto' }}
                                 </button>
                             </form>
@@ -624,7 +627,7 @@
                                       data-modal-message="Seu perfil voltará a mostrar suas iniciais."
                                       data-modal-confirm="Remover foto">
                 {% include "components/csrf_field.html" %}
-                                    <button type="submit" class="button-secondary">Remover foto</button>
+                                    <button type="submit" class="et-botao et-botao--contorno">Remover foto</button>
                                 </form>
                             {% endif %}
                         </div>
@@ -643,7 +646,7 @@
                     <p class="form-titulo">Dados pessoais</p>
                     <div class="grupo-input">
                         <label for="dados-nome">Nome completo</label>
-                        <input id="dados-nome"
+                        <input class="et-campo" id="dados-nome"
                                type="text"
                                name="nome"
                                value="{{ usuario.nome }}"
@@ -652,7 +655,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dados-login">Nome de usuário</label>
-                        <input id="dados-login"
+                        <input class="et-campo" id="dados-login"
                                type="text"
                                name="login"
                                value="{{ usuario.login }}"
@@ -661,7 +664,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dados-telefone">Telefone</label>
-                        <input id="dados-telefone"
+                        <input class="et-campo" id="dados-telefone"
                                type="tel"
                                name="telefone"
                                value="{{ usuario.telefone or '' }}"
@@ -672,7 +675,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dados-descricao">Observações de saúde</label>
-                        <input id="dados-descricao"
+                        <input class="et-campo" id="dados-descricao"
                                type="text"
                                name="descricao"
                                value="{{ usuario.descricao or '' }}"
@@ -680,13 +683,13 @@
                     </div>
                     <div class="grupo-input">
                         <label for="dados-senha-atual">Senha atual <small>Obrigatória</small></label>
-                        <input id="dados-senha-atual"
+                        <input class="et-campo" id="dados-senha-atual"
                                type="password"
                                name="senha_atual"
                                autocomplete="current-password"
                                required>
                     </div>
-                    <button type="submit" class="btn-salvar">Salvar dados pessoais</button>
+                    <button type="submit" class="et-botao et-botao--principal">Salvar dados pessoais</button>
                 </form>
                 <form action="/perfil/email"
                       method="POST"
@@ -704,11 +707,11 @@
                                type="email"
                                value="{{ usuario.email }}"
                                readonly
-                               class="input-bloqueado">
+                               class="et-campo et-campo--bloqueado">
                     </div>
                     <div class="grupo-input">
                         <label for="email-novo">Novo e-mail</label>
-                        <input id="email-novo"
+                        <input class="et-campo" id="email-novo"
                                type="email"
                                name="novo_email"
                                maxlength="150"
@@ -717,13 +720,13 @@
                     </div>
                     <div class="grupo-input">
                         <label for="email-senha-atual">Senha atual <small>Obrigatória</small></label>
-                        <input id="email-senha-atual"
+                        <input class="et-campo" id="email-senha-atual"
                                type="password"
                                name="senha_atual"
                                autocomplete="current-password"
                                required>
                     </div>
-                    <button type="submit" class="btn-salvar">Solicitar troca de e-mail</button>
+                    <button type="submit" class="et-botao et-botao--principal">Solicitar troca de e-mail</button>
                 </form>
                 <form action="/perfil/senha"
                       method="POST"
@@ -737,7 +740,7 @@
                     <p class="form-titulo">Senha</p>
                     <div class="grupo-input">
                         <label for="senha-atual">Senha atual</label>
-                        <input id="senha-atual"
+                        <input class="et-campo" id="senha-atual"
                                type="password"
                                name="senha_atual"
                                autocomplete="current-password"
@@ -745,7 +748,7 @@
                     </div>
                     <div class="grupo-input">
                         <label for="senha-nova">Nova senha <small>Mínimo 8 caracteres</small></label>
-                        <input id="senha-nova"
+                        <input class="et-campo" id="senha-nova"
                                type="password"
                                name="nova_senha"
                                autocomplete="new-password"
@@ -754,14 +757,14 @@
                     </div>
                     <div class="grupo-input">
                         <label for="senha-confirmar">Confirmar nova senha</label>
-                        <input id="senha-confirmar"
+                        <input class="et-campo" id="senha-confirmar"
                                type="password"
                                name="confirmar_senha"
                                autocomplete="new-password"
                                minlength="8"
                                required>
                     </div>
-                    <button type="submit" class="btn-salvar">Alterar senha</button>
+                    <button type="submit" class="et-botao et-botao--principal">Alterar senha</button>
                 </form>
             </div>
         </section>
