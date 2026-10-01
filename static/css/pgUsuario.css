@@ -347,7 +347,7 @@
 .menu-screen[hidden] { display:none !important; }
 /* O painel recebe foco por script só para levar o leitor de tela ao conteúdo
    da tela escolhida. O anel de foco pertence ao item de menu, não ao painel. */
-.menu-screen:focus,.menu-screen:focus-visible { outline:none; box-shadow:none; }
+.menu-screen:focus,.menu-screen:focus-visible { outline:none; box-shadow:none; border-radius:0; }
 .content-section.menu-screen { margin-top:0; }
 /* A troca de tela já desliza (components/deslize.html); a entrada da abertura não se repete
    a cada volta para a visão geral. */

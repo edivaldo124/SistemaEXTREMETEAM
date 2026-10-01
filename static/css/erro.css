@@ -24,6 +24,7 @@ body.erro-page { min-height:100vh; background:var(--et-black); color:var(--et-te
 .erro-titulo {
   margin:0; color:var(--et-text-on-dark);
   font-family:var(--et-font-display); font-weight:400; font-size:clamp(30px, 6vw, 40px); line-height:1.05; letter-spacing:.02em;
+  text-transform:uppercase;
 }
 /* O estado vazio é pensado para superfície clara; aqui ele vira texto sobre o escuro. */
 .erro-cartao .et-vazio { padding:0; border:0; background:none; gap:var(--sp-4); }

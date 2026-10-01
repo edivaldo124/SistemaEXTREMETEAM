@@ -25,7 +25,7 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
   gap:var(--sp-6);
 }
 .admin-intro h1 {
-  margin:0; font:700 var(--h1)/1.02 var(--display);
+  margin:0; font:400 var(--h1)/1.02 var(--display);
   letter-spacing:-.01em; text-transform:uppercase;
 }
 .admin-intro > div > p:last-child {
@@ -88,7 +88,7 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 .plan-list article strong {
   display:block; margin:var(--sp-2) 0 var(--sp-1);
   overflow-wrap:break-word;
-  font:700 23px/1.1 var(--display); text-transform:uppercase;
+  font:400 23px/1.1 var(--display); text-transform:uppercase;
 }
 .plan-list article p {
   margin:0; color:var(--text-2);

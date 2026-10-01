@@ -11,7 +11,7 @@
 .academia-editor .academia-form { margin-top:var(--sp-2); }
 .academia-grupo { min-width:0; margin:0 0 var(--sp-7); padding:var(--sp-5) 0 0; border:0; border-top:1px solid var(--line); }
 .academia-grupo:first-of-type { padding-top:0; border-top:0; }
-.academia-grupo legend { padding:0 var(--sp-4) 0 0; font:700 var(--h3)/1.2 var(--display); text-transform:uppercase; letter-spacing:.01em; }
+.academia-grupo legend { padding:0 var(--sp-4) 0 0; font:400 var(--h3)/1.2 var(--display); text-transform:uppercase; letter-spacing:.01em; }
 .academia-ajuda { margin:0 0 var(--sp-5); color:var(--text-2); }
 .academia-campos { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-5); }
 .academia-linha { grid-column:1/-1; }
