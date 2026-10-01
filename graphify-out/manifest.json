@@ -186,9 +186,9 @@
     "semantic_hash": ""
   },
   "templates/dt_aluno.html": {
-    "mtime": 1790812555.815568,
-    "seen": 1790813284.1854558,
-    "ast_hash": "0655ce79716964062772a50fe0b674f0",
+    "mtime": 1790816565.5389686,
+    "seen": 1790817269.6316082,
+    "ast_hash": "79568f3e6dc2edaabde5446bb4a73fc1",
     "semantic_hash": ""
   },
   "templates/index.html": {
@@ -204,15 +204,15 @@
     "semantic_hash": ""
   },
   "templates/pgAdm.html": {
-    "mtime": 1790812555.8162563,
-    "seen": 1790813284.1857047,
-    "ast_hash": "ab95a20bc0d8ecc0dac0705561158e2a",
+    "mtime": 1790816565.5403233,
+    "seen": 1790817269.6318436,
+    "ast_hash": "8db010e2a9576d0ec44c9f5f34ddf71d",
     "semantic_hash": ""
   },
   "templates/pgProfessor.html": {
-    "mtime": 1790707624.5710592,
-    "seen": 1790712839.7030132,
-    "ast_hash": "89b407012b7a82238d76c7c249d5be9d",
+    "mtime": 1790816748.810351,
+    "seen": 1790817269.6318445,
+    "ast_hash": "4a4074f88f942c546a7869cd8846f3c6",
     "semantic_hash": ""
   },
   "templates/pgUsuario.html": {
@@ -228,15 +228,15 @@
     "semantic_hash": ""
   },
   "templates/turma.html": {
-    "mtime": 1790812555.815039,
-    "seen": 1790813284.1858702,
-    "ast_hash": "d8ad62e5ea41e1791887c56243a6785f",
+    "mtime": 1790816565.5406673,
+    "seen": 1790817269.632006,
+    "ast_hash": "354c369d9835b8bb5a58e1f5b06d845e",
     "semantic_hash": ""
   },
   "templates/turmas.html": {
-    "mtime": 1790812555.815263,
-    "seen": 1790813284.1858716,
-    "ast_hash": "1f870b5df18c8ff6252a02a950b5e61a",
+    "mtime": 1790816565.541108,
+    "seen": 1790817269.6320071,
+    "ast_hash": "bccc66eb65f9e959fa57d776406a21ef",
     "semantic_hash": ""
   },
   "servicos/email.py": {
@@ -246,9 +246,9 @@
     "semantic_hash": ""
   },
   "templates/admin_avisos.html": {
-    "mtime": 1790707624.566289,
-    "seen": 1790712839.7021427,
-    "ast_hash": "5d2c1e8a87724c1f9d4e279f164d569b",
+    "mtime": 1790816565.5379667,
+    "seen": 1790817269.630843,
+    "ast_hash": "19e42a9cfe7364a1c52ff9c77a8ee9b9",
     "semantic_hash": ""
   },
   "templates/email/base.html": {
@@ -271,7 +271,7 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1790643345.3116493,
+    "seen": 1790816425.7291827,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1788571889.4654422,
-    "seen": 1788577577.8363035,
-    "ast_hash": "82efb97a359f5c7290bf2513d14686be",
+    "mtime": 1790815519.3365636,
+    "seen": 1790816425.7293591,
+    "ast_hash": "d23201340fc0a30fa519bad93b1bc656",
     "semantic_hash": ""
   },
   "requirements-dev.txt": {
@@ -504,9 +504,9 @@
     "semantic_hash": ""
   },
   "templates/financeiro.html": {
-    "mtime": 1790812555.8158154,
-    "seen": 1790813284.1855319,
-    "ast_hash": "04e245bf05aac864ad1d168033419624",
+    "mtime": 1790816741.9025803,
+    "seen": 1790817269.6316848,
+    "ast_hash": "dd8a8d45f22e5e9b401d88f97c02b1e1",
     "semantic_hash": ""
   },
   "templates/pagamento.html": {
@@ -553,7 +553,7 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1790643345.311631,
+    "seen": 1790816425.7291777,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -636,9 +636,9 @@
     "semantic_hash": ""
   },
   "templates/admin_academia.html": {
-    "mtime": 1790707624.5820594,
-    "seen": 1790712839.702117,
-    "ast_hash": "53ed00c1f1aea3a1004386ad29b7c0d1",
+    "mtime": 1790816565.5229423,
+    "seen": 1790817269.630816,
+    "ast_hash": "56c260b8eae0004edeb6e6dcccda19f3",
     "semantic_hash": ""
   },
   "templates/components/contatos_academia.html": {
@@ -1212,9 +1212,9 @@
     "semantic_hash": ""
   },
   "templates/layouts/admin.html": {
-    "mtime": 1790558371.8241904,
-    "seen": 1790558671.783699,
-    "ast_hash": "50f02ea54aa77e2ec59972713a2c7c1e",
+    "mtime": 1790816565.5220068,
+    "seen": 1790817269.6317089,
+    "ast_hash": "c7fc6cec31e249015f9400ea0ad3e9b8",
     "semantic_hash": ""
   },
   "templates/layouts/aluno.html": {
@@ -1230,9 +1230,9 @@
     "semantic_hash": ""
   },
   "templates/layouts/professor.html": {
-    "mtime": 1790558371.824423,
-    "seen": 1790558671.7837012,
-    "ast_hash": "9ce95fdc41fbb17d9a351fbb728ca542",
+    "mtime": 1790816565.522134,
+    "seen": 1790817269.6317623,
+    "ast_hash": "7b8933ca788e95e4f708b24cbc1ca1eb",
     "semantic_hash": ""
   },
   "templates/layouts/publico.html": {

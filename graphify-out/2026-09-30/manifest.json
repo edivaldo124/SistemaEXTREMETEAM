@@ -271,8 +271,8 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1790643345.3116493,
-    "ast_hash": "",
+    "seen": 1790816425.7291827,
+    "ast_hash": "415656dfbf722b4ee0b494c18bfc8682",
     "semantic_hash": ""
   },
   "app.py": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1788571889.4654422,
-    "seen": 1788577577.8363035,
-    "ast_hash": "82efb97a359f5c7290bf2513d14686be",
+    "mtime": 1790815519.3365636,
+    "seen": 1790816425.7293591,
+    "ast_hash": "d23201340fc0a30fa519bad93b1bc656",
     "semantic_hash": ""
   },
   "requirements-dev.txt": {
@@ -553,8 +553,8 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1790643345.311631,
-    "ast_hash": "",
+    "seen": 1790816425.7291777,
+    "ast_hash": "324d1aabfdaabef57d9ffa0805a7c9c6",
     "semantic_hash": ""
   },
   "servicos/senhas.py": {
@@ -1479,6 +1479,12 @@
     "mtime": 1790707243.044309,
     "seen": 1790712839.7018714,
     "ast_hash": "cfe592355d0f6b42ac398a2e7df3ee3b",
+    "semantic_hash": ""
+  },
+  "DESIGN.md": {
+    "mtime": 1790815450.044468,
+    "seen": 1790815459.485594,
+    "ast_hash": "0535416b84784003b00d68104c42117f",
     "semantic_hash": ""
   }
 }

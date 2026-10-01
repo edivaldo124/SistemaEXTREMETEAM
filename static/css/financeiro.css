@@ -27,7 +27,7 @@
 }
 .total-card > div > strong {
   display:block; margin-top:var(--sp-1); color:var(--text);
-  font:700 27px/1.05 var(--display); font-variant-numeric:tabular-nums;
+  font:400 27px/1.05 var(--display); font-variant-numeric:tabular-nums;
 }
 .total-card > div > small {
   display:block; margin-top:var(--sp-1);
@@ -137,18 +137,3 @@
   .form-filtros-financeiro { grid-template-columns:1fr; }
   .comprovante-resumo { grid-template-columns:1fr; }
 }
-
-/* ------------------------------------------------ tabela de mensalidades -- */
--/* A tabela paginada utiliza .et-tabela (componentes.css). */
--.secao-pagamentos .et-tabela {
--  margin-top: var(--sp-4);
--}
--.et-tabela .pessoa {
--  display: inline-flex;
--  align-items: center;
--  gap: var(--sp-3);
--}
--.et-tabela td[data-label="Ações"] {
--  text-align: right;
--}
-

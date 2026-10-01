@@ -193,7 +193,7 @@ td,th,.tabular,.metric-value,.summary-grid strong,.stat-value { font-variant-num
 .site-brand {
   display:inline-flex; align-items:center; gap:var(--sp-3);
   color:inherit; text-decoration:none; text-transform:uppercase;
-  font:600 14px/1 var(--display); letter-spacing:.1em;
+  font:400 14px/1 var(--display); letter-spacing:.1em;
 }
 .site-brand img { width:38px; height:38px; object-fit:contain; flex:0 0 auto; }
 .site-brand strong { display:block; margin-top:3px; color:var(--yellow); font-size:20px; letter-spacing:.04em; }
@@ -211,7 +211,7 @@ td,th,.tabular,.metric-value,.summary-grid strong,.stat-value { font-variant-num
 
 .page-title {
   margin:0;
-  font:700 var(--h1)/1.02 var(--display);
+  font:400 var(--h1)/1.02 var(--display);
   letter-spacing:-.01em; text-transform:uppercase;
 }
 
@@ -221,7 +221,7 @@ td,th,.tabular,.metric-value,.summary-grid strong,.stat-value { font-variant-num
   width:38px; height:38px; flex:0 0 auto;
   border:2px solid var(--gold); border-radius:50%;
   color:var(--text); background:var(--surface);
-  font:700 16px/1 var(--display);
+  font:400 16px/1 var(--display);
 }
 
 /* ------------------------------------------------------------- campos -- */
@@ -322,7 +322,7 @@ input[type="file"]::file-selector-button {
   width:38px; height:38px; margin-right:var(--sp-3);
   overflow:hidden; border-radius:var(--radius-pill);
   color:var(--yellow); background:var(--ink);
-  font:700 16px/1 var(--display); text-transform:uppercase;
+  font:400 16px/1 var(--display); text-transform:uppercase;
 }
 .avatar-img { display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
 
@@ -556,8 +556,7 @@ tbody tr td { transition:background var(--dur-rapida) ease; }
 
 /* Avatar e nome lado a lado. O flex fica no <span> interno, não no <td>: um td
    flex sai do cálculo de altura da linha e desalinha as bordas das colunas. */
-.pessoa { display:flex; align-items:center; min-width:0; }
-.pessoa > .student-avatar { margin-right:var(--sp-3); }
+.pessoa { display:flex; align-items:center; gap:var(--sp-3); min-width:0; }
 .pessoa > strong { font-weight:600; }
 @media (min-width:641px) {
   /* Largura mínima para o nome completo não cair em três linhas. */

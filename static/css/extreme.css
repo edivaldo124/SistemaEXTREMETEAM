@@ -253,8 +253,13 @@ td.empty-state,tr .empty-state { padding-top:var(--sp-8); }
   }
 }
 @media (max-width:620px) {
+  /* Some da vista, mas continua sendo o nome do link para o leitor de tela: a
+     logo ao lado tem alt="" e, com display:none, o link ficaria sem nome. */
   .app-header .site-brand span,
   .detail-header .site-brand span,
-  .account-header .site-brand span { display:none; }
+  .account-header .site-brand span {
+    position:absolute; width:1px; height:1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap;
+  }
   .detail-intro > span:not(.et-avatar) { width:58px; height:58px; }
 }

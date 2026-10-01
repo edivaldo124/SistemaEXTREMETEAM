@@ -133,7 +133,7 @@ body.auth-page {
   border: 3px solid var(--et-black);
   border-radius: 50%;
   color: var(--et-black);
-  background: var(--et-gold-gradient);
+  background: var(--et-gold);
   transform: translateY(-50%);
   text-decoration: none;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
@@ -309,7 +309,7 @@ body.auth-page {
   height: 44px;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--et-radius-control);
   color: var(--et-text-on-dark-muted);
   background: transparent;
   cursor: pointer;
@@ -322,6 +322,7 @@ body.auth-page {
 }
 
 .password-toggle:focus-visible {
+  border-radius: var(--et-radius-control);
   outline: 2px solid var(--et-gold);
 }
 

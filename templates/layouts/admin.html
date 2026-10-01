@@ -7,4 +7,8 @@
 {% block corpo %}
     {% include "components/admin_nav.html" %}
     {% block conteudo %}{% endblock %}
+    {#- O "Sair" da navegação (e todo form[data-confirm-modal]) pede confirmação; por
+        isso o diálogo mora aqui e não em cada tela. -#}
+    {% include "components/confirm_modal.html" %}
+    <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 {% endblock %}

@@ -213,7 +213,7 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th scope="col">Aluno</th>
+                                    <th scope="col" class="coluna-pessoa">Aluno</th>
                                     <th scope="col">Plano</th>
                                     <th scope="col">Competência</th>
                                     <th scope="col">Valor</th>
@@ -227,7 +227,7 @@
                             <tbody>
                                 {% for pagamento in pagamentos %}
                                     <tr>
-                                        <td data-label="Aluno">
+                                        <td data-label="Aluno" class="celula-pessoa">
                                             <span class="pessoa">
                                                 {{ avatar(pagamento.aluno.nome, url_for('auth.foto_perfil', aluno_id=pagamento.aluno.id) if pagamento.aluno.foto_arquivo else '', 'sm') }}
                                                 <span>{{ pagamento.aluno.nome }}</span>
@@ -235,8 +235,8 @@
                                         </td>
                                         <td data-label="Plano">{{ pagamento.plano.nome_plano if pagamento.plano else '—' }}</td>
                                         <td data-label="Competência">{{ formatar_competencia(pagamento.competencia) }}</td>
-                                        <td data-label="Valor" data-valor="{{ pagamento.valor }}">{{ pagamento.valor|moeda }}</td>
-                                        <td data-label="Vencimento" data-valor="{{ pagamento.vencimento.strftime('%d/%m/%Y') }}">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
+                                        <td data-label="Valor" class="celula-valor" data-valor="{{ pagamento.valor }}">{{ pagamento.valor|moeda }}</td>
+                                        <td data-label="Vencimento" class="celula-numero" data-valor="{{ pagamento.vencimento.strftime('%d/%m/%Y') }}">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
                                         <td data-label="Status">
                                             {{ badge(pagamento.status_efetivo, rotulo_status(pagamento.status_efetivo)) }}
                                         </td>
@@ -309,8 +309,6 @@
     </main>
 {% endblock %}
 {% block fim_corpo %}
-    {% include 'components/confirm_modal.html' %}
-    <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
     <script src="{{ url_for('static', filename='js/filtros_financeiro.js') }}" defer></script>
     {% include 'components/comprovante_modal.html' %}
     <script src="{{ url_for('static', filename='js/comprovante_modal.js') }}" defer></script>

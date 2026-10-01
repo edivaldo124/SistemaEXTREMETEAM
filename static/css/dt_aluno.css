@@ -18,7 +18,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
 }
 .detail-intro h1 {
   margin:0; overflow-wrap:anywhere;
-  font:700 var(--h1)/1.02 var(--display);
+  font:400 var(--h1)/1.02 var(--display);
   letter-spacing:-.01em; text-transform:uppercase;
 }
 .detail-intro > div > p:last-child {
@@ -30,7 +30,7 @@ body.admin-shell > main { padding:0 0 var(--sp-9); }
   display:grid; place-items:center; flex:0 0 auto;
   width:76px; height:76px; overflow:hidden;
   color:var(--ink); background:var(--yellow);
-  font:700 30px/1 var(--display); font-variant-numeric:tabular-nums;
+  font:400 30px/1 var(--display); font-variant-numeric:tabular-nums;
 }
 .container-detalhes > .et-aviso { margin-top:var(--sp-6); }
 
