@@ -1260,11 +1260,11 @@ def verificar_email_cadastro(token):
     
     if not aluno:
         flash("Link de verificação inválido ou já utilizado.", "erro")
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('auth.pagina_login'))
         
     if aluno.token_verificacao_expira and aluno.token_verificacao_expira < datetime.utcnow():
         flash("Este link de verificação expirou. Por favor, solicite um novo.", "erro")
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('auth.pagina_login'))
         
     aluno.email_verificado = True
     aluno.token_verificacao_hash = None
@@ -1293,4 +1293,4 @@ def verificar_email_cadastro(token):
             logger.error('APP_BASE_URL inválida; aviso de novo cadastro não foi enviado ao administrador.')
             
     flash("E-mail verificado com sucesso! Seu cadastro já foi enviado para análise da administração.", "sucesso")
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('auth.pagina_login'))

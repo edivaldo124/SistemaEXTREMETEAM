@@ -1,6 +1,7 @@
 {% extends "layouts/admin.html" %}
 {% set secao_ativa = 'turmas' %}
 {% from "components/breadcrumb.html" import breadcrumb %}
+{% from "components/ui.html" import interruptor %}
 {% block titulo %}Perfil do professor | Extreme Team{% endblock %}
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
@@ -86,28 +87,19 @@
                     <div class="field editor-field-full">
                         <label for="instagram">Instagram</label>
                         <input class="et-campo" id="instagram" type="text" name="instagram" maxlength="200" value="{{ valores.instagram or '' }}" placeholder="@usuario ou link do perfil" autocapitalize="none" spellcheck="false">
-                        <label class="editor-check" for="exibir-instagram">
-                            <input class="et-caixa" id="exibir-instagram" type="checkbox" name="exibir_instagram" {% if valores.exibir_instagram %}checked{% endif %}>
-                            <span>Exibir Instagram no site</span>
-                        </label>
+                        {{ interruptor('exibir-instagram', 'exibir_instagram', 'Exibir Instagram no site', ligado=valores.exibir_instagram) }}
                     </div>
                     <div class="field editor-field-full">
                         <label for="email-publico">E-mail profissional</label>
                         <input class="et-campo" id="email-publico" type="email" name="email_publico" maxlength="150" value="{{ valores.email_publico or '' }}" placeholder="professor@exemplo.com" autocomplete="off" aria-describedby="email-ajuda">
                         <p class="field-help" id="email-ajuda">Pode ser Gmail ou outro provedor. Este contato é independente do acesso ao sistema.</p>
-                        <label class="editor-check" for="exibir-email">
-                            <input class="et-caixa" id="exibir-email" type="checkbox" name="exibir_email" {% if valores.exibir_email %}checked{% endif %}>
-                            <span>Exibir e-mail no site</span>
-                        </label>
+                        {{ interruptor('exibir-email', 'exibir_email', 'Exibir e-mail no site', ligado=valores.exibir_email) }}
                     </div>
                     <div class="field editor-field-full">
                         <label for="whatsapp">WhatsApp profissional</label>
                         <input class="et-campo" id="whatsapp" type="tel" name="whatsapp" maxlength="30" value="{{ valores.whatsapp or '' }}" placeholder="+55 (81) 99999-9999" autocomplete="off" aria-describedby="whatsapp-ajuda">
                         <p class="field-help" id="whatsapp-ajuda">Inclua o código do país e o DDD.</p>
-                        <label class="editor-check" for="exibir-whatsapp">
-                            <input class="et-caixa" id="exibir-whatsapp" type="checkbox" name="exibir_whatsapp" {% if valores.exibir_whatsapp %}checked{% endif %}>
-                            <span>Exibir WhatsApp no site</span>
-                        </label>
+                        {{ interruptor('exibir-whatsapp', 'exibir_whatsapp', 'Exibir WhatsApp no site', ligado=valores.exibir_whatsapp) }}
                     </div>
                 </div>
             </section>
@@ -117,10 +109,7 @@
                     <p>As informações ficam salvas para você revisar antes de publicar.</p>
                 </div>
                 <div>
-                    <label class="editor-check" for="perfil-publico">
-                        <input class="et-caixa" id="perfil-publico" type="checkbox" name="perfil_publico" {% if valores.perfil_publico %}checked{% endif %} aria-describedby="publicacao-ajuda">
-                        <span>Exibir perfil do professor no site</span>
-                    </label>
+                    {{ interruptor('perfil-publico', 'perfil_publico', 'Exibir perfil do professor no site', ligado=valores.perfil_publico, descrito_por='publicacao-ajuda') }}
                     <p class="field-help" id="publicacao-ajuda">Ao ativar, nome, foto, apresentação e formação aparecem na equipe e na área do aluno. Apenas os contatos marcados acima serão exibidos.</p>
                 </div>
             </section>

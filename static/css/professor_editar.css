@@ -15,8 +15,10 @@
 .editor-fields { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-6); min-width:0; }
 .editor-field-full { grid-column:1/-1; }
 .professor-form .field { min-width:0; }
-.professor-form .field > label:not(.editor-check) { display:block; margin-bottom:var(--sp-2); font-size:var(--fs-sm); font-weight:600; }
+.professor-form .field > label:not(.editor-check):not(.et-interruptor-linha) { display:block; margin-bottom:var(--sp-2); font-size:var(--fs-sm); font-weight:600; }
 .professor-form .field-help { margin:var(--sp-2) 0 0; color:var(--text-2); font-size:var(--fs-xs); line-height:1.65; }
+.professor-form .et-interruptor-linha { margin-top:var(--sp-2); }
+/* "Remover foto atual" é uma ação ao salvar, não uma configuração: fica caixa. */
 .professor-form .editor-check {
   display:flex; align-items:center; gap:var(--sp-3); min-height:44px; margin-top:var(--sp-2);
   font:500 var(--fs-sm)/1.5 var(--body); cursor:pointer;
@@ -26,7 +28,7 @@
 .editor-photo > img, .editor-photo-empty { width:112px; height:112px; flex:0 0 112px; object-fit:cover; border-radius:var(--radius-card); }
 .editor-photo-empty { display:grid; place-items:center; background:var(--et-black); color:var(--et-gold); font:400 48px/1 var(--display); }
 .editor-publication { border-left:4px solid var(--et-gold); background:var(--surface-2); }
-.editor-publication .editor-check { margin-top:0; font-weight:600; }
+.editor-publication .et-interruptor-linha { margin-top:0; }
 .editor-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:var(--sp-3); padding:var(--sp-5) var(--sp-7); }
 @media (max-width:760px) {
   .editor-section { grid-template-columns:1fr; gap:var(--sp-5); padding:var(--sp-5); }

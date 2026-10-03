@@ -9,6 +9,7 @@
     <main id="conteudo">
         <div class="container-detalhes">
             {% from "components/breadcrumb.html" import breadcrumb %}
+            {% from "components/ui.html" import interruptor %}
             {{ breadcrumb([('Painel', url_for('admin_blueprint.painel_adm')), ('Matricular aluno', None)]) }}
             <div class="detail-intro">
                 <div>
@@ -136,15 +137,8 @@
                         </small>
                     </div>
                     <div class="grupo-input">
-                        <label class="opcao-inline" for="novo-gerar-mensalidade">
-                            <input class="et-caixa" id="novo-gerar-mensalidade"
-                                   type="checkbox"
-                                   name="gerar_mensalidade"
-                                   value="sim"
-                                   {% if dados.gerar_mensalidade %}checked{% endif %}
-                                   aria-describedby="novo-gerar-ajuda">
-                            <span>Já lançar a primeira mensalidade deste plano</span>
-                        </label>
+                        {{ interruptor('novo-gerar-mensalidade', 'gerar_mensalidade', 'Já lançar a primeira mensalidade deste plano',
+                                       ligado=dados.gerar_mensalidade, valor='sim', descrito_por='novo-gerar-ajuda') }}
                         <small id="novo-gerar-ajuda">
                             Cria uma mensalidade em aberto com o valor e o vencimento do plano. Você marca como paga na tela do
                             aluno quando receber.

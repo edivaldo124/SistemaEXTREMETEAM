@@ -22,7 +22,7 @@
                 </div>
             </div>
             <div class="et-tabela">
-                <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Minhas turmas">
+                <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Minhas turmas">
                     <table>
                         <thead>
                             <tr>
@@ -35,10 +35,10 @@
                         <tbody>
                             {% for t in turmas %}
                                 <tr>
-                                    <td><strong>{{ t.nome }}</strong></td>
-                                    <td>{{ t.dias_semana|replace(',', ', ') }} · {{ t.horario }}</td>
-                                    <td>{{ t.matriculas|length }}/{{ t.limite_alunos }} alunos</td>
-                                    <td>
+                                    <td data-label="Turma" class="celula-titulo"><strong>{{ t.nome }}</strong></td>
+                                    <td data-label="Dias e horário">{{ t.dias_semana|replace(',', ', ') }} · {{ t.horario }}</td>
+                                    <td data-label="Alunos">{{ t.matriculas|length }}/{{ t.limite_alunos }} alunos</td>
+                                    <td class="acao-cell">
                                         <a href="/turmas/{{ t.id }}" class="et-botao et-botao--contorno et-botao--pequeno">
                                             <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v3m8-3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Zm4.5 8 1.7 1.7 3.3-3.4" /></svg>
                                             Registrar presença

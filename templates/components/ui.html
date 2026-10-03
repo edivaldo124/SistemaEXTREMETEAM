@@ -48,6 +48,23 @@
 </figure>
 {%- endmacro %}
 
+{# Interruptor (Switch do shadcn/ui, .et-interruptor) para uma configuração que liga
+   ou desliga. A linha inteira é o alvo de toque; o nome acessível é só o `rotulo`, e
+   a `ajuda` (e o id em `descrito_por`, se houver) vira a descrição. `valor` é o value
+   enviado quando ligado (sem ele o navegador manda "on"). #}
+{% macro interruptor(id, nome, rotulo, ligado=False, ajuda='', valor='', descrito_por='') -%}
+{% set descricao = ([id ~ '-ajuda'] if ajuda else []) + ([descrito_por] if descrito_por else []) %}
+<label class="et-interruptor-linha" for="{{ id }}">
+    <input class="et-interruptor" type="checkbox" role="switch" id="{{ id }}" name="{{ nome }}"
+           {%- if valor %} value="{{ valor }}"{% endif %}{% if ligado %} checked{% endif %}
+           aria-labelledby="{{ id }}-rotulo"{% if descricao %} aria-describedby="{{ descricao|join(' ') }}"{% endif %}>
+    <span class="et-interruptor-texto">
+        <span id="{{ id }}-rotulo">{{ rotulo }}</span>
+        {% if ajuda %}<small id="{{ id }}-ajuda">{{ ajuda }}</small>{% endif %}
+    </span>
+</label>
+{%- endmacro %}
+
 {# Campo só de leitura com botão "Copiar", para endereços que alguém cola em outro
    painel. O botão copia pelo data-copiar-campo (componentes.js) e avisa com o toast;
    sem JS, o campo continua selecionável para a cópia manual. #}

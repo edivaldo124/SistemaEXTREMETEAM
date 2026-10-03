@@ -307,12 +307,9 @@
 /* No celular cada mensalidade vira um cartão (.table-stack de theme.css): o
    contêiner do componente some e a rolagem horizontal deixa de existir. */
 @media (max-width:640px) {
-  .tabela-mensalidades { overflow:visible; border:0; border-radius:0; background:transparent; }
   .tabela-mensalidades .et-tabela-ferramentas {
     margin-bottom:var(--sp-3); border:1px solid var(--line); border-radius:var(--et-radius-card);
   }
-  .tabela-mensalidades .et-tabela-rolagem { max-height:none; overflow:visible; }
-  .tabela-mensalidades .et-tabela-rolagem table { min-width:0; }
   .tabela-mensalidades .et-tabela-vazio { border:1px dashed var(--line-strong); border-radius:var(--et-radius-card); }
 }
 
@@ -323,9 +320,9 @@
 
 .form-foto-perfil { gap:var(--sp-4); }
 .foto-perfil-area { display:flex; align-items:center; gap:var(--sp-5); }
-.foto-perfil-acoes { display:flex; flex-direction:column; gap:var(--sp-3); }
+.foto-perfil-acoes { display:flex; flex-direction:column; gap:var(--sp-3); min-width:0; max-width:100%; }
 .form-foto { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); }
-.form-foto input[type=file] { max-width:100%; }
+.form-foto input[type=file] { min-width:0; max-width:100%; }
 .dica-foto { margin:0; color:var(--text-2); font-size:var(--fs-xs); }
 
 /* ------------------------------------------------ formulários da conta -- */
@@ -380,7 +377,9 @@
   .summary-grid { grid-template-columns:1fr; }
 }
 @media (max-width:760px) {
-  .form-detalhes-grid { grid-template-columns:1fr; }
+  /* minmax(0,…): com 1fr, o texto "Nenhum arquivo escolhido" do campo de foto
+     segura a coluna em 360px e os cartões passam da tela. */
+  .form-detalhes-grid { grid-template-columns:minmax(0,1fr); }
 }
 @media (max-width:720px) {
   .profile-page { padding-top:var(--sp-5); }

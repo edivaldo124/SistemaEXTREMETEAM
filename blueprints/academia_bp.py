@@ -1,6 +1,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from sqlalchemy.exc import SQLAlchemyError
 
+from blueprints.google_login import redirect_uri as retorno_login_google
 from blueprints.mercado_pago_oauth_bp import tentativa_sem_retorno
 from config import db
 from modelos.academia import Academia
@@ -8,13 +9,21 @@ from servicos.autorizacao import admin_requerido
 from servicos.contatos import validar_email, validar_instagram, validar_whatsapp
 from servicos.mercado_pago_conta import estado_conexao
 from servicos.gmail_conta import estado as estado_gmail
+from servicos.mercado_pago import ConfiguracaoInvalida
 
 academia_bp = Blueprint('academia', __name__)
 
 
 def _pagina(dados, status=200):
+    gmail = estado_gmail()
+    # O botão "Entrar com o Google" usa o mesmo cliente OAuth do Gmail, mas volta por
+    # outro caminho; o Google recusa (redirect_uri_mismatch) se ele não estiver cadastrado.
+    try:
+        gmail['redirect_uri_login'] = retorno_login_google()
+    except ConfiguracaoInvalida:
+        gmail['redirect_uri_login'] = None
     return render_template(
-        'admin_academia.html', dados=dados, mp=estado_conexao(), gmail=estado_gmail(),
+        'admin_academia.html', dados=dados, mp=estado_conexao(), gmail=gmail,
         mp_sem_retorno=tentativa_sem_retorno(),
     ), status
 

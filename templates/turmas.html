@@ -43,7 +43,7 @@
                 <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Cadastrando...">Cadastrar professor</button>
             </form>
             <div class="et-tabela">
-                <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Professores cadastrados">
+                <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Professores cadastrados">
                     <table>
                         <thead>
                             <tr>
@@ -57,16 +57,16 @@
                         <tbody>
                             {% for p in professores %}
                                 <tr>
-                                    <td>
+                                    <td data-label="Professor" class="celula-titulo">
                                         <span class="pessoa">
                                             {{ avatar(p.nome_exibicao, url_for('turma_blueprint.foto_professor', professor_id=p.id) if p.foto_arquivo else '', 'sm') }}
                                             <strong>{{ p.nome_exibicao }}</strong>
                                         </span>
                                     </td>
-                                    <td>{{ p.login }}</td>
-                                    <td>{{ p.turmas|length }} turma{{ "" if p.turmas|length == 1 else "s" }}</td>
-                                    <td>{{ 'Perfil publicado no site' if p.perfil_publico else 'Perfil ainda não publicado' }}</td>
-                                    <td>
+                                    <td data-label="Login">{{ p.login }}</td>
+                                    <td data-label="Turmas">{{ p.turmas|length }} turma{{ "" if p.turmas|length == 1 else "s" }}</td>
+                                    <td data-label="Status no site">{{ 'Perfil publicado no site' if p.perfil_publico else 'Perfil ainda não publicado' }}</td>
+                                    <td data-label="Ações" class="celula-menu">
                                         <div class="et-menu" data-menu>
                                             <button type="button"
                                                     class="et-menu-botao et-botao et-botao--fantasma et-botao--icone et-botao--pequeno"
@@ -161,7 +161,7 @@
                 <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Cadastrando...">Cadastrar turma</button>
             </form>
             <div class="et-tabela">
-                <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Turmas da academia">
+                <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Turmas da academia">
                     <table>
                         <thead>
                             <tr>
@@ -175,11 +175,11 @@
                         <tbody>
                             {% for t in turmas %}
                                 <tr>
-                                    <td><strong>{{ t.nome }}</strong></td>
-                                    <td>{{ t.dias_semana|replace(',', ', ') }} · {{ t.horario }}</td>
-                                    <td>Prof. {{ t.professor.nome }}</td>
-                                    <td>{{ t.matriculas|length }}/{{ t.limite_alunos }} alunos</td>
-                                    <td>
+                                    <td data-label="Turma" class="celula-titulo"><strong>{{ t.nome }}</strong></td>
+                                    <td data-label="Dias e horário">{{ t.dias_semana|replace(',', ', ') }} · {{ t.horario }}</td>
+                                    <td data-label="Professor">Prof. {{ t.professor.nome }}</td>
+                                    <td data-label="Alunos">{{ t.matriculas|length }}/{{ t.limite_alunos }} alunos</td>
+                                    <td data-label="Ações" class="celula-menu">
                                         <div class="et-menu" data-menu>
                                             <button type="button"
                                                     class="et-menu-botao et-botao et-botao--fantasma et-botao--icone et-botao--pequeno"

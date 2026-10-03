@@ -133,6 +133,12 @@
   --caixa-fundo:transparent;
   --caixa-marcada:var(--et-gold);
   --caixa-ponto:var(--ink);
+  --interruptor-trilho:var(--et-surface-dark-2);
+  --interruptor-borda:var(--et-line-dark-strong);
+  --interruptor-polegar-borda:transparent;
+  --interruptor-polegar-fundo:var(--et-text-on-dark-muted);
+  --interruptor-ligado:var(--et-gold);
+  --interruptor-polegar-ligado:var(--et-black);
   --caixa-sinal:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 }
 
@@ -226,7 +232,9 @@ td,th,.tabular,.metric-value,.summary-grid strong,.stat-value { font-variant-num
 
 /* ------------------------------------------------------------- campos -- */
 
-.field label,.grupo-input label {
+/* A linha do interruptor também é um <label>, mas monta o próprio layout; o
+   :where() mantém a especificidade de sempre. */
+.field label:not(:where(.et-interruptor-linha)),.grupo-input label:not(:where(.et-interruptor-linha)) {
   display:block; margin-bottom:var(--sp-2);
   color:var(--text); font-size:var(--fs-sm); font-weight:600;
 }
@@ -234,10 +242,10 @@ td,th,.tabular,.metric-value,.summary-grid strong,.stat-value { font-variant-num
 .field label.dia-opcao,.grupo-input label.dia-opcao { margin-bottom:0; }
 /* "Opcional", "Obrigatória", "Mínimo 8 caracteres": nota curta na mesma linha
    do rótulo, alinhada à direita do campo. */
-.field label:has(small),.grupo-input label:has(small) {
+.field label:not(:where(.et-interruptor-linha)):has(small),.grupo-input label:not(:where(.et-interruptor-linha)):has(small) {
   display:flex; align-items:baseline; justify-content:space-between; gap:var(--sp-3);
 }
-.field label small,.grupo-input label small {
+.field label:not(:where(.et-interruptor-linha)) small,.grupo-input label:not(:where(.et-interruptor-linha)) small {
   flex:0 0 auto; color:var(--text-3);
   font-size:var(--fs-xs); font-weight:400;
 }
@@ -459,10 +467,17 @@ tbody tr td { transition:background var(--dur-rapida) ease; }
 
 /* --------------------------------------------- tabelas viram lista (mobile) -- */
 /* Ativado com a classe .table-stack no wrapper da tabela. Cada linha vira um
-   cartão com rótulo e valor, sem rolagem horizontal. */
+   cartão com rótulo e valor, sem rolagem horizontal. Cartão compacto: a célula
+   .celula-titulo (quem ou o quê da linha) vira a cabeça do cartão, sem rótulo, e o
+   menu ⋮ da .celula-menu fica no canto dela. */
 
 @media (max-width:640px) {
-  .table-stack { overflow-x:hidden; border:0; border-radius:0; background:transparent; }
+  /* Cada linha já traz a própria moldura: a do componente sai, e a lista cresce
+     com a página em vez de rolar dentro de uma caixa de 440px. */
+  .et-tabela:has(> .table-stack) { overflow:visible; border:0; border-radius:0; background:transparent; }
+  .et-tabela-rolagem.table-stack { max-height:none; overflow:visible; }
+  .et-tabela-rolagem.table-stack > table { min-width:0; }
+  .table-stack { border:0; border-radius:0; background:transparent; }
   .table-stack table,.table-stack thead,.table-stack tbody,
   .table-stack th,.table-stack td,.table-stack tr { display:block; }
   .table-stack table { background:transparent; }
@@ -496,6 +511,24 @@ tbody tr td { transition:background var(--dur-rapida) ease; }
   }
   .table-stack td.acao-cell::before { margin-bottom:var(--sp-1); }
   .table-stack td.acao-cell > * + * { margin-left:0; }
+
+  .table-stack tbody tr:has(> td.celula-titulo):not([hidden]) {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:var(--sp-3);
+    padding:var(--sp-4) var(--sp-5) var(--sp-3);
+  }
+  .table-stack tbody tr:has(> td.celula-titulo) > td { grid-column:1 / -1; border-top:1px solid var(--line); }
+  .table-stack tbody tr:has(> td.celula-titulo) > td.celula-titulo {
+    grid-column:1; grid-row:1; justify-content:flex-start; min-height:44px;
+    padding:0 0 var(--sp-3); border-top:0; text-align:left; font-size:var(--fs-md); font-weight:600;
+  }
+  /* Só nome e menu (lista de matriculados): sem o respiro para a linha de baixo. */
+  .table-stack tbody tr:has(> td.celula-titulo):not(:has(> td:nth-child(3))) { padding-block:var(--sp-3); }
+  .table-stack tbody tr:has(> td.celula-titulo):not(:has(> td:nth-child(3))) > td.celula-titulo { padding-bottom:0; }
+  .table-stack tbody tr:has(> td.celula-titulo) > td.celula-menu {
+    grid-column:2; grid-row:1; align-self:start; padding:0; border-top:0;
+  }
+  .table-stack td.celula-titulo::before,.table-stack td.celula-menu::before { content:none; }
+  .table-stack td.celula-menu:not(:has(.et-menu)) { display:none; }
   /* Linha vazia continua sendo um aviso, não um cartão. */
   .table-stack tbody tr:has(> td.empty-state) { padding:0; border-style:dashed; box-shadow:none; background:transparent; }
   .table-stack td.empty-state { display:block; text-align:center; }

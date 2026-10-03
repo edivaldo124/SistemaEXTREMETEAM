@@ -240,7 +240,7 @@
                         <tbody>
                             {% for m in matriculas %}
                                 <tr>
-                                    <td data-label="Turma">
+                                    <td data-label="Turma" class="celula-titulo">
                                         <strong>{{ m.turma.nome }}</strong>
                                     </td>
                                     <td data-label="Professor">
@@ -369,7 +369,7 @@
                                         <td data-label="Plano">
                                             <strong>{{ pagamento.plano.nome_plano }}</strong>
                                         </td>
-                                        <td data-label="Competência" data-valor="{{ pagamento.competencia or '' }}">{{ formatar_competencia(pagamento.competencia) }}</td>
+                                        <td data-label="Competência" class="celula-titulo" data-valor="{{ pagamento.competencia or '' }}">{{ formatar_competencia(pagamento.competencia) }}</td>
                                         <td data-label="Valor" class="celula-valor" data-valor="{{ pagamento.valor }}">{{ pagamento.valor|moeda }}</td>
                                         <td data-label="Vencimento" data-valor="{{ pagamento.vencimento.isoformat() }}">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
                                         <td data-label="Pagamento" data-valor="{{ pagamento.data_pagamento.isoformat() if pagamento.data_pagamento else '' }}">
