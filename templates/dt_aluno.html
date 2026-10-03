@@ -475,7 +475,7 @@
                             {% for pagamento in pagamentos %}
                                 <tr>
                                     <td data-label="Plano">{{ pagamento.plano.nome_plano }}</td>
-                                    <td data-label="Competência" class="celula-numero">{{ formatar_competencia(pagamento.competencia) }}</td>
+                                    <td data-label="Competência" class="celula-numero celula-titulo">{{ formatar_competencia(pagamento.competencia) }}</td>
                                     <td data-label="Valor" class="celula-numero">{{ pagamento.valor|moeda }}</td>
                                     <td data-label="Vencimento" class="celula-numero">{{ pagamento.vencimento.strftime('%d/%m/%Y') }}</td>
                                     <td data-label="Pagamento" class="celula-numero">
@@ -632,7 +632,7 @@
                         <tbody>
                             {% for m in u.matriculas %}
                                 <tr>
-                                    <td data-label="Turma">{{ m.turma.nome }}</td>
+                                    <td data-label="Turma" class="celula-titulo">{{ m.turma.nome }}</td>
                                     <td data-label="Dias">{{ m.turma.dias_semana|replace(',', ', ') }}</td>
                                     <td data-label="Horário">{{ m.turma.horario }}</td>
                                 </tr>

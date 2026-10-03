@@ -7,7 +7,7 @@ from flask import Blueprint, redirect, url_for, request, session, flash, render_
 from config import db, limiter
 from modelos.usuario import Aluno
 from dao.usuarioDAO import AlunoDAO
-from servicos.mercado_pago import base_url_publica
+from servicos.mercado_pago import ConfiguracaoInvalida, base_url_publica
 from servicos.autorizacao import iniciar_sessao, registrar_credencial
 
 logger = logging.getLogger(__name__)
@@ -20,6 +20,8 @@ USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo'
 CALLBACK_ROUTE = '/login/google/callback'
 
 def redirect_uri():
+    # Precisa estar cadastrado, igual, em "URIs de redirecionamento autorizados" do
+    # cliente OAuth do GMAIL_CLIENT_ID (o mesmo cliente do Gmail, que usa outro caminho).
     return f'{base_url_publica()}{CALLBACK_ROUTE}'
 
 @google_auth_bp.route('/login/google')
@@ -28,14 +30,21 @@ def login_google():
     client_id = os.environ.get('GMAIL_CLIENT_ID')
     if not client_id:
         flash('O Login com Google não está configurado no servidor.', 'erro')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('auth.pagina_login'))
         
+    try:
+        retorno = redirect_uri()
+    except ConfiguracaoInvalida:
+        logger.error('APP_BASE_URL inválida; o login com Google não tem para onde voltar.')
+        flash('O Login com Google não está configurado no servidor.', 'erro')
+        return redirect(url_for('auth.pagina_login'))
+
     state = secrets.token_urlsafe(32)
     session['google_oauth_state'] = state
     
     url = AUTH_URL + '?' + urlencode({
         'client_id': client_id,
-        'redirect_uri': redirect_uri(),
+        'redirect_uri': retorno,
         'response_type': 'code',
         'scope': 'openid email profile',
         'access_type': 'online',
@@ -52,15 +61,15 @@ def callback():
     
     if not state_guardado or state_guardado != state_recebido:
         flash('Falha na validação de segurança do Google. Tente novamente.', 'erro')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('auth.pagina_login'))
         
     if request.args.get('error'):
         flash('O login com Google foi cancelado.', 'erro')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('auth.pagina_login'))
         
     code = request.args.get('code')
     if not code:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('auth.pagina_login'))
         
     try:
         resposta = requests.post(TOKEN_URL, data={
@@ -78,17 +87,19 @@ def callback():
         }, timeout=10)
         perfil.raise_for_status()
         info = perfil.json()
-    except Exception as e:
+    except Exception:
         logger.exception('Falha ao autenticar usuário via Google OAuth.')
         flash('Não foi possível se conectar com o Google. Tente novamente.', 'erro')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('auth.pagina_login'))
         
     email = info.get('email')
     nome = info.get('name')
     
-    if not email:
+    # O e-mail é a única ligação com a conta do aluno: sem a confirmação do Google,
+    # qualquer conta com esse endereço digitado entraria no lugar dele.
+    if not email or info.get('email_verified') is not True:
         flash('O Google não forneceu um e-mail válido.', 'erro')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('auth.pagina_login'))
         
     # Verificar se o aluno já existe
     email_lower = email.strip().lower()

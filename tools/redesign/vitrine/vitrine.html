@@ -1,6 +1,7 @@
 {#- Vitrine dos componentes da etapa 2. Só é servida por tools/redesign/servir_visual.py.
     Cada agente escreve a sua parte em _a.html / _b.html; aqui fica o que é do orquestrador. -#}
 {% extends "layouts/base.html" %}
+{% from "components/ui.html" import interruptor %}
 {% block titulo %}Vitrine de componentes | Extreme Team{% endblock %}
 {% block estilos %}
     <style>
@@ -66,6 +67,10 @@
                 <label class="opcao-inline"><input type="radio" class="et-caixa" name="v-r"> Opção B</label>
             </div>
             <div class="vitrine-linha">
+                {{ interruptor('v-sw-1', 'v_sw_1', 'Destacar na página inicial', ligado=True) }}
+                {{ interruptor('v-sw-2', 'v_sw_2', 'Exibir WhatsApp no site', ajuda='O número aparece no perfil público do professor.') }}
+            </div>
+            <div class="vitrine-linha">
                 <span class="et-selo">Neutro</span>
                 <span class="et-selo et-selo--ok">Conectada</span>
                 <span class="et-selo et-selo--info">Credencial do servidor</span>
@@ -95,6 +100,8 @@
             <div class="vitrine-linha">
                 <label class="opcao-inline"><input type="checkbox" class="et-caixa" checked> Lembrar meu usuário</label>
                 <label class="opcao-inline"><input type="checkbox" class="et-caixa"> Desmarcado</label>
+                {{ interruptor('v-sw-3', 'v_sw_3', 'Ligado no escuro', ligado=True) }}
+                {{ interruptor('v-sw-4', 'v_sw_4', 'Desligado no escuro') }}
             </div>
         </section>
 

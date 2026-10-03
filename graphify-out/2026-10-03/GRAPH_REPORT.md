@@ -5,12 +5,12 @@
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2258 nodes · 5663 edges · 140 communities (129 shown, 11 thin omitted)
+- 2259 nodes · 5663 edges · 141 communities (129 shown, 12 thin omitted)
 - Extraction: 80% EXTRACTED · 20% INFERRED · 0% AMBIGUOUS · INFERRED: 1132 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1ad814aa`
+- Built from commit: `77be81f9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -114,6 +114,7 @@
 - test_backup_scripts.py
 - .__init__
 - gerar_imagem_og.py
+- route
 - erro_validacao_senha
 - pagina_cadastro
 - Professor
@@ -143,16 +144,16 @@
 10. `MercadoPagoIndisponivel` - 43 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Histórico de Mensalidades Section` --shares_data_with--> `Pagamento`  [INFERRED]
-  templates/pgUsuario.html → modelos/pagamento.py
 - `Planos Disponíveis Section` --shares_data_with--> `Plano`  [INFERRED]
   templates/pgUsuario.html → modelos/plano.py
+- `Histórico de Mensalidades Section` --shares_data_with--> `Pagamento`  [INFERRED]
+  templates/pgUsuario.html → modelos/pagamento.py
 - `Presença Form` --shares_data_with--> `Presenca`  [INFERRED]
   templates/turma.html → modelos/presenca.py
-- `Aluno Detail/Admin Page` --shares_data_with--> `Matricula`  [INFERRED]
-  templates/dt_aluno.html → modelos/matricula.py
-- `Aluno Profile Page` --shares_data_with--> `Matricula`  [INFERRED]
-  templates/pgUsuario.html → modelos/matricula.py
+- `Turma Detail Page` --shares_data_with--> `Turma`  [INFERRED]
+  templates/turma.html → modelos/turma.py
+- `Cadastrar Turma Form` --shares_data_with--> `Turma`  [INFERRED]
+  templates/turmas.html → modelos/turma.py
 
 ## Import Cycles
 - None detected.
@@ -162,7 +163,7 @@
 - **Mensalidade (Billing) Management Flow** — templates_dt_aluno_pagamento_form, templates_pgusuario_mensalidades_section, modelos_pagamento_pagamento, modelos_plano_plano [INFERRED 0.85]
 - **Turma and Attendance Management Flow** — templates_turmas_turma_form, templates_turma_presenca_form, templates_pgprofessor_page, modelos_turma_turma [INFERRED 0.85]
 
-## Communities (140 total, 11 thin omitted)
+## Communities (141 total, 12 thin omitted)
 
 ### Community 0 - "criar_pagamento"
 Cohesion: 0.11
@@ -577,19 +578,19 @@ Cohesion: 0.33
 Nodes (5): test_busca_financeira_trata_curingas_como_texto(), test_painel_financeiro_busca_por_nome_do_aluno(), test_painel_financeiro_exige_admin(), test_painel_financeiro_filtra_por_status(), test_painel_financeiro_mostra_totais_do_backend()
 
 ## Knowledge Gaps
-- **135 isolated node(s):** `modal`, `input_senha`, `icone_senha`, `formularioPlano`, `campoPreco` (+130 more)
+- **135 isolated node(s):** `icone_senha`, `input_senha`, `modal`, `campoDuracao`, `campoPreco` (+130 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `PagamentoDAO` connect `PagamentoDAO` to `criar_pagamento`, `criar_aluno`, `test_pagamento_recusado.py`, `test_mudanca_plano.py`, `pix_bp.py`, `test_regressao_auditoria.py`, `test_financeiro_admin_painel.py`, `AlunoDAO`, `checkout_bp.py`, `config.py`, `test_auditoria_seguranca.py`, `MatriculaDAO`, `test_pix_rotas.py`, `test_seguranca.py`, `.contratar_plano`, `salvar_foto_perfil`, `Aluno`, `test_admin_mercado_pago.py`, `conftest.py`, `.buscar_por_id`, `test_perfil_e_foto.py`, `usuario_bp.py`, `PlanoDAO`, `pagina_cadastro`, `adm_bp.py`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+  _High betweenness centrality (0.125) - this node is a cross-community bridge._
+- **Why does `logar_como_admin()` connect `logar_como_admin` to `criar_pagamento`, `criar_aluno`, `test_mudanca_plano.py`, `test_regressao_auditoria.py`, `test_analytics.py`, `test_financeiro_admin_painel.py`, `test_home_planos.py`, `AlunoDAO`, `test_mercado_pago_oauth.py`, `test_limites_pagamento.py`, `MatriculaDAO`, `PagamentoDAO`, `test_pix_rotas.py`, `test_conversao_home.py`, `test_seguranca.py`, `Aluno`, `test_admin_mercado_pago.py`, `conftest.py`, `test_sessao_revogada.py`, `test_seo.py`, `.buscar_por_id`, `test_layouts.py`, `Academia`, `parametrize`, `test_perfil_e_foto.py`, `Plano`, `PlanoDAO`, `Professor`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
 - **Why does `AlunoDAO` connect `AlunoDAO` to `Aluno`, `painel_adm`, `turma_bp.py`, `criar_aluno`, `test_mudanca_plano.py`, `pagina_login`, `test_regressao_auditoria.py`, `PagamentoDAO`, `google_login.py`, `logar_como_admin`, `test_perfil_e_foto.py`, `conftest.py`, `test_seguranca.py`, `Plano`, `usuario_bp.py`, `config.py`, `pagina_cadastro`, `adm_bp.py`?**
-  _High betweenness centrality (0.039) - this node is a cross-community bridge._
-- **Why does `criar_aluno()` connect `criar_aluno` to `criar_pagamento`, `test_mudanca_plano.py`, `test_regressao_auditoria.py`, `logar_como_admin`, `test_analytics.py`, `test_financeiro_admin_painel.py`, `test_home_planos.py`, `AlunoDAO`, `test_mercado_pago_oauth.py`, `test_auditoria_seguranca.py`, `test_limites_pagamento.py`, `MatriculaDAO`, `PagamentoDAO`, `test_pix_rotas.py`, `test_conversao_home.py`, `test_seguranca.py`, `.contratar_plano`, `Aluno`, `conftest.py`, `test_paginas_erro.py`, `test_seo.py`, `.buscar_por_id`, `painel_adm`, `test_layouts.py`, `parametrize`, `test_perfil_e_foto.py`, `Plano`, `PlanoDAO`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
 - **Are the 157 inferred relationships involving `PagamentoDAO` (e.g. with `aprovar_comprovante_manual()` and `atualizar_status_pagamento()`) actually correct?**
   _`PagamentoDAO` has 157 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 157 inferred relationships involving `criar_aluno()` (e.g. with `AlunoDAO` and `Aluno`) actually correct?**

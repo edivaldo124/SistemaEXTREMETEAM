@@ -148,6 +148,9 @@ body:not(.admin-shell) .container-admin { padding:var(--sp-7) clamp(var(--sp-4),
 /* Ações de um plano (editar, destacar, arquivar, excluir), embaixo do cartão: grade de
    duas colunas para os botões não quebrarem em linhas de tamanhos diferentes. */
 .plano-acoes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-2); }
+/* Número ímpar de ações (Editar, Destacar, Arquivar): a última ocupa a linha, em vez
+   de ficar sozinha pela metade. */
+.plano-acoes > :last-child:nth-child(odd) { grid-column:1/-1; }
 .plano-acoes > .et-botao,
 .plano-acoes > form .et-botao { width:100%; }
 
@@ -189,12 +192,10 @@ a.pessoa-linha:focus-visible { outline:2px solid var(--focus-ink); outline-offse
 
 @media (max-width:640px) {
   /* Linhas em cartão: a moldura da tabela sai e cada cartão traz a sua. */
-  .tabela-admin { border:0; background:transparent; }
   .tabela-admin .et-tabela-ferramentas { padding:0 0 var(--sp-4); border:0; background:transparent; }
   .tabela-admin .et-tabela-ferramentas > .et-botao { width:100%; }
   .tabela-admin .paginacao { padding-inline:0; border-top:0; }
   .tabela-admin td.celula-menu { width:auto; }
-  .table-stack.et-tabela-rolagem td.celula-menu { margin-top:var(--sp-2); padding-top:var(--sp-3); }
   .form-busca-aluno .et-campo { flex:1 1 100%; }
   .form-busca-aluno .et-botao { flex:1 1 auto; }
   .tabela-admin .acao-cell > .form-inline + .form-inline { margin-left:0; }

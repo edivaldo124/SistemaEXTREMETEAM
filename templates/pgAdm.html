@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
 {% endblock %}
 {% block conteudo %}
-    {% from "components/ui.html" import metrica with context %}
+    {% from "components/ui.html" import metrica, interruptor with context %}
     {% from "components/avatar.html" import avatar %}
     <main id="conteudo" class="container-admin">
         <section class="admin-intro">
@@ -41,7 +41,7 @@
                             <tbody>
                                 {% for u in pendentes %}
                                     <tr>
-                                        <td data-label="Aluno">
+                                        <td data-label="Aluno" class="celula-titulo">
                                             <span class="pessoa-linha">
                                                 {{ avatar(u.nome, url_for('auth.foto_perfil', aluno_id=u.id) if u.foto_arquivo else '', 'sm') }}
                                                 <strong>{{ u.nome }}</strong>
@@ -115,10 +115,9 @@
                            placeholder="Dias"
                            required>
                 </div>
-                <label class="checkbox-label plano-destaque-opcao" for="destaque-plano">
-                    <input class="et-caixa" type="checkbox" id="destaque-plano" name="destaque" value="sim">
-                    <span>Destacar na página inicial</span>
-                </label>
+                <div class="plano-destaque-opcao">
+                    {{ interruptor('destaque-plano', 'destaque', 'Destacar na página inicial', valor='sim') }}
+                </div>
                 <button type="submit" class="et-botao et-botao--principal">Cadastrar plano</button>
             </form>
             {#- Cada ficha: nome, preço (com a promoção, se houver) e ações. "Excluir" só
@@ -259,7 +258,7 @@
                         <tbody id="lista-alunos">
                             {% for u in usuarios %}
                                 <tr class="aluno-item" data-nome="{{ u.nome }}">
-                                    <td data-label="Aluno">
+                                    <td data-label="Aluno" class="celula-titulo">
                                         <a class="pessoa-linha" href="/admin/usuario/{{ u.cpf }}">
                                             {{ avatar(u.nome, url_for('auth.foto_perfil', aluno_id=u.id) if u.foto_arquivo else '', 'sm') }}
                                             <strong>{{ u.nome }}</strong>

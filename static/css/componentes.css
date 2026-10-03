@@ -943,6 +943,89 @@ select.et-campo--pequeno { padding-right: calc(var(--sp-3) + 24px); }
 .et-caixa[aria-invalid="true"] { border-color: var(--red); }
 .et-caixa:disabled { opacity: .5; cursor: not-allowed; }
 
+/* ----------------------------------------------------------- Interruptor -- */
+/* Switch do shadcn/ui para ligar e desligar uma configuração: checkbox nativo com
+   role="switch" (o leitor de tela anuncia ligado/desligado e o formulário envia como
+   qualquer checkbox). Desligado: trilho claro e polegar branco com contorno. Ligado:
+   trilho preto e polegar dourado na direita. Vai dentro de .et-interruptor-linha, que
+   faz da linha inteira (≥ 44px) o alvo de toque; macro interruptor() em ui.html.
+     <label class="et-interruptor-linha" for="x">
+       <input class="et-interruptor" type="checkbox" role="switch" id="x" aria-labelledby="x-rotulo">
+       <span class="et-interruptor-texto"><span id="x-rotulo">…</span><small id="x-ajuda">…</small></span>
+     </label>
+   No escuro, theme.css troca as --interruptor-* (trilho dourado e polegar preto). */
+.et-interruptor {
+  --interruptor-largura: 44px;
+  --interruptor-polegar: 18px;
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--interruptor-largura);
+  height: 24px;
+  margin: 0;
+  border: 1px solid var(--interruptor-borda, var(--line-strong));
+  border-radius: var(--radius-pill);
+  background: var(--interruptor-trilho, var(--paper-2));
+  appearance: none;
+  cursor: pointer;
+  transition: background-color var(--dur-rapida) var(--ease), border-color var(--dur-rapida) var(--ease);
+}
+.et-interruptor::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: var(--interruptor-polegar);
+  height: var(--interruptor-polegar);
+  border: 1px solid var(--interruptor-polegar-borda, var(--text-3));
+  border-radius: 50%;
+  background: var(--interruptor-polegar-fundo, var(--surface));
+  box-shadow: 0 1px 2px rgba(26, 22, 10, .2);
+  translate: 0 -50%;
+  transition: translate var(--dur-media) var(--ease), background-color var(--dur-rapida) var(--ease);
+}
+.et-interruptor:focus-visible { border-radius: var(--radius-pill); }
+.et-interruptor:hover { border-color: var(--interruptor-ligado, var(--ink)); }
+.et-interruptor:checked {
+  border-color: var(--interruptor-ligado, var(--ink));
+  background: var(--interruptor-ligado, var(--ink));
+}
+.et-interruptor:checked::before {
+  border-color: transparent;
+  background: var(--interruptor-polegar-ligado, var(--et-gold));
+  /* 44 de trilho − 2 de borda − 2 de folga de cada lado − 18 do polegar */
+  translate: calc(var(--interruptor-largura) - var(--interruptor-polegar) - 6px) -50%;
+}
+.et-interruptor:disabled { opacity: .5; cursor: not-allowed; }
+
+.et-interruptor-linha {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 44px;
+  margin: 0;
+  padding-block: var(--sp-2);
+  cursor: pointer;
+}
+.et-interruptor-linha:has(.et-interruptor:disabled) { cursor: not-allowed; }
+/* Com descrição, o interruptor acompanha a primeira linha do rótulo. */
+.et-interruptor-linha:has(small) { align-items: flex-start; }
+.et-interruptor-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.4;
+}
+.et-interruptor-texto small {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
 /* ----------------------------------------------------------------- Selo -- */
 /* Badge do shadcn/ui com a marca: <span class="et-selo et-selo--ok">Conectada</span>.
    Tons: ok, alerta, perigo, info, neutro, destaque. Situação de mensalidade, plano
@@ -1153,6 +1236,11 @@ select.et-campo--pequeno { padding-right: calc(var(--sp-3) + 24px); }
 @media (max-width: 540px) {
   .et-cartao { border-radius: var(--radius-card); }
   .et-cartao-cabeca { margin-bottom: var(--sp-5); }
+  /* A ação fica na linha do título e a descrição desce para a largura toda; numa
+     coluna de 360px, dividir o espaço com o botão espreme o texto. */
+  .et-cartao-cabeca > :not(.et-cartao-acao) { grid-column: 1 / -1; }
+  .et-cartao-cabeca > .et-cartao-titulo { grid-column: 1; }
+  .et-cartao-acao { grid-row: 1; }
 }
 
 /* -------------------------------------------------------------- Diálogo -- */

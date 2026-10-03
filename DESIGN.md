@@ -220,6 +220,17 @@ components:
     rounded: "{rounded.btn}"
     height: 48px
     padding: "0 {spacing.sp-4}"
+  et-interruptor:
+    trackColor: "{colors.paper-2}"
+    trackBorder: "{colors.line-strong}"
+    thumbColor: "{colors.surface}"
+    thumbBorder: "{colors.text-3}"
+    checkedTrackColor: "{colors.et-black}"
+    checkedThumbColor: "{colors.et-gold}"
+    rounded: "{rounded.pill}"
+    width: 44px
+    height: 24px
+    rowHeight: 44px
   et-selo:
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.line-strong}"
@@ -527,6 +538,7 @@ Todos ficam em `static/css/componentes.css`, usam só tokens e têm a classe `.e
 - **Rótulo** (`.field label`): 14 px, peso 600, com 8 px até o campo. Notas como "Opcional" vão em `<small>` alinhado à direita, em `{colors.text-3}`.
 - **Ajuda** (`.field-hint`): 13 px em `{colors.text-2}`. **Erro** (`.field-erro`): 13 px, peso 600, em `{colors.red-ink}`, escrito ao lado do campo e não no topo do formulário.
 - **`.et-caixa`** (checkbox e radio): 20 px, raio de 6 px, marcada em preto com sinal branco. No escuro, fica dourada com sinal preto. O tamanho e a cor vêm de `--caixa-*`.
+- **`.et-interruptor`** (Switch): checkbox nativo com `role="switch"` para uma configuração que liga e desliga (destacar plano, exibir contato no site, publicar perfil, lançar a primeira mensalidade). Trilho de 44 × 24 px: desligado em `{colors.paper-2}` com polegar branco contornado; ligado em preto com polegar dourado. No escuro, o trilho ligado fica dourado e o polegar preto (`--interruptor-*`). Sempre dentro de `.et-interruptor-linha`, um `<label>` de 44 px de altura em que a linha inteira é o alvo de toque, com o interruptor antes do rótulo. Use a macro `interruptor()` de `ui.html`: o nome acessível é só o rótulo, e a ajuda vira descrição. A caixa continua para aceite (termos), "lembrar meu usuário", ação ao salvar ("remover foto atual") e chamada de presença.
 - **`.et-upload`**: área tracejada de 140 px que fica dourada ao arrastar, com pré-visualização e erro em vermelho suave.
 - **`.et-copiavel`**: campo somente leitura com botão de copiar ao lado (o "Pix copia e cola").
 
@@ -559,7 +571,8 @@ Todos ficam em `static/css/componentes.css`, usam só tokens e têm a classe `.e
 - **Breadcrumb**: herda a cor do contêiner, usa barra como separador e tem link sublinhado com alvo de 44 px.
 
 ### Dados
-- **`.et-tabela`**: contêiner branco com raio de 18 px, ferramentas no topo (busca até 320 px) e rolagem com cabeçalho fixo. O cabeçalho usa faixa `{colors.surface-2}` com 12 px, peso 700 e caixa alta. A ordenação (`th[aria-sort]`) usa setas do Lucide, apagadas até a coluna ser escolhida e em ouro escuro quando ativas. As células têm 14 px e a linha sob o cursor fica em `{colors.surface-2}`. Até 640 px, a tabela vira lista. Busca e ordenação só existem em tabela sem paginação.
+- **`.et-tabela`**: contêiner branco com raio de 18 px, ferramentas no topo (busca até 320 px) e rolagem com cabeçalho fixo. O cabeçalho usa faixa `{colors.surface-2}` com 12 px, peso 700 e caixa alta. A ordenação (`th[aria-sort]`) usa setas do Lucide, apagadas até a coluna ser escolhida e em ouro escuro quando ativas. As células têm 14 px e a linha sob o cursor fica em `{colors.surface-2}`. Busca e ordenação só existem em tabela sem paginação.
+- **Lista no celular** (`.table-stack` no `.et-tabela-rolagem`, toda tabela tem): até 640 px, cada linha vira um cartão com rótulo (`data-label`) e valor, a moldura do componente sai e a lista cresce com a página. **Cartão compacto:** a célula `.celula-titulo` (quem ou o quê da linha: aluno, turma, professor, competência) vira a cabeça do cartão, sem rótulo e em 600, e o menu ⋮ da `.celula-menu` fica no canto dela. Ações com vários botões ficam em `.acao-cell`, empilhadas no pé.
 - **Gráficos**: SVG gerado no servidor (Jinja), com tabela ou legenda acessível. Sem biblioteca de gráfico.
 
 ### Avisos flutuantes

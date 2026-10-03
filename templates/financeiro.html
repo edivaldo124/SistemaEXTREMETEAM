@@ -209,7 +209,7 @@
                     <p class="et-cartao-descricao">{{ pagina.total }} resultado{{ "" if pagina.total == 1 else "s" }} com os filtros atuais.</p>
                 </div>
                 <div class="et-tabela">
-                    <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Mensalidades">
+                    <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Mensalidades">
                         <table>
                             <thead>
                                 <tr>
@@ -227,7 +227,7 @@
                             <tbody>
                                 {% for pagamento in pagamentos %}
                                     <tr>
-                                        <td data-label="Aluno" class="celula-pessoa">
+                                        <td data-label="Aluno" class="celula-pessoa celula-titulo">
                                             <span class="pessoa">
                                                 {{ avatar(pagamento.aluno.nome, url_for('auth.foto_perfil', aluno_id=pagamento.aluno.id) if pagamento.aluno.foto_arquivo else '', 'sm') }}
                                                 <span>{{ pagamento.aluno.nome }}</span>
@@ -250,7 +250,7 @@
                                                 —
                                             {% endif %}
                                         </td>
-                                        <td data-label="Ações">
+                                        <td data-label="Ações" class="celula-menu">
                                             <div class="et-menu" data-menu>
                                                 <button type="button"
                                                         class="et-menu-botao et-botao et-botao--fantasma et-botao--icone et-botao--pequeno"

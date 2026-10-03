@@ -18983,6 +18983,28 @@
       "source_location": "L1"
     },
     {
+      "id": "route_verificacao_py_route",
+      "label": "route",
+      "_origin": "ast",
+      "community": 122,
+      "community_name": "route",
+      "file_type": "code",
+      "norm_label": "route",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "route",
+      "label": "route",
+      "_origin": "ast",
+      "community": 123,
+      "community_name": "erro_validacao_senha",
+      "file_type": "code",
+      "norm_label": "route",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "route_verificacao",
       "label": "route_verificacao.py",
       "_origin": "ast",
@@ -18992,17 +19014,6 @@
       "norm_label": "route_verificacao.py",
       "source_file": "route_verificacao.py",
       "source_location": "L1"
-    },
-    {
-      "id": "route_verificacao_py_route",
-      "label": "route",
-      "_origin": "ast",
-      "community": 123,
-      "community_name": "erro_validacao_senha",
-      "file_type": "code",
-      "norm_label": "route",
-      "source_file": "",
-      "source_location": ""
     },
     {
       "id": "servicos_senhas",
@@ -47452,7 +47463,7 @@
     },
     {
       "source": "route_verificacao_verificar_email_cadastro",
-      "target": "route_verificacao_py_route",
+      "target": "route",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -92186,5 +92197,5 @@
       "source_file": "templates/turmas.html"
     }
   ],
-  "built_at_commit": "1ad814aa5f1850245bfa8d368ad3a76d5d18304e"
+  "built_at_commit": "77be81f941dcc4f695be24a039ab84541cb6c8c3"
 }

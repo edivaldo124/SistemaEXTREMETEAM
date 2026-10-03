@@ -205,8 +205,11 @@
                             <div class="et-acordeao-corpo">
                                 <ol class="mp-passos">
                                     <li>
-                                        <p>No Google Cloud, em Google Auth Platform → Clientes → seu cliente da Web, cadastre em <strong>URIs de redirecionamento autorizados</strong>:</p>
-                                        {{ campo_copiavel('gmail-redirect-uri', 'URI de redirecionamento', gmail.redirect_uri) }}
+                                        <p>No Google Cloud, em Google Auth Platform → Clientes → seu cliente da Web, cadastre os dois endereços em <strong>URIs de redirecionamento autorizados</strong>, exatamente como estão abaixo:</p>
+                                        {{ campo_copiavel('gmail-redirect-uri', 'Conexão do Gmail', gmail.redirect_uri) }}
+                                        {% if gmail.redirect_uri_login %}
+                                            {{ campo_copiavel('google-login-redirect-uri', 'Entrar com o Google (alunos)', gmail.redirect_uri_login, ajuda='Sem este endereço, o Google mostra “Erro 400: redirect_uri_mismatch” para quem tenta entrar com o Google.') }}
+                                        {% endif %}
                                     </li>
                                     <li><p>Em <strong>Público-alvo</strong>, deixe o status de publicação <strong>Em produção</strong>. No modo Teste, o Google derruba a autorização em 7 dias e os e-mails param de sair.</p></li>
                                     <li><p>Enquanto o Google não verificar o app, a autorização mostra “O Google não verificou este app”. Quem conecta é a própria academia, então dá para seguir em <strong>Avançado</strong> → <strong>Acessar</strong>. Para tirar o aviso, envie o app para verificação na Central de verificação do Google Auth Platform.</p></li>

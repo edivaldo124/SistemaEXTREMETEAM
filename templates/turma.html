@@ -63,7 +63,7 @@
                     </form>
                 {% endif %}
                 <div class="et-tabela tabela-matriculados">
-                    <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Alunos matriculados">
+                    <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Alunos matriculados">
                         <table>
                             <thead>
                                 <tr>
@@ -74,13 +74,13 @@
                             <tbody>
                                 {% for aluno in matriculados %}
                                     <tr>
-                                        <td>
+                                        <td data-label="Aluno" class="celula-titulo">
                                             <span class="pessoa">
                                                 {{ avatar(aluno.nome, url_for('auth.foto_perfil', aluno_id=aluno.id) if aluno.foto_arquivo else '', 'sm') }}
                                                 <span>{{ aluno.nome }}</span>
                                             </span>
                                         </td>
-                                        <td>
+                                        <td class="celula-menu">
                                             {% if eh_admin %}
                                                 <div class="et-menu" data-menu>
                                                     <button type="button"
@@ -149,7 +149,7 @@
                         {% include "components/csrf_field.html" %}
                         <input type="hidden" name="data_aula" value="{{ data_aula.isoformat() }}">
                         <div class="et-tabela tabela-presenca">
-                            <div class="et-tabela-rolagem" tabindex="0" role="region" aria-label="Chamada de presença">
+                            <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Chamada de presença">
                                 <table>
                                     <thead>
                                         <tr>
