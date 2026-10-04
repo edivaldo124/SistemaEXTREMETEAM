@@ -192,15 +192,15 @@
     "semantic_hash": ""
   },
   "templates/index.html": {
-    "mtime": 1790707578.8176675,
-    "seen": 1790712839.7028575,
-    "ast_hash": "54411b0016d1e86f3b081d387d9cbacc",
+    "mtime": 1791087393.6632173,
+    "seen": 1791087574.5500925,
+    "ast_hash": "9b3bb36809361a50096f2165c8e0cd5d",
     "semantic_hash": ""
   },
   "templates/login.html": {
-    "mtime": 1790812740.2254276,
-    "seen": 1790813284.1856804,
-    "ast_hash": "df38854fba8ff891053c2e7cc4459353",
+    "mtime": 1791087393.6627011,
+    "seen": 1791087574.5502229,
+    "ast_hash": "6f26e6a0e608927c7360fcc826333e02",
     "semantic_hash": ""
   },
   "templates/pgAdm.html": {
@@ -271,7 +271,7 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1790999470.9963622,
+    "seen": 1791086702.1466343,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -553,7 +553,7 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1790999470.9963539,
+    "seen": 1791086702.1466265,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -1488,9 +1488,9 @@
     "semantic_hash": ""
   },
   "tests/test_google_login.py": {
-    "mtime": 1791084064.9137592,
-    "seen": 1791084193.153722,
-    "ast_hash": "930c20f5fba02432b0400c3423479e16",
+    "mtime": 1791087423.9021616,
+    "seen": 1791087574.547999,
+    "ast_hash": "795ae14e70c5419c946acc0de5191e85",
     "semantic_hash": ""
   },
   "tools/redesign/figma/fase3b.js": {
@@ -1509,6 +1509,18 @@
     "mtime": 1791085793.427858,
     "seen": 1791086370.3073082,
     "ast_hash": "5cca952235a624f739d64dbf40156f7a",
+    "semantic_hash": ""
+  },
+  "tools/redesign/figma/estado.json": {
+    "mtime": 1790997728.0851638,
+    "seen": 1791086702.146824,
+    "ast_hash": "",
+    "semantic_hash": ""
+  },
+  "templates/components/botao_google.html": {
+    "mtime": 1791087392.4416754,
+    "seen": 1791087574.5493958,
+    "ast_hash": "c0dad6bd3dc1c9595b848b5efaccf9f9",
     "semantic_hash": ""
   }
 }
