@@ -1,0 +1,259 @@
+{% extends "layouts/admin.html" %}
+{% set secao_ativa = 'planilha' %}
+{% from "components/ui.html" import metrica, estado_vazio with context %}
+{% block titulo %}Planilha econômica | Extreme Team{% endblock %}
+{% block estilos %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pgAdm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/planilha.css') }}">
+{% endblock %}
+
+{#- Atributos e mensagem de erro de um campo do formulário de despesa. -#}
+{% macro invalido(campo) -%}
+    {% if erros.get(campo) %} aria-invalid="true" aria-describedby="despesa-{{ campo }}-erro"{% endif %}
+{%- endmacro %}
+{% macro erro(campo) -%}
+    {% if erros.get(campo) %}<p class="field-erro" id="despesa-{{ campo }}-erro">{{ erros[campo] }}</p>{% endif %}
+{%- endmacro %}
+
+{% block conteudo %}
+    {% set mes_resumo = resumo.mes(mes) %}
+    <main id="conteudo" class="container-admin">
+        <section class="admin-intro">
+            <div>
+                <h1>Planilha econômica</h1>
+                <p>Entradas das mensalidades pagas, saídas lançadas aqui e o saldo de cada mês.</p>
+            </div>
+            <div class="planilha-ferramentas">
+                <form method="GET" action="{{ url_for('planilha.pagina') }}" class="planilha-ano">
+                    <label for="planilha-ano">Ano</label>
+                    <select class="et-campo et-campo--pequeno" id="planilha-ano" name="ano">
+                        {% for opcao in anos %}
+                            <option value="{{ opcao }}"{% if opcao == ano %} selected{% endif %}>{{ opcao }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="et-botao et-botao--contorno et-botao--pequeno">Ver</button>
+                </form>
+                <a class="et-botao et-botao--contorno et-botao--pequeno"
+                   href="{{ url_for('planilha.baixar_excel', ano=ano) }}"
+                   download>
+                    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19h14" /></svg>
+                    <span>Baixar Excel de {{ ano }}</span>
+                </a>
+            </div>
+            <div class="admin-metricas">
+                {{ metrica('Entradas em ' ~ ano, resumo.entradas|moeda, 'Mensalidades pagas') }}
+                {{ metrica('Saídas em ' ~ ano, resumo.saidas|moeda, 'Despesas lançadas') }}
+                {{ metrica('Saldo de ' ~ ano, resumo.saldo|moeda,
+                           'Entradas menos saídas',
+                           tom='perigo' if resumo.saldo < 0 else ('ok' if resumo.saldo > 0 else '')) }}
+            </div>
+        </section>
+
+        <section class="et-cartao secao" aria-labelledby="titulo-meses">
+            <div class="et-cartao-cabeca">
+                <h2 class="et-cartao-titulo" id="titulo-meses">Mês a mês</h2>
+                <p class="et-cartao-descricao">A mensalidade conta no mês em que foi paga. Escolha um mês para ver e lançar as saídas dele.</p>
+            </div>
+            {% if resumo.meses %}
+                <div class="et-tabela">
+                    <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Fluxo de caixa de {{ ano }}">
+                        <table class="planilha-meses">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Mês</th>
+                                    <th scope="col" class="coluna-valor">Entradas</th>
+                                    <th scope="col" class="coluna-valor">Saídas</th>
+                                    <th scope="col" class="coluna-valor">Saldo do mês</th>
+                                    <th scope="col" class="coluna-valor">Acumulado no ano</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for linha in resumo.meses %}
+                                    <tr{% if linha.numero == mes %} class="mes-aberto"{% endif %}>
+                                        <td class="celula-titulo">
+                                            <a href="{{ url_for('planilha.pagina', ano=ano, mes=linha.numero, _anchor='saidas') }}"
+                                               {% if linha.numero == mes %}aria-current="true"{% endif %}>{{ linha.nome }}</a>
+                                        </td>
+                                        <td data-label="Entradas" class="celula-valor">{{ linha.entradas|moeda }}</td>
+                                        <td data-label="Saídas" class="celula-valor">{{ linha.saidas|moeda }}</td>
+                                        <td data-label="Saldo do mês" class="celula-valor{{ ' valor-negativo' if linha.saldo < 0 }}">{{ linha.saldo|moeda }}</td>
+                                        <td data-label="Acumulado" class="celula-valor{{ ' valor-negativo' if linha.acumulado < 0 }}">{{ linha.acumulado|moeda }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                {{ estado_vazio('Nenhum movimento em ' ~ ano,
+                                'As entradas aparecem quando uma mensalidade é paga, e as saídas quando você lança uma despesa.') }}
+            {% endif %}
+        </section>
+
+        <section class="et-cartao secao" id="saidas" aria-labelledby="titulo-saidas">
+            <div class="et-cartao-cabeca">
+                <h2 class="et-cartao-titulo" id="titulo-saidas">Saídas de {{ nome_mes|lower }} de {{ ano }}</h2>
+                <p class="et-cartao-descricao">
+                    {% if despesas %}
+                        {{ despesas|length }} despesa{{ '' if despesas|length == 1 else 's' }}, somando {{ (mes_resumo.saidas if mes_resumo else 0)|moeda }}.
+                    {% else %}
+                        Aluguel, contas, salários e tudo o que sai do caixa no mês.
+                    {% endif %}
+                </p>
+                {% if mes_anterior or mes_seguinte %}
+                    <nav class="et-cartao-acao planilha-meses-nav" aria-label="Outros meses">
+                        {% if mes_anterior %}
+                            <a class="et-botao et-botao--fantasma et-botao--pequeno"
+                               href="{{ url_for('planilha.pagina', ano=mes_anterior[0], mes=mes_anterior[1], _anchor='saidas') }}">
+                                <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                                <span>{{ meses_nomes[mes_anterior[1]] }}</span>
+                            </a>
+                        {% endif %}
+                        {% if mes_seguinte %}
+                            <a class="et-botao et-botao--fantasma et-botao--pequeno"
+                               href="{{ url_for('planilha.pagina', ano=mes_seguinte[0], mes=mes_seguinte[1], _anchor='saidas') }}">
+                                <span>{{ meses_nomes[mes_seguinte[1]] }}</span>
+                                <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                            </a>
+                        {% endif %}
+                    </nav>
+                {% endif %}
+            </div>
+
+            {% if editando %}
+                <div class="et-aviso et-aviso--info planilha-editando" role="status">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                    <p>Alterando “{{ editando.descricao }}”. Salve ou cancele para voltar a lançar despesas novas.</p>
+                </div>
+            {% endif %}
+            <form method="POST"
+                  action="{{ url_for('planilha.alterar_despesa', despesa_id=editando.id) if editando else url_for('planilha.lancar_despesa') }}"
+                  class="form-despesa"
+                  data-enviando>
+                {% include "components/csrf_field.html" %}
+                <input type="hidden" name="ano" value="{{ ano }}">
+                <input type="hidden" name="mes" value="{{ mes }}">
+                <div class="field">
+                    <label for="despesa-data">Data</label>
+                    <input class="et-campo" id="despesa-data" type="date" name="data"
+                           value="{{ form.data }}" required{{ invalido('data') }}>
+                    {{ erro('data') }}
+                </div>
+                <div class="field">
+                    <label for="despesa-categoria">Categoria</label>
+                    <select class="et-campo" id="despesa-categoria" name="categoria" required{{ invalido('categoria') }}>
+                        <option value=""{% if not form.categoria %} selected{% endif %} disabled>Escolha…</option>
+                        {% for chave, rotulo in categorias.items() %}
+                            <option value="{{ chave }}"{% if form.categoria == chave %} selected{% endif %}>{{ rotulo }}</option>
+                        {% endfor %}
+                    </select>
+                    {{ erro('categoria') }}
+                </div>
+                <div class="field campo-descricao">
+                    <label for="despesa-descricao">Descrição</label>
+                    <input class="et-campo" id="despesa-descricao" type="text" name="descricao"
+                           value="{{ form.descricao }}" maxlength="{{ descricao_maximo }}"
+                           placeholder="Ex.: Conta de luz de setembro" required{{ invalido('descricao') }}>
+                    {{ erro('descricao') }}
+                </div>
+                <div class="field">
+                    <label for="despesa-valor">Valor</label>
+                    <input class="et-campo" id="despesa-valor" type="text" name="valor"
+                           value="{{ form.valor }}" inputmode="decimal" placeholder="150,00"
+                           required{{ invalido('valor') }}>
+                    {{ erro('valor') }}
+                </div>
+                <div class="form-actions">
+                    {% if editando %}
+                        <a class="et-botao et-botao--contorno"
+                           href="{{ url_for('planilha.pagina', ano=ano, mes=mes, _anchor='saidas') }}">Cancelar</a>
+                        <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Salvando...">Salvar alteração</button>
+                    {% else %}
+                        <button type="submit" class="et-botao et-botao--principal" data-texto-enviando="Lançando...">Lançar despesa</button>
+                    {% endif %}
+                </div>
+            </form>
+
+            <div class="et-tabela planilha-despesas">
+                <div class="et-tabela-rolagem table-stack" tabindex="0" role="region" aria-label="Despesas de {{ nome_mes|lower }} de {{ ano }}">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Descrição</th>
+                                <th scope="col">Data</th>
+                                <th scope="col">Categoria</th>
+                                <th scope="col" class="coluna-valor">Valor</th>
+                                <th scope="col"><span class="sr-only">Ações</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for despesa in despesas %}
+                                <tr{% if editando and editando.id == despesa.id %} class="despesa-editando"{% endif %}>
+                                    <td class="celula-titulo">{{ despesa.descricao }}</td>
+                                    <td data-label="Data" class="celula-numero">{{ despesa.data.strftime('%d/%m/%Y') }}</td>
+                                    <td data-label="Categoria">{{ despesa.rotulo_categoria }}</td>
+                                    <td data-label="Valor" class="celula-valor">{{ despesa.valor|moeda }}</td>
+                                    <td class="celula-menu">
+                                        <div class="et-menu" data-menu>
+                                            <button type="button"
+                                                    class="et-menu-botao et-botao et-botao--fantasma et-botao--icone et-botao--pequeno"
+                                                    aria-haspopup="menu"
+                                                    aria-expanded="false"
+                                                    aria-controls="menu-despesa-{{ despesa.id }}"
+                                                    aria-label="Ações de {{ despesa.descricao }}" data-tooltip>
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                    <circle cx="12" cy="5" r="2"/>
+                                                    <circle cx="12" cy="12" r="2"/>
+                                                    <circle cx="12" cy="19" r="2"/>
+                                                </svg>
+                                            </button>
+                                            <div class="et-menu-lista" role="menu" id="menu-despesa-{{ despesa.id }}" hidden>
+                                                <a role="menuitem" href="{{ url_for('planilha.pagina', editar=despesa.id, _anchor='saidas') }}">Alterar</a>
+                                                <hr>
+                                                <form action="{{ url_for('planilha.excluir_despesa', despesa_id=despesa.id) }}"
+                                                      method="POST"
+                                                      role="none"
+                                                      data-confirm-modal
+                                                      data-modal-variant="danger"
+                                                      data-modal-eyebrow="Excluir despesa"
+                                                      data-modal-title="Excluir “{{ despesa.descricao }}”?"
+                                                      data-modal-message="{{ despesa.valor|moeda }} sai das saídas de {{ nome_mes|lower }} e do saldo do ano. Não dá para desfazer."
+                                                      data-modal-confirm="Excluir">
+                                                    {% include "components/csrf_field.html" %}
+                                                    <button type="submit" role="menuitem" class="et-menu-perigo">Excluir</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="empty-state">Nenhuma despesa lançada em {{ nome_mes|lower }} de {{ ano }}.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        {% if resumo.categorias %}
+            <section class="et-cartao secao" aria-labelledby="titulo-categorias">
+                <div class="et-cartao-cabeca">
+                    <h2 class="et-cartao-titulo" id="titulo-categorias">Saídas por categoria</h2>
+                    <p class="et-cartao-descricao">Quanto cada tipo de gasto pesou nas saídas de {{ ano }}.</p>
+                </div>
+                <ul class="planilha-categorias">
+                    {% for categoria in resumo.categorias %}
+                        <li>
+                            <span class="categoria-nome">{{ categoria.rotulo }}</span>
+                            <span class="categoria-valor">{{ categoria.total|moeda }}</span>
+                            <span class="categoria-percentual">{{ categoria.percentual }}%</span>
+                            <span class="categoria-barra" aria-hidden="true"><span style="--parte: {{ categoria.percentual }}%"></span></span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </main>
+{% endblock %}

@@ -1,0 +1,111 @@
+/* =========================================================================
+   Planilha econômica (/admin/planilha): ano e download, fluxo de caixa mês a mês,
+   saídas do mês aberto e saídas por categoria. A moldura da área do admin
+   (.container-admin, .admin-intro, .admin-metricas, .secao) mora em pgAdm.css.
+   ========================================================================= */
+
+/* ------------------------------------------- ano e download, no topo --- */
+
+.planilha-ferramentas { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3); }
+.planilha-ano { display:flex; align-items:center; gap:var(--sp-2); }
+.planilha-ano label { color:var(--text-2); font-size:var(--fs-sm); font-weight:600; }
+.planilha-ano .et-campo { width:auto; min-width:104px; }
+
+/* ---------------------------------------------------- valores em reais -- */
+
+.planilha-meses .coluna-valor,.planilha-despesas .coluna-valor { text-align:right; }
+.planilha-meses td.celula-valor,.planilha-despesas td.celula-valor,.planilha-despesas td.celula-numero {
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.planilha-meses td.celula-valor,.planilha-despesas td.celula-valor { text-align:right; }
+/* O sinal de menos já vem escrito; a cor só reforça. */
+.planilha-meses td.valor-negativo { color:var(--red-ink); font-weight:600; }
+
+/* ------------------------------------------------------- mês a mês ------ */
+
+/* Doze linhas no máximo: a tabela cresce com a página em vez de rolar por dentro. */
+.et-tabela-rolagem:has(> .planilha-meses) { max-height:none; }
+
+.planilha-meses td.celula-titulo a { color:var(--text); font-weight:600; text-decoration:none; }
+.planilha-meses td.celula-titulo a:hover { text-decoration:underline; text-underline-offset:3px; }
+
+/* Mês aberto no cartão de saídas: faixa e marca em ouro escuro na primeira célula. */
+.planilha-meses tr.mes-aberto td { background:var(--surface-2); }
+.planilha-meses tr.mes-aberto td:first-child { box-shadow:inset 3px 0 0 var(--et-gold-dark); }
+
+@media (min-width:641px) {
+  /* O link ocupa a célula inteira: alvo de 44 px sem aumentar a linha. */
+  .planilha-meses td.celula-titulo { padding:0; }
+  .planilha-meses td.celula-titulo a { display:block; padding:var(--sp-3) var(--sp-4); }
+}
+@media (max-width:640px) {
+  /* Cartão compacto: o mês na cabeça e os quatro valores em grade 2×2, com o rótulo
+     em cima. Em lista de rótulo e valor, doze meses passavam de 2.500 px e empurravam
+     o lançamento de despesas para o fim da página. */
+  .table-stack .planilha-meses tbody tr:has(> td.celula-titulo):not([hidden]) {
+    grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:var(--sp-4);
+    padding:var(--sp-2) var(--sp-4) var(--sp-3);
+  }
+  .table-stack .planilha-meses tbody tr:has(> td.celula-titulo) > td {
+    grid-column:auto; flex-direction:column; align-items:flex-start; gap:2px; text-align:left;
+  }
+  .table-stack .planilha-meses tbody tr:has(> td.celula-titulo) > td.celula-titulo {
+    grid-column:1/-1; padding:0; border-top:0;
+  }
+  .table-stack .planilha-meses td[data-label]::before { max-width:100%; margin-right:0; white-space:normal; }
+  .planilha-meses td.celula-titulo a { display:flex; align-items:center; width:100%; min-height:44px; }
+  .planilha-meses tr.mes-aberto td { background:transparent; }
+  .planilha-meses tr.mes-aberto td:first-child { box-shadow:none; }
+  .table-stack .planilha-meses tbody tr.mes-aberto {
+    border-color:var(--et-gold-dark);
+    box-shadow:inset 3px 0 0 var(--et-gold-dark), var(--shadow-card);
+  }
+}
+
+/* ------------------------------------------------ saídas do mês aberto -- */
+
+.planilha-meses-nav { display:flex; gap:var(--sp-1); }
+
+.planilha-editando { margin-bottom:var(--sp-5); }
+.planilha-editando p { margin:0; }
+
+.form-despesa {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,2fr) minmax(0,1fr);
+  gap:var(--sp-4);
+  margin-bottom:var(--sp-6);
+}
+.form-despesa .field { min-width:0; }
+.form-despesa .form-actions { grid-column:1/-1; margin-top:0; }
+
+.planilha-despesas tr.despesa-editando td { background:var(--surface-2); }
+
+@media (max-width:900px) {
+  .form-despesa { grid-template-columns:1fr 1fr; }
+}
+@media (max-width:540px) {
+  .form-despesa { grid-template-columns:1fr; }
+  .form-despesa .form-actions .et-botao { flex:1 1 100%; }
+  .planilha-meses-nav { grid-column:1/-1; grid-row:auto; justify-self:start; margin-top:var(--sp-2); }
+}
+
+/* ------------------------------------------------ saídas por categoria -- */
+
+.planilha-categorias {
+  display:grid; gap:var(--sp-4);
+  margin:0; padding:0; list-style:none;
+}
+.planilha-categorias li {
+  display:grid; grid-template-columns:minmax(0,1fr) auto 3.5em;
+  align-items:baseline; gap:var(--sp-2) var(--sp-4);
+  font-size:var(--fs-sm);
+}
+.categoria-nome { font-weight:600; }
+.categoria-valor,.categoria-percentual { font-variant-numeric:tabular-nums; text-align:right; }
+.categoria-percentual { color:var(--text-2); }
+.categoria-barra {
+  grid-column:1/-1; height:8px; overflow:hidden;
+  border-radius:var(--et-radius-pill); background:var(--surface-2);
+  box-shadow:inset 0 0 0 1px var(--line);
+}
+.categoria-barra > span { display:block; width:var(--parte); height:100%; border-radius:inherit; background:var(--text); }
