@@ -19,13 +19,17 @@ services:
   rate-limit:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "32mb", "--maxmemory-policy", "allkeys-lru"]
+    # volatile-ttl: sob pressão de memória sai primeiro a chave mais perto de expirar.
+    # Com allkeys-lru o Redis apagava contadores de limite ainda em uso, e quem estava
+    # bloqueado voltava a ter cota inteira justamente quando havia carga.
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "volatile-ttl"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    mem_limit: 48m
+    # Folga acima do maxmemory para a sobrecarga do próprio processo do Redis.
+    mem_limit: 96m
     cpus: 0.25
 
   app:

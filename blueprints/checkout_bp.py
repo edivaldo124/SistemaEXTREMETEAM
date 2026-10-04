@@ -183,6 +183,7 @@ def abrir_checkout(pagamento_id):
 
 
 @checkout_bp.route('/perfil/mensalidade/<int:pagamento_id>/checkout/continuar')
+@limitar_consulta_pagamento
 def continuar_checkout(pagamento_id):
     """Alternativa sem JavaScript: POST local, depois um link GET para o provedor."""
     if session.get('tipo_usuario') not in ('admin', 'aluno'):
