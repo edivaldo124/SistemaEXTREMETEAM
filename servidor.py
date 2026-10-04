@@ -24,6 +24,7 @@ from blueprints.turma_bp import turma_bp
 from blueprints.pix_bp import pix_bp
 from blueprints.checkout_bp import checkout_bp
 from blueprints.academia_bp import academia_bp
+from blueprints.planilha_bp import planilha_bp
 from blueprints.mercado_pago_oauth_bp import mercado_pago_oauth_bp
 from blueprints.gmail_oauth_bp import gmail_oauth_bp
 from blueprints.google_login import google_auth_bp
@@ -163,6 +164,7 @@ app.register_blueprint(turma_bp)
 app.register_blueprint(pix_bp)
 app.register_blueprint(checkout_bp)
 app.register_blueprint(academia_bp)
+app.register_blueprint(planilha_bp)
 app.register_blueprint(mercado_pago_oauth_bp)
 app.register_blueprint(gmail_oauth_bp)
 app.register_blueprint(google_auth_bp)
