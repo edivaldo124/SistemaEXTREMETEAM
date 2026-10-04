@@ -3,7 +3,7 @@ import logging
 import time
 
 from flask import Blueprint, flash, redirect, request, session, url_for
-from config import limiter
+from config import chave_da_conta, limiter
 from servicos.autorizacao import admin_requerido
 from servicos import gmail_conta
 
@@ -54,6 +54,7 @@ def callback():
 
 
 @gmail_oauth_bp.route('/admin/gmail/desconectar', methods=['POST'])
+@limiter.limit('10 per 15 minutes', key_func=chave_da_conta)
 @admin_requerido
 def desconectar():
     gmail_conta.remover()

@@ -10,6 +10,7 @@ import time
 import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 import blueprints.checkout_bp as checkout_bp
 import blueprints.pix_bp as pix_bp
@@ -18,6 +19,12 @@ from servicos.mercado_pago import ConfiguracaoInvalida, MercadoPagoIndisponivel
 
 URL_MP = 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-1'
 JSON_HEADERS = {'Accept': 'application/json'}
+
+
+# Hora de agora no fuso que o Mercado Pago usa. Uma data fixa aqui envelhece: a vigência
+# conta da aprovação, e 30 dias depois o plano "pago" do teste já tinha vencido.
+def _agora_mercado_pago():
+    return datetime.now(ZoneInfo('America/Manaus')).isoformat(timespec='milliseconds')
 
 
 def _resposta_preferencia(preference_id='pref-1', url=URL_MP, ambiente='producao', minutos=60):
@@ -42,7 +49,7 @@ def _pagamento_mp(status='approved', external_reference='checkout-ref', valor=15
         'currency_id': currency_id,
         'payment_method_id': payment_method_id,
         'payment_type_id': payment_type_id,
-        'date_approved': '2026-09-04T10:00:00.000-03:00' if status == 'approved' else None,
+        'date_approved': _agora_mercado_pago() if status == 'approved' else None,
         'qr_code': None,
         'qr_code_base64': None,
         'ticket_url': None,

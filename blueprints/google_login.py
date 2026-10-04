@@ -6,7 +6,6 @@ from urllib.parse import urlencode
 from flask import Blueprint, redirect, url_for, request, session, flash, render_template
 from config import db, limiter
 from modelos.usuario import Aluno
-from dao.usuarioDAO import AlunoDAO
 from servicos.mercado_pago import ConfiguracaoInvalida, base_url_publica
 from servicos.autorizacao import iniciar_sessao, registrar_credencial
 
@@ -93,45 +92,39 @@ def callback():
         return redirect(url_for('auth.pagina_login'))
         
     email = info.get('email')
-    nome = info.get('name')
-    
+
     # O e-mail é a única ligação com a conta do aluno: sem a confirmação do Google,
     # qualquer conta com esse endereço digitado entraria no lugar dele.
     if not email or info.get('email_verified') is not True:
         flash('O Google não forneceu um e-mail válido.', 'erro')
         return redirect(url_for('auth.pagina_login'))
         
-    # Verificar se o aluno já existe
     email_lower = email.strip().lower()
     aluno = Aluno.query.filter_by(email=email_lower).first()
-    
-    if aluno:
-        # Se existe, loga o aluno (se estiver aprovado e ativo)
-        if aluno.status_cadastro == 'pendente':
-            # Como autenticou no google, marcamos o email como verificado caso não esteja
-            if not aluno.email_verificado:
-                aluno.email_verificado = True
-                db.session.commit()
-            return render_template('login.html', msg='Seu cadastro ainda está em análise pela administração.')
-            
-        if aluno.status_cadastro == 'recusado':
-            return render_template('login.html', msg='Seu cadastro não foi aprovado. Fale com a administração.')
-            
-        if not aluno.ativo:
-            return render_template('login.html', msg='Sua conta está desativada. Fale com a administração.')
-            
-        # Loga o aluno com sucesso!
-        session.clear()
-        iniciar_sessao()
-        session['usuario'] = aluno.login
-        session['aluno_id'] = aluno.id
-        session['tipo_usuario'] = "aluno"
-        registrar_credencial(aluno.senha_hash or 'google_oauth')
-        session.permanent = True
-        return redirect('/perfil')
-    else:
-        # Aluno novo - mandar preencher o resto
-        session['google_cadastro_nome'] = nome
-        session['google_cadastro_email'] = email_lower
-        flash('Quase lá! Para concluir o cadastro via Google, preencha os dados restantes.', 'sucesso')
-        return redirect(url_for('auth.pagina_cadastro'))
+
+    # O Google só serve para entrar: a conta nasce pelo formulário de cadastro.
+    if not aluno:
+        flash('Não há conta com este e-mail do Google. Crie sua conta pelo cadastro e depois entre com o Google.', 'erro')
+        return redirect(url_for('auth.pagina_login'))
+
+    if aluno.status_cadastro == 'pendente':
+        # Como autenticou no google, marcamos o email como verificado caso não esteja
+        if not aluno.email_verificado:
+            aluno.email_verificado = True
+            db.session.commit()
+        return render_template('login.html', msg='Seu cadastro ainda está em análise pela administração.')
+
+    if aluno.status_cadastro == 'recusado':
+        return render_template('login.html', msg='Seu cadastro não foi aprovado. Fale com a administração.')
+
+    if not aluno.ativo:
+        return render_template('login.html', msg='Sua conta está desativada. Fale com a administração.')
+
+    session.clear()
+    iniciar_sessao()
+    session['usuario'] = aluno.login
+    session['aluno_id'] = aluno.id
+    session['tipo_usuario'] = "aluno"
+    registrar_credencial(aluno.senha_hash or 'google_oauth')
+    session.permanent = True
+    return redirect('/perfil')

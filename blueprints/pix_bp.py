@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 import secrets
@@ -7,7 +8,7 @@ from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 from flask import Blueprint, flash, jsonify, redirect, request, session
-from config import csrf
+from config import csrf, limiter
 
 from dao.financeiroDAO import STATUS_FECHADOS, PagamentoDAO, rotulo_acao, rotulo_status
 from servicos.formatacao import formatar_competencia
@@ -404,8 +405,43 @@ def sincronizar_pagamento(pagamento_id):
     return _voltar_ao_painel()
 
 
+# Igual à janela de recência da assinatura (`validar_assinatura_webhook`): depois dela, a
+# mesma notificação já seria recusada pelo `ts` vencido.
+JANELA_REPETICAO_WEBHOOK = 300
+
+
+def _chave_entrega_webhook(x_request_id, data_id):
+    resumo = hashlib.sha256(f'{x_request_id}\n{data_id}'.encode()).hexdigest()
+    return f'webhook-mercado-pago:{resumo}'
+
+
+def _primeira_entrega_webhook(chave):
+    """Marca a notificação como recebida; False se ela já chegou dentro da janela.
+
+    Uma notificação assinada e capturada vale por toda a janela de recência: sem isto,
+    cada reenvio dela custaria uma consulta à API do Mercado Pago. Usa o mesmo storage
+    do limitador (Redis em produção), compartilhado entre os workers. Se ele falhar, a
+    notificação segue: a assinatura já foi validada e o processamento é idempotente.
+    """
+    try:
+        return limiter.storage.incr(chave, JANELA_REPETICAO_WEBHOOK) == 1
+    except Exception:
+        logger.warning('Storage do limitador indisponível; webhook processado sem checar repetição.', exc_info=True)
+        return True
+
+
+def _liberar_entrega_webhook(chave):
+    """Uma entrega que falhou do nosso lado precisa poder ser reprocessada no reenvio."""
+    try:
+        limiter.storage.clear(chave)
+    except Exception:
+        logger.warning('Não foi possível liberar a marca de entrega do webhook.', exc_info=True)
+
+
 @pix_bp.route('/api/webhooks/mercado-pago', methods=['POST'])
 @csrf.exempt
+# Por IP: o Mercado Pago não tem sessão. Folgado para rajadas legítimas de notificação.
+@limiter.limit('120 per minute')
 def webhook_mercado_pago():
     x_signature = request.headers.get('x-signature', '')
     x_request_id = request.headers.get('x-request-id', '')
@@ -424,6 +460,22 @@ def webhook_mercado_pago():
         logger.warning('Webhook Mercado Pago com assinatura invalida (request-id=%s).', x_request_id)
         return '', 401
 
+    chave_entrega = _chave_entrega_webhook(x_request_id, data_id)
+    if not _primeira_entrega_webhook(chave_entrega):
+        logger.info('Webhook Mercado Pago repetido (request-id=%s); ignorado.', x_request_id)
+        return '', 200
+
+    try:
+        resposta = _tratar_webhook(data_id)
+    except Exception:
+        _liberar_entrega_webhook(chave_entrega)
+        raise
+    if resposta[1] >= 500:
+        _liberar_entrega_webhook(chave_entrega)
+    return resposta
+
+
+def _tratar_webhook(data_id):
     corpo = request.get_json(silent=True) or {}
     tipo = corpo.get('type', corpo.get('topic'))
     if tipo not in (None, 'payment'):

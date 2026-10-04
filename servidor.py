@@ -340,12 +340,16 @@ def home():
 
 
 @app.route("/health")
+# Healthcheck do Docker a cada 20 s: nunca pode cair no limite padrão.
+@limiter.exempt
 def health():
     return {"status": "ok"}
 
 
 @app.route("/health/pronto")
-@limiter.exempt
+# Cada chamada consulta o banco e o Redis. O monitor externo passa a cada poucos
+# minutos; sem limite, a rota pública virava um jeito barato de ocupar os dois.
+@limiter.limit('60 per minute')
 def health_pronto():
     # Prontidão para o monitor externo (UptimeRobot): banco e Redis respondem? Nenhuma
     # sessão é lida nem criada, e o corpo diz só ok/falha por dependência, sem detalhe.
@@ -357,6 +361,7 @@ def health_pronto():
 
 
 @app.route("/logout", methods=['POST'])
+@limiter.limit('60 per minute')
 def logout():
     # Só limpar o cookie do navegador não encerra nada: o cookie é assinado e sem estado,
     # e uma cópia dele continuaria aceita. Revoga-se o identificador da sessão no banco.

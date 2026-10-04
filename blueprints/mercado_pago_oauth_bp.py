@@ -5,7 +5,7 @@ import time
 from flask import Blueprint, flash, redirect, request, session, url_for
 from sqlalchemy.exc import SQLAlchemyError
 
-from config import db, limiter
+from config import chave_da_conta, db, limiter
 from servicos import mercado_pago_conta as conta
 from servicos.autorizacao import admin_requerido
 from servicos.mercado_pago import ConfiguracaoInvalida, MercadoPagoIndisponivel
@@ -171,6 +171,7 @@ def callback():
 
 
 @mercado_pago_oauth_bp.route('/admin/mercado-pago/desconectar', methods=['POST'])
+@limiter.limit('10 per 15 minutes', key_func=chave_da_conta)
 @admin_requerido
 def desconectar():
     try:

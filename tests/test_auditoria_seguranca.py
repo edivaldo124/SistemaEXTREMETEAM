@@ -8,6 +8,7 @@ import hashlib
 import hmac
 import time
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -24,12 +25,18 @@ JSON = {'Accept': 'application/json'}
 URL_MP = 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-1'
 
 
+# Hora de agora no fuso que o Mercado Pago usa. Uma data fixa aqui envelhece: a vigência
+# conta da aprovação, e 30 dias depois o plano "pago" do teste já tinha vencido.
+def _agora_mercado_pago():
+    return datetime.now(ZoneInfo('America/Manaus')).isoformat(timespec='milliseconds')
+
+
 def _pagamento_mp(**over):
     base = {
         'payment_id': 'mp-1', 'status': 'approved', 'status_detail': 'accredited',
         'external_reference': None, 'transaction_amount': 150.0, 'currency_id': 'BRL',
         'payment_method_id': 'master', 'payment_type_id': 'credit_card',
-        'date_approved': '2026-09-04T10:00:00.000-03:00',
+        'date_approved': _agora_mercado_pago(),
         'qr_code': None, 'qr_code_base64': None, 'ticket_url': None,
     }
     base.update(over)

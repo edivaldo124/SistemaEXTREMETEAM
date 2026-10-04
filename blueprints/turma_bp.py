@@ -4,7 +4,7 @@ from pathlib import Path
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_file, session, url_for
 from sqlalchemy.exc import SQLAlchemyError
 
-from config import db
+from config import chave_da_conta, db, limiter
 from dao.matriculaDAO import MatriculaDAO
 from dao.presencaDAO import PresencaDAO
 from dao.professorDAO import ProfessorDAO
@@ -254,6 +254,7 @@ def detalhe_turma(turma_id):
 
 
 @turma_bp.route('/turmas/<int:turma_id>/matricular', methods=['POST'])
+@limiter.limit('60 per hour', key_func=chave_da_conta)
 @admin_requerido
 def matricular_aluno(turma_id):
     turma = _turma_ou_404(turma_id)
@@ -290,6 +291,7 @@ def desmatricular_aluno(turma_id, aluno_id):
 
 
 @turma_bp.route('/turmas/<int:turma_id>/presenca', methods=['POST'])
+@limiter.limit('60 per hour', key_func=chave_da_conta)
 @professor_ou_admin_requerido
 def registrar_presenca(turma_id):
     turma = _turma_ou_404(turma_id)

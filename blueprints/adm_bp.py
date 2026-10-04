@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, session
 from sqlalchemy.exc import IntegrityError
-from config import db
+from config import chave_da_conta, db, limiter
 from modelos.plano import Plano
 from modelos.usuario import Aluno
 from dao.usuarioDAO import AlunoDAO
@@ -367,6 +367,7 @@ def _aluno_do_cpf_ou_painel(cpf):
 
 
 @admin_bp.route("/admin/alunos/novo", methods=["GET", "POST"])
+@limiter.limit('30 per hour', methods=['POST'], key_func=chave_da_conta)
 def cadastrar_aluno():
     """Matrícula feita pela administração, sem conta de acesso.
 
@@ -466,6 +467,7 @@ def cadastrar_aluno():
 
 
 @admin_bp.route("/admin/usuario/<cpf>/convite", methods=["POST"])
+@limiter.limit('30 per hour', key_func=chave_da_conta)
 def enviar_convite_acesso(cpf):
     """Envia ao aluno o link de uso único que transforma o cadastro numa conta.
 
@@ -590,6 +592,7 @@ def detalhes_usuario(cpf):
 
 
 @admin_bp.route("/admin/usuario/<cpf>/foto", methods=["POST"])
+@limiter.limit('30 per hour', key_func=chave_da_conta)
 def enviar_foto_aluno(cpf):
     if not usuario_e_admin():
         return redirect('/login')
@@ -638,6 +641,7 @@ def remover_foto_aluno(cpf):
 
 
 @admin_bp.route("/admin/usuario/<cpf>/pagamentos", methods=["POST"])
+@limiter.limit('60 per hour', key_func=chave_da_conta)
 def cadastrar_pagamento(cpf):
     if not usuario_e_admin():
         return redirect('/login')
@@ -711,6 +715,7 @@ def cadastrar_pagamento(cpf):
 
 
 @admin_bp.route("/admin/pagamentos/<int:pagamento_id>/status", methods=["POST"])
+@limiter.limit('60 per hour', key_func=chave_da_conta)
 def atualizar_status_pagamento(pagamento_id):
     if not usuario_e_admin():
         return redirect('/login')
@@ -739,6 +744,7 @@ def atualizar_status_pagamento(pagamento_id):
 
 
 @admin_bp.route("/admin/pagamentos/<int:pagamento_id>/comprovante-manual/aprovar", methods=["POST"])
+@limiter.limit('60 per hour', key_func=chave_da_conta)
 def aprovar_comprovante_manual(pagamento_id):
     if not usuario_e_admin():
         return redirect('/login')
@@ -768,6 +774,7 @@ def aprovar_comprovante_manual(pagamento_id):
 
 
 @admin_bp.route("/admin/pagamentos/<int:pagamento_id>/comprovante-manual/rejeitar", methods=["POST"])
+@limiter.limit('60 per hour', key_func=chave_da_conta)
 def rejeitar_comprovante_manual(pagamento_id):
     if not usuario_e_admin():
         return redirect('/login')
@@ -926,6 +933,9 @@ def _token_aviso_valido():
 
 
 @admin_bp.route("/admin/avisos", methods=["GET", "POST"])
+# Cada envio enfileira um e-mail por aluno. Mesmo com a sessão do admin nas mãos, quem
+# repetir o envio não transforma a conta Gmail da academia num disparador de spam.
+@limiter.limit('10 per hour', methods=['POST'], key_func=chave_da_conta)
 def enviar_aviso():
     if not usuario_e_admin():
         return redirect('/login')
@@ -1010,6 +1020,7 @@ def enviar_aviso():
 
 
 @admin_bp.route("/admin/avisos/cobranca", methods=["POST"])
+@limiter.limit('5 per hour', key_func=chave_da_conta)
 def cobrar_inadimplentes():
     if not usuario_e_admin():
         return redirect('/login')
@@ -1060,6 +1071,7 @@ def cobrar_inadimplentes():
 
 
 @admin_bp.route("/admin/usuario/<cpf>/cobrar", methods=["POST"])
+@limiter.limit('30 per hour', key_func=chave_da_conta)
 def cobrar_mensalidade(cpf):
     if not usuario_e_admin():
         return redirect('/login')

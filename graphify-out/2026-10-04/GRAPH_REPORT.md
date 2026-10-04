@@ -1,11 +1,11 @@
 # Graph Report - SistemaEXTREMETEAM  (2026-10-04)
 
 ## Corpus Check
-- 175 files · ~236,359 words
+- 175 files · ~236,219 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2377 nodes · 5883 edges · 136 communities (127 shown, 9 thin omitted)
+- 2375 nodes · 5879 edges · 144 communities (134 shown, 10 thin omitted)
 - Extraction: 81% EXTRACTED · 19% INFERRED · 0% AMBIGUOUS · INFERRED: 1141 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
@@ -45,22 +45,23 @@
 - test_auditoria_seguranca.py
 - test_mercado_pago_oauth.py
 - test_limites_requisicao.py
-- MatriculaDAO
+- impressao_credencial
 - gmail_conta.py
-- .contratar_plano
+- seo.py
 - turma_bp.py
 - pagamento_polling.test.cjs
-- MercadoPagoIndisponivel
-- admin_requerido
+- mercado_pago_conta.py
+- test_professor_perfil.py
 - criar_pagamento
-- Plano
+- test_limites_pagamento.py
 - d9e2f6a14c80_contatos_academia_perfis_professores.py
+- Academia
 - botao_ocupado.test.cjs
 - test_seguranca.py
 - checkout_abertura.test.cjs
 - filtros_financeiro.js
 - gunicorn.conf.py
-- PagamentoDAO
+- test_financeiro_dao.py
 - fila_email.py
 - test_migracao_cadastro_administrativo.py
 - salvar_foto_perfil
@@ -71,7 +72,7 @@
 - Aluno
 - autorizacao.py
 - servidor.py
-- mercado_pago_oauth_bp.py
+- admin_requerido
 - test_admin_mercado_pago.py
 - credenciais.py
 - shot.mjs
@@ -82,7 +83,7 @@
 - e4b7c2a91d35_cadastro_administrativo_e_convite_de_acesso.py
 - a1f0c3e75b92_schema_inicial.py
 - Contrato do redesign — SistemaEXTREMETEAM
-- conftest.py
+- Plano
 - test_sessao_revogada.py
 - Skills Disponíveis
 - componentes.js
@@ -92,8 +93,12 @@
 - test_seo.py
 - test_email_componentes.py
 - .buscar_por_id
+- .contar_cadastrados
 - test_layouts.py
+- MercadoPagoIndisponivel
+- validar_assinatura_webhook
 - Flask App Service (compose)
+- analytics.py
 - erro_validacao_senha
 - Etapa 1 — migrar páginas para os layouts (SEM mudar o visual)
 - Etapas 4 a 6 — aluno, admin, professor (aplicar os componentes nas páginas)
@@ -101,26 +106,29 @@
 - Etapa 2 — biblioteca de componentes
 - Etapa 3 — home com os planos + termos
 - test_prontidao.py
-- test_perfil_e_foto.py
-- PagamentoEvento
+- MatriculaDAO
+- PagamentoDAO
 - test_observabilidade.py
 - usuario_bp.py
-- test_plano_arquivo_promocao.py
+- PlanoDAO
 - test_backup_scripts.py
 - google_login.py
 - gerar_imagem_og.py
 - revogar_sessao_atual
+- _pedir_token
 - pagina_cadastro
-- PlanoDAO
+- editar_plano
 - Professor
 - adm_bp.py
 - TransporteEmMemoria
+- ConfiguracaoInvalida
 - _aluno_por_token
 - parametrize
 - test_conversao_home.py
 - URLPublicaInvalida
 - prontidao.py
 - capturar_emails
+- limites_pagamento.py
 - backup.sh
 - Biblioteca no Figma
 - agendar.sh
@@ -158,11 +166,11 @@
 - **Mensalidade (Billing) Management Flow** — templates_dt_aluno_pagamento_form, templates_pgusuario_mensalidades_section, modelos_pagamento_pagamento, modelos_plano_plano [INFERRED 0.85]
 - **Turma and Attendance Management Flow** — templates_turmas_turma_form, templates_turma_presenca_form, templates_pgprofessor_page, modelos_turma_turma [INFERRED 0.85]
 
-## Communities (136 total, 9 thin omitted)
+## Communities (144 total, 10 thin omitted)
 
 ### Community 0 - "logar_como_aluno"
-Cohesion: 0.12
-Nodes (38): logar_como_aluno(), _mockar_preferencia(), parametrize, Rotas do Checkout Pro ("outras formas de pagamento"). Nenhum teste aqui fala…, Um boleto pendente do Checkout Pro grava provider_payment_id, mas não é Pix:…, _resposta_preferencia(), test_abertura_json_navega_sem_redirecionar_post_externo(), test_admin_tambem_pode_abrir_checkout() (+30 more)
+Cohesion: 0.09
+Nodes (47): logar_como_aluno(), Hipótese: forjar ?status=approved na volta do MP quita a mensalidade., test_retorno_ignora_status_aprovado_da_query_string(), _mockar_preferencia(), parametrize, Rotas do Checkout Pro ("outras formas de pagamento"). Nenhum teste aqui fala…, Um boleto pendente do Checkout Pro grava provider_payment_id, mas não é Pix:…, _resposta_preferencia() (+39 more)
 
 ### Community 1 - "extreme.css"
 Cohesion: 0.05
@@ -174,27 +182,27 @@ Nodes (42): cadeia_paga(), cartao_do_plano(), cobranca_a_pagar(), cobranca_em_de
 
 ### Community 3 - ".listar_por_aluno"
 Cohesion: 0.10
-Nodes (34): parametrize, test_admin_lanca_mensalidade_paga_no_cartao(), test_escolher_plano_cria_mensalidade_e_redireciona_para_pix(), test_plano_invalido_nao_cria_mensalidade(), test_reenvio_da_contratacao_reutiliza_mensalidade(), test_valor_enviado_pelo_navegador_e_ignorado(), _pagar(), plano_barato() (+26 more)
+Nodes (36): parametrize, test_admin_lanca_mensalidade_paga_no_cartao(), test_escolher_plano_cria_mensalidade_e_redireciona_para_pix(), test_plano_invalido_nao_cria_mensalidade(), test_reenvio_da_contratacao_reutiliza_mensalidade(), test_valor_enviado_pelo_navegador_e_ignorado(), _pagar(), plano_barato() (+28 more)
 
 ### Community 4 - "test_pagamento_recusado.py"
 Cohesion: 0.28
 Nodes (20): _assinar(), _data_mp(), _eventos(), _mockar_mp(), _pagamento_mp(), _pix_criado(), Mensalidade recusada: a próxima tentativa do aluno a reabre, e a recusa antiga…, Mensalidade cujo cartão acabou de ser recusado no Checkout Pro. (+12 more)
 
 ### Community 5 - "test_mudanca_plano.py"
-Cohesion: 0.17
-Nodes (24): Persistência dos pedidos de troca de plano agendados para a próxima renovação., SolicitacaoPlanoDAO, _agendar(), _pagar(), plano_barato(), fixture, Mudança para um plano mais barato agendada para a próxima renovação. Regra…, O admin pode estornar/cancelar a mensalidade que sustentava a vigência depois… (+16 more)
+Cohesion: 0.13
+Nodes (29): detalhes_usuario(), Persistência dos pedidos de troca de plano agendados para a próxima renovação., Mesma trava de linha usada nas mensalidades: dois cliques simultâneos em…, Aplica um pedido agendado cujo período de origem já terminou sem renovação.…, SolicitacaoPlanoDAO, _agendar(), _pagar(), plano_barato() (+21 more)
 
 ### Community 6 - "pix_bp.py"
-Cohesion: 0.07
-Nodes (47): _acesso_permitido(), _chave_entrega_webhook(), criar_pix_mensalidade(), _data_da_aprovacao(), _forma_pagamento_confirmada(), _instante_utc(), _iso_utc(), _liberar_entrega_webhook() (+39 more)
+Cohesion: 0.10
+Nodes (33): _acesso_permitido(), criar_pix_mensalidade(), _data_da_aprovacao(), _forma_pagamento_confirmada(), _instante_utc(), _iso_utc(), _pagamento_mp_mais_relevante(), _pagamento_ou_none() (+25 more)
 
 ### Community 7 - "criar_aluno"
-Cohesion: 0.03
-Nodes (79): _parece_busca_por_cpf(), O termo é um CPF, ou um pedaço dele, e não um nome que por acaso tem número?, Uma página de alunos já cadastrados, recortada e filtrada pelo banco. O painel…, criar_aluno(), test_aluno_existente_continua_entrando_normalmente(), test_area_do_aluno_renderiza_telas_independentes_do_menu(), test_plano_atual_continua_disponivel_para_gerar_cobranca(), test_busca_financeira_trata_curingas_como_texto() (+71 more)
+Cohesion: 0.04
+Nodes (69): _parece_busca_por_cpf(), O termo é um CPF, ou um pedaço dele, e não um nome que por acaso tem número?, Uma página de alunos já cadastrados, recortada e filtrada pelo banco. O painel…, criar_aluno(), test_aluno_existente_continua_entrando_normalmente(), test_area_do_aluno_renderiza_telas_independentes_do_menu(), test_plano_atual_continua_disponivel_para_gerar_cobranca(), test_aluno_ve_o_proprio_perfil() (+61 more)
 
 ### Community 9 - "test_mercado_pago_servico.py"
-Cohesion: 0.09
-Nodes (35): buscar_pagamentos_por_referencia(), Lista os pagamentos que o Mercado Pago associa a uma external_reference. Usada…, Valida a assinatura HMAC-SHA256 do webhook do Mercado Pago. Nunca lanca -…, validar_assinatura_webhook(), Hipótese: uma notificação capturada ontem pode ser reenviada hoje., `ts=nan` fazia a comparação da janela dar False e passava pela checagem de…, test_webhook_recusa_assinatura_antiga(), test_webhook_recusa_ts_nao_numerico_finito() (+27 more)
+Cohesion: 0.13
+Nodes (26): ambiente_mercado_pago(), Diz se a integracao esta apontando para producao ou para o sandbox. Prioriza a…, test_ambiente_explicito_vence_a_conta_conectada(), test_ambiente_segue_o_live_mode_da_conta(), base_url(), _criar_preferencia(), _FakePreferenceResource, mp_fake() (+18 more)
 
 ### Community 10 - "fase3b.js"
 Cohesion: 0.06
@@ -221,24 +229,24 @@ Cohesion: 0.20
 Nodes (7): postgres_mp(), fixture, Renovação do token OAuth com trava de linha real, opcional na suíte que usa…, _Resposta, _migracao(), test_migracao_cria_a_tabela_igual_ao_modelo_e_e_reentrante(), test_migracao_encadeia_na_ultima_revisao_existente()
 
 ### Community 18 - "AlunoDAO"
-Cohesion: 0.15
-Nodes (38): AlunoDAO, _matricular(), Cadastro de aluno pela administração, ativação de acesso e confirmação de…, test_admin_lanca_e_baixa_mensalidade_de_aluno_sem_acesso(), test_admin_matricula_aluno_sem_email_senha_nem_acesso(), test_admin_pode_deixar_cadastro_de_balcao_sem_usuario_e_sem_email(), test_admin_rejeita_status_financeiro_desconhecido(), test_admin_rejeita_valor_financeiro_invalido() (+30 more)
+Cohesion: 0.12
+Nodes (44): _convidar_cadastro_existente(), Cadastro administrativo que alguém tentou recriar pelo formulário público. Em…, AlunoDAO, _matricular(), Cadastro de aluno pela administração, ativação de acesso e confirmação de…, test_admin_lanca_e_baixa_mensalidade_de_aluno_sem_acesso(), test_admin_matricula_aluno_sem_email_senha_nem_acesso(), test_admin_pode_deixar_cadastro_de_balcao_sem_usuario_e_sem_email() (+36 more)
 
 ### Community 19 - "logar_como_admin"
 Cohesion: 0.13
-Nodes (25): logar_como_admin(), test_admin_nao_pode_apagar_o_usuario_de_uma_conta_ativa(), test_convite_recusado_para_quem_ja_tem_acesso(), _preparar_state(), parametrize, test_aviso_de_autorizacao_vencida_aparece_uma_vez(), test_cada_conexao_iniciada_usa_state_novo(), test_callback_avisa_quando_a_conta_muda() (+17 more)
+Nodes (25): logar_como_admin(), test_admin_nao_pode_apagar_o_usuario_de_uma_conta_ativa(), test_convite_recusado_para_quem_ja_tem_acesso(), _preparar_state(), parametrize, test_aviso_de_autorizacao_vencida_aparece_uma_vez(), test_callback_avisa_quando_a_conta_muda(), test_callback_cancelado_no_mercado_pago_consome_o_state() (+17 more)
 
 ### Community 20 - "checkout_bp.py"
-Cohesion: 0.08
-Nodes (32): abrir_checkout(), _acesso_permitido(), _checkout_pronto(), continuar_checkout(), _erro_abertura(), limitar_consulta_pagamento, limitar_criacao_pagamento, route (+24 more)
+Cohesion: 0.15
+Nodes (20): abrir_checkout(), _acesso_permitido(), _checkout_pronto(), continuar_checkout(), _erro_abertura(), limitar_consulta_pagamento, limitar_criacao_pagamento, route (+12 more)
 
 ### Community 21 - "pix.js"
 Cohesion: 0.33
 Nodes (14): abrirPix(), alvoDoRotulo(), atualizarStatusTexto(), fecharDialog(), iniciarPolling(), lerJson(), liberarBotao(), limparConteudoAnterior() (+6 more)
 
 ### Community 22 - "config.py"
-Cohesion: 0.14
-Nodes (14): _paginar(), Aplica LIMIT/OFFSET e conta o total numa consulta separada e barata. A contagem…, Decimal, Matricula, _para_decimal(), Pedido de troca de plano agendado para a próxima renovação. Nunca altera o…, SolicitacaoMudancaPlano, postgres_pix() (+6 more)
+Cohesion: 0.12
+Nodes (19): _paginar(), Aplica LIMIT/OFFSET e conta o total numa consulta separada e barata. A contagem…, Decimal, Matricula, Pagamento, _para_decimal(), Status a exibir, com o vencimento já aplicado. Uma cobrança `pendente` cujo…, Pedido de troca de plano agendado para a próxima renovação. Nunca altera o… (+11 more)
 
 ### Community 23 - "env.py"
 Cohesion: 0.39
@@ -262,63 +270,67 @@ Nodes (3): _e_decimal(), _faltantes(), upgrade()
 
 ### Community 33 - "test_auditoria_seguranca.py"
 Cohesion: 0.06
-Nodes (48): _agora_mercado_pago(), _assinar(), _pagamento_mp(), _preparar_para_conciliacao(), parametrize, Auditoria de segurança: sondas escritas para TENTAR quebrar as regras. Nenhum…, Hipótese: as rotas de cobrança respondem sem sessão nenhuma., Hipótese: a sessão de professor é aceita nas rotas financeiras do aluno. (+40 more)
+Nodes (46): _assinar(), _pagamento_mp(), _preparar_para_conciliacao(), parametrize, Auditoria de segurança: sondas escritas para TENTAR quebrar as regras. Nenhum…, Hipótese: a sessão de professor é aceita nas rotas financeiras do aluno., Hipótese: como o JS agora usa fetch, o POST perdeu a exigência de CSRF., Hipótese: as demais rotas de dinheiro aceitam POST sem token. (+38 more)
 
 ### Community 34 - "test_mercado_pago_oauth.py"
-Cohesion: 0.07
-Nodes (52): MercadoPagoConexao, Conta do Mercado Pago que a academia autorizou por OAuth. Uma linha só (a…, _sdk(), _agora(), _ajustar(), api_mp(), _conectar(), _dados_conexao() (+44 more)
+Cohesion: 0.08
+Nodes (49): MercadoPagoConexao, Conta do Mercado Pago que a academia autorizou por OAuth. Uma linha só (a…, _agora(), _ajustar(), api_mp(), _conectar(), _dados_conexao(), oauth_env() (+41 more)
 
 ### Community 35 - "test_limites_requisicao.py"
 Cohesion: 0.12
 Nodes (28): consultar_mp(), _estourar(), fixture, parametrize, Limites de requisição da rodada de 04/10/2026 (SEC-10 a SEC-17 e SEC-19). Cada…, Trocar de rede ou abrir outra sessão não devolve a cota de e-mails em massa., Faz `limite` requisições sem nenhum 429 e devolve a seguinte., Alunos no mesmo Wi-Fi não dividem o teto padrão, nem com o visitante anônimo. (+20 more)
 
-### Community 36 - "MatriculaDAO"
-Cohesion: 0.19
-Nodes (16): MatriculaDAO, Presenca, impressao_credencial(), Resumo curto e não reversível do hash da senha, guardado na sessão. Nunca é a…, Valor que representa a credencial administrativa em vigor, ou None se não há…, referencia_credencial_admin(), parametrize, test_aluno_confirma_sua_frequencia() (+8 more)
+### Community 36 - "impressao_credencial"
+Cohesion: 0.20
+Nodes (15): Presenca, impressao_credencial(), Resumo curto e não reversível do hash da senha, guardado na sessão. Nunca é a…, Valor que representa a credencial administrativa em vigor, ou None se não há…, referencia_credencial_admin(), parametrize, test_aluno_confirma_sua_frequencia(), test_consulta_com_data_invalida_exibe_hoje_e_aviso() (+7 more)
 
 ### Community 37 - "gmail_conta.py"
 Cohesion: 0.16
 Nodes (18): GmailConexao, _access_token(), _cifrar(), _client_id(), _client_secret(), _decifrar(), enviar(), estado() (+10 more)
 
-### Community 38 - ".contratar_plano"
-Cohesion: 0.10
-Nodes (12): O que aconteceu numa tentativa de contratar/renovar/trocar de plano., Mesma trava de linha usada nas mensalidades: dois cliques simultâneos em…, Troca o plano de uma cobrança ainda não paga em vez de abrir uma segunda. O…, Aplica um pedido agendado cujo período de origem já terminou sem renovação.…, Único caminho pelo qual o aluno contrata, renova ou agenda a troca de plano.…, Com uma troca já agendada, só dois planos fazem sentido num pedido de…, A cobrança do período seguinte tem de nascer no plano que o aluno agendou.…, `pendente` vira `atrasado` depois do vencimento. Não altera nada além disso -… (+4 more)
+### Community 38 - "seo.py"
+Cohesion: 0.18
+Nodes (18): conteudo_robots(), conteudo_sitemap(), dados_estruturados_academia(), _dia(), _dias_da_linha(), _hora(), horarios_estruturados(), origem_publica() (+10 more)
 
 ### Community 41 - "turma_bp.py"
 Cohesion: 0.13
-Nodes (19): configuracoes(), route, editar_professor(), remover_professor(), Academia, remover_arquivo(), link_email(), Normalização de contatos profissionais antes de montar links públicos. (+11 more)
+Nodes (21): configuracoes(), route, _acesso_permitido(), desmatricular_aluno(), detalhe_turma(), editar_professor(), matricular_aluno(), painel_professor() (+13 more)
 
 ### Community 42 - "pagamento_polling.test.cjs"
 Cohesion: 0.22
 Nodes (6): assert, criarPagina(), fs, path, test, vm
 
-### Community 43 - "MercadoPagoIndisponivel"
-Cohesion: 0.08
-Nodes (46): _pagina(), ConfiguracaoInvalida, access_token_vigente(), _agora(), ambiente_da_conexao(), _cifrar(), _client_id(), _client_secret() (+38 more)
+### Community 43 - "mercado_pago_conta.py"
+Cohesion: 0.16
+Nodes (23): access_token_vigente(), _agora(), ambiente_da_conexao(), _cifrar(), ConexaoIlegivel, _decifrar(), estado_conexao(), _fernet() (+15 more)
 
-### Community 44 - "admin_requerido"
-Cohesion: 0.42
-Nodes (9): callback(), conectar(), desconectar(), limit, route, _voltar(), chave_da_conta(), Chave de limite por CONTA, caindo no IP só para quem não está autenticado. A… (+1 more)
+### Community 44 - "test_professor_perfil.py"
+Cohesion: 0.23
+Nodes (10): _foto(), pasta_fotos(), fixture, parametrize, test_admin_salva_perfil_sem_alterar_acesso(), test_apenas_admin_edita_perfil(), test_contato_invalido_nao_salva_nenhuma_alteracao(), test_falha_ao_salvar_preserva_foto_anterior() (+2 more)
 
 ### Community 45 - "criar_pagamento"
-Cohesion: 0.09
-Nodes (45): criar_pagamento(), test_retorno_sem_sessao_vai_para_o_login(), test_perfil_so_autoriza_abertura_automatica_da_propria_mensalidade(), consultar_mp(), fixture, parametrize, Limites de pagamento por conta, com o provedor inteiramente simulado., _sessao_aluno() (+37 more)
+Cohesion: 0.17
+Nodes (27): criar_pagamento(), test_busca_financeira_trata_curingas_como_texto(), test_painel_financeiro_busca_por_nome_do_aluno(), test_painel_financeiro_exige_admin(), test_painel_financeiro_filtra_por_status(), test_painel_financeiro_mostra_totais_do_backend(), _agora_mercado_pago(), _assinar() (+19 more)
 
-### Community 46 - "Plano"
-Cohesion: 0.24
-Nodes (4): Plano, Preço de uma cobrança criada em `hoje`., parametrize, test_duas_requisicoes_pix_reutilizam_uma_cobranca_postgres()
+### Community 46 - "test_limites_pagamento.py"
+Cohesion: 0.15
+Nodes (15): consultar_mp(), fixture, parametrize, Limites de pagamento por conta, com o provedor inteiramente simulado., _sessao_aluno(), test_admin_limite_por_usuario_persiste_entre_sessoes(), test_alunos_no_mesmo_ip_tem_limites_separados(), test_anonimos_limitados_por_ip_sem_consultar_provedor() (+7 more)
 
 ### Community 47 - "d9e2f6a14c80_contatos_academia_perfis_professores.py"
 Cohesion: 0.83
 Nodes (3): _campos_professor(), downgrade(), upgrade()
+
+### Community 49 - "Academia"
+Cohesion: 0.19
+Nodes (10): Academia, parametrize, test_admin_salva_atualiza_e_limpa_contatos(), test_configuracoes_exigem_admin(), test_contatos_invalidos(), test_csrf_configuracoes(), test_erro_preserva_formulario_e_dados_salvos(), test_link_email_preserva_caracteres_do_endereco() (+2 more)
 
 ### Community 50 - "botao_ocupado.test.cjs"
 Cohesion: 0.18
 Nodes (7): assert, criarElemento(), fs, montar(), path, test, vm
 
 ### Community 51 - "test_seguranca.py"
-Cohesion: 0.07
-Nodes (24): test_upload_de_arquivo_disfarcado_e_recusado(), _cadastro_publico(), _imagem_jpeg(), _mensagem_da_resposta(), O `login` de um aluno pode ser o e-mail de outro; quem entra é decidido pela…, O ramo "par existe" não pode pagar a ida ao provedor dentro da requisição., Cadastro novo, CPF existente e e-mail existente respondem com a MESMA tela., Quem ainda controla a caixa antiga não pode assumir a conta depois da troca. (+16 more)
+Cohesion: 0.08
+Nodes (21): test_upload_de_arquivo_disfarcado_e_recusado(), _cadastro_publico(), _imagem_jpeg(), _mensagem_da_resposta(), O ramo "par existe" não pode pagar a ida ao provedor dentro da requisição., Cadastro novo, CPF existente e e-mail existente respondem com a MESMA tela., Quem ainda controla a caixa antiga não pode assumir a conta depois da troca., test_cabecalhos_de_seguranca() (+13 more)
 
 ### Community 52 - "checkout_abertura.test.cjs"
 Cohesion: 0.22
@@ -328,9 +340,9 @@ Nodes (6): assert, criarPagina(), fs, path, test, vm
 Cohesion: 0.25
 Nodes (9): post_worker_init(), Hooks carregados pelo Gunicorn; nunca executados por flask db upgrade., worker_exit(), iniciar(), _laco(), parar(), Aciona a fila periodicamente durante a vida de um worker Gunicorn. Importar…, Inicia uma vez por processo, depois de carregar a aplicação e migrar o banco. (+1 more)
 
-### Community 56 - "PagamentoDAO"
-Cohesion: 0.10
-Nodes (25): PagamentoDAO, Status como o painel deve LER, com o vencimento aplicado na própria consulta. A…, Carrega aluno e plano junto das mensalidades. O template do painel lê…, Lista completa (sem paginar). Mantida para relatórios e testes., Uma página de mensalidades, recortada pelo banco (LIMIT/OFFSET). O painel…, Totais do painel financeiro - sempre calculados no backend a partir do banco,…, True se já existe um Pix ou um checkout válido emitido para esta cobrança.…, True se a cobrança Pix já gerada para este pagamento ainda pode ser… (+17 more)
+### Community 56 - "test_financeiro_dao.py"
+Cohesion: 0.09
+Nodes (18): Status como o painel deve LER, com o vencimento aplicado na própria consulta. A…, Carrega aluno e plano junto das mensalidades. O template do painel lê…, Lista completa (sem paginar). Mantida para relatórios e testes., Uma página de mensalidades, recortada pelo banco (LIMIT/OFFSET). O painel…, Totais do painel financeiro - sempre calculados no backend a partir do banco,…, True se já existe um Pix ou um checkout válido emitido para esta cobrança.…, True se a cobrança Pix já gerada para este pagamento ainda pode ser…, True se a preferência do Checkout Pro já criada pode ser reaproveitada. Só… (+10 more)
 
 ### Community 57 - "fila_email.py"
 Cohesion: 0.06
@@ -341,8 +353,8 @@ Cohesion: 0.40
 Nodes (3): banco_antigo(), fixture, Verifica a migração em um banco isolado com o schema anterior e dados.
 
 ### Community 59 - "salvar_foto_perfil"
-Cohesion: 0.12
-Nodes (26): ArquivoInvalido, caminho_arquivo(), _conferir_dimensoes(), _detectar_tipo_imagem_real(), ImagemGrandeDemais, _pasta(), Exception, _raiz_uploads() (+18 more)
+Cohesion: 0.09
+Nodes (32): ArquivoInvalido, caminho_arquivo(), _conferir_dimensoes(), _detectar_tipo_imagem_real(), ImagemGrandeDemais, _pasta(), Exception, _raiz_uploads() (+24 more)
 
 ### Community 60 - "test_keep_alive.py"
 Cohesion: 0.16
@@ -353,28 +365,28 @@ Cohesion: 0.11
 Nodes (13): cliente_google(), google(), fixture, parametrize, Troca o token e o userinfo do Google; `perfil` é o que o userinfo devolve., test_aluno_aprovado_entra_e_a_troca_usa_o_mesmo_redirect_uri(), test_email_nao_verificado_pelo_google_nao_entra_na_conta(), test_email_sem_conta_volta_ao_login_sem_cadastrar() (+5 more)
 
 ### Community 62 - "mercado_pago.py"
-Cohesion: 0.11
-Nodes (30): _base_url_opcional(), base_url_publica(), cancelar_pagamento(), criar_pagamento_pix(), criar_preferencia_checkout(), _erro_menciona(), _erro_menciona_expiracao(), _extrair_dados_pix() (+22 more)
+Cohesion: 0.15
+Nodes (21): _base_url_opcional(), criar_pagamento_pix(), criar_preferencia_checkout(), _erro_menciona(), _erro_menciona_expiracao(), _extrair_dados_pix(), _normalizar_pagamento(), URL publica normalizada, ou None quando nao houver uma valida configurada. (+13 more)
 
 ### Community 63 - "test_arranque_seguranca.py"
 Cohesion: 0.22
 Nodes (14): _env_arranque(), Validações feitas por servidor.py no arranque (COOKIE_SECURE, TRUSTED_HOSTS,…, `python -m servicos.credenciais`: o hash sai entre aspas simples. O hash do…, Desenvolvimento local sem HTTPS (sem Caddy) não pode ficar travado., _rodar(), test_arranque_falha_com_cookie_secure_false_e_app_base_url_https(), test_arranque_falha_com_cookie_secure_invalido(), test_arranque_falha_sem_trusted_hosts() (+6 more)
 
 ### Community 64 - "Aluno"
-Cohesion: 0.08
-Nodes (16): _convidar_cadastro_existente(), _convidar_cadastro_existente_por_id(), Cadastro administrativo que alguém tentou recriar pelo formulário público. Em…, Versão para thread de fundo: a sessão da requisição não vale fora dela., Matrícula feita no balcão: sem login, sem senha e sem convite de acesso. Nasce…, Aluno, Se existe uma conta de acesso, e não se o aluno está em dia ou matriculado.…, Convite de acesso já enviado e ainda não usado (a validade é checada na rota). (+8 more)
+Cohesion: 0.09
+Nodes (13): _convidar_cadastro_existente_por_id(), Versão para thread de fundo: a sessão da requisição não vale fora dela., Matrícula feita no balcão: sem login, sem senha e sem convite de acesso. Nasce…, Aluno, Se existe uma conta de acesso, e não se o aluno está em dia ou matriculado.…, Convite de acesso já enviado e ainda não usado (a validade é checada na rota)., Chave do estado da CONTA - nunca da situação financeira nem da matrícula., test_cadastro_publico_recusa_confirmacao_diferente() (+5 more)
 
 ### Community 66 - "autorizacao.py"
-Cohesion: 0.10
-Nodes (26): _acesso_permitido(), desmatricular_aluno(), detalhe_turma(), foto_professor(), gerenciar_turmas(), matricular_aluno(), painel_professor(), limit (+18 more)
+Cohesion: 0.21
+Nodes (15): foto_professor(), aluno_autorizado(), aluno_requerido(), _credencial_confere(), encerrar_sessao(), professor_autorizado(), Autorização das rotas protegidas. A sessão diz quem *afirmou* ser quem; quem…, A sessão foi emitida para a credencial que vale AGORA? Uma sessão sem carimbo é… (+7 more)
 
 ### Community 67 - "servidor.py"
 Cohesion: 0.14
 Nodes (20): after_request, Ponto de entrada WSGI usado pelo Gunicorn em producao., before_request, context_processor, errorhandler, formatar_moeda(), Formata um valor em reais no padrão brasileiro: R$ 1.080,00. Usado como filtro…, acesso_negado() (+12 more)
 
-### Community 69 - "mercado_pago_oauth_bp.py"
-Cohesion: 0.29
-Nodes (11): _autorizacao_valida(), callback(), conectar(), desconectar(), limit, route, O administrador foi ao Mercado Pago e a autorização não voltou para cá? O state…, O state devolvido é o que ESTA sessão emitiu, há pouco tempo? (+3 more)
+### Community 69 - "admin_requerido"
+Cohesion: 0.22
+Nodes (18): callback(), conectar(), desconectar(), limit, route, _voltar(), _autorizacao_valida(), callback() (+10 more)
 
 ### Community 70 - "test_admin_mercado_pago.py"
 Cohesion: 0.15
@@ -408,9 +420,9 @@ Nodes (7): assert, CODIGO, Element, fs, path, test, vm
 Cohesion: 0.09
 Nodes (20): 0. Antes de escrever código, 1. Identidade visual (design tokens), 2. Logo oficial (usar SOMENTE a logo original), 3. Telas a implementar, 4. Regras e dados, 5. Forma de trabalhar, Painel administrativo (desktop, sidebar preta com o emblema do dragão), Prompt para o Claude Code — Redesign do SistemaEXTREMETEAM (+12 more)
 
-### Community 82 - "conftest.py"
-Cohesion: 0.27
-Nodes (11): app(), client(), contexto_app(), limpar_banco(), logar_como_professor(), plano(), fixture, Substitui o provedor de e-mail em todos os módulos que o chamam. A suíte nunca… (+3 more)
+### Community 82 - "Plano"
+Cohesion: 0.15
+Nodes (13): Plano, Preço de uma cobrança criada em `hoje`., app(), client(), contexto_app(), limpar_banco(), logar_como_professor(), plano() (+5 more)
 
 ### Community 83 - "test_sessao_revogada.py"
 Cohesion: 0.24
@@ -437,28 +449,40 @@ Cohesion: 0.22
 Nodes (8): Controles verificados, Histórico de auditorias, Pendências não relacionadas a segurança, Relatório de segurança — Sistema Extreme Team, Rodada anterior (22/09/2026 — 2ª rodada), Situação atual (04/10/2026 — limites de requisição), Validação executada em 04/10/2026, Validação executada em 22/09/2026
 
 ### Community 94 - "test_seo.py"
-Cohesion: 0.06
-Nodes (50): analytics_ativo(), id_analytics(), marcar_conversao_cadastro(), Google Analytics 4 opcional, só em página pública e só com consentimento. Sem…, Chamada no arranque: um ID malformado derruba a subida, como as demais…, Esta resposta pode carregar o GA4? Visitante, página pública indexável ou…, validar_configuracao(), conteudo_robots() (+42 more)
+Cohesion: 0.10
+Nodes (25): _head(), _json_ld(), parametrize, SEO técnico: robots.txt, sitemap, títulos, meta tags, noindex e JSON-LD da home., Nenhum campo do JSON-LD pode sair nulo, vazio ou só com espaços., _robots(), _sem_vazios(), test_area_do_admin_sai_do_indice() (+17 more)
 
 ### Community 95 - "test_email_componentes.py"
 Cohesion: 0.33
 Nodes (7): E-mails: base com a logo oficial e componentes seguros para cliente de e-mail…, _render(), _sem_recursos_externos(), test_base_sem_url_publica_cai_para_o_nome_em_texto(), test_base_usa_a_logo_quando_ha_url_publica(), test_botao_do_email_usa_o_ouro_do_sistema(), test_cartao_de_resumo_com_badge()
 
 ### Community 96 - ".buscar_por_id"
-Cohesion: 0.15
-Nodes (26): _agora_mercado_pago(), _assinar(), _pagamento_mp(), _preparar_retorno(), Pix aberto e checkout concluído ao mesmo tempo: a consulta pelo…, test_retorno_com_aprovacao_confirmada_marca_pago(), test_retorno_com_mp_indisponivel_avisa_sem_mudar_status(), test_retorno_de_boleto_avisa_sobre_o_prazo() (+18 more)
+Cohesion: 0.16
+Nodes (26): _assinar(), _pagamento_mp(), _preparar_retorno(), Pix aberto e checkout concluído ao mesmo tempo: a consulta pelo…, test_retorno_com_aprovacao_confirmada_marca_pago(), test_retorno_com_mp_indisponivel_avisa_sem_mudar_status(), test_retorno_de_boleto_avisa_sobre_o_prazo(), test_retorno_de_sucesso_nao_marca_pago_sem_confirmacao() (+18 more)
 
 ### Community 98 - "test_layouts.py"
 Cohesion: 0.29
 Nodes (8): _conferir_head_comum(), parametrize, Layouts base (templates/layouts/) e toasts. Cada página estende o layout da sua…, test_area_do_aluno_carrega_o_layout(), test_flash_de_erro_vira_toast_que_nao_some_sozinho(), test_paginas_publicas_carregam_o_head_comum(), test_painel_admin_carrega_o_layout_admin(), test_toda_pagina_estende_um_layout()
 
+### Community 99 - "MercadoPagoIndisponivel"
+Cohesion: 0.12
+Nodes (22): _tratar_webhook(), Acha a mensalidade por qualquer uma das duas referências persistidas. O Pix…, buscar_pagamento(), buscar_pagamentos_por_referencia(), cancelar_pagamento(), MercadoPagoIndisponivel, Exception, Consulta o pagamento diretamente na API do Mercado Pago - fonte de verdade de… (+14 more)
+
+### Community 100 - "validar_assinatura_webhook"
+Cohesion: 0.11
+Nodes (19): _chave_entrega_webhook(), _liberar_entrega_webhook(), _primeira_entrega_webhook(), exempt, limit, Marca a notificação como recebida; False se ela já chegou dentro da janela. Uma…, Uma entrega que falhou do nosso lado precisa poder ser reprocessada no reenvio., webhook_mercado_pago() (+11 more)
+
 ### Community 102 - "Flask App Service (compose)"
 Cohesion: 0.22
 Nodes (9): Flask App Service (compose), Postgres DB Service (compose), postgres_data Volume, Flask, Flask-SQLAlchemy, Gunicorn, psycopg2-binary, python-dotenv (+1 more)
 
+### Community 103 - "analytics.py"
+Cohesion: 0.28
+Nodes (7): analytics_ativo(), id_analytics(), marcar_conversao_cadastro(), Google Analytics 4 opcional, só em página pública e só com consentimento. Sem…, Chamada no arranque: um ID malformado derruba a subida, como as demais…, Esta resposta pode carregar o GA4? Visitante, página pública indexável ou…, validar_configuracao()
+
 ### Community 104 - "erro_validacao_senha"
-Cohesion: 0.16
-Nodes (13): alterar_senha_perfil(), ativar_acesso(), Transforma um cadastro feito no balcão na conta do próprio aluno. Quem chega…, mascarar_email(), Mostra o bastante do e-mail para o dono se reconhecer, sem revelá-lo a…, _carregar_senhas_comuns(), erro_confirmacao_senha(), erro_validacao_senha() (+5 more)
+Cohesion: 0.14
+Nodes (16): alterar_senha_perfil(), ativar_acesso(), Descarta todo link pendente que ainda autorizaria assumir ou redirecionar a…, Transforma um cadastro feito no balcão na conta do próprio aluno. Quem chega…, redefinir_senha(), _revogar_tokens_de_conta(), mascarar_email(), Mostra o bastante do e-mail para o dono se reconhecer, sem revelá-lo a… (+8 more)
 
 ### Community 106 - "Etapa 1 — migrar páginas para os layouts (SEM mudar o visual)"
 Cohesion: 0.29
@@ -484,13 +508,13 @@ Nodes (4): Agente A — `templates/index.html` e `static/css/index.css`, Antigra
 Cohesion: 0.14
 Nodes (5): banco_fora(), fixture, /health/pronto: 503 quando banco ou Redis caem, sem expor detalhe nem criar…, Cada chamada consulta banco e Redis: 60 por minuto bastam ao monitor externo., test_pronto_tem_limite_por_ip()
 
-### Community 113 - "test_perfil_e_foto.py"
+### Community 113 - "MatriculaDAO"
 Cohesion: 0.19
-Nodes (13): cadastrar_turma(), remover_turma(), TurmaDAO, Turma, Cadastrar Turma Form, test_escolher_plano_com_turma_cria_matricula(), test_turma_lotada_nao_vira_matricula_apos_pagamento(), _imagem_jpeg_valida() (+5 more)
+Nodes (14): cadastrar_turma(), remover_turma(), MatriculaDAO, TurmaDAO, Turma, Cadastrar Turma Form, test_escolher_plano_com_turma_cria_matricula(), test_turma_lotada_nao_vira_matricula_apos_pagamento() (+6 more)
 
-### Community 115 - "PagamentoEvento"
-Cohesion: 0.12
-Nodes (11): Lançamento manual de recebimento (dinheiro/transferência) feito pelo admin.…, Primeiro dia não coberto por outra mensalidade do mesmo aluno., Define o período coberto por uma mensalidade que ainda não tem um (lançamento…, Abre o período de acesso no momento em que o pagamento é confirmado. Se a…, Reescreve os campos denormalizados do aluno a partir das mensalidades.…, forma_pagamento vem do que o Mercado Pago confirmou na consulta à API ('pix',…, Uma recusa encerra aquela tentativa, não a mensalidade. Quando o aluno gera um…, PagamentoEvento (+3 more)
+### Community 115 - "PagamentoDAO"
+Cohesion: 0.07
+Nodes (24): PagamentoDAO, Lançamento manual de recebimento (dinheiro/transferência) feito pelo admin.…, O que aconteceu numa tentativa de contratar/renovar/trocar de plano., Troca o plano de uma cobrança ainda não paga em vez de abrir uma segunda. O…, Único caminho pelo qual o aluno contrata, renova ou agenda a troca de plano.…, Com uma troca já agendada, só dois planos fazem sentido num pedido de…, A cobrança do período seguinte tem de nascer no plano que o aluno agendou.…, `pendente` vira `atrasado` depois do vencimento. Não altera nada além disso -… (+16 more)
 
 ### Community 116 - "test_observabilidade.py"
 Cohesion: 0.18
@@ -500,41 +524,49 @@ Nodes (18): before_breadcrumb(), before_send(), iniciar_sentry(), _limpar(), mas
 Cohesion: 0.12
 Nodes (35): _acesso_permitido_pagamento(), _aluno_da_sessao(), atualizar_dados_perfil(), cadastro_obrigado(), cancelar_mudanca_plano(), _chave_ip_e_identificador(), comprovante_mensalidade(), confirmar_presenca() (+27 more)
 
-### Community 118 - "test_plano_arquivo_promocao.py"
-Cohesion: 0.14
-Nodes (25): Tira o plano de venda. Devolve `(plano, pedidos_cancelados)`, ou None. Pedidos…, Pagamento, Status a exibir, com o vencimento já aplicado. Uma cobrança `pendente` cujo…, _pagar(), _plano(), _promocao(), Plano fora de venda (arquivar/reativar/excluir), edição e promoção com período.…, test_admin_nao_lanca_mensalidade_nova_em_plano_arquivado() (+17 more)
+### Community 118 - "PlanoDAO"
+Cohesion: 0.10
+Nodes (40): arquivar_plano(), painel_adm(), reativar_plano(), PlanoDAO, Apaga um plano que nunca foi usado. True, None (não existe) ou False (em uso)., Os planos à venda: home, perfil do aluno e formulários de contratação., Planos que algum registro referencia: mensalidade, cadastro de aluno ou pedido…, Tira o plano de venda. Devolve `(plano, pedidos_cancelados)`, ou None. Pedidos… (+32 more)
 
 ### Community 119 - "test_backup_scripts.py"
 Cohesion: 0.27
 Nodes (11): ambiente(), _executavel(), fixture, Scripts de backup (tools/backup/): retenção, falha sem backup "pela metade" e a…, _rodar(), test_backup_gera_dump_e_uploads_e_aplica_a_retencao(), test_dump_ilegivel_nao_vira_backup(), test_restaurar_em_banco_descartavel_e_extrair_uploads() (+3 more)
 
 ### Community 120 - "google_login.py"
-Cohesion: 0.27
-Nodes (10): callback(), login_google(), limit, route, redirect_uri(), pagina_login(), iniciar_sessao(), Grava na sessão atual a credencial em vigor (login ou troca de senha bem-… (+2 more)
+Cohesion: 0.20
+Nodes (13): _pagina(), callback(), login_google(), limit, route, redirect_uri(), O administrador foi ao Mercado Pago e a autorização não voltou para cá? O state…, tentativa_sem_retorno() (+5 more)
 
 ### Community 122 - "revogar_sessao_atual"
 Cohesion: 0.29
 Nodes (8): Registra a sessão como encerrada: cópias antigas do cookie deixam de valer.…, revogar_sessao_atual(), health(), health_pronto(), logout(), exempt, limit, route
 
-### Community 124 - "pagina_cadastro"
-Cohesion: 0.25
-Nodes (13): _cadastro_recebido(), _em_segundo_plano(), pagina_cadastro(), Post/Redirect/Get para a página de obrigado. Cadastro novo, CPF já cadastrado e…, Roda `tarefa` fora da requisição, para o tempo de resposta não revelar nada. Em…, cpf_valido(), data_nascimento_valida(), formatar_cpf() (+5 more)
+### Community 123 - "_pedir_token"
+Cohesion: 0.16
+Nodes (15): _client_id(), _client_secret(), nova_autorizacao(), oauth_configurado(), _pedir_token(), O servidor tem o aplicativo do Mercado Pago (client_id + client_secret)?, Endereço de retorno. Vem de APP_BASE_URL, nunca do Host da requisição. É…, Prepara uma ida ao Mercado Pago. Devolve (url, segredos). `segredos` (state +… (+7 more)
 
-### Community 125 - "PlanoDAO"
-Cohesion: 0.13
-Nodes (17): PlanoDAO, Apaga um plano que nunca foi usado. True, None (não existe) ou False (em uso)., Os planos à venda: home, perfil do aluno e formulários de contratação., Planos que algum registro referencia: mensalidade, cadastro de aluno ou pedido…, Grava a edição do admin. Vale para as cobranças criadas daqui em diante: as…, home(), parametrize, test_admin_cria_promocao() (+9 more)
+### Community 124 - "pagina_cadastro"
+Cohesion: 0.24
+Nodes (14): _cadastro_recebido(), _em_segundo_plano(), pagina_cadastro(), Post/Redirect/Get para a página de obrigado. Cadastro novo, CPF já cadastrado e…, Roda `tarefa` fora da requisição, para o tempo de resposta não revelar nada. Em…, recuperar_senha(), cpf_valido(), data_nascimento_valida() (+6 more)
+
+### Community 125 - "editar_plano"
+Cohesion: 0.18
+Nodes (10): cadastrar_plano(), editar_plano(), _ler_plano(), _ler_promocao(), 80', '80.5', '80,50' ou '1.234,56' -> Decimal. None se vazio; ValueError se…, Nome, preço e duração do formulário de plano: `(campos, None)` ou `(None,…, Preço promocional e período: `(campos, None)` ou `(None, erro)`. Os três campos…, Nome, preço, duração e promoção. Vale para as cobranças criadas daqui em… (+2 more)
 
 ### Community 126 - "Professor"
-Cohesion: 0.09
-Nodes (28): cadastrar_professor(), ProfessorDAO, Professor, Cadastrar Professor Form, test_publicacao_professor_nao_expoe_contatos_sem_permissao(), logar_como_professor(), fixture, Hipótese: a foto continua acessível por URL depois de tirar a publicação. (+20 more)
+Cohesion: 0.13
+Nodes (17): cadastrar_professor(), gerenciar_turmas(), ProfessorDAO, Professor, logar_como_professor(), fixture, Hipótese: a foto continua acessível por URL depois de tirar a publicação., Hipótese: os contatos vazam na home antes de a publicação ser marcada. (+9 more)
 
 ### Community 127 - "adm_bp.py"
-Cohesion: 0.06
-Nodes (67): _aluno_do_cpf_ou_painel(), aprovar_aluno(), aprovar_comprovante_manual(), arquivar_plano(), ativar_aluno(), atualizar_status_pagamento(), cadastrar_aluno(), cadastrar_pagamento() (+59 more)
+Cohesion: 0.08
+Nodes (52): _aluno_do_cpf_ou_painel(), aprovar_aluno(), aprovar_comprovante_manual(), ativar_aluno(), atualizar_status_pagamento(), cadastrar_aluno(), cadastrar_pagamento(), cancelar_mudanca_plano_admin() (+44 more)
+
+### Community 129 - "ConfiguracaoInvalida"
+Cohesion: 0.24
+Nodes (10): base_url_publica(), ConfiguracaoInvalida, _configuracao_do_aplicativo(), O que precisa estar cadastrado no aplicativo do Mercado Pago, pronto para…, Mantém a exceção pública usada pelo serviço do Mercado Pago., Variavel de ambiente obrigatoria ausente ou com formato invalido. Erro de…, url_webhook(), parametrize (+2 more)
 
 ### Community 130 - "_aluno_por_token"
-Cohesion: 0.25
-Nodes (8): _aluno_por_token(), confirmar_email(), Descarta todo link pendente que ainda autorizaria assumir ou redirecionar a…, Localiza o aluno pelo hash do token, filtrando no banco por uma coluna indexada., redefinir_senha(), _revogar_tokens_de_conta(), route, verificar_email_cadastro()
+Cohesion: 0.29
+Nodes (6): _aluno_por_token(), confirmar_email(), Localiza o aluno pelo hash do token, filtrando no banco por uma coluna indexada., verificar_email_cadastro(), route, verificar_email_cadastro()
 
 ### Community 131 - "parametrize"
 Cohesion: 0.40
@@ -545,8 +577,8 @@ Cohesion: 0.14
 Nodes (17): faq_estruturado(), Textos editáveis da página inicial: perguntas frequentes e prazos de…, JSON-LD FAQPage com exatamente as perguntas mostradas na página., _body_tag(), _html(), parametrize, Conversão na home: perguntas frequentes, CTA fixo no celular e página de…, test_admin_logado_nao_ve_o_cta_fixo() (+9 more)
 
 ### Community 134 - "URLPublicaInvalida"
-Cohesion: 0.11
-Nodes (30): _enviar_em_segundo_plano(), E-mail COM token (recuperação, confirmação): não pode ir para a `fila_email`. A…, recuperar_senha(), solicitar_troca_email(), verificar_email_cadastro(), aluno_do_token(), ConviteIndisponivel, descartar() (+22 more)
+Cohesion: 0.12
+Nodes (28): _enviar_em_segundo_plano(), E-mail COM token (recuperação, confirmação): não pode ir para a `fila_email`. A…, solicitar_troca_email(), aluno_do_token(), ConviteIndisponivel, descartar(), enviar(), gerar_token() (+20 more)
 
 ### Community 135 - "prontidao.py"
 Cohesion: 0.43
@@ -555,6 +587,10 @@ Nodes (6): banco_responde(), _consultar_banco(), Verificação de prontidão (/h
 ### Community 136 - "capturar_emails"
 Cohesion: 0.67
 Nodes (3): capturar_emails(), fixture, Intercepta o envio e devolve os e-mails que teriam saído, com os links.
+
+### Community 137 - "limites_pagamento.py"
+Cohesion: 0.50
+Nodes (3): chave_pagamento(), Orçamentos compartilhados das chamadas interativas ao provedor de pagamento., A mesma conta mantém seu limite entre sessões, rotas e mensalidades. Alunos que…
 
 ### Community 140 - "backup.sh"
 Cohesion: 1.00
@@ -567,17 +603,17 @@ Nodes (3): Biblioteca no Figma, Falta (ordem de retomada), Limites do plano Star
 ## Knowledge Gaps
 - **166 isolated node(s):** `modal`, `input_senha`, `icone_senha`, `formularioPlano`, `campoPreco` (+161 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `PagamentoDAO` connect `PagamentoDAO` to `logar_como_aluno`, `.listar_por_aluno`, `test_pagamento_recusado.py`, `test_mudanca_plano.py`, `pix_bp.py`, `criar_aluno`, `AlunoDAO`, `checkout_bp.py`, `config.py`, `test_auditoria_seguranca.py`, `MatriculaDAO`, `.contratar_plano`, `criar_pagamento`, `test_seguranca.py`, `Aluno`, `test_admin_mercado_pago.py`, `conftest.py`, `.buscar_por_id`, `test_perfil_e_foto.py`, `PagamentoEvento`, `usuario_bp.py`, `test_plano_arquivo_promocao.py`, `adm_bp.py`?**
-  _High betweenness centrality (0.120) - this node is a cross-community bridge._
-- **Why does `criar_aluno()` connect `criar_aluno` to `logar_como_aluno`, `.listar_por_aluno`, `parametrize`, `test_conversao_home.py`, `test_mudanca_plano.py`, `test_analytics.py`, `test_home_planos.py`, `AlunoDAO`, `logar_como_admin`, `test_auditoria_seguranca.py`, `test_mercado_pago_oauth.py`, `test_limites_requisicao.py`, `MatriculaDAO`, `.contratar_plano`, `criar_pagamento`, `test_seguranca.py`, `PagamentoDAO`, `test_google_login.py`, `Aluno`, `conftest.py`, `test_paginas_erro.py`, `test_seo.py`, `.buscar_por_id`, `test_layouts.py`, `test_perfil_e_foto.py`, `test_plano_arquivo_promocao.py`, `PlanoDAO`, `Professor`?**
-  _High betweenness centrality (0.042) - this node is a cross-community bridge._
-- **Why does `logar_como_admin()` connect `logar_como_admin` to `logar_como_aluno`, `.listar_por_aluno`, `parametrize`, `test_conversao_home.py`, `test_mudanca_plano.py`, `criar_aluno`, `test_analytics.py`, `test_home_planos.py`, `AlunoDAO`, `test_mercado_pago_oauth.py`, `MatriculaDAO`, `turma_bp.py`, `criar_pagamento`, `test_seguranca.py`, `PagamentoDAO`, `test_google_login.py`, `Aluno`, `test_admin_mercado_pago.py`, `conftest.py`, `test_sessao_revogada.py`, `test_seo.py`, `.buscar_por_id`, `test_layouts.py`, `test_perfil_e_foto.py`, `test_plano_arquivo_promocao.py`, `PlanoDAO`, `Professor`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Why does `PagamentoDAO` connect `PagamentoDAO` to `logar_como_aluno`, `.listar_por_aluno`, `test_pagamento_recusado.py`, `test_mudanca_plano.py`, `pix_bp.py`, `criar_aluno`, `AlunoDAO`, `checkout_bp.py`, `config.py`, `test_auditoria_seguranca.py`, `criar_pagamento`, `test_seguranca.py`, `test_financeiro_dao.py`, `Aluno`, `test_admin_mercado_pago.py`, `Plano`, `.buscar_por_id`, `MercadoPagoIndisponivel`, `MatriculaDAO`, `usuario_bp.py`, `PlanoDAO`, `adm_bp.py`?**
+  _High betweenness centrality (0.119) - this node is a cross-community bridge._
+- **Why does `criar_aluno()` connect `criar_aluno` to `logar_como_aluno`, `.listar_por_aluno`, `parametrize`, `test_conversao_home.py`, `test_mudanca_plano.py`, `test_analytics.py`, `test_home_planos.py`, `AlunoDAO`, `logar_como_admin`, `test_auditoria_seguranca.py`, `test_mercado_pago_oauth.py`, `test_limites_requisicao.py`, `impressao_credencial`, `criar_pagamento`, `test_limites_pagamento.py`, `test_seguranca.py`, `test_financeiro_dao.py`, `test_google_login.py`, `Aluno`, `Plano`, `test_paginas_erro.py`, `test_seo.py`, `.buscar_por_id`, `test_layouts.py`, `MatriculaDAO`, `PagamentoDAO`, `PlanoDAO`, `Professor`?**
+  _High betweenness centrality (0.040) - this node is a cross-community bridge._
+- **Why does `logar_como_admin()` connect `logar_como_admin` to `logar_como_aluno`, `.listar_por_aluno`, `parametrize`, `test_conversao_home.py`, `test_mudanca_plano.py`, `criar_aluno`, `test_analytics.py`, `test_home_planos.py`, `AlunoDAO`, `test_mercado_pago_oauth.py`, `impressao_credencial`, `test_professor_perfil.py`, `criar_pagamento`, `test_limites_pagamento.py`, `Academia`, `test_seguranca.py`, `test_google_login.py`, `test_admin_mercado_pago.py`, `Plano`, `test_sessao_revogada.py`, `test_seo.py`, `.buscar_por_id`, `test_layouts.py`, `MatriculaDAO`, `PlanoDAO`, `Professor`?**
+  _High betweenness centrality (0.040) - this node is a cross-community bridge._
 - **Are the 157 inferred relationships involving `PagamentoDAO` (e.g. with `aprovar_comprovante_manual()` and `atualizar_status_pagamento()`) actually correct?**
   _`PagamentoDAO` has 157 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 162 inferred relationships involving `criar_aluno()` (e.g. with `AlunoDAO` and `Aluno`) actually correct?**

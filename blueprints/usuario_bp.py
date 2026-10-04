@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 from flask import Blueprint, abort, current_app, flash, render_template, request, send_file, session, redirect, url_for
 from flask_limiter.util import get_remote_address
 from sqlalchemy.exc import IntegrityError
-from config import db, limiter
+from config import chave_da_conta as _chave_da_conta, db, limiter
 from modelos.usuario import Aluno
 from modelos.matricula import Matricula
 from modelos.turma import Turma
@@ -82,27 +82,13 @@ MSG_ERRO = 'Erro: Credenciais incorretas!'
 VERSAO_TERMOS_RESPONSABILIDADE = '2026-09'
 
 
-def _chave_ip_e_identificador(nome_campo):
+def _resumo_identificador(nome_campo):
     identificador = (request.form.get(nome_campo) or '').strip().lower()
-    resumo = hashlib.sha256(identificador.encode()).hexdigest()
-    return f'{get_remote_address()}:{resumo}'
+    return hashlib.sha256(identificador.encode()).hexdigest()
 
 
-def _chave_da_conta():
-    """Chave de limite por CONTA, caindo no IP só para quem não está autenticado.
-
-    A academia inteira costuma sair por um IP só (o Wi-Fi da recepção, o 4G de uma
-    operadora). Limitar por IP as ações de quem já entrou faria um aluno consumir a cota
-    do outro: quem trocasse a foto de perfil deixaria os colegas sem trocar a sua.
-    """
-    tipo = session.get('tipo_usuario')
-    if tipo == 'aluno' and session.get('aluno_id'):
-        return f'aluno:{session["aluno_id"]}'
-    if tipo == 'professor' and session.get('professor_id'):
-        return f'professor:{session["professor_id"]}'
-    if tipo == 'admin':
-        return 'admin'
-    return f'ip:{get_remote_address()}'
+def _chave_ip_e_identificador(nome_campo):
+    return f'{get_remote_address()}:{_resumo_identificador(nome_campo)}'
 
 
 def _em_segundo_plano(tarefa, *args, **kwargs):
@@ -145,6 +131,12 @@ def _enviar_em_segundo_plano(*args, **kwargs):
 @limiter.limit(
     '5 per 15 minutes', methods=['POST'],
     key_func=lambda: _chave_ip_e_identificador('loginusuario'),
+)
+# Teto por usuário, venha de quantos IPs vier: os dois limites acima não seguram um
+# ataque distribuído contra a mesma conta.
+@limiter.limit(
+    '10 per hour', methods=['POST'],
+    key_func=lambda: f"usuario:{_resumo_identificador('loginusuario')}",
 )
 def pagina_login():
     if request.method == "POST":
@@ -248,7 +240,9 @@ def _convidar_cadastro_existente_por_id(aluno_id):
 
 
 @auth_bp.route("/cadastrar", methods=["GET", "POST"])
-@limiter.limit('5 per hour', methods=['POST'])
+# Por IP, mas folgado: a academia inteira costuma cadastrar pelo mesmo Wi-Fi. O teto
+# por IP+CPF logo abaixo segura a repetição do mesmo CPF.
+@limiter.limit('20 per hour', methods=['POST'])
 @limiter.limit(
     '3 per hour', methods=['POST'],
     key_func=lambda: _chave_ip_e_identificador('cpfusuario'),
@@ -347,10 +341,6 @@ def pagina_cadastro():
             termos_responsabilidade_versao=VERSAO_TERMOS_RESPONSABILIDADE,
             termos_responsabilidade_aceito_em=datetime.now(timezone.utc),
         )
-        veio_do_google = 'google_cadastro_email' in session and session['google_cadastro_email'] == email
-        if veio_do_google:
-            novo_aluno.email_verificado = True
-            
         token = secrets.token_urlsafe(32)
         novo_aluno.token_verificacao_hash = hashlib.sha256(token.encode()).hexdigest()
         novo_aluno.token_verificacao_expira = datetime.utcnow() + timedelta(hours=24)
@@ -361,54 +351,26 @@ def pagina_cadastro():
             db.session.rollback()
             return render_template("cadastro.html", erro="Erro: Não foi possível cadastrar. Verifique se os dados já estão em uso.", dados=dados_formulario)
 
-        if veio_do_google:
-            session.pop('google_cadastro_nome', None)
-            session.pop('google_cadastro_email', None)
-            admin_email = os.environ.get('ADMIN_EMAIL')
-            if admin_email:
-                try:
-                    link_admin = url_publica('admin_blueprint.painel_adm')
-                    fila_email.enfileirar_transacional(
-                        f'cadastro-aviso-admin:{novo_aluno.id}',
-                        destinatario=admin_email, nome_destinatario='Administração',
-                        assunto='Novo cadastro aguardando aprovação — Extreme Team', titulo='Novo cadastro pendente',
-                        paragrafos=[
-                            f'O aluno {novo_aluno.nome} acabou de se cadastrar (via Google) e está aguardando aprovação.',
-                            f'E-mail: {novo_aluno.email}',
-                            f'Telefone: {novo_aluno.telefone}',
-                            'Acesse o painel administrativo para aprovar ou recusar o cadastro.',
-                        ],
-                        link_url=link_admin,
-                        link_texto='Abrir painel administrativo',
-                    )
-                except URLPublicaInvalida:
-                    pass
-        else:
-            try:
-                link_verificacao = url_publica('auth.verificar_email_cadastro', token=token)
-                fila_email.enfileirar_transacional(
-                    f'cadastro-recebido:{novo_aluno.id}',
-                    destinatario=email, nome_destinatario=nome,
-                    assunto='Verifique seu e-mail — Extreme Team', titulo='Falta pouco para finalizar!',
-                    paragrafos=[
-                        f'Olá, {nome.split()[0]}!',
-                        'Seu cadastro na Extreme Team foi recebido com sucesso.',
-                        'Para enviá-lo para a análise da nossa administração, precisamos apenas que você verifique este e-mail clicando no link abaixo:',
-                    ],
-                    link_url=link_verificacao,
-                    link_texto='Verificar Meu E-mail'
-                )
-            except URLPublicaInvalida:
-                logger.error('APP_BASE_URL inválida; e-mail de verificação não enviado para %s.', email)
+        try:
+            link_verificacao = url_publica('auth.verificar_email_cadastro', token=token)
+            fila_email.enfileirar_transacional(
+                f'cadastro-recebido:{novo_aluno.id}',
+                destinatario=email, nome_destinatario=nome,
+                assunto='Verifique seu e-mail — Extreme Team', titulo='Falta pouco para finalizar!',
+                paragrafos=[
+                    f'Olá, {nome.split()[0]}!',
+                    'Seu cadastro na Extreme Team foi recebido com sucesso.',
+                    'Para enviá-lo para a análise da nossa administração, precisamos apenas que você verifique este e-mail clicando no link abaixo:',
+                ],
+                link_url=link_verificacao,
+                link_texto='Verificar Meu E-mail'
+            )
+        except URLPublicaInvalida:
+            logger.error('APP_BASE_URL inválida; e-mail de verificação não enviado para %s.', email)
 
         return _cadastro_recebido()
 
-    dados_iniciais = {}
-    if 'google_cadastro_nome' in session:
-        dados_iniciais['nome'] = session.get('google_cadastro_nome')
-        dados_iniciais['email'] = session.get('google_cadastro_email')
-        
-    return render_template("cadastro.html", dados=dados_iniciais, from_google=bool(dados_iniciais))
+    return render_template("cadastro.html")
 
 
 @auth_bp.route('/cadastro/obrigado')
@@ -565,6 +527,7 @@ def pagina_perfil():
 
 
 @auth_bp.route('/perfil/presencas/<int:presenca_id>/confirmar', methods=['POST'])
+@limiter.limit('30 per hour', key_func=_chave_da_conta)
 def confirmar_presenca(presenca_id):
     aluno = _aluno_da_sessao()
     if not aluno:
@@ -578,6 +541,7 @@ def confirmar_presenca(presenca_id):
 
 
 @auth_bp.route("/perfil/plano/mudanca/<int:solicitacao_id>/cancelar", methods=["POST"])
+@limiter.limit('10 per hour', key_func=_chave_da_conta)
 def cancelar_mudanca_plano(solicitacao_id):
     """Cancela um pedido de troca antes de ele ser aplicado.
 
@@ -1099,6 +1063,7 @@ def enviar_foto_perfil():
 
 
 @auth_bp.route('/perfil/foto/remover', methods=['POST'])
+@limiter.limit('20 per hour', key_func=_chave_da_conta)
 def remover_foto_perfil():
     aluno = _aluno_da_sessao()
     if not aluno:
@@ -1255,6 +1220,8 @@ def ver_comprovante_manual(pagamento_id):
     )
 
 @auth_bp.route("/cadastro/verificar/<token>")
+# Mesmo teto dos outros links com token: sem ele, a rota é sondagem de token de graça.
+@limiter.limit('30 per hour')
 def verificar_email_cadastro(token):
     aluno = _aluno_por_token(Aluno.token_verificacao_hash, token)
     

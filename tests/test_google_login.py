@@ -105,6 +105,22 @@ def test_email_nao_verificado_pelo_google_nao_entra_na_conta(client, google, cri
         assert 'aluno_id' not in sess
 
 
+def test_email_sem_conta_volta_ao_login_sem_cadastrar(client, google):
+    resposta = _voltar_do_google(client)
+
+    assert resposta.status_code == 302
+    assert urlsplit(resposta.headers['Location']).path == '/login'
+    with client.session_transaction() as sess:
+        assert 'aluno_id' not in sess
+        assert not any(chave.startswith('google_cadastro') for chave in sess)
+
+
+def test_cadastro_nao_oferece_criar_conta_com_o_google(client):
+    pagina = client.get('/cadastrar').get_data(as_text=True)
+
+    assert '/login/google' not in pagina
+
+
 def test_painel_mostra_o_redirect_uri_do_login_com_google(client, logar_como_admin, cliente_google):
     logar_como_admin()
 

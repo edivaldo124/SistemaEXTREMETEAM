@@ -110,12 +110,11 @@ def test_pronto_nao_cria_sessao(client, banco_fora):
         assert 'Set-Cookie' not in resposta.headers, caminho
 
 
-def test_pronto_e_isento_do_limite_de_requisicoes(app, client):
-    from flask_limiter import ExemptionScope
-
-    from config import limiter
-
-    escopo = limiter.limit_manager.exemption_scope(app, 'health_pronto', None)
-    assert ExemptionScope.APPLICATION in escopo and ExemptionScope.DEFAULT in escopo
-    for _ in range(40):
+def test_pronto_tem_limite_por_ip(client):
+    """Cada chamada consulta banco e Redis: 60 por minuto bastam ao monitor externo."""
+    for _ in range(60):
         assert client.get('/health/pronto').status_code == 200
+    assert client.get('/health/pronto').status_code == 429
+    # O teto é por IP: o monitor, vindo de outro endereço, continua sendo atendido.
+    outro_ip = client.get('/health/pronto', environ_base={'REMOTE_ADDR': '203.0.113.9'})
+    assert outro_ip.status_code == 200
