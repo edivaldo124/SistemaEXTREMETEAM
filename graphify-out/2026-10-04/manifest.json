@@ -12,9 +12,9 @@
     "semantic_hash": ""
   },
   "blueprints/usuario_bp.py": {
-    "mtime": 1791086268.6038306,
-    "seen": 1791086370.3046534,
-    "ast_hash": "c6acbdc1ecf4fb7e906c2c1561309401",
+    "mtime": 1791086583.1477964,
+    "seen": 1791086681.67998,
+    "ast_hash": "fc4e3049c18c580612e98e4876992833",
     "semantic_hash": ""
   },
   "config.py": {
@@ -271,8 +271,8 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1790999470.9963622,
-    "ast_hash": "",
+    "seen": 1791086702.1466343,
+    "ast_hash": "415656dfbf722b4ee0b494c18bfc8682",
     "semantic_hash": ""
   },
   "app.py": {
@@ -384,9 +384,9 @@
     "semantic_hash": ""
   },
   "tests/test_checkout_rotas.py": {
-    "mtime": 1788668645.3584368,
-    "seen": 1788670113.6057732,
-    "ast_hash": "e4fe05047550243fc8cc66b2ae12f72d",
+    "mtime": 1791086583.1482387,
+    "seen": 1791086681.6824274,
+    "ast_hash": "6375de2d937420bac8ed94994872c978",
     "semantic_hash": ""
   },
   "tests/test_comprovante_manual.py": {
@@ -553,8 +553,8 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1790999470.9963539,
-    "ast_hash": "",
+    "seen": 1791086702.1466265,
+    "ast_hash": "324d1aabfdaabef57d9ffa0805a7c9c6",
     "semantic_hash": ""
   },
   "servicos/senhas.py": {
@@ -690,9 +690,9 @@
     "semantic_hash": ""
   },
   "tests/test_auditoria_seguranca.py": {
-    "mtime": 1790081964.0989606,
-    "seen": 1790083727.1229353,
-    "ast_hash": "de62ae09d2f21b430953dea3b47e9311",
+    "mtime": 1791086583.148541,
+    "seen": 1791086681.6823776,
+    "ast_hash": "c6640dabdcfce0f9f8d4a1cab33a03a9",
     "semantic_hash": ""
   },
   "servicos/limites_pagamento.py": {
@@ -1098,9 +1098,9 @@
     "semantic_hash": ""
   },
   "security-review/RELATORIO.md": {
-    "mtime": 1791086366.2788749,
-    "seen": 1791086370.3082004,
-    "ast_hash": "ea5b5e513e01b76fb83033e6ffa2d151",
+    "mtime": 1791086677.5791705,
+    "seen": 1791086681.683772,
+    "ast_hash": "fffb5f93a5f32d7130c34819724184f9",
     "semantic_hash": ""
   },
   "skills_disponiveis.md": {
@@ -1509,6 +1509,12 @@
     "mtime": 1791085793.427858,
     "seen": 1791086370.3073082,
     "ast_hash": "5cca952235a624f739d64dbf40156f7a",
+    "semantic_hash": ""
+  },
+  "tools/redesign/figma/estado.json": {
+    "mtime": 1790997728.0851638,
+    "seen": 1791086702.146824,
+    "ast_hash": "d298032dfa2a3ed2eaabcfa6878f3419",
     "semantic_hash": ""
   }
 }

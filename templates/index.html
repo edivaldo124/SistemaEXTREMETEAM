@@ -199,6 +199,8 @@
             </div>
             <p class="et-dialogo-descricao">Entre com seu usuário e senha para continuar sua evolução.</p>
         </div>
+        {% include 'components/botao_google.html' %}
+        <p class="et-separador">ou use seu usuário</p>
         <form action="/login" method="post">
             {% include "components/csrf_field.html" %}
             <div class="field">

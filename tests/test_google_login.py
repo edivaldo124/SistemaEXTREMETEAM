@@ -121,6 +121,15 @@ def test_cadastro_nao_oferece_criar_conta_com_o_google(client):
     assert '/login/google' not in pagina
 
 
+@pytest.mark.parametrize('caminho,inicio', [('/login', 'id="login-title"'), ('/', 'id="meuModal"')])
+def test_login_e_modal_da_home_oferecem_entrar_com_o_google(client, caminho, inicio):
+    pagina = client.get(caminho).get_data(as_text=True)
+    trecho = pagina[pagina.index(inicio):]
+
+    # O botão vem antes do formulário de usuário e senha, como na página de login.
+    assert trecho.index('href="/login/google"') < trecho.index('name="loginusuario"')
+
+
 def test_painel_mostra_o_redirect_uri_do_login_com_google(client, logar_como_admin, cliente_google):
     logar_como_admin()
 
