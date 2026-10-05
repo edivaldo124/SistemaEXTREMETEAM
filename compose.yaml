@@ -118,7 +118,7 @@ services:
     cpus: 0.25
 
   https:
-    image: caddy:2.9-alpine
+    image: caddy:2.10-alpine
     restart: unless-stopped
     depends_on:
       - app
