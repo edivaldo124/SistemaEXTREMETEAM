@@ -4,6 +4,7 @@ import logging
 import os
 import secrets
 import threading
+from io import BytesIO
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -46,7 +47,7 @@ from dao.presencaDAO import PresencaDAO
 from servicos.armazenamento import (
     ArquivoInvalido,
     CONTENT_TYPE_POR_EXTENSAO,
-    caminho_arquivo,
+    ler_arquivo,
     remover_arquivo,
     salvar_comprovante_manual,
     salvar_foto_perfil,
@@ -1022,11 +1023,11 @@ def foto_perfil(aluno_id):
     if not aluno or not aluno.foto_arquivo:
         abort(404)
 
-    caminho = caminho_arquivo(aluno.foto_arquivo, subpasta='fotos')
-    if not caminho:
+    conteudo = ler_arquivo(aluno.foto_arquivo, subpasta='fotos')
+    if conteudo is None:
         abort(404)
 
-    resposta = send_file(caminho, mimetype='image/jpeg', conditional=False)
+    resposta = send_file(BytesIO(conteudo), mimetype='image/jpeg', conditional=False)
     resposta.headers['Cache-Control'] = 'private, no-store'
     resposta.headers['X-Content-Type-Options'] = 'nosniff'
     return resposta
@@ -1205,14 +1206,15 @@ def ver_comprovante_manual(pagamento_id):
     if not pagamento or not pagamento.comprovante_manual_arquivo:
         abort(404)
 
-    caminho = caminho_arquivo(pagamento.comprovante_manual_arquivo, subpasta='comprovantes')
-    if not caminho:
+    nome_arquivo = pagamento.comprovante_manual_arquivo
+    conteudo = ler_arquivo(nome_arquivo, subpasta='comprovantes')
+    if conteudo is None:
         abort(404)
 
-    extensao = caminho.rsplit('.', 1)[-1].lower()
+    extensao = nome_arquivo.rsplit('.', 1)[-1].lower()
     tipo_conteudo = CONTENT_TYPE_POR_EXTENSAO.get(extensao, 'application/octet-stream')
     return send_file(
-        caminho,
+        BytesIO(conteudo),
         mimetype=tipo_conteudo,
         max_age=0,
         as_attachment=extensao == 'pdf',

@@ -59,16 +59,16 @@
                         <div class="editor-photo-empty" aria-hidden="true">{{ professor.nome_exibicao[:1] }}</div>
                     {% endif %}
                     <div class="field editor-photo-upload">
-                        <div class="et-upload" data-upload data-tipos="image/jpeg,image/png,image/webp" data-max-mb="5">
+                        <div class="et-upload" data-upload data-tipos="image/jpeg,image/png,image/webp" data-max-mb="4">
                             <label class="et-upload-alvo" for="foto">
                                 <input id="foto" type="file" name="foto" accept="image/jpeg,image/png,image/webp" class="sr-only" aria-describedby="foto-ajuda">
                                 <span class="et-upload-titulo">{{ 'Substituir foto' if professor.foto_arquivo else 'Escolha a foto' }}</span>
-                                <span class="et-upload-ajuda">JPEG, PNG ou WebP, até 5 MB.</span>
+                                <span class="et-upload-ajuda">JPEG, PNG ou WebP, até 4 MB.</span>
                             </label>
                             <div class="et-upload-previa" data-upload-previa hidden></div>
                             <p class="et-upload-erro" data-upload-erro role="alert" hidden></p>
                         </div>
-                        <p class="field-help" id="foto-ajuda">JPEG, PNG ou WebP, até 5 MB. A foto será recortada em formato quadrado.</p>
+                        <p class="field-help" id="foto-ajuda">JPEG, PNG ou WebP, até 4 MB. A foto será recortada em formato quadrado.</p>
                         {% if professor.foto_arquivo %}
                             <label class="editor-check" for="remover-foto">
                                 <input class="et-caixa" id="remover-foto" type="checkbox" name="remover_foto">

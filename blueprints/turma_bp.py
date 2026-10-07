@@ -1,5 +1,5 @@
 from datetime import date
-from pathlib import Path
+from io import BytesIO
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_file, session, url_for
 from sqlalchemy.exc import SQLAlchemyError
@@ -17,7 +17,7 @@ from servicos.autorizacao import (
     sessao_administrativa_valida,
 )
 from servicos.armazenamento import (
-    ArquivoInvalido, TAMANHO_MAX_FOTO, caminho_arquivo, remover_arquivo, salvar_foto_perfil,
+    ArquivoInvalido, TAMANHO_MAX_FOTO, ler_arquivo, remover_arquivo, salvar_foto_perfil,
 )
 from servicos.contatos import validar_email, validar_instagram, validar_whatsapp
 from servicos.senhas import erro_validacao_senha
@@ -140,10 +140,10 @@ def foto_professor(professor_id):
     proprio_professor = da_sessao is not None and da_sessao.id == professor.id
     if not professor.perfil_publico and not sessao_administrativa_valida() and not proprio_professor:
         abort(404)
-    caminho = caminho_arquivo(professor.foto_arquivo, subpasta='professores')
-    if not caminho:
+    conteudo = ler_arquivo(professor.foto_arquivo, subpasta='professores')
+    if conteudo is None:
         abort(404)
-    resposta = send_file(Path(caminho).resolve(), mimetype='image/jpeg', conditional=False)
+    resposta = send_file(BytesIO(conteudo), mimetype='image/jpeg', conditional=False)
     resposta.headers['Cache-Control'] = 'private, no-store'
     resposta.headers['X-Content-Type-Options'] = 'nosniff'
     return resposta

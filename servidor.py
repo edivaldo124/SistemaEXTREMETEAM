@@ -127,6 +127,10 @@ database_url = os.environ.get('DATABASE_URL')
 if not database_url:
     raise RuntimeError('A variavel de ambiente DATABASE_URL e obrigatoria.')
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+# O banco fica fora da hospedagem (pooler do Supabase): uma conexão parada no pool pode
+# ter sido fechada do outro lado. O ping troca por uma nova antes de usar, em vez de a
+# requisição de alguém terminar em erro 500; a reciclagem evita conexões velhas demais.
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 300}
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
