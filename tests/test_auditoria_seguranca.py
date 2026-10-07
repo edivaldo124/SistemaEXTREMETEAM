@@ -613,18 +613,16 @@ def test_foto_do_aluno_nao_e_cacheavel_por_proxy(client, criar_aluno, logar_como
     assert resposta.status_code == 200
     cache = resposta.headers.get('Cache-Control', '')
     assert 'private' in cache and 'no-store' in cache and 'public' not in cache, f'Cache-Control={cache!r}'
-    # Uma requisição condicional também precisa passar pela autorização e receber
-    # a política privada, sem revalidar uma cópia pública com 304.
-    condicional = client.get(f'/perfil/foto/{aluno.id}', headers={
-        'If-None-Match': resposta.headers['ETag'],
-    })
+    # Sem ETag não há o que revalidar. E uma requisição condicional (`*` casa com
+    # qualquer versão) também precisa passar pela autorização e receber a política
+    # privada, nunca um 304 que reaproveite uma cópia guardada.
+    assert 'ETag' not in resposta.headers
+    condicional = client.get(f'/perfil/foto/{aluno.id}', headers={'If-None-Match': '*'})
     assert condicional.status_code == 200
     assert condicional.headers['Cache-Control'] == 'private, no-store'
     with client.session_transaction() as sess:
         sess.clear()
-    assert client.get(f'/perfil/foto/{aluno.id}', headers={
-        'If-None-Match': resposta.headers['ETag'],
-    }).status_code == 403
+    assert client.get(f'/perfil/foto/{aluno.id}', headers={'If-None-Match': '*'}).status_code == 403
 
 
 @pytest.mark.parametrize('valor', [

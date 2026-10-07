@@ -1,20 +1,26 @@
 """Armazenamento de arquivos enviados por usuários (fotos de perfil, comprovantes manuais).
 
-Guarda tudo em disco fora de `static/` (nunca fica público por URL direta - o acesso
-sempre passa por uma rota Flask autenticada que confere permissão antes de servir o
-arquivo). Local por padrão (bom para desenvolvimento); em produção o diretório
-apontado por UPLOAD_DIR precisa estar num volume persistente (veja README/.env.example -
-o container da aplicação não tem disco persistente por si só).
+Nada fica público por URL direta: o acesso sempre passa por uma rota Flask autenticada
+que confere permissão antes de servir o arquivo.
+
+Com SUPABASE_URL e SUPABASE_SECRET_KEY definidas, os arquivos vão para o bucket
+privado `uploads` do Supabase Storage - é o caso da Vercel, que não tem disco
+persistente. Sem as duas, ficam em disco, no diretório UPLOAD_DIR (desenvolvimento,
+testes e o compose, que monta um volume ali).
 
 Nunca salva bytes de imagem em campos de texto do banco - só o nome gerado (UUID) fica
-no banco, o conteúdo sempre vai para o disco.
+no banco, o conteúdo sempre vai para o disco ou para o Storage.
 """
+import logging
 import os
 import threading
 import uuid
 from io import BytesIO
 
+import requests
 from PIL import Image, ImageOps
+
+logger = logging.getLogger(__name__)
 
 # Uma decodificação de imagem por vez no processo.
 #
@@ -28,9 +34,15 @@ from PIL import Image, ImageOps
 # leva dezenas de milissegundos. Apertar o limite recusaria envios legítimos o tempo todo.
 _UMA_IMAGEM_POR_VEZ = threading.Semaphore(1)
 
-TAMANHO_MAX_FOTO = 5 * 1024 * 1024  # 5 MB, conforme RF de upload de perfil
-TAMANHO_MAX_COMPROVANTE = 8 * 1024 * 1024  # 8 MB - PDFs escaneados costumam ser maiores
+# 4 MB para os dois: a Vercel recusa corpo de requisição acima de 4,5 MB com uma página
+# de erro dela, antes de chegar no app. Abaixo disso a pessoa recebe a nossa mensagem.
+TAMANHO_MAX_FOTO = 4 * 1024 * 1024
+TAMANHO_MAX_COMPROVANTE = 4 * 1024 * 1024
 TAMANHO_AVATAR = 512  # px, quadrado
+
+BUCKET_STORAGE = 'uploads'
+TIMEOUT_STORAGE = 10  # segundos, por chamada ao Supabase Storage
+MSG_STORAGE_INDISPONIVEL = 'Não foi possível guardar o arquivo agora. Tente de novo em instantes.'
 
 # Limites de PIXELS. É o número de pixels, não o tamanho do arquivo, que decide a
 # memória usada: um PNG de 285 KB pode declarar 10000x10000 e custar, medido neste
@@ -75,6 +87,14 @@ class ArquivoInvalido(Exception):
     """Arquivo recusado por tipo, tamanho ou conteúdo não confiável."""
 
 
+class ArmazenamentoIndisponivel(ArquivoInvalido):
+    """O arquivo era válido, mas o Storage não aceitou guardá-lo agora.
+
+    Herda de ArquivoInvalido para as rotas mostrarem a mensagem no mesmo lugar, sem um
+    segundo `except` em cada uma.
+    """
+
+
 def _raiz_uploads():
     raiz = os.environ.get('UPLOAD_DIR', 'uploads')
     os.makedirs(raiz, exist_ok=True)
@@ -85,6 +105,48 @@ def _pasta(subpasta):
     caminho = os.path.join(_raiz_uploads(), subpasta)
     os.makedirs(caminho, exist_ok=True)
     return caminho
+
+
+def _storage():
+    """(URL base do bucket, cabeçalhos) do Supabase Storage, ou None para gravar em disco."""
+    url = (os.environ.get('SUPABASE_URL') or '').strip().rstrip('/')
+    chave = (os.environ.get('SUPABASE_SECRET_KEY') or '').strip()
+    if not url or not chave:
+        return None
+    cabecalhos = {'apikey': chave}
+    # A chave secreta nova (sb_secret_...) não é JWT e a plataforma a recusa no
+    # Authorization. A service_role antiga é JWT e precisa ir nos dois cabeçalhos.
+    if not chave.startswith('sb_'):
+        cabecalhos['Authorization'] = f'Bearer {chave}'
+    return f'{url}/storage/v1/object/{BUCKET_STORAGE}', cabecalhos
+
+
+def _nome_valido(nome_arquivo):
+    """O nome sempre é o UUID gerado por esta camada, nunca um valor vindo da requisição."""
+    return bool(nome_arquivo) and not any(trecho in nome_arquivo for trecho in ('/', '\\', '..'))
+
+
+def _gravar(conteudo, *, subpasta, nome_arquivo, content_type):
+    storage = _storage()
+    if storage is None:
+        with open(os.path.join(_pasta(subpasta), nome_arquivo), 'wb') as destino:
+            destino.write(conteudo)
+        return
+
+    base, cabecalhos = storage
+    try:
+        resposta = requests.post(
+            f'{base}/{subpasta}/{nome_arquivo}',
+            data=conteudo,
+            headers={**cabecalhos, 'Content-Type': content_type, 'x-upsert': 'false'},
+            timeout=TIMEOUT_STORAGE,
+        )
+    except requests.RequestException as exc:
+        logger.warning('Storage indisponível ao gravar arquivo: %s', type(exc).__name__)
+        raise ArmazenamentoIndisponivel(MSG_STORAGE_INDISPONIVEL) from exc
+    if not resposta.ok:
+        logger.error('Storage recusou o arquivo (HTTP %s): %s', resposta.status_code, resposta.text[:200])
+        raise ArmazenamentoIndisponivel(MSG_STORAGE_INDISPONIVEL)
 
 
 class ImagemGrandeDemais(ArquivoInvalido):
@@ -153,7 +215,7 @@ def salvar_foto_perfil(conteudo, *, subpasta='fotos'):
     if not conteudo:
         raise ArquivoInvalido('Nenhum arquivo enviado.')
     if len(conteudo) > TAMANHO_MAX_FOTO:
-        raise ArquivoInvalido('A imagem deve ter no máximo 5 MB.')
+        raise ArquivoInvalido('A imagem deve ter no máximo 4 MB.')
 
     if _detectar_tipo_imagem_real(conteudo, limitar_dimensoes=True) not in _MIME_POR_FORMATO_PIL.values():
         raise ArquivoInvalido('Envie uma imagem JPEG, PNG ou WebP.')
@@ -182,8 +244,7 @@ def salvar_foto_perfil(conteudo, *, subpasta='fotos'):
         imagem.save(buffer, format='JPEG', quality=88, optimize=True)
 
     nome_arquivo = f'{uuid.uuid4().hex}.jpg'
-    with open(os.path.join(_pasta(subpasta), nome_arquivo), 'wb') as destino:
-        destino.write(buffer.getvalue())
+    _gravar(buffer.getvalue(), subpasta=subpasta, nome_arquivo=nome_arquivo, content_type='image/jpeg')
     return nome_arquivo
 
 
@@ -198,7 +259,7 @@ def salvar_comprovante_manual(conteudo, *, subpasta='comprovantes'):
     if not conteudo:
         raise ArquivoInvalido('Nenhum arquivo enviado.')
     if len(conteudo) > TAMANHO_MAX_COMPROVANTE:
-        raise ArquivoInvalido('O arquivo deve ter no máximo 8 MB.')
+        raise ArquivoInvalido('O arquivo deve ter no máximo 4 MB.')
 
     if conteudo[:5] == b'%PDF-':
         extensao = 'pdf'
@@ -209,28 +270,56 @@ def salvar_comprovante_manual(conteudo, *, subpasta='comprovantes'):
         extensao = _EXTENSAO_POR_MIME_IMAGEM[tipo_real]
 
     nome_arquivo = f'{uuid.uuid4().hex}.{extensao}'
-    with open(os.path.join(_pasta(subpasta), nome_arquivo), 'wb') as destino:
-        destino.write(conteudo)
+    _gravar(
+        conteudo, subpasta=subpasta, nome_arquivo=nome_arquivo,
+        content_type=CONTENT_TYPE_POR_EXTENSAO[extensao],
+    )
     return nome_arquivo
 
 
-def caminho_arquivo(nome_arquivo, *, subpasta):
-    """Resolve o caminho em disco de um arquivo já salvo, ou None se não existir/for inválido.
-
-    Rejeita qualquer nome com separador de caminho - o nome sempre deve ser o UUID
-    gerado por esta camada, nunca um valor vindo direto de uma requisição.
-    """
-    if not nome_arquivo or '/' in nome_arquivo or '\\' in nome_arquivo or '..' in nome_arquivo:
+def ler_arquivo(nome_arquivo, *, subpasta):
+    """Conteúdo de um arquivo já salvo, ou None se não existir, for inválido ou o
+    Storage não responder (a rota devolve 404 nos três casos)."""
+    if not _nome_valido(nome_arquivo):
         return None
-    caminho = os.path.join(_pasta(subpasta), nome_arquivo)
-    return caminho if os.path.isfile(caminho) else None
+
+    storage = _storage()
+    if storage is None:
+        caminho = os.path.join(_pasta(subpasta), nome_arquivo)
+        if not os.path.isfile(caminho):
+            return None
+        with open(caminho, 'rb') as origem:
+            return origem.read()
+
+    base, cabecalhos = storage
+    try:
+        resposta = requests.get(f'{base}/{subpasta}/{nome_arquivo}', headers=cabecalhos, timeout=TIMEOUT_STORAGE)
+    except requests.RequestException as exc:
+        logger.warning('Storage indisponível ao ler arquivo: %s', type(exc).__name__)
+        return None
+    if resposta.status_code == 200:
+        return resposta.content
+    # Arquivo inexistente volta como 400 ou 404, conforme a versão do Storage.
+    if resposta.status_code not in (400, 404):
+        logger.error('Storage não entregou o arquivo (HTTP %s).', resposta.status_code)
+    return None
 
 
 def remover_arquivo(nome_arquivo, *, subpasta):
-    caminho = caminho_arquivo(nome_arquivo, subpasta=subpasta)
-    if not caminho:
+    """Melhor esforço: um arquivo que sobra não quebra nada, então falha só vai para o log."""
+    if not _nome_valido(nome_arquivo):
         return
+
+    storage = _storage()
+    if storage is None:
+        try:
+            os.remove(os.path.join(_pasta(subpasta), nome_arquivo))
+        except OSError:
+            pass
+        return
+
+    base, cabecalhos = storage
     try:
-        os.remove(caminho)
-    except OSError:
-        pass
+        requests.delete(f'{base}/{subpasta}/{nome_arquivo}', headers=cabecalhos, timeout=TIMEOUT_STORAGE)
+    except requests.RequestException as exc:
+        logger.warning('Storage indisponível ao apagar arquivo: %s', type(exc).__name__)

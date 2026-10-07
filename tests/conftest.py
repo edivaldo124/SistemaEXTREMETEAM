@@ -40,6 +40,8 @@ for _variavel in (
     'MERCADO_PAGO_CLIENT_ID', 'MERCADO_PAGO_CLIENT_SECRET', 'MERCADO_PAGO_TOKEN_KEY',
     'MERCADO_PAGO_AMBIENTE', 'GMAIL_CLIENT_ID', 'GMAIL_CLIENT_SECRET', 'ADMIN_EMAIL',
     'KEEP_ALIVE', 'KEEP_ALIVE_INTERVALO', 'ANALYTICS_ID', 'SENTRY_DSN',
+    # Sem estas, os uploads da suíte vão para UPLOAD_DIR e nunca para o bucket real.
+    'SUPABASE_URL', 'SUPABASE_SECRET_KEY',
 ):
     os.environ[_variavel] = ''
 

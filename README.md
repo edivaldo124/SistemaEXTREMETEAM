@@ -49,6 +49,26 @@ flask db upgrade
 O `Dockerfile` já executa isso antes de subir o Gunicorn, então uma publicação normal
 não exige nenhum passo manual.
 
+### Produção no Supabase
+
+O banco de produção fica no projeto Supabase `xtrainer-control` (`jinjuzbziwyicctlctoy`,
+São Paulo), compartilhado com outro sistema. O que importa:
+
+- **Conexão:** `DATABASE_URL` usa o *Session pooler* (porta 5432 em
+  `…pooler.supabase.com`, usuário `postgres.<ref>`), com `?sslmode=require`. A conexão
+  direta `db.<ref>.supabase.co` só tem IPv6 e o Render não alcança. O modo transação
+  (porta 6543) também não serve: o Flask mantém pool próprio e as migrations precisam
+  de sessão.
+- **Data API:** a chave publicável (`sb_publishable_…`) desse projeto vai para o
+  navegador do outro sistema. Por isso o projeto foi ajustado para que tabelas novas no
+  `public` **não** recebam `GRANT` para `anon`/`authenticated`
+  (`alter default privileges for role postgres in schema public revoke all on tables
+  from anon, authenticated`), e as tabelas da academia têm RLS ligado sem políticas.
+  O Flask conecta como `postgres`, dono das tabelas, e não é afetado. Nunca dê `GRANT`
+  a `anon`/`authenticated` em tabela da academia.
+- **Senha do banco:** é a mesma do outro sistema. Trocar em *Database Settings*
+  derruba os dois até o `DATABASE_URL` de cada um ser atualizado.
+
 `servidor.py` não chama mais `db.create_all()` ao ser importado. Ele fazia isso até
 mesmo durante o import que o próprio `flask db upgrade` executa: num banco vazio, criava
 as tabelas já no formato atual e a primeira migration então tentava adicionar colunas
@@ -510,7 +530,9 @@ A preferência criada é reaproveitada em cliques repetidos enquanto continuar v
 Fotos de alunos e comprovantes manuais (`servicos/armazenamento.py`) ficam fora de `static/` e só são servidos por rotas autenticadas (`/perfil/foto/<id>`, `/perfil/mensalidade/<id>/comprovante-manual/arquivo`) que conferem permissão a cada request. Fotos profissionais ficam em `UPLOAD_DIR/professores` e são servidas por `/professores/<id>/foto`: o acesso público depende da opção de publicar o perfil; quando privado, só o administrador e o próprio professor podem acessar.
 
 - **Local (dev)**: gravado em `UPLOAD_DIR` (padrão `uploads/`, relativo à raiz do projeto). Já está no `.gitignore`.
-- **Docker/produção**: o filesystem do container `app` é descartado a cada rebuild/deploy. Por isso o `compose.yaml` monta um volume nomeado (`uploads_data:/app/uploads`) e fixa `UPLOAD_DIR=/app/uploads` - **isso é obrigatório**: sem esse volume, toda foto e comprovante enviado se perde no próximo `docker compose up --build`. Se um dia migrar para object storage (S3, R2, etc.), troque a implementação de `servicos/armazenamento.py` sem precisar mexer nas rotas que a usam.
+- **Docker**: o filesystem do container `app` é descartado a cada rebuild/deploy. Por isso o `compose.yaml` monta um volume nomeado (`uploads_data:/app/uploads`) e fixa `UPLOAD_DIR=/app/uploads` - **isso é obrigatório**: sem esse volume, toda foto e comprovante enviado se perde no próximo `docker compose up --build`.
+- **Vercel**: não há disco persistente. Defina `SUPABASE_URL` e `SUPABASE_SECRET_KEY` e os arquivos vão para o bucket **privado** `uploads` do Supabase Storage (`<subpasta>/<uuid>.<ext>`). O bucket não tem política de acesso: só a chave secreta do servidor lê e grava, e as rotas acima continuam sendo o único caminho até o arquivo. O bucket aceita até 4 MB e só JPEG, PNG, WebP e PDF.
+- **Limite de 4 MB** para foto e comprovante: a Vercel recusa corpo de requisição acima de 4,5 MB com uma página de erro própria, antes de chegar no app.
 
 Upload de foto: valida o tipo real do arquivo decodificando com Pillow (nunca confia na extensão/Content-Type enviados pelo navegador), recorta em quadrado, remove EXIF e regrava do zero como JPEG antes de salvar com nome aleatório (UUID). Comprovante manual aceita JPEG/PNG/PDF; PDFs não são reprocessados (não são executados nem renderizados pelo servidor), só têm a assinatura binária conferida.
 
