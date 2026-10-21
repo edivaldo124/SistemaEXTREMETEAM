@@ -16,7 +16,8 @@ function criarElemento(dataset = {}) {
     return {
         dataset, textContent: '', value: '', hidden: false, open: false, disabled: false,
         atributos,
-        classList: { add() {}, remove() {} },
+        // pix.js troca o tom do aviso com classList.replace.
+        classList: { add() {}, remove() {}, replace() {}, toggle() {}, contains() { return false; } },
         addEventListener(nome, callback) {
             if (!eventos.has(nome)) eventos.set(nome, []);
             eventos.get(nome).push(callback);
