@@ -1,6 +1,13 @@
 # Relatório de segurança — Sistema Extreme Team
 
-**Última atualização:** 04/10/2026 (rodada de limites de requisição)
+**Última atualização:** 20/10/2026 (hero 3D da home, revisão OWASP Top 10:2025 + DevSecOps e
+dependências)
+**Escopo da rodada de 20/10/2026:** o código que entrou depois de 04/10 (uploads no Supabase
+Storage, planilha econômica, login com Google, ajustes da Vercel), a superfície nova do front
+(hero cinematográfico e a cena 3D em `front/`), cadeia de dependências (`pip-audit`, `npm
+audit`, lock com hashes) e as categorias do OWASP Top 10:2025 menos cobertas antes (A03
+cadeia de suprimentos, A09 logs, A10 condições excepcionais), com o checklist DevSecOps
+Flask/PostgreSQL/Docker/Vercel.
 **Escopo da rodada de 04/10/2026:** cobertura de rate limit em todas as rotas (limite padrão,
 login, e-mails em massa, webhook do Mercado Pago, links com token, prontidão, escritas
 autenticadas, cadastro público) e a política de memória do Redis que guarda os contadores.
@@ -19,7 +26,72 @@ atacado.
 > a anterior lendo o código diretamente. Os arquivos antigos foram removidos; o histórico
 > resumido de cada rodada está na seção **Histórico de auditorias** no fim deste documento.
 
-## Situação atual (04/10/2026 — limites de requisição)
+## Situação atual (20/10/2026 — hero 3D, OWASP/DevSecOps e dependências)
+
+**Corrigidos nesta rodada:** 7 achados novos (SEC-20 a SEC-26) e o SEC-18, que estava aberto
+desde 04/10. **Abertos, todos dependentes de decisão ou configuração do dono:** 4 (SEC-27 a
+SEC-30). Nenhum achado crítico ou alto: o mais sério (SEC-20) exigia uma conta de aluno
+aprovada e derrubava só a instância que recebeu o arquivo.
+
+### O que foi feito nesta rodada
+
+**Front-end** (pedido do dono: "melhorar todo o sistema, principalmente o front", com as skills
+de vídeo na rolagem, 3D em React, OWASP e DevSecOps):
+
+- **Hero cinematográfico da home** (padrão Framerate): pista de 400svh com quatro manchetes que
+  trocam com a rolagem, medidor de 00 a 100, loader só na primeira visita da aba e seta para os
+  planos. Os textos ficam no HTML (SEO e leitor de tela; um único `<h1>`). Arquivos:
+  `templates/index.html`, `static/js/cinema.js`, `static/css/cinema.css`. O hero antigo saiu
+  (216 linhas de CSS apagadas de `index.css` e `.hero` tirado do `theme.css`).
+- **Cena 3D (nível 2)**: núcleo de metal dourado líquido com brasas, ilha React Three Fiber em
+  `front/`, compilada pelo Vite para `static/dist/cinema` (316 KB gzip). É baixada só depois
+  que a página carregou e nunca com "reduzir movimento", economia de dados, conexão 2G,
+  aparelho com menos de 4 GB ou sem GPU; nesses casos fica um pôster de 32 KB (20 KB no
+  celular). Fora da tela, a cena para de desenhar.
+- **Vídeo opcional**: um MP4 em `static/video/cinema.mp4` substitui a cena e avança com a
+  rolagem (scrolly-video). Testado com um vídeo sintético (os quadros mudam com a rolagem, sem
+  erro de console nem de CSP) e removido depois.
+- **3D nível 1 no sistema**: tilt em CSS (`.et-tilt`) nos cartões de plano (home e área do
+  aluno), de métrica (painéis do admin) e do método; só com mouse e sem "reduzir movimento".
+- **Fontes servidas pelo próprio site** (SEC-18, abaixo).
+- Conferência no navegador (GPU real): 1440×900 e 390×844, nos progressos 0, 30, 55, 85 e 100%,
+  com movimento reduzido e sem JS; sem rolagem lateral, sem erro de console, cena pronta em
+  0,7–1,2 s. `DESIGN.md` e `README.md` registram a exceção da ilha React e o movimento do hero.
+
+**Segurança**: tabela abaixo. Também foram corrigidas 13 falhas antigas dos testes de JS
+(`tests/js/botao_ocupado.test.cjs` e `tests/js/pagamento_polling.test.cjs`): o DOM falso não
+tinha `classList.replace`, que o `pix.js` passou a usar. Era dívida de teste, não bug.
+
+| ID | Achado | Severidade | Status | Evidência |
+|---|---|---|---|---|
+| SEC-20 | Pillow 12.3.0 com 8 CVEs. Uma alcançável: o `Image.open()` do upload tentava **todos** os formatos antes de recusar, então um GIF de ~60 bytes (CVE-2026-112400) enviado como foto ou comprovante por qualquer aluno aprovado fazia o Pillow pedir gigabytes de memória e derrubava a instância (A03 + A06, negação de serviço). As outras 7 estão em código que o sistema não usa (append em PDF, `ImageMorph`, salvar TIFF, EPS) ou em formatos recusados antes de decodificar | Média | **Corrigido** (mitigado; a atualização do Pillow fica pendente) | [armazenamento.py:80](../servicos/armazenamento.py#L80): `_FORMATOS_ACEITOS = ('JPEG', 'PNG', 'WEBP')`, passado como `formats=` nos três `Image.open` ([202](../servicos/armazenamento.py#L202), [206](../servicos/armazenamento.py#L206), [230](../servicos/armazenamento.py#L230)). GIF, TIFF, EPS e PPM nunca chegam a um parser, e a próxima falha desses decodificadores também fica fora de alcance. O Pillow 13.0.0 (que corrige as 8) saiu em 16/10 e é major: fica para o PR do Dependabot, com a suíte rodando. Testes: `tests/test_formatos_de_imagem.py` (8; falham se o parser de GIF ou TIFF rodar). |
+| SEC-21 | `certifi` 2026.7.22 confiava na raiz `emSign ECC Root CA - G3`, cujos intermediários tiveram chave privada comprometida (PYSEC-2026-4320): alguém no caminho de rede do servidor poderia se passar pelo Mercado Pago, pelo Google ou pelo Supabase nas chamadas HTTPS do backend | Média (condicional: exige atacante no caminho de rede) | **Corrigido** | [requirements.lock:17](../requirements.lock#L17): `certifi==2026.10.18`. Conferido no `cacert.pem`: a raiz não está lá. O `pip-audit` ainda cita a .18 porque o aviso aponta a .19 como correção, mas a .19 só **devolve** três raízes emSign não afetadas (117 → 120 certificados), e nenhum serviço que o sistema chama usa emSign. Na Vercel o `requirements.txt` não fixa `certifi`, então cada deploy já pega a versão mais nova. |
+| SEC-22 | Werkzeug 3.1.8: `safe_join` aceitava nomes de dispositivo do Windows (PYSEC-2026-4312) | Informativo (só em servidor Windows; o sistema roda em Linux) | **Corrigido** | [requirements.lock:868](../requirements.lock#L868): `werkzeug==3.1.9`. Lock regenerado com `--upgrade-package` só para Werkzeug e certifi (as demais versões ficaram iguais) e conferido com `docker build --target builder` (`--require-hashes` instala). |
+| SEC-23 | Login com Google sem PKCE, `state` comparado com `!=` e sem validade (A07). As boas práticas de OAuth (RFC 9700) pedem PKCE também para cliente confidencial, contra injeção de código de autorização vazado | Baixa (defesa em profundidade: o cliente é confidencial e o `state` já era conferido) | **Corrigido** | Mesmo padrão do OAuth do Mercado Pago: [google_login.py:30](../blueprints/google_login.py#L30) (`code_verifier` de 86 caracteres e desafio S256), [google_login.py:43](../blueprints/google_login.py#L43) (`hmac.compare_digest` e validade de 10 min), [google_login.py:117](../blueprints/google_login.py#L117) (`code_verifier` na troca do code). Testes novos em `tests/test_google_login.py`: desafio = SHA-256 do verificador da sessão, verificador enviado na troca, sessão sem PKCE e `state` vencido recusados sem chamar o Google. |
+| SEC-24 | O login com Google pedia o escopo `profile` (nome e foto), que o código nunca usa | Baixa (LGPD, minimização) | **Corrigido** | [google_login.py:85](../blueprints/google_login.py#L85): `scope='openid email'`, que já traz `email` e `email_verified`. Teste em `tests/test_google_login.py`. |
+| SEC-25 | E-mail completo no log quando o link de verificação do cadastro não pode ser montado (A09; LGPD). O SEC-08 tinha mascarado os logs do serviço de e-mail, mas esta linha ficou de fora | Baixa | **Corrigido** | [usuario_bp.py:370](../blueprints/usuario_bp.py#L370) usa `mascarar_email`. Teste: `tests/test_logs_sem_dado_pessoal.py`. |
+| SEC-18 | Fontes do Google Fonts: o navegador de todo visitante mandava o IP ao Google, na home e antes de qualquer consentimento (LGPD) | Informativo (LGPD) | **Corrigido** (estava aberto desde 04/10) | Bebas Neue e Inter (Fontsource 5.3.0, licença OFL em `static/fonts/LICENCA-*.txt`) servidas de `static/fonts`, declaradas em `static/css/fontes.css`; CSP sem `fonts.googleapis.com`/`fonts.gstatic.com` ([servidor.py:205-206](../servidor.py#L205-L206): `style-src 'self' 'unsafe-inline'`, `font-src 'self'`); `preload` das duas fontes de toda tela no `base.html`. No navegador: só o subconjunto latino de cada peso usado é baixado, **zero requisições externas**, renderização idêntica. Testes: `tests/test_fontes_locais.py` (8). |
+| SEC-26 | A política de privacidade diz que "alunos e professores não conectam contas do Google", mas existe "Entrar com o Google", que recebe o e-mail do aluno (transparência, LGPD art. 9º; o Google também exige que a política descreva o uso dos dados do login) | Média | **Corrigido** (texto aplicado a pedido do dono em 20/10; validar com quem cuida da parte jurídica) | `templates/politica_privacidade.html`: a seção 2 virou "Contas do Google (Gmail e login)", a frase passou a "não conectam contas do Google para o envio de e-mails" e entrou o parágrafo *"**Entrar com o Google (alunos):** quem já tem cadastro pode entrar com a conta do Google que usa o mesmo e-mail. O Google informa ao sistema apenas o endereço de e-mail e se ele foi confirmado; o sistema não recebe a senha do Google, não guarda nenhum token do Google e não acessa e-mails, contatos ou arquivos. O e-mail serve só para encontrar o cadastro existente; nenhum cadastro é criado a partir do Google."* Política com data de 20/10/2026. Teste: `test_politica_de_privacidade_descreve_o_login_com_google`. |
+| SEC-27 | Na Vercel, o valor certo de `TRUST_PROXY_COUNT` não está documentado (o README cobre só o Caddy do compose). Se o Flask não enxergar o IP real do visitante, **todo limite por IP vira limite global**: 20 senhas erradas por minuto, vindas de qualquer pessoa, bloqueariam o login de todo mundo (A04/A06) | Média (condicional: depende da configuração de produção, que não é visível daqui) | **A verificar em produção** | Na Vercel → Logs, procure linhas `Login recusado: ip=` ([usuario_bp.py:195](../blueprints/usuario_bp.py#L195)) de pessoas diferentes. Se todas mostrarem o mesmo IP (interno da Vercel), defina `TRUST_PROXY_COUNT=1` (a Vercel sobrescreve o `X-Forwarded-For` com o IP do cliente) e confira de novo. Se já aparecem IPs diferentes, deixe como está. |
+| SEC-28 | Comprovante em imagem guardado como enviado, com os metadados EXIF (podem incluir a localização de onde a foto foi tirada) | Baixa (LGPD) | **Aberto: recomendação** | `salvar_comprovante_manual` ([armazenamento.py](../servicos/armazenamento.py)) não regrava a imagem de propósito (memória). Opções: regravar JPEG/PNG sem metadados (custa uma decodificação, com o mesmo semáforo da foto) ou avisar na tela de envio. |
+| SEC-29 | Sem pipeline de CI: testes, `pip-audit`, `npm audit` e Bandit só rodam à mão, e nada impede o deploy de código com dependência vulnerável (A03/A08) | Baixa (processo) | **Aberto: recomendação** | Um workflow em `.github/workflows/ci.yml` com `pytest -q`, `node --test tests/js/*.test.cjs`, `pip-audit -r requirements.lock`, `npm audit --omit=dev` em `front/` e `bandit -q -r blueprints servicos dao modelos`, rodando em todo PR. O Dependabot já tem a entrada `github-actions` esperando. |
+| SEC-30 | Conta de administrador sem segundo fator (ASVS 5.0, 6.3.3, nível 2). Ela acessa CPF, financeiro e a conta do Mercado Pago | Média | **Aberto: recomendação** (mudança estrutural de autenticação) | Caminho sugerido: TOTP (`pyotp`) só para o admin, com códigos de recuperação. Não foi implementado por mudar o fluxo de login. |
+
+**Cadeia de dependências do front (nova):** versões fixas e com mais de 14 dias de publicação
+(React 19.3.0, three 0.186.1, R3F 9.8.1, drei 10.7.9, Vite 8.3.3, scrolly-video 0.0.24),
+`package-lock.json` versionado, instalação com `npm ci --ignore-scripts` (nenhum pacote roda
+script de instalação), `npm audit` sem vulnerabilidades. O Dependabot ganhou a entrada `npm`
+para `front/` ([.github/dependabot.yml](../.github/dependabot.yml)). O build não busca nada fora
+do site (teste `test_build_nao_busca_nada_fora_do_site`), e a iluminação da cena é gerada no
+navegador em vez de baixar um HDRI de CDN, que a CSP bloquearia.
+
+**Descartados depois de conferir:** "Voltar" de `turma.html` levando o admin a `/professor` (o
+layout do admin não desenha esse cabeçalho; o admin recebe a navegação e o breadcrumb dele);
+`innerHTML` do `componentes.js` (só SVG constante); SQL em texto no `prontidao.py` (constante);
+alertas baixos do Bandit (URLs de endpoint de token tidas como senha, comparações com `None`, o
+prefixo `TEST-` e o `escape` usado para **gerar** o sitemap XML).
+
+## Rodada de 04/10/2026 — limites de requisição
 
 **Nenhum achado de segurança aberto.** Antes desta rodada, 62 das 85 rotas não tinham limite
 algum: o `limiter` nascia com `default_limits=[]` e só a rota com decorador era contida. Os
@@ -46,7 +118,7 @@ para alunos no mesmo Wi-Fi da academia não dividirem cota. Os limites declarado
 | SEC-15 | `/health/pronto` isento de limite, consultando banco e Redis a cada chamada pública | Baixa | **Corrigido** | `@limiter.exempt` virou `60 per minute` por IP ([servidor.py:348-353](../servidor.py#L348-L353)); foi escolhida a opção sem token. Isso reverte de propósito a isenção criada no commit `0e5b399`. O healthcheck do Docker usa `/health`, que segue isento. Teste: `tests/test_prontidao.py::test_pronto_tem_limite_por_ip`, que substitui o teste que exigia a isenção. |
 | SEC-16 | Escritas autenticadas sem limite | Baixa (todas exigem sessão válida) | **Corrigido** | Por conta: `confirmar_presenca` 30/h ([usuario_bp.py:530](../blueprints/usuario_bp.py#L530)), `cancelar_mudanca_plano` 10/h ([usuario_bp.py:544](../blueprints/usuario_bp.py#L544)), `remover_foto_perfil` 20/h ([usuario_bp.py:1066](../blueprints/usuario_bp.py#L1066)), `continuar_checkout` com `limitar_consulta_pagamento` ([checkout_bp.py:186](../blueprints/checkout_bp.py#L186)), desconectar Gmail e Mercado Pago 10 a cada 15 min ([gmail_oauth_bp.py:57](../blueprints/gmail_oauth_bp.py#L57), [mercado_pago_oauth_bp.py:174](../blueprints/mercado_pago_oauth_bp.py#L174)), `enviar_foto_aluno` e `cadastrar_aluno` (`POST`) 30/h ([adm_bp.py:595](../blueprints/adm_bp.py#L595), [adm_bp.py:370](../blueprints/adm_bp.py#L370)), escritas financeiras do admin 60/h ([adm_bp.py:644](../blueprints/adm_bp.py#L644), [718](../blueprints/adm_bp.py#L718), [747](../blueprints/adm_bp.py#L747), [777](../blueprints/adm_bp.py#L777)), `matricular_aluno` e `registrar_presenca` 60/h ([turma_bp.py:257](../blueprints/turma_bp.py#L257), [turma_bp.py:294](../blueprints/turma_bp.py#L294)). `logout` 60/min por IP ([servidor.py:363-364](../servidor.py#L363-L364)). Testes: `test_escritas_do_admin_tem_limite` (10 casos), `test_escritas_do_aluno_tem_limite` (4 casos), `test_limite_das_escritas_do_aluno_e_por_conta` e `test_logout_tem_limite_por_ip`. |
 | SEC-17 | Cadastro público com 5/h por IP bloqueava cadastros legítimos: a academia inteira sai por um IP só | Baixa (disponibilidade) | **Corrigido** | `20 per hour` por IP ([usuario_bp.py:242-245](../blueprints/usuario_bp.py#L242-L245)). Mantido o `3 per hour` cuja chave é IP + hash do CPF (já era assim; não é um teto só por CPF). Testes: `test_cadastro_publico_aceita_20_por_hora_do_mesmo_ip` e `test_cadastro_publico_mantem_3_por_hora_por_cpf`. |
-| SEC-18 | Fontes carregadas do Google Fonts: o `@import` em [static/css/theme.css:7](../static/css/theme.css#L7) (liberado na CSP em `style-src`/`font-src` de `servidor.py`) faz o navegador de todo visitante, inclusive em páginas públicas e sem consentimento, enviar o IP ao Google | Informativo (LGPD) | **Não implementado** (fora do escopo: front-end) | A política de privacidade (`templates/politica_privacidade.html`) cita o Google só no contexto do Gmail da academia, não das fontes. Caminhos possíveis: servir Bebas Neue e Inter (licença OFL) de `static/` e tirar `fonts.googleapis.com`/`fonts.gstatic.com` da CSP, ou declarar o compartilhamento na política de privacidade. |
+| SEC-18 | Fontes carregadas do Google Fonts: o `@import` em [static/css/theme.css:7](../static/css/theme.css#L7) (liberado na CSP em `style-src`/`font-src` de `servidor.py`) faz o navegador de todo visitante, inclusive em páginas públicas e sem consentimento, enviar o IP ao Google | Informativo (LGPD) | **Corrigido em 20/10/2026** (ver a rodada de 20/10); em 04/10 ficou sem implementar por ser front-end | A política de privacidade (`templates/politica_privacidade.html`) cita o Google só no contexto do Gmail da academia, não das fontes. Caminhos possíveis: servir Bebas Neue e Inter (licença OFL) de `static/` e tirar `fonts.googleapis.com`/`fonts.gstatic.com` da CSP, ou declarar o compartilhamento na política de privacidade. |
 | SEC-19 | Redis do rate limit com `allkeys-lru` e 32 MB: sob pressão de memória ele apagava contadores ainda em uso, e quem estava bloqueado voltava a ter cota inteira justamente sob carga | Média (condicional: só com o Redis cheio) | **Corrigido** | [compose.yaml:22-32](../compose.yaml#L22-L32): `--maxmemory-policy volatile-ttl` e `--maxmemory 64mb`. Todas as chaves do Flask-Limiter e a marca do webhook têm TTL, então `volatile-ttl` descarta primeiro a mais perto de expirar. O `mem_limit` do container subiu de 48m para 96m; com 64 MB de dados num container de 48 MB, o processo seria morto por falta de memória. Teste: `test_redis_do_rate_limit_nao_apaga_contadores_sob_carga`. |
 
 ## Rodada anterior (22/09/2026 — 2ª rodada)
@@ -148,9 +220,54 @@ os mesmos 8 aparecem como pulados e o restante continua verde (732 passaram).
 - Cabeçalhos de segurança (`CSP` com nonce, `X-Content-Type-Options`, `X-Frame-Options`,
   `Referrer-Policy`, `Permissions-Policy`, HSTS condicional) aplicados a toda resposta.
 - Páginas autenticadas saem com `Cache-Control: no-store`.
-- `pip-audit` sem vulnerabilidades conhecidas nas dependências declaradas.
+- `pip-audit` sem vulnerabilidades conhecidas nas dependências declaradas (04/10). Em 20/10
+  apareceram 10 (Pillow, certifi, Werkzeug): ver SEC-20 a SEC-22.
 - Bandit: 1 alerta médio (`app.run(host="0.0.0.0")`, protegido por `if __name__ == '__main__'`;
   produção usa Gunicorn) e alertas baixos, todos falsos positivos de constantes/`None`.
+
+**Conferido em 20/10/2026, no código novo desde 04/10 e no hero:**
+
+- Upload no Supabase Storage: nome sempre UUID gerado no servidor (leitura recusa `/`, `\` e
+  `..`), bucket privado acessado só pela chave secreta do servidor, tipo real conferido pelo
+  conteúdo, foto regravada sem metadados, teto de pixels contra bomba de descompressão e,
+  agora, só os decodificadores de JPEG, PNG e WebP (SEC-20).
+- Comprovante: dono conferido, `Content-Type` tirado da extensão gerada pelo servidor e PDF
+  entregue como download (`as_attachment`), nunca inline no domínio do sistema.
+- Planilha econômica: todas as rotas com `@admin_requerido` e limite por conta; data,
+  categoria (lista fechada), descrição (tamanho) e valor validados; o Excel grava todo texto
+  como texto, então um aluno cadastrado com o nome `=HYPERLINK(...)` não vira fórmula (teste
+  `test_planilha_economica.py`).
+- Login com Google: `state` aleatório de 32 bytes, PKCE S256, validade de 10 min,
+  `email_verified` obrigatório, só conta já existente e aprovada, sessão nova
+  (`session.clear()` + `iniciar_sessao()`), credencial carimbada e escopo mínimo.
+- Erros: toda exceção cai no handler de 500, que faz `rollback` e responde sem detalhe interno;
+  401/403/404/413/429 com mensagens genéricas (A10, falha fechada).
+- Hero da home: nenhuma rota nova; os módulos da cena vêm do `manifest.json` gerado no build
+  (nunca de dado do visitante) e são importados do próprio domínio; o único script inline é
+  estático e leva o nonce da resposta (teste `test_scripts_da_home_sao_do_proprio_site_ou_tem_nonce`);
+  a CSP ficou **mais restrita** (sem os domínios de fonte do Google).
+
+## Validação executada em 20/10/2026
+
+- Linha de base antes das mudanças: suíte Python verde; testes de JS com 13 falhas antigas
+  (DOM falso sem `classList.replace`), as mesmas antes e depois desta rodada até serem corrigidas.
+- Final: `pytest -q` → **1021 passaram, 0 falharam, 8 pulados** (os `*_postgres.py`, sem
+  `TEST_POSTGRES_URL` nesta máquina); `node --test tests/js/*.test.cjs` → **62 passaram, 0
+  falharam**.
+- Testes novos: `tests/test_cinema.py` (13), `tests/js/cinema.test.cjs` (6),
+  `tests/test_formatos_de_imagem.py` (8), `tests/test_fontes_locais.py` (8),
+  `tests/test_logs_sem_dado_pessoal.py` (1) e 5 casos novos em `tests/test_google_login.py`.
+- `pip-audit -r requirements.lock`: antes, 10 vulnerabilidades em 3 pacotes; depois, as 8 do
+  Pillow (fora de alcance pelo SEC-20, atualização pendente) e o aviso da `certifi` 2026.10.18
+  explicado no SEC-21. `npm audit` em `front/`: 0.
+- `docker build --target builder .`: o lock novo instala com `--require-hashes` no Python 3.11
+  da imagem.
+- Bandit sobre `blueprints servicos dao modelos servidor.py config.py`: só alertas baixos,
+  todos falsos positivos (ver "Descartados depois de conferir").
+- Navegador (Playwright, GPU real, instância descartável `tools/redesign/servir_visual.py`):
+  hero em 1440×900 e 390×844, movimento reduzido e sem JS; fontes carregadas só de
+  `/static/fonts` com zero requisições externas; caminho do vídeo com um MP4 sintético.
+- Nenhuma requisição foi enviada a Mercado Pago, Google, Supabase, Redis ou banco de produção.
 
 ## Validação executada em 04/10/2026
 
@@ -208,6 +325,7 @@ revalidado e está refletido nas seções acima.
 | 17/09/2026 (atualizado 19/09) | Revalidação de F1–F15 + novos achados A1–A4 + varredura independente S1–S2 + fluxo OAuth do Mercado Pago | A1–A4 (recuperação de senha vazando tempo, `/perfil/dados` sem limite de tentativas nem validação de tamanho, enumeração de usuário/e-mail) e S1–S2 (logout não revogava sessão, páginas autenticadas sem `Cache-Control`) | Todos corrigidos em 19/09/2026. |
 | 21/09/2026 | Foco nos fluxos recentes de matrícula, turma, presença e permissões de professor | SEC-01 a SEC-09 (0 alto, 6 médio, 3 baixo) | Todos confirmados corrigidos (ou não reprodutíveis) em 22/09/2026 — ver tabela **Situação atual** acima. |
 | 04/10/2026 | Rate limit em todas as rotas, webhook do Mercado Pago (repetição de notificação), prontidão, política de memória do Redis | SEC-10 a SEC-17 e SEC-19 (0 alto, 4 médio, 5 baixo) + SEC-18 informativo (Google Fonts/LGPD) | SEC-10 a SEC-17 e SEC-19 corrigidos com teste; SEC-18 registrado sem implementar (front-end). |
+| 20/10/2026 | Código novo desde 04/10 (Storage, planilha, login com Google, Vercel), hero 3D e `front/`, dependências (pip-audit, npm audit, lock), OWASP Top 10:2025 (A03, A09, A10) e checklist DevSecOps | SEC-20 a SEC-30 + SEC-18 (0 alto; 5 médio, 5 baixo, 2 informativo) | SEC-18 e SEC-20 a SEC-26 corrigidos com teste (o texto da política, a validar juridicamente); SEC-27 (configuração da Vercel) e SEC-28 a SEC-30 (recomendações) dependem do dono. |
 | 22/09/2026 (2ª rodada) | OAuth Gmail/Mercado Pago, Checkout Pro, upload de arquivos, páginas legais públicas, credencial do administrador, revalidação independente de SEC-01/03/05/06/07/09 | OBS-01 (rate limit ausente no OAuth do Gmail, baixa/informativo); `requirements.lock` confirmado commitado e já usado com `--require-hashes` no Dockerfile | Nenhum achado de segurança aberto; ver tabelas **Situação atual** acima. |
 
 **Nenhuma injeção de SQL, XSS refletido/armazenado/DOM, path traversal, IDOR, SSRF ou
