@@ -42,7 +42,7 @@ def _carrega_analytics(resposta):
 
 
 def _csp_com_google(resposta):
-    # As fontes do Google (fonts.googleapis.com) já estão na política base; aqui só o GA4.
+    # As fontes saem do próprio site (static/fonts); aqui só os domínios do GA4.
     csp = resposta.headers['Content-Security-Policy']
     return any(dominio in csp for dominio in ('googletagmanager', 'google-analytics', 'analytics.google'))
 

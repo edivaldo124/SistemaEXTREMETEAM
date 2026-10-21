@@ -72,6 +72,13 @@ MAX_PIXELS_SEM_ESCALA = 8_000_000
 # Formatos cujo decodificador aceita entregar a imagem já reduzida.
 _FORMATOS_COM_ESCALA = ('JPEG', 'MPO')
 
+# Os únicos decodificadores do Pillow que chegam a ver um arquivo enviado. Sem a lista, o
+# `Image.open` tenta todos os formatos que o Pillow conhece, e o arquivo de um aluno passava
+# pelo parser de GIF, TIFF, EPS ou PPM antes de ser recusado. É ali que estão as falhas
+# conhecidas do Pillow 12.3 (CVE-2026-112400: um GIF de 60 bytes pede gigabytes de memória;
+# as de TIFF e EPS), e é por ali que viria a próxima. O decodificador de JPEG também abre MPO.
+_FORMATOS_ACEITOS = ('JPEG', 'PNG', 'WEBP')
+
 _MIME_POR_FORMATO_PIL = {'JPEG': 'image/jpeg', 'PNG': 'image/png', 'WEBP': 'image/webp'}
 _EXTENSAO_POR_MIME_IMAGEM = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}
 
@@ -192,11 +199,11 @@ def _detectar_tipo_imagem_real(conteudo, *, limitar_dimensoes=False):
     qualquer outro arquivo que não seja uma imagem válida.
     """
     try:
-        with Image.open(BytesIO(conteudo)) as imagem:
+        with Image.open(BytesIO(conteudo), formats=_FORMATOS_ACEITOS) as imagem:
             if limitar_dimensoes:
                 _conferir_dimensoes(imagem)
             imagem.verify()
-        with Image.open(BytesIO(conteudo)) as imagem:
+        with Image.open(BytesIO(conteudo), formats=_FORMATOS_ACEITOS) as imagem:
             formato = (imagem.format or '').upper()
     except ImagemGrandeDemais:
         raise
@@ -220,7 +227,7 @@ def salvar_foto_perfil(conteudo, *, subpasta='fotos'):
     if _detectar_tipo_imagem_real(conteudo, limitar_dimensoes=True) not in _MIME_POR_FORMATO_PIL.values():
         raise ArquivoInvalido('Envie uma imagem JPEG, PNG ou WebP.')
 
-    with _UMA_IMAGEM_POR_VEZ, Image.open(BytesIO(conteudo)) as imagem:
+    with _UMA_IMAGEM_POR_VEZ, Image.open(BytesIO(conteudo), formats=_FORMATOS_ACEITOS) as imagem:
         # Segunda conferência: `_detectar_tipo_imagem_real` abriu outra instância, e é
         # esta que vai de fato decodificar os pixels.
         _conferir_dimensoes(imagem)

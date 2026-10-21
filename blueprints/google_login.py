@@ -1,5 +1,9 @@
+import base64
+import hashlib
+import hmac
 import secrets
 import os
+import time
 import requests
 import logging
 from urllib.parse import urlencode
@@ -17,6 +21,36 @@ AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 TOKEN_URL = 'https://oauth2.googleapis.com/token'
 USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo'
 CALLBACK_ROUTE = '/login/google/callback'
+
+CHAVE_SESSAO = 'google_oauth'
+# O code do Google vale poucos minutos; o state guardado não precisa viver mais que isso.
+VALIDADE_AUTORIZACAO_SEGUNDOS = 10 * 60
+
+
+def _novo_pkce():
+    """(code_verifier, code_challenge S256), como na conexão do Mercado Pago.
+
+    O state amarra a volta a quem iniciou; o PKCE impede que um code vazado (log,
+    histórico, extensão do navegador) seja trocado por uma sessão que não começou o login.
+    """
+    verifier = secrets.token_urlsafe(64)  # 86 caracteres; o limite do PKCE é 43-128
+    challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(verifier.encode('ascii')).digest()
+    ).rstrip(b'=').decode('ascii')
+    return verifier, challenge
+
+
+def _autorizacao_valida(guardada, state_recebido):
+    """O state devolvido é o que ESTA sessão emitiu, há pouco tempo?"""
+    if not isinstance(guardada, dict) or not isinstance(state_recebido, str):
+        return False
+    state, verifier, criado_em = guardada.get('state'), guardada.get('verifier'), guardada.get('criado_em')
+    if not isinstance(state, str) or not isinstance(verifier, str) or not isinstance(criado_em, (int, float)):
+        return False
+    if time.time() - criado_em > VALIDADE_AUTORIZACAO_SEGUNDOS:
+        return False
+    return hmac.compare_digest(state.encode('utf-8'), state_recebido.encode('utf-8'))
+
 
 def redirect_uri():
     # Precisa estar cadastrado, igual, em "URIs de redirecionamento autorizados" do
@@ -39,26 +73,29 @@ def login_google():
         return redirect(url_for('auth.pagina_login'))
 
     state = secrets.token_urlsafe(32)
-    session['google_oauth_state'] = state
-    
+    verifier, challenge = _novo_pkce()
+    session[CHAVE_SESSAO] = {'state': state, 'verifier': verifier, 'criado_em': time.time()}
+
     url = AUTH_URL + '?' + urlencode({
         'client_id': client_id,
         'redirect_uri': retorno,
         'response_type': 'code',
-        'scope': 'openid email profile',
+        # Só o e-mail e a confirmação dele: nome e foto (escopo `profile`) não são usados
+        # e não devem ser pedidos (minimização, LGPD).
+        'scope': 'openid email',
         'access_type': 'online',
         'prompt': 'select_account',
         'state': state,
+        'code_challenge': challenge,
+        'code_challenge_method': 'S256',
     })
     return redirect(url)
 
 @google_auth_bp.route(CALLBACK_ROUTE)
 @limiter.limit('10 per 15 minutes')
 def callback():
-    state_guardado = session.pop('google_oauth_state', None)
-    state_recebido = request.args.get('state')
-    
-    if not state_guardado or state_guardado != state_recebido:
+    guardada = session.pop(CHAVE_SESSAO, None)
+    if not _autorizacao_valida(guardada, request.args.get('state')):
         flash('Falha na validação de segurança do Google. Tente novamente.', 'erro')
         return redirect(url_for('auth.pagina_login'))
         
@@ -77,6 +114,7 @@ def callback():
             'client_secret': os.environ.get('GMAIL_CLIENT_SECRET'),
             'redirect_uri': redirect_uri(),
             'grant_type': 'authorization_code',
+            'code_verifier': guardada['verifier'],
         }, timeout=10)
         resposta.raise_for_status()
         dados = resposta.json()

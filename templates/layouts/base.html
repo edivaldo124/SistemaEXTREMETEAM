@@ -24,6 +24,10 @@
         <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='imagens/favicon-32.png') }}">
         <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='imagens/favicon-192.png') }}">
         <link rel="apple-touch-icon" href="{{ url_for('static', filename='imagens/favicon-180.png') }}">
+        {#- As duas fontes de toda tela, pedidas já aqui em vez de esperar o @import do
+            theme.css → fontes.css. Servidas pelo próprio site (static/fonts). -#}
+        <link rel="preload" href="{{ url_for('static', filename='fonts/inter-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="{{ url_for('static', filename='fonts/bebas-neue-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
         {% block deslize %}{% include "components/deslize.html" %}{% endblock %}
         <script src="{{ url_for('static', filename='js/componentes.js') }}" defer></script>
         {% block scripts %}{% endblock %}

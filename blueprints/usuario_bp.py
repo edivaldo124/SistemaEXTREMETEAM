@@ -367,7 +367,7 @@ def pagina_cadastro():
                 link_texto='Verificar Meu E-mail'
             )
         except URLPublicaInvalida:
-            logger.error('APP_BASE_URL inválida; e-mail de verificação não enviado para %s.', email)
+            logger.error('APP_BASE_URL inválida; e-mail de verificação não enviado para %s.', mascarar_email(email))
 
         return _cadastro_recebido()
 

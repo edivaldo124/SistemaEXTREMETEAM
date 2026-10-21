@@ -198,8 +198,9 @@ def adicionar_cabecalhos_de_seguranca(resposta):
         "default-src 'self'; "
         f"script-src 'self' 'nonce-{nonce}'{script_ga}; "
         "script-src-attr 'none'; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "font-src 'self' https://fonts.gstatic.com; "
+        # As fontes são servidas daqui (static/fonts): nenhum visitante manda o IP ao Google.
+        "style-src 'self' 'unsafe-inline'; "
+        "font-src 'self'; "
         f"img-src 'self' data:{img_ga}; connect-src 'self'{connect_ga}; object-src 'none'; "
         "base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
     )
