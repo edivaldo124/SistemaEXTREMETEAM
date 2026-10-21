@@ -10,26 +10,25 @@ def test_landing_page(client):
     assert 'logo-horizontal-400.png' in html
     assert 'logo-horizontal-800.png' in html
 
-    # Título do Hero em caixa alta
-    assert 'DESPERTE SUA FORÇA.' in html
-    assert 'CONQUISTE O SEU MELHOR.' in html
+    # Hero cinematográfico: a primeira manchete é o único <h1> (a caixa alta é do CSS).
+    assert 'data-cinema' in html
+    assert html.count('<h1') == 1
+    assert re.search(r'<h1 class="cinema-titulo">.*Desperte.*sua força\.</span></span>\s*</h1>', html, re.S)
 
     # Planos logo depois do hero (sem planos cadastrados: o estado vazio real).
     assert 'id="planos"' in html
     assert 'Os planos ainda não foram publicados.' in html
 
-    # Visual do dragão recortado
-    assert 'hero-emblema.webp' in html
-
     # Âncoras e ações da landing
     assert 'href="#estrutura"' in html
     assert 'href="#metodo"' in html
+    assert 'href="#planos"' in html
     assert 'data-abrir-login' in html
 
     # Faixa do método em 3 etapas
-    assert 'Comece' in html
-    assert 'Mantenha' in html
-    assert 'Supere' in html
+    assert 'Crie sua conta' in html
+    assert 'Escolha seu plano' in html
+    assert 'Treine e acompanhe' in html
 
     # Modal de login da landing com campos e CSRF
     assert 'id="meuModal"' in html

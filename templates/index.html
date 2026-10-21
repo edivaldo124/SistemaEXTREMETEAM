@@ -2,71 +2,97 @@
 {% block titulo %}Centro de Treinamento | Extreme Team{% endblock %}
 {% block descricao %}Treine no Centro de Treinamento Extreme Team: conheça os planos e a equipe de professores e crie sua conta para começar.{% endblock %}
 {% block scripts %}
+    {#- Antes da primeira pintura: liga a pista longa do hero cinematográfico e pula o
+        loader quando ele já apareceu nesta aba. Sem JS o hero fica estático. -#}
+    <script nonce="{{ csp_nonce() }}">
+        document.documentElement.classList.add('cinema-js');
+        try { if (sessionStorage.getItem('et-cinema-visto')) document.documentElement.classList.add('cinema-visto'); } catch (e) {}
+    </script>
     <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/cinema.js') }}" defer></script>
     {# `tojson` escapa <, > e &: um texto do painel não fecha a tag <script>. #}
     <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ dados_estruturados|tojson }}</script>
     <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ faq_estruturado|tojson }}</script>
 {% endblock %}
 {#- Visitante ganha a barra fixa de conversão no celular; quem já entrou, não. -#}
 {% set mostrar_cta_fixo = not session.get('tipo_usuario') %}
-{% block atributos_body %}{% if mostrar_cta_fixo %} class="has-cta-fixo"{% endif %}{% endblock %}
+{% block atributos_body %} class="pagina-cinema{% if mostrar_cta_fixo %} has-cta-fixo{% endif %}"{% endblock %}
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cinema.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/contatos.css') }}">
 {% endblock %}
 {% block conteudo %}
     {% from "components/cartao_plano.html" import secao_planos with context %}
     {% from "components/avatar.html" import avatar %}
+    {#- Hero cinematográfico (padrão Framerate): a rolagem dentro de .cinema é o "filme".
+        static/js/cinema.js troca as manchetes, enche o medidor e move a cena 3D
+        (front/, compilada em static/dist/cinema). Os textos ficam aqui, no HTML, para
+        SEO e leitor de tela; a cena é só decoração. A primeira manchete é o <h1>. -#}
+    {% set manchetes = [
+        {'sobretitulo': 'Centro de Treinamento', 'linhas': ['Desperte', 'sua força.'],
+         'texto': 'Disciplina, evolução e resultados reais. Conquiste o seu melhor.'},
+        {'sobretitulo': 'Lutas e musculação', 'linhas': ['Treino com', 'intenção.'],
+         'texto': 'O ambiente e os planos certos para você manter a constância.'},
+        {'sobretitulo': 'Professores', 'linhas': ['Uma equipe', 'com você.'],
+         'texto': 'Aqui você encontra mais que treino: encontra uma equipe.'},
+        {'sobretitulo': 'Comece hoje', 'linhas': ['Seu primeiro', 'treino.'],
+         'texto': 'Crie sua conta, escolha o plano e acompanhe tudo pela área do aluno.'},
+    ] %}
+    <div class="cinema-carregando" data-cinema-carregando aria-hidden="true">
+        <div class="cinema-carregando-linha">
+            <img src="{{ url_for('static', filename='imagens/logo-icon.png') }}" alt="" width="44" height="44">
+            <span>Lutas e musculação</span>
+        </div>
+        <div class="cinema-carregando-centro">
+            <p>Preparando o seu treino</p>
+            <span class="cinema-carregando-barra"><span></span></span>
+            <p class="cinema-carregando-status">Carregando</p>
+        </div>
+        <div class="cinema-carregando-linha">
+            <span>{{ academia.endereco if academia and academia.endereco else 'Centro de Treinamento' }}</span>
+        </div>
+    </div>
     <main id="conteudo">
-        <section class="hero">
-            <div class="hero-copy">
-                <h1 class="entra-2">
-                    DESPERTE SUA FORÇA.
-                    <br>
-                    <em>CONQUISTE O SEU MELHOR.</em>
-                </h1>
-                <p class="hero-text entra-3">
-                    Disciplina, evolução e resultados reais. Aqui você encontra mais que treino: encontra uma equipe.
-                </p>
-                <div class="hero-actions entra-4">
-                    <a class="et-botao et-botao--principal et-botao--grande" href="/cadastrar">Criar minha conta</a>
-                    <button class="et-botao et-botao--contorno et-botao--grande" type="button" data-abrir-login>Já sou aluno</button>
+        <section class="cinema et-escuro" id="topo" aria-label="Apresentação do Centro de Treinamento" data-cinema
+                 {%- if cinema_modulo('cena') %} data-cena-src="{{ cinema_modulo('cena') }}"{% endif %}
+                 {%- if cinema_video() %} data-video-src="{{ cinema_video() }}" data-video-modulo="{{ cinema_modulo('video') }}"{% endif %}>
+            <div class="cinema-palco">
+                <picture class="cinema-poster">
+                    <source media="(max-width: 720px)" srcset="{{ url_for('static', filename='imagens/cinema-poster-estreito.webp') }}" width="780" height="1688">
+                    <img src="{{ url_for('static', filename='imagens/cinema-poster-largo.webp') }}" alt="" width="1920" height="1200" fetchpriority="high" decoding="async">
+                </picture>
+                <div class="cinema-cena" data-cinema-cena aria-hidden="true"></div>
+                <div class="cinema-tinta" aria-hidden="true"></div>
+                <div class="cinema-sobreposicao">
+                    <div class="cinema-manchetes" aria-live="polite">
+                        {% for manchete in manchetes %}
+                            {% set titulo = 'h1' if loop.first else 'h2' %}
+                            <div class="cinema-manchete {{ 'is-active' if loop.first else 'is-after' }}" data-cinema-manchete{% if not loop.first %} aria-hidden="true" inert{% endif %}>
+                                <p class="cinema-sobretitulo"><span class="cinema-ponto" aria-hidden="true"></span>{{ manchete.sobretitulo }}</p>
+                                <{{ titulo }} class="cinema-titulo">
+                                    {%- for linha in manchete.linhas %}<span class="cinema-linha"><span>{{ linha }}</span></span>{{ ' ' if not loop.last }}{% endfor -%}
+                                </{{ titulo }}>
+                                <p class="cinema-texto">{{ manchete.texto }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="cinema-rodape">
+                        <div class="cinema-acoes">
+                            <a class="et-botao et-botao--principal et-botao--grande cinema-cadastro" href="/cadastrar">Criar minha conta</a>
+                            <a class="cinema-seta" href="#planos">
+                                <span>Ver os planos</span>
+                                <span class="cinema-seta-circulo" aria-hidden="true"><svg class="icone" viewBox="0 0 24 24"><path d="M12 5v14m-6-6 6 6 6-6" /></svg></span>
+                            </a>
+                        </div>
+                        <div class="cinema-medidor" aria-hidden="true">
+                            <span class="cinema-medidor-rotulo">Role para avançar</span>
+                            <span class="cinema-medidor-linha"><span data-cinema-medidor-preenchimento></span></span>
+                            <span class="cinema-medidor-valor" data-cinema-medidor-valor>00</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="hero-visual entra-3" aria-hidden="true">
-                <div class="hero-dragon-glow"></div>
-                {# TODO: trocar por hero-dragao.webp quando o arquivo oficial existir.
-                   alt vazio de propósito: é o emblema da marca como ilustração (o nome já
-                   está no h1 e no logo do cabeçalho); descrevê-lo só repetiria "Extreme Team". #}
-                <img src="{{ url_for('static', filename='imagens/hero-emblema.webp') }}"
-                     alt=""
-                     class="hero-dragon-img"
-                     width="795"
-                     height="859">
-            </div>
-            <ul class="hero-highlights entra-4" aria-label="O que você encontra aqui">
-                <li>
-                    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3 5 14h6l-1 7 8-11h-6l1-7Z" /></svg>
-                    <div>
-                        <strong>Comece</strong>
-                        <span>Dê o primeiro passo</span>
-                    </div>
-                </li>
-                <li>
-                    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6m7 6V8m7 12v-9" /></svg>
-                    <div>
-                        <strong>Mantenha</strong>
-                        <span>Crie o hábito</span>
-                    </div>
-                </li>
-                <li>
-                    <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Zm0 2H5v1a3 3 0 0 0 3 3m8-4h3v1a3 3 0 0 1-3 3m-4 4v4m-3 3h6" /></svg>
-                    <div>
-                        <strong>Supere</strong>
-                        <span>Alcance seu melhor</span>
-                    </div>
-                </li>
-            </ul>
         </section>
         <section class="home-planos" id="planos" aria-labelledby="planos-titulo">
             <div class="home-planos-cabeca">
@@ -88,17 +114,17 @@
             </p>
         </section>
         <section class="method-grid" id="metodo" aria-label="Nosso método">
-            <article>
+            <article class="et-tilt" data-tilt>
                 <span class="round-badge">01</span>
                 <h3>Crie sua conta</h3>
                 <p>Preencha seu cadastro e aguarde a liberação da administração para iniciar seus treinos.</p>
             </article>
-            <article>
+            <article class="et-tilt" data-tilt>
                 <span class="round-badge">02</span>
                 <h3>Escolha seu plano</h3>
                 <p>Contrate o plano que cabe na sua rotina e pague pela própria área do aluno.</p>
             </article>
-            <article>
+            <article class="et-tilt" data-tilt>
                 <span class="round-badge">03</span>
                 <h3>Treine e acompanhe</h3>
                 <p>Veja turmas, presença e mensalidades sempre que precisar, em um só lugar.</p>

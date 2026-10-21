@@ -1,8 +1,8 @@
 /* =========================================================================
    Página inicial pública (Landing).
    Header sobre --et-black com logo horizontal oficial.
-   Hero é o momento memorável: dragão sangrando pela borda direita com halo dourado.
-   Movimento restrito ao hero (entra-1..4) e respeitando prefers-reduced-motion.
+   O hero cinematográfico (pista de rolagem, manchetes e cena 3D) mora em
+   cinema.css; aqui ficam o cabeçalho e as seções que vêm depois dele.
    ========================================================================= */
 
 :root {
@@ -62,148 +62,6 @@
 
 .home-nav-links a:hover {
   color: var(--et-gold);
-}
-
-/* ----------------------------------------------------------------- Hero -- */
-.hero {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  align-items: center;
-  margin: 0;
-  padding: 0;
-  border-radius: 0 0 var(--et-radius-card) var(--et-radius-card);
-  color: var(--et-text-on-dark);
-  background: var(--et-black);
-  overflow: hidden;
-}
-
-.hero-copy {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: var(--sp-5) var(--sp-6) var(--sp-6) var(--home-gutter);
-  z-index: 2;
-}
-
-.hero h1 {
-  margin: 0;
-  font-family: var(--et-font-display);
-  font-size: clamp(48px, 5vw, 72px);
-  font-weight: 400;
-  line-height: 0.92;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  color: var(--et-text-on-dark);
-}
-
-.hero h1 em {
-  font-style: normal;
-  color: var(--et-gold);
-}
-
-.hero-text {
-  max-width: 46ch;
-  margin: var(--sp-4) 0 0;
-  color: var(--et-text-on-dark-muted);
-  font-size: var(--fs-lg);
-  line-height: 1.6;
-}
-
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-4);
-  margin-top: var(--sp-6);
-}
-
-/* ------------------------------------------- Dragão Hero (Visual) -------- */
-/* O emblema é RGB com placa preta. `lighten` faz o preto ceder ao brilho dourado que
-   está atrás dele; sem isso a placa desenhava um retângulo em volta do dragão. O
-   tamanho fica bem abaixo da resolução nativa do recorte (795 px) e baixo o bastante
-   para o topo dos planos caber na primeira tela em 1440x900. */
-.hero-visual {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  padding: var(--sp-4) var(--home-gutter) var(--sp-4) var(--sp-6);
-}
-
-.hero-dragon-glow {
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 50%;
-  width: min(110%, 350px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 185, 20, 0.24) 0%, rgba(183, 121, 10, 0.09) 46%, transparent 70%);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.hero-dragon-img {
-  display: block;
-  width: 100%;
-  max-width: 300px;
-  height: auto;
-  mix-blend-mode: lighten;
-  pointer-events: none;
-}
-
-/* ------------------------------------------------- Destaques Base Hero --- */
-.hero-highlights {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid var(--et-line-dark);
-  background: rgba(10, 10, 10, 0.85);
-  z-index: 2;
-}
-
-.hero-highlights li {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-3) clamp(var(--sp-5), 4vw, var(--sp-8));
-  border-left: 1px solid var(--et-line-dark);
-}
-
-.hero-highlights li:first-child {
-  border-left: 0;
-}
-
-.hero-highlights .icone {
-  width: 24px;
-  height: 24px;
-  fill: none;
-  stroke: var(--et-gold);
-  stroke-width: 2;
-  flex-shrink: 0;
-}
-
-.hero-highlights strong {
-  display: block;
-  color: var(--et-text-on-dark);
-  font-family: var(--et-font-display);
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  line-height: 1.1;
-}
-
-.hero-highlights span {
-  display: block;
-  color: var(--et-text-on-dark-muted);
-  font-size: var(--fs-xs);
 }
 
 /* ------------------------------------------------------------- Planos --- */
@@ -647,34 +505,8 @@
   text-decoration: underline;
 }
 
-/* --------------------------------------------------- Movimento Único Hero */
-@keyframes heroFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.hero .entra-2 {
-  animation: heroFadeIn 420ms var(--ease) 80ms forwards;
-  opacity: 0;
-}
-
-.hero .entra-3 {
-  animation: heroFadeIn 460ms var(--ease) 160ms forwards;
-  opacity: 0;
-}
-
-.hero .entra-4 {
-  animation: heroFadeIn 500ms var(--ease) 240ms forwards;
-  opacity: 0;
-}
-
-/* Remove animações de fade/slide de todas as outras seções */
+/* ------------------------------------------------------------ Movimento -- */
+/* As seções da home não entram com fade/slide: o movimento é do hero. */
 .home-section,
 .home-planos,
 .method-grid,
@@ -682,16 +514,6 @@
 .academy-contact,
 .home-footer {
   animation: none !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero .entra-2,
-  .hero .entra-3,
-  .hero .entra-4 {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
 }
 
 /* --------------------------------------------------------- Responsivo --- */
@@ -710,16 +532,6 @@
 @media (max-width: 900px) {
   .team-list {
     grid-template-columns: 1fr;
-  }
-  .hero {
-    grid-template-columns: 1fr;
-    padding-top: var(--sp-6);
-  }
-  .hero-visual {
-    padding: var(--sp-2) var(--sp-6) var(--sp-5);
-  }
-  .hero-dragon-img {
-    max-width: 240px;
   }
   .home-section {
     grid-template-columns: 1fr;
@@ -742,33 +554,9 @@
 }
 
 @media (max-width: 520px) {
-  /* A faixa continua em 3 colunas, com o ícone em cima: empilhada ela ocupava
-     quase uma tela inteira antes dos planos. */
-  .hero-highlights li {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--sp-2);
-    padding: var(--sp-3) var(--sp-4);
-  }
-  .hero-highlights strong {
-    font-size: 18px;
-  }
   .home-planos,
   .home-faq {
     padding: var(--sp-6) var(--sp-5) var(--sp-8);
-  }
-  .hero-copy {
-    padding: var(--sp-5) var(--sp-5) var(--sp-6);
-  }
-  .hero h1 {
-    font-size: clamp(38px, 11vw, 52px);
-  }
-  .hero-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .hero-actions .et-botao {
-    width: 100%;
   }
   .method-grid {
     margin-inline: var(--sp-3);

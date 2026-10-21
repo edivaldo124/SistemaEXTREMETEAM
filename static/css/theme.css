@@ -107,7 +107,7 @@
 /* Blocos de fundo escuro invertem o anel de foco para continuar visível. Bloco
    escuro novo: ponha .et-escuro nele em vez de crescer estas listas. */
 .home-header,.app-header,.admin-header,.detail-header,.account-header,
-.auth-shell,.hero,.bottom-nav,
+.auth-shell,.bottom-nav,
 .home-footer,.app-footer,.aluno-hero,.mensalidade-card,.plano-situacao-card,
 .et-plano--destaque,.et-toasts,.erro-cartao,.et-escuro {
   --focus-ink:var(--yellow);
@@ -118,7 +118,7 @@
    contorno, fantasma, secundário e link passam a texto claro, borda dourada discreta
    e realce dourado; a caixa marcada fica dourada com o sinal preto. */
 .home-header,.app-header,.admin-header,.detail-header,.account-header,
-.auth-shell,.hero,.home-footer,.app-footer,.aluno-hero,.erro-cartao,
+.auth-shell,.home-footer,.app-footer,.aluno-hero,.erro-cartao,
 .et-plano--destaque,.et-cta-fixo,.et-consentimento,.et-toasts,.et-escuro,
 .mensalidade-card[data-status="pendente"],.mensalidade-card[data-status="atrasado"],
 .mensalidade-card[data-status="recusado"] {

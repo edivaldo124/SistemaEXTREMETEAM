@@ -29,7 +29,7 @@
 {% macro cartao_plano(plano, destaque=false, selos=[], classe='') -%}
 {%- set _meses = plano.meses or 1 -%}
 {%- set _duracao = plano.duracao_texto or (('%d meses'|format(_meses)) if _meses > 1 else '1 mês') -%}
-<article class="et-plano{{ ' et-plano--destaque et-borda-brilho' if destaque }}{{ ' ' ~ classe if classe }}"{% if plano.id %} data-plano-id="{{ plano.id }}"{% endif %}>
+<article class="et-plano et-tilt{{ ' et-plano--destaque et-borda-brilho' if destaque }}{{ ' ' ~ classe if classe }}" data-tilt{% if plano.id %} data-plano-id="{{ plano.id }}"{% endif %}>
     {%- if destaque %}
     <p class="et-selo et-selo--destaque">Recomendado</p>
     {%- endif %}

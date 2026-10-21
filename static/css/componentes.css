@@ -379,6 +379,31 @@ body.has-bottom-nav .et-toasts { bottom:calc(104px + var(--safe-b, 0px)); }
   .et-borda-brilho::before { animation:none; background:var(--et-gold); }
 }
 
+/* -------------------------------------------------- profundidade (tilt) -- */
+/* Nível 1 de 3D, só CSS: o cartão com [data-tilt] inclina até 5° seguindo o mouse
+   e ganha um brilho que acompanha o cursor. componentes.js só escreve as variáveis,
+   e só com mouse e sem reduced-motion: no toque o cartão não se mexe sob o dedo.
+   Parado, o cartão fica sem transform (sem camada extra nem texto borrado). */
+
+.et-tilt { position:relative; transition:transform var(--dur-media) var(--ease); }
+.et-tilt.is-inclinado {
+  transform:perspective(1000px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition-duration:80ms;
+}
+.et-tilt::after {
+  content:""; position:absolute; inset:0; z-index:2; pointer-events:none;
+  border-radius:inherit;
+  background:radial-gradient(circle at var(--brilho-x, 50%) var(--brilho-y, 50%),
+    color-mix(in srgb, var(--et-gold-light) 16%, transparent), transparent 60%);
+  opacity:0; transition:opacity var(--dur-media) var(--ease);
+}
+.et-tilt.is-inclinado::after { opacity:1; }
+
+@media (prefers-reduced-motion:reduce) {
+  .et-tilt, .et-tilt.is-inclinado { transform:none; transition:none; }
+  .et-tilt::after { display:none; }
+}
+
 /* =========================================================================
    Componentes interativos: tabs, menu de ações, tooltip, accordion, botão com
    carregamento, tabela de dados e upload. Comportamento em static/js/componentes.js.

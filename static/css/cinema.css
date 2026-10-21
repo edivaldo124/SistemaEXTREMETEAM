@@ -1,0 +1,524 @@
+/* =========================================================================
+   Hero cinematográfico da página inicial (padrão Framerate "Coworking Space").
+   A seção .cinema tem 400svh e um palco preso (sticky) da altura da tela: a
+   rolagem dentro dela troca as manchetes, enche o medidor e move a cena 3D.
+   static/js/cinema.js liga tudo; a classe .cinema-js, posta no <html> antes da
+   primeira pintura, é que estica a pista. Sem JS, o hero é uma tela estática com a
+   primeira manchete.
+
+   É a exceção de movimento do sistema (DESIGN.md, "Hero cinematográfico"): as
+   linhas do título sobem em 780 ms com a curva do template, e nada disso roda com
+   prefers-reduced-motion.
+   ========================================================================= */
+
+/* O cabeçalho público flutua sobre o palco só nesta página: o palco começa no topo
+   da tela e o cabeçalho rola embora enquanto ele fica preso. A logo continua sobre
+   preto puro, porque a tinta do palco é preta no alto. */
+.pagina-cinema .home-header {
+  position: absolute;
+  inset: 0 0 auto;
+  background: transparent;
+}
+
+/* -------------------------------------------------------------- loader --- */
+/* Só na primeira visita da aba (.cinema-visto) e só com JS. Se cinema.js falhar,
+   a animação o tira da frente sozinha depois de 4,5 s. */
+.cinema-carregando {
+  display: none;
+}
+
+.cinema-js:not(.cinema-visto) .cinema-carregando {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--sp-6) var(--home-gutter) var(--sp-7);
+  color: var(--et-text-on-dark);
+  background: var(--et-black);
+  transition: opacity 500ms var(--ease), visibility 500ms;
+  animation: cinema-carregando-some 400ms var(--ease) 4.5s forwards;
+}
+
+.cinema-carregando.is-complete {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes cinema-carregando-some {
+  to {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+.cinema-carregando-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.cinema-carregando-linha img {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+
+.cinema-carregando-centro {
+  width: min(320px, 72vw);
+}
+
+.cinema-carregando-centro p {
+  margin: 0;
+  color: var(--et-text-on-dark);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cinema-carregando-barra {
+  position: relative;
+  display: block;
+  height: 1px;
+  margin: var(--sp-4) 0 var(--sp-3);
+  overflow: hidden;
+  background: var(--et-line-dark);
+}
+
+.cinema-carregando-barra span {
+  position: absolute;
+  inset: 0 auto 0 -35%;
+  width: 35%;
+  background: var(--et-gold);
+  animation: cinema-varre 1.35s ease-in-out infinite;
+}
+
+@keyframes cinema-varre {
+  to {
+    transform: translateX(385%);
+  }
+}
+
+.cinema-carregando-centro .cinema-carregando-status {
+  color: var(--et-text-on-dark-muted);
+}
+
+/* ------------------------------------------------------- pista e palco --- */
+.cinema {
+  position: relative;
+  color: var(--et-text-on-dark);
+  background: var(--et-black);
+}
+
+.cinema-js .cinema {
+  height: 400vh;
+  height: 400svh;
+}
+
+.cinema-palco {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  min-height: 520px;
+  overflow: hidden;
+}
+
+.cinema-js .cinema-palco {
+  position: sticky;
+  top: 0;
+}
+
+/* Camadas: pôster (fallback e primeira pintura) → cena 3D → tinta → textos. */
+.cinema-poster,
+.cinema-cena,
+.cinema-tinta {
+  position: absolute;
+  inset: 0;
+}
+
+.cinema-poster {
+  transition: opacity 600ms var(--ease);
+}
+
+.cinema-poster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 70% 50%;
+}
+
+.cinema-cena {
+  opacity: 0;
+  transition: opacity 600ms var(--ease);
+}
+
+.cinema--cena-pronta .cinema-poster {
+  opacity: 0;
+}
+
+.cinema--cena-pronta .cinema-cena {
+  opacity: 1;
+}
+
+/* Contraste do texto em qualquer quadro da cena: preto puro no alto (sob o
+   cabeçalho e a logo), escurecido à esquerda (coluna do título) e no pé (medidor). */
+.cinema-tinta {
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, var(--et-black) 0, transparent 160px),
+    linear-gradient(90deg, color-mix(in srgb, var(--et-black) 82%, transparent) 0%,
+      color-mix(in srgb, var(--et-black) 40%, transparent) 42%, transparent 66%),
+    linear-gradient(0deg, color-mix(in srgb, var(--et-black) 72%, transparent) 0%, transparent 26%);
+}
+
+/* ------------------------------------------------------------- textos --- */
+.cinema-sobreposicao {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-7);
+  padding: clamp(112px, 15svh, 160px) var(--home-gutter) var(--sp-7);
+  pointer-events: none;
+}
+
+/* As quatro manchetes ocupam a mesma célula da grade: a pilha tem a altura da maior
+   e o título fica no mesmo lugar em todas. */
+.cinema-manchetes {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: center;
+  min-height: 0;
+}
+
+.cinema-manchete {
+  grid-area: 1 / 1;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+
+.cinema-manchete.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html:not(.cinema-js) .cinema-manchete:not(:first-child) {
+  display: none;
+}
+
+.cinema-sobretitulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+/* Fica dourado quando a cena (ou o pôster, sem 3D) está pronta. */
+.cinema-ponto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--et-text-on-dark-muted);
+  transition: background-color var(--dur-media) var(--ease);
+}
+
+.cinema--pronto .cinema-ponto {
+  background: var(--et-gold);
+}
+
+.cinema-titulo {
+  margin: 0;
+  color: var(--et-text-on-dark);
+  font-family: var(--et-font-display);
+  font-size: min(clamp(64px, 10.4vw, 168px), 19svh);
+  font-weight: 400;
+  font-synthesis-weight: none;
+  line-height: 0.86;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+
+/* Cada linha é uma máscara: o texto sobe de dentro dela. A folga em cima e embaixo
+   guarda o til de "INTENÇÃO" e a cedilha de "FORÇA", que passam da caixa alta. */
+.cinema-linha {
+  display: block;
+  overflow: hidden;
+  padding: 0.12em 0 0.1em;
+  margin: -0.12em 0 -0.1em;
+}
+
+.cinema-linha > span {
+  display: block;
+  transition: transform 780ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cinema-linha:nth-child(2) > span {
+  color: var(--et-gold);
+}
+
+.cinema-manchete.is-before .cinema-linha > span {
+  transform: translateY(-112%);
+}
+
+.cinema-manchete.is-after .cinema-linha > span {
+  transform: translateY(112%);
+}
+
+.cinema-manchete.is-active .cinema-linha > span {
+  transform: none;
+}
+
+.cinema-manchete.is-active .cinema-linha:nth-child(2) > span {
+  transition-delay: 75ms;
+}
+
+.cinema-texto {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-lg);
+  line-height: 1.5;
+}
+
+.cinema-sobretitulo,
+.cinema-texto {
+  transition: opacity 260ms ease, transform 460ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cinema-manchete.is-before :is(.cinema-sobretitulo, .cinema-texto) {
+  opacity: 0;
+  transform: translateY(-14px);
+}
+
+.cinema-manchete.is-after :is(.cinema-sobretitulo, .cinema-texto) {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.cinema-manchete.is-active .cinema-sobretitulo {
+  transition-delay: 90ms;
+}
+
+.cinema-manchete.is-active .cinema-texto {
+  transition-delay: 150ms;
+}
+
+/* ------------------------------------------------- ações e medidor --- */
+.cinema-rodape {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-6);
+}
+
+.cinema-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-6);
+  pointer-events: auto;
+}
+
+/* A seta em círculo do template: leva aos planos, logo depois do hero. */
+.cinema-seta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 44px;
+  color: var(--et-text-on-dark);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cinema-seta-circulo {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--et-line-dark-strong);
+  border-radius: 50%;
+  transition: background-color var(--dur-rapida) var(--ease), border-color var(--dur-rapida) var(--ease),
+    color var(--dur-rapida) var(--ease);
+}
+
+.cinema-seta-circulo .icone {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cinema-seta:hover .cinema-seta-circulo {
+  border-color: var(--et-gold);
+  color: var(--et-black);
+  background: var(--et-gold);
+}
+
+.cinema-medidor {
+  display: grid;
+  grid-template-columns: 1px minmax(0, 150px);
+  grid-template-rows: 1fr auto;
+  column-gap: var(--sp-4);
+  align-items: end;
+  min-height: 96px;
+}
+
+html:not(.cinema-js) .cinema-medidor {
+  display: none;
+}
+
+.cinema-medidor-rotulo {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--et-text-on-dark-muted);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.cinema-medidor-linha {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 1px;
+  height: 100%;
+  background: var(--et-line-dark);
+}
+
+/* Enche por transform (sem recalcular layout a cada quadro de rolagem). */
+.cinema-medidor-linha span {
+  position: absolute;
+  inset: 0;
+  background: var(--et-gold);
+  transform: scaleY(0.04);
+  transform-origin: bottom;
+  transition: transform 120ms linear;
+}
+
+.cinema-medidor-valor {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  margin-top: var(--sp-2);
+  color: var(--et-gold);
+  font-family: var(--et-font-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------- responsivo --- */
+/* Com a barra fixa de conversão (visitante, até 768px), o cadastro já está nela:
+   o hero não repete o botão e deixa o pé livre para a barra. */
+@media (max-width: 768px) {
+  body.has-cta-fixo .cinema-cadastro {
+    display: none;
+  }
+
+  body.has-cta-fixo .cinema-sobreposicao {
+    padding-bottom: calc(92px + var(--sp-4) + var(--safe-b, 0px));
+  }
+}
+
+/* Celular: o texto sobe para o terço de cima e o núcleo fica embaixo, atrás dele. */
+@media (max-width: 720px) {
+  .cinema-sobreposicao {
+    justify-content: flex-start;
+    gap: var(--sp-5);
+    padding-top: clamp(100px, 14svh, 124px);
+  }
+
+  .cinema-manchetes {
+    flex: 0 0 auto;
+  }
+
+  .cinema-titulo {
+    font-size: min(clamp(52px, 15vw, 96px), 11svh);
+    line-height: 0.88;
+  }
+
+  .cinema-texto {
+    max-width: 30ch;
+    font-size: var(--fs-md);
+  }
+
+  .cinema-rodape {
+    margin-top: auto;
+  }
+
+  .cinema-medidor {
+    grid-template-columns: 1px minmax(0, 96px);
+    min-height: 72px;
+  }
+
+  .cinema-medidor-rotulo {
+    font-size: 11px;
+  }
+
+  .cinema-tinta {
+    background:
+      linear-gradient(180deg, var(--et-black) 0, color-mix(in srgb, var(--et-black) 70%, transparent) 38%,
+        color-mix(in srgb, var(--et-black) 10%, transparent) 64%, color-mix(in srgb, var(--et-black) 60%, transparent) 100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinema-js:not(.cinema-visto) .cinema-carregando {
+    display: none;
+  }
+
+  .cinema-manchete,
+  .cinema-linha > span,
+  .cinema-sobretitulo,
+  .cinema-texto,
+  .cinema-poster,
+  .cinema-cena,
+  .cinema-medidor-linha span {
+    transition: none;
+  }
+}
+
+@media print {
+  .cinema-js:not(.cinema-visto) .cinema-carregando,
+  .cinema-cena,
+  .cinema-medidor {
+    display: none;
+  }
+
+  .cinema-js .cinema {
+    height: auto;
+  }
+}

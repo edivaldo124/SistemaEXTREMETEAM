@@ -18,6 +18,21 @@ updates:
       pip-menores:
         update-types: [minor, patch]
 
+  # Cena 3D da home (front/: React, three.js, Vite). O build fica versionado em
+  # static/dist/cinema: ao aceitar um PR daqui, rode `npm ci --ignore-scripts && npm run
+  # build` em front/ e versione o static/dist junto, senão o site segue com o código velho.
+  - package-ecosystem: npm
+    directory: /front
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    groups:
+      npm-menores:
+        update-types: [minor, patch]
+
   # Imagem base do Dockerfile (python:3.11-slim-bookworm).
   - package-ecosystem: docker
     directory: /

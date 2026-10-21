@@ -35,7 +35,7 @@ from modelos.professor import Professor
 from dao.planoDAO import PlanoDAO
 from modelos.sessao_revogada import SessaoRevogada  # noqa: F401  (registra a tabela no metadata)
 from modelos.gmail_conexao import GmailConexao  # noqa: F401
-from servicos import analytics, conteudo_home, credenciais, fila_email, keep_alive, prontidao, seo
+from servicos import analytics, cinema, conteudo_home, credenciais, fila_email, keep_alive, prontidao, seo
 from servicos.autorizacao import revogar_sessao_atual
 from servicos.planos import vitrine_planos
 
@@ -160,6 +160,9 @@ app.jinja_env.globals.update(
     url_estatico_absoluta=seo.url_estatico,
     analytics_ativo=analytics.analytics_ativo,
     id_analytics=analytics.id_analytics,
+    # Hero da home: a cena 3D compilada em static/dist/cinema e o vídeo opcional.
+    cinema_modulo=cinema.modulo,
+    cinema_video=cinema.video,
 )
 
 app.register_blueprint(auth_bp)

@@ -46,6 +46,8 @@ PROMPT_CLAUDE_CODE.md
 REDESIGN_CONTRATO.md
 tools/
 requirements-dev.txt
+# Fonte da cena 3D da home: a imagem só precisa do build em static/dist/cinema.
+front/
 
 # Infraestrutura que não pertence à imagem da aplicação
 compose.yaml

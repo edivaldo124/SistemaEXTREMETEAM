@@ -17,7 +17,7 @@
 {# Card de métrica: rótulo pequeno, valor grande em Bebas Neue, detalhe opcional.
    `tom`: '' | 'ok' | 'alerta' | 'perigo' — só colore o valor, nunca substitui o texto. #}
 {% macro metrica(rotulo, valor, detalhe='', tom='') -%}
-<article class="et-metrica{{ ' et-metrica--' ~ tom if tom }}">
+<article class="et-metrica et-tilt{{ ' et-metrica--' ~ tom if tom }}" data-tilt>
     <p class="et-metrica-rotulo">{{ rotulo }}</p>
     <p class="et-metrica-valor">{{ valor }}</p>
     {% if detalhe %}<p class="et-metrica-detalhe">{{ detalhe }}</p>{% endif %}

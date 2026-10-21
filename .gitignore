@@ -13,6 +13,9 @@ uploads/
 # Artefatos locais de testes no navegador
 .playwright-mcp/
 
+# Dependências do build da cena 3D (front/); o resultado fica em static/dist/cinema
+front/node_modules/
+
 # Cache gerado pelo Graphify
 graphify-out/cache/
 

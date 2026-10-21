@@ -434,6 +434,33 @@
     }
   });
 
+  // --------------------------------------------------- profundidade (tilt) --
+  // [data-tilt]: o cartão inclina seguindo o mouse (nível 1 de 3D, .et-tilt em
+  // componentes.css). Só com mouse e sem "reduzir movimento".
+  const TILT_MAX_GRAUS = 5;
+  const comMouse = window.matchMedia('(hover: hover) and (pointer: fine)');
+  document.querySelectorAll('[data-tilt]').forEach((cartao) => {
+    let quadro = 0;
+    cartao.addEventListener('pointermove', (evento) => {
+      if (evento.pointerType !== 'mouse' || !comMouse.matches || semMovimento()) return;
+      const caixa = cartao.getBoundingClientRect();
+      const x = (evento.clientX - caixa.left) / caixa.width;
+      const y = (evento.clientY - caixa.top) / caixa.height;
+      cancelAnimationFrame(quadro);
+      quadro = requestAnimationFrame(() => {
+        cartao.style.setProperty('--tilt-x', `${((0.5 - y) * 2 * TILT_MAX_GRAUS).toFixed(2)}deg`);
+        cartao.style.setProperty('--tilt-y', `${((x - 0.5) * 2 * TILT_MAX_GRAUS).toFixed(2)}deg`);
+        cartao.style.setProperty('--brilho-x', `${(x * 100).toFixed(1)}%`);
+        cartao.style.setProperty('--brilho-y', `${(y * 100).toFixed(1)}%`);
+        cartao.classList.add('is-inclinado');
+      });
+    });
+    cartao.addEventListener('pointerleave', () => {
+      cancelAnimationFrame(quadro);
+      cartao.classList.remove('is-inclinado');
+    });
+  });
+
   // Esc: fecha o menu de ações (devolvendo o foco) e o tooltip.
   document.addEventListener('keydown', (evento) => {
     if (evento.key !== 'Escape') return;

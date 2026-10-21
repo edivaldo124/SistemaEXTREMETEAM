@@ -409,6 +409,8 @@ A cor nunca comunica sozinha: o selo sempre traz o nome da situação escrito.
 ### Decorativas
 **Barro** (`#B9541F`) e **floresta** (`#1C4A38`) só existem nas formas abstratas do fundo. Nunca indicam situação.
 
+**Cena 3D do hero** (exceção ao "dourado não é decoração"): o núcleo de metal dourado e as brasas são a única decoração dourada do sistema, e só existem no palco preto do hero da página inicial. As cores vêm dos mesmos tokens, espelhados em hexadecimal em `front/src/tokens.ts` (o three.js não lê variável CSS).
+
 ## Tipografia
 
 ### Famílias
@@ -489,6 +491,7 @@ As sombras do claro são curtas e com tom quente (`rgba(26,22,10,…)`), nunca c
 - **Formas do fundo:** quatro gradientes radiais fixos atrás do papel (ouro 20% no canto superior direito, floresta 13% no superior esquerdo, barro 11% no inferior esquerdo, preto 7% no inferior direito).
 - **Borda brilhante** (`.et-borda-brilho`): um arco dourado gira pela borda do plano em destaque a cada 6 s. Com `prefers-reduced-motion`, a borda fica dourada e parada.
 - **Vidro escuro:** navegação inferior e CTA fixo em `rgba(10,10,10,.94)` com `backdrop-filter: blur(10px)`.
+- **Tilt** (`.et-tilt` + `data-tilt`, nível 1 de 3D, só CSS): cartões de plano, de métrica e do método inclinam até 5° seguindo o mouse, com um brilho dourado fraco sob o cursor. Só com mouse e sem `prefers-reduced-motion`; no toque o cartão não se mexe, e parado ele fica sem `transform`. As macros `cartao_plano()` e `metrica()` já trazem o atributo.
 
 ## Formas
 
@@ -590,6 +593,7 @@ Todo elemento focável mostra um anel de dois tons: `outline` de 2 px em `--focu
 - **Uma entrada por tela** (`.entra`, subindo 10 px no bloco de abertura). O resto só se mexe quando a pessoa age.
 - **Deslize entre telas** por View Transitions: cabeçalho, navegação inferior e item ativo têm nome próprio e deslizam juntos.
 - `prefers-reduced-motion: reduce` desliga zoom, deslize e giro, deixando no máximo um esmaecimento curto.
+- **Exceção: hero cinematográfico da página inicial** (padrão Framerate; `cinema.css` e `static/js/cinema.js`). A seção tem 400svh e o palco fica preso enquanto a rolagem troca quatro manchetes (cada uma com o seu sobretítulo; as linhas do título sobem em 780 ms com `cubic-bezier(.16,1,.3,1)`), enche o medidor de 00 a 100 e move a cena 3D. Um loader preto aparece só na primeira visita da aba e sai em até 3 s (4,5 s se o JS falhar). Com `prefers-reduced-motion`: sem loader, sem transição e sem cena 3D, só o pôster estático.
 
 ## O que fazer e o que evitar
 
@@ -624,5 +628,7 @@ Todo elemento focável mostra um anel de dois tons: `outline` de 2 px em `--focu
 | Macros Jinja | `templates/components/` (`ui.html`, `avatar.html`, `cartao_plano.html`, `linha_tempo.html`, `breadcrumb.html`, `toasts.html`…) |
 | Layouts | `templates/layouts/` |
 | Logos e favicons | `static/imagens/` (originais intactos em `static/imagens/marca/`) |
+| Hero cinematográfico da home (pista, manchetes, medidor, loader) | `templates/index.html`, `static/css/cinema.css`, `static/js/cinema.js` |
+| Cena 3D do hero (React Three Fiber) | `front/src/` → `npm run build` → `static/dist/cinema/` (entrada achada por `servicos/cinema.py`); pôsteres em `static/imagens/cinema-poster-*.webp` |
 
-A stack é Flask + Jinja, sem build de front-end, sem Tailwind e sem React. Componentes do shadcn/ui entram **portados** para `.et-*`, nunca via `npx shadcn add`.
+A stack é Flask + Jinja, sem Tailwind. A única exceção ao "sem build e sem React" é a cena 3D do hero da home: uma ilha React (React Three Fiber) compilada pelo Vite em `front/`, com o resultado versionado em `static/dist/cinema/`. Textos, botões e SEO do hero continuam no Jinja, e o resto do sistema não usa React. Componentes do shadcn/ui entram **portados** para `.et-*`, nunca via `npx shadcn add`.

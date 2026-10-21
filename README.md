@@ -209,6 +209,32 @@ python servidor.py            # dev, http://localhost:4000
 docker compose up --build     # app + Caddy (HTTPS)
 ```
 
+## Hero da página inicial (cena 3D)
+
+O topo da home é um hero "cinematográfico": a seção tem 400svh e, enquanto a pessoa rola, quatro manchetes se revezam, um medidor vai de 00 a 100 e uma cena 3D (um núcleo de metal dourado com brasas) acompanha. Os textos ficam no HTML (`templates/index.html`) por causa do SEO; a rolagem é controlada por `static/js/cinema.js` e o visual mora em `static/css/cinema.css`.
+
+A cena é a única parte do sistema em React: React Three Fiber, compilado pelo Vite a partir de `front/` para `static/dist/cinema/`. O build vai versionado, então o servidor e o deploy não precisam de Node. Para mudar a cena:
+
+```bash
+cd front
+npm ci --ignore-scripts
+npm run build      # tsc + vite; regrava static/dist/cinema
+```
+
+O nome de cada arquivo leva o hash do conteúdo, e `servicos/cinema.py` acha a entrada pelo `manifest.json` (reinicie o servidor depois de um build). Sem o build, a home mostra só o pôster estático (`static/imagens/cinema-poster-*.webp`).
+
+**Peso e quando carrega.** A cena tem cerca de 1,15 MB (316 KB com gzip) e só é baixada depois que a página terminou de carregar. Ela nunca é baixada com "reduzir movimento" ligado, economia de dados, conexão 2G, aparelho com menos de 4 GB de memória ou sem aceleração de vídeo (WebGL por software): nesses casos fica o pôster. Fora da tela, a cena para de desenhar.
+
+**Vídeo no lugar da cena (opcional).** Um MP4 em `static/video/cinema.mp4` substitui a cena 3D e avança com a rolagem (scrolly-video, como no template Framerate). Converta com keyframe em todo quadro e sem áudio, de preferência abaixo de 15 MB:
+
+```bash
+ffmpeg -i original.mp4 -c:v libx264 -g 1 -an -movflags +faststart -vf "scale=1920:-2" static/video/cinema.mp4
+```
+
+Se o arquivo ficar pesado, troque `-g 1` por `-g 5`. Reinicie o servidor depois de pôr ou tirar o vídeo (a presença do arquivo é lida uma vez).
+
+**Pôsteres.** Se a cena mudar, gere os pôsteres de novo a partir dela mesma (sem textos), em 1920×1200 e 780×1688, e salve como WebP em `static/imagens/cinema-poster-largo.webp` e `static/imagens/cinema-poster-estreito.webp`.
+
 ## Testes
 
 ```bash
