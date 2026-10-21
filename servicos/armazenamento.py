@@ -15,10 +15,11 @@ import logging
 import os
 import threading
 import uuid
+import zlib
 from io import BytesIO
 
 import requests
-from PIL import Image, ImageOps
+from PIL import ExifTags, Image, ImageOps
 
 logger = logging.getLogger(__name__)
 
@@ -188,9 +189,9 @@ def _detectar_tipo_imagem_real(conteudo, *, limitar_dimensoes=False):
     enviados pelo navegador - impede um arquivo malicioso disfarçado com extensão de imagem.
 
     `limitar_dimensoes` só é ligado por quem vai DECODIFICAR os pixels depois. O
-    comprovante manual não decodifica nada - ele é guardado como veio - então aplicar ali
-    o teto pensado para o avatar recusava um documento legítimo: um A4 escaneado a
-    300 dpi tem 8,7 MP e cabe folgado nos 8 MB permitidos ao arquivo.
+    comprovante manual não decodifica nada - só os metadados saem, direto dos bytes -
+    então aplicar ali o teto pensado para o avatar recusava um documento legítimo: um A4
+    escaneado a 300 dpi tem 8,7 MP.
 
     `verify()` lê o arquivo para conferir a integridade sem alocar o buffer de pixels,
     então o caminho sem limite continua preso ao tamanho do arquivo.
@@ -255,12 +256,141 @@ def salvar_foto_perfil(conteudo, *, subpasta='fotos'):
     return nome_arquivo
 
 
+MSG_FORMATO_COMPROVANTE = 'Envie um arquivo JPEG, PNG ou PDF.'
+
+# A foto de um comprovante em papel sai do celular com o EXIF da câmera: GPS de onde foi
+# tirada, aparelho, data e hora. Regravar a imagem (como na foto de perfil) apagaria
+# tudo, mas decodificaria pixels que o comprovante não tem limite para ter. Os metadados
+# saem então direto dos bytes, e a imagem continua exatamente a mesma.
+#
+# JPEG: ficam só os segmentos APPn de que a imagem precisa para ser desenhada igual - JFIF,
+# perfil de cor e Adobe (muda como as cores são lidas). Saem EXIF e XMP (APP1), IPTC
+# (APP13), os comentários e o que vier depois do fim da imagem (trailers de fabricante).
+_APP_JPEG_MANTIDOS = {0xE0: b'JFIF\x00', 0xE2: b'ICC_PROFILE\x00', 0xEE: b'Adobe'}
+_MARCADORES_JPEG_SEM_TAMANHO = {0x01, *range(0xD0, 0xD8)}  # TEM e RST0 a RST7
+_SOS, _EOI, _COM, _APP0, _APP1 = 0xDA, 0xD9, 0xFE, 0xE0, 0xE1
+# PNG: ficam os chunks que mudam o desenho. Saem tEXt, zTXt e iTXt (texto livre e XMP),
+# eXIf, tIME e os chunks particulares de cada aplicativo.
+_ASSINATURA_PNG = b'\x89PNG\r\n\x1a\n'
+_CHUNKS_PNG_MANTIDOS = {
+    b'IHDR', b'PLTE', b'IDAT', b'IEND', b'tRNS', b'cHRM', b'gAMA', b'iCCP', b'sBIT',
+    b'sRGB', b'cICP', b'mDCV', b'cLLI', b'bKGD', b'pHYs',
+}
+_CABECALHO_EXIF = b'Exif\x00\x00'
+
+
+def _orientacao(exif):
+    """Orientação (2 a 8) gravada num bloco EXIF, ou None. Lê só as tags, nunca os pixels."""
+    tags = Image.Exif()
+    try:
+        tags.load(exif)
+    except Exception:
+        return None
+    orientacao = tags.get(ExifTags.Base.Orientation)
+    return orientacao if orientacao in range(2, 9) else None
+
+
+def _exif_so_com_orientacao(orientacao):
+    """A única tag que volta: sem ela, a foto tirada com o celular deitado chegaria de
+    lado para o administrador. Começa com o cabeçalho `Exif\\0\\0`."""
+    exif = Image.Exif()
+    exif[ExifTags.Base.Orientation] = orientacao
+    return exif.tobytes()
+
+
+def _jpeg_sem_metadados(conteudo):
+    saida = bytearray(conteudo[:2])  # SOI
+    posicao_exif = len(saida)
+    orientacao = None
+    i, n = 2, len(conteudo)
+    while i + 1 < n:
+        if conteudo[i] != 0xFF:
+            raise ArquivoInvalido(MSG_FORMATO_COMPROVANTE)
+        marcador = conteudo[i + 1]
+        if marcador == 0xFF:  # byte de preenchimento antes de um marcador
+            i += 1
+            continue
+        if marcador == _EOI:
+            saida += conteudo[i:i + 2]
+            break
+        if marcador in _MARCADORES_JPEG_SEM_TAMANHO:
+            saida += conteudo[i:i + 2]
+            i += 2
+            continue
+
+        fim = i + 2 + int.from_bytes(conteudo[i + 2:i + 4], 'big')
+        if fim < i + 4 or fim > n:
+            raise ArquivoInvalido(MSG_FORMATO_COMPROVANTE)
+        dados = conteudo[i + 4:fim]
+        if marcador == _APP1 and orientacao is None and dados.startswith(_CABECALHO_EXIF):
+            orientacao = _orientacao(dados)
+        if marcador == _COM or 0xE0 <= marcador <= 0xEF:
+            assinatura = _APP_JPEG_MANTIDOS.get(marcador)
+            manter = assinatura is not None and dados.startswith(assinatura)
+        else:
+            manter = True
+        if manter:
+            # O EXIF novo entra logo depois do JFIF, que tem de vir colado ao SOI.
+            if marcador == _APP0 and len(saida) == posicao_exif:
+                posicao_exif += fim - i
+            saida += conteudo[i:fim]
+        i = fim
+
+        if marcador == _SOS:
+            # Dados comprimidos até o próximo marcador de verdade: FF 00 é um FF escapado
+            # e RST0 a RST7 fazem parte do fluxo. Um JPEG progressivo tem vários SOS.
+            fim_dados = i
+            while True:
+                fim_dados = conteudo.find(b'\xff', fim_dados)
+                if fim_dados < 0 or fim_dados + 1 >= n:
+                    fim_dados = n
+                    break
+                seguinte = conteudo[fim_dados + 1]
+                if seguinte != 0x00 and seguinte not in _MARCADORES_JPEG_SEM_TAMANHO:
+                    break
+                fim_dados += 2
+            saida += conteudo[i:fim_dados]
+            i = fim_dados
+
+    if orientacao:
+        exif = _exif_so_com_orientacao(orientacao)
+        saida[posicao_exif:posicao_exif] = b'\xff\xe1' + (len(exif) + 2).to_bytes(2, 'big') + exif
+    return bytes(saida)
+
+
+def _png_sem_metadados(conteudo):
+    saida = bytearray(_ASSINATURA_PNG)
+    orientacao = None
+    i, n = len(_ASSINATURA_PNG), len(conteudo)
+    antes_da_imagem = True
+    while i + 12 <= n:
+        tipo = conteudo[i + 4:i + 8]
+        fim = i + 12 + int.from_bytes(conteudo[i:i + 4], 'big')
+        if fim > n:
+            raise ArquivoInvalido(MSG_FORMATO_COMPROVANTE)
+        if tipo == b'eXIf' and antes_da_imagem:
+            # Só vale a orientação lida antes da imagem, onde o eXIf novo vai entrar.
+            orientacao = _orientacao(conteudo[i + 8:fim - 4])
+        elif tipo in _CHUNKS_PNG_MANTIDOS:
+            if tipo == b'IDAT' and antes_da_imagem:
+                antes_da_imagem = False
+                if orientacao:
+                    dados = b'eXIf' + _exif_so_com_orientacao(orientacao)[len(_CABECALHO_EXIF):]
+                    saida += (len(dados) - 4).to_bytes(4, 'big') + dados + zlib.crc32(dados).to_bytes(4, 'big')
+            saida += conteudo[i:fim]
+        i = fim
+        if tipo == b'IEND':
+            break
+    return bytes(saida)
+
+
 def salvar_comprovante_manual(conteudo, *, subpasta='comprovantes'):
     """Valida e salva um comprovante manual (JPEG, PNG ou PDF).
 
-    Imagens passam pelo mesmo Pillow.verify() da foto de perfil. PDFs não são
-    reprocessados (não executamos/renderizamos o conteúdo em nenhum momento -
-    só guardamos os bytes e os servimos depois com o Content-Type correto para
+    Imagens passam pelo mesmo Pillow.verify() da foto de perfil e são guardadas sem os
+    metadados da câmera (GPS, aparelho, data), com os mesmos pixels. PDFs não são
+    reprocessados (não executamos/renderizamos o conteúdo em nenhum momento - só
+    guardamos os bytes e os servimos depois com o Content-Type correto para
     download/visualização), mas têm a assinatura binária conferida.
     """
     if not conteudo:
@@ -273,8 +403,12 @@ def salvar_comprovante_manual(conteudo, *, subpasta='comprovantes'):
     else:
         tipo_real = _detectar_tipo_imagem_real(conteudo)
         if tipo_real not in ('image/jpeg', 'image/png'):
-            raise ArquivoInvalido('Envie um arquivo JPEG, PNG ou PDF.')
+            raise ArquivoInvalido(MSG_FORMATO_COMPROVANTE)
         extensao = _EXTENSAO_POR_MIME_IMAGEM[tipo_real]
+        if tipo_real == 'image/jpeg':
+            conteudo = _jpeg_sem_metadados(conteudo)
+        else:
+            conteudo = _png_sem_metadados(conteudo)
 
     nome_arquivo = f'{uuid.uuid4().hex}.{extensao}'
     _gravar(
