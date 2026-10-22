@@ -356,6 +356,7 @@ def health():
     return {"status": "ok"}
 
 
+
 @app.route("/health/pronto")
 # Cada chamada consulta o banco e o Redis. O monitor externo passa a cada poucos
 # minutos; sem limite, a rota pública virava um jeito barato de ocupar os dois.
@@ -386,3 +387,4 @@ keep_alive.iniciar()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4001)  # nosec B104 - somente desenvolvimento local
+
