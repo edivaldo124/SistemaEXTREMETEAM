@@ -17,7 +17,7 @@ export default defineConfig({
     manifest: 'manifest.json',
     target: 'es2022',
     modulePreload: { polyfill: false },
-    // A cena leva o three.js inteiro (o R3F importa o pacote todo): ~1,15 MB, 316 KB
+    // A cena leva o three.js inteiro (o R3F importa o pacote todo): ~1,15 MB, 317 KB
     // gzip. É baixada só depois que a página carregou, então o aviso padrão de 500 KB
     // não se aplica; o limite fica logo acima do tamanho atual para pegar regressão.
     chunkSizeWarningLimit: 1200,

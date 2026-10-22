@@ -453,7 +453,7 @@ html:not(.cinema-js) .cinema-medidor {
   }
 }
 
-/* Celular: o texto sobe para o terço de cima e o núcleo fica embaixo, atrás dele. */
+/* Celular: o texto sobe para o terço de cima e o emblema fica no vão de baixo. */
 @media (max-width: 720px) {
   .cinema-sobreposicao {
     justify-content: flex-start;
@@ -488,10 +488,11 @@ html:not(.cinema-js) .cinema-medidor {
     font-size: 11px;
   }
 
+  /* Escurece só a faixa do texto e o rodapé: o emblema fica no meio, aceso. */
   .cinema-tinta {
     background:
-      linear-gradient(180deg, var(--et-black) 0, color-mix(in srgb, var(--et-black) 70%, transparent) 38%,
-        color-mix(in srgb, var(--et-black) 10%, transparent) 64%, color-mix(in srgb, var(--et-black) 60%, transparent) 100%);
+      linear-gradient(180deg, var(--et-black) 0, color-mix(in srgb, var(--et-black) 70%, transparent) 30%,
+        transparent 48%, transparent 74%, color-mix(in srgb, var(--et-black) 60%, transparent) 100%);
   }
 }
 

@@ -409,7 +409,7 @@ A cor nunca comunica sozinha: o selo sempre traz o nome da situação escrito.
 ### Decorativas
 **Barro** (`#B9541F`) e **floresta** (`#1C4A38`) só existem nas formas abstratas do fundo. Nunca indicam situação.
 
-**Cena 3D do hero** (exceção ao "dourado não é decoração"): o núcleo de metal dourado e as brasas são a única decoração dourada do sistema, e só existem no palco preto do hero da página inicial. As cores vêm dos mesmos tokens, espelhados em hexadecimal em `front/src/tokens.ts` (o three.js não lê variável CSS).
+**Cena 3D do hero** (exceção ao "dourado não é decoração"): o emblema do dragão feito de brasas é a única decoração dourada do sistema, e só existe no palco preto do hero da página inicial. Cada brasa leva a cor de um pixel do emblema oficial (`front/src/emblema.webp`, gerado por `front/scripts/emblema.py`); o brilho das brasas soltas e o halo vêm dos tokens, espelhados em hexadecimal em `front/src/tokens.ts` (o three.js não lê variável CSS).
 
 ## Tipografia
 

@@ -4,13 +4,20 @@
     "name": "rolldown-runtime"
   },
   "src/cena.tsx": {
-    "file": "cena-B4OWkc3Y.js",
+    "file": "cena-DLAAlvEf.js",
     "name": "cena",
     "src": "src/cena.tsx",
     "isEntry": true,
     "imports": [
       "_rolldown-runtime-XKyaHtl9.js"
+    ],
+    "assets": [
+      "assets/emblema-uhwbeSuw.webp"
     ]
+  },
+  "src/emblema.webp": {
+    "file": "assets/emblema-uhwbeSuw.webp",
+    "src": "src/emblema.webp"
   },
   "src/video.ts": {
     "file": "video-CaTlxJUo.js",

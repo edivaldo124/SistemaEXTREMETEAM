@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 from flask import render_template_string
+from PIL import Image
 
 from servicos import cinema
 
@@ -69,6 +70,25 @@ def test_manifest_tem_as_duas_entradas_e_todos_os_arquivos_existem():
     assert entradas == {'cena', 'video'}
     for item in manifest.values():
         assert (PASTA_BUILD / item['file']).is_file(), item['file']
+
+
+def test_cena_leva_a_imagem_do_emblema_no_build():
+    # As brasas são sorteadas desta imagem; sem ela a cena nunca fica pronta (fica o pôster).
+    manifest = json.loads((PASTA_BUILD / 'manifest.json').read_text(encoding='utf-8'))
+    cena = manifest['src/cena.tsx']
+    imagens = [arquivo for arquivo in cena.get('assets', []) if re.fullmatch(r'assets/emblema-[\w-]+\.webp', arquivo)]
+    assert len(imagens) == 1
+    assert imagens[0] in (PASTA_BUILD / cena['file']).read_text(encoding='utf-8')
+
+
+def test_emblema_tem_fundo_transparente():
+    # A cena só põe brasa em pixel opaco. Sem a transparência, o fundo preto do emblema
+    # oficial viraria um retângulo de brasas em volta do dragão.
+    with Image.open(RAIZ / 'front' / 'src' / 'emblema.webp') as emblema:
+        assert emblema.mode == 'RGBA'
+        alfa = emblema.getchannel('A').histogram()
+    total = sum(alfa)
+    assert alfa[0] / total > 0.3 and alfa[255] / total > 0.3
 
 
 def test_build_nao_busca_nada_fora_do_site():

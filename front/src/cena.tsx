@@ -1,17 +1,17 @@
-// Cena do hero da home: um núcleo de metal dourado líquido com poeira dourada em
-// volta, sobre o palco preto. Ela não decide nada sozinha: a cada quadro lê o
-// progresso da rolagem que static/js/cinema.js publica (ver estado.ts). Nenhum
-// texto mora aqui; título, botões e SEO ficam no HTML do Jinja.
-import { MeshDistortMaterial, PerformanceMonitor } from '@react-three/drei'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+// Cena do hero da home: o emblema do dragão feito de brasas. No topo do hero ele está
+// meio formado, com brasas soltas em volta; com a rolagem elas se juntam, o emblema
+// brilha nas últimas manchetes e sobe de novo como brasa quando o hero acaba. A cena não
+// decide nada sozinha: a cada quadro lê o progresso da rolagem que static/js/cinema.js
+// publica (ver estado.ts). Nenhum texto mora aqui; título, botões e SEO ficam no Jinja.
+import { PerformanceMonitor } from '@react-three/drei'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { easing } from 'maath'
-import { StrictMode, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react'
+import { StrictMode, Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as THREE from 'three'
+import urlEmblema from './emblema.webp'
 import { lerEstado, type OpcoesCinema } from './estado'
 import { cores } from './tokens'
-
-type MaterialDistorcido = ComponentRef<typeof MeshDistortMaterial>
 
 // Pseudoaleatório com semente: as brasas nascem sempre no mesmo lugar, então o pôster
 // (static/imagens/cinema-poster-*.webp) bate com a cena quando ela assume.
@@ -24,7 +24,7 @@ function sementeAleatoria(semente: number) {
   }
 }
 
-// Mancha radial macia, branca: vira o halo atrás do núcleo (a cor vem do material).
+// Mancha radial macia, branca: vira o halo atrás do emblema (a cor vem do material).
 function criarTexturaHalo() {
   const tela = document.createElement('canvas')
   tela.width = tela.height = 128
@@ -41,7 +41,7 @@ function criarTexturaHalo() {
 }
 
 // Impulso de 0 a ~0,4 e de volta a 0 em 0,9 s a cada troca de manchete: o "golpe"
-// que o núcleo leva e que espalha a poeira.
+// que faz as brasas do emblema saltarem.
 function useGolpe() {
   const golpe = useRef({ indice: 0, inicio: -10 })
   return (indice: number, agora: number) => {
@@ -51,9 +51,9 @@ function useGolpe() {
   }
 }
 
-// Brasas que sobem do metal: cada uma com velocidade, tamanho e fase próprios, num
-// único <points> com shader (uma chamada de desenho para todas). O deslocamento é
-// acumulado na CPU (uDeslocamento), então acelerar com a rolagem não dá salto.
+// Brasas que sobem em volta do emblema: cada uma com velocidade, tamanho e fase
+// próprios, num único <points> com shader (uma chamada de desenho para todas). O
+// deslocamento é acumulado na CPU (uDeslocamento), então acelerar com a rolagem não dá salto.
 const ALTURA_BRASAS = 5.6
 
 const verticeBrasas = /* glsl */ `
@@ -110,7 +110,7 @@ function Brasas({ quantidade, espalhamento, semente, energia }: PropsBrasas) {
     const tamanhos = new Float32Array(quantidade)
     const fases = new Float32Array(quantidade)
     for (let i = 0; i < quantidade; i++) {
-      // Coluna larga em volta do núcleo, mais densa perto do eixo.
+      // Coluna larga em volta do emblema, mais densa perto do eixo.
       const raio = 0.4 + espalhamento * Math.pow(aleatorio(), 0.8)
       const angulo = aleatorio() * Math.PI * 2
       posicoes.set(
@@ -153,17 +153,21 @@ function Brasas({ quantidade, espalhamento, semente, energia }: PropsBrasas) {
   )
 }
 
-// Brilho dourado atrás do núcleo: um sprite (sempre de frente para a câmera).
-function Halo({ escala }: { escala: number }) {
+// Brilho dourado atrás do emblema: um sprite (sempre de frente para a câmera).
+function Halo({ escala, opacidade }: { escala: number; opacidade: { current: number } }) {
+  const material = useRef<THREE.SpriteMaterial>(null!)
   const textura = useMemo(criarTexturaHalo, [])
   useEffect(() => () => textura.dispose(), [textura])
+  useFrame(() => {
+    material.current.opacity = opacidade.current
+  })
   return (
     <sprite scale={[escala, escala, 1]} position={[0, 0, -1.2]}>
       <spriteMaterial
+        ref={material}
         map={textura}
         color={cores.ouro}
         transparent
-        opacity={0.18}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
         toneMapped={false}
@@ -172,61 +176,287 @@ function Halo({ escala }: { escala: number }) {
   )
 }
 
-// Cor do metal: um terço do caminho entre o ouro e o ouro claro da marca. O ouro puro,
-// refletindo o céu dourado, puxava para o âmbar.
-const COR_METAL = new THREE.Color(cores.ouro).lerp(new THREE.Color(cores.ouroClaro), 0.35)
+// --- Emblema de brasas ---------------------------------------------------------------
+
+// Altura do emblema na cena; a largura sai da proporção da imagem (front/src/emblema.webp,
+// gerada por front/scripts/emblema.py a partir do emblema oficial).
+const ALTURA_EMBLEMA = 2.7
+
+type AmostraEmblema = {
+  alvos: Float32Array // onde cada brasa fica no emblema formado
+  soltas: Float32Array // onde ela anda quando está solta
+  cores: Float32Array
+  atrasos: Float32Array // 0 a 1: ordem de chegada (e de saída, ao contrário)
+  fases: Float32Array
+  tamanho: number // diâmetro de uma brasa, para elas se tocarem sem amontoar
+}
+
+const BRONZE = new THREE.Color(cores.ouroEscuro)
+
+// Sorteia as brasas entre os pixels opacos do emblema, com a cor de cada pixel. O dourado
+// do X, o olho e a boca do dragão ficam como estão. As escamas seguem o brilho do pixel,
+// puxadas para o bronze: o corpo fica quase preto e o contorno das escamas acende, que é
+// como o dragão do logo se lê sobre o preto.
+function amostrarEmblema(imagem: HTMLImageElement, quantidade: number): AmostraEmblema {
+  const { naturalWidth: largura, naturalHeight: altura } = imagem
+  const tela = document.createElement('canvas')
+  tela.width = largura
+  tela.height = altura
+  const contexto = tela.getContext('2d', { willReadFrequently: true })!
+  contexto.drawImage(imagem, 0, 0)
+  const pixels = contexto.getImageData(0, 0, largura, altura).data
+
+  // O dourado é o X, o olho e a boca; o resto é escama.
+  const lerPixel = (indice: number) => {
+    const [r, g, b] = [pixels[indice * 4] / 255, pixels[indice * 4 + 1] / 255, pixels[indice * 4 + 2] / 255]
+    return { r, g, b, luz: 0.2126 * r + 0.7152 * g + 0.0722 * b, dourado: r > 0.5 && g > 0.3 && b < 0.35 && r - b > 0.3 }
+  }
+
+  // Sorteio com peso e sem repetição (Efraimidis-Spirakis): cada pixel opaco ganha a chave
+  // sorteio^(1/peso) e ficam as maiores. O detalhe do dragão está nos brilhos, e o
+  // dourado liso do X se lê bem com menos brasas. Tudo em arrays numéricos: com objetos e
+  // função de comparação, o sorteio levava ~410 ms com a CPU 4x mais lenta (celular
+  // médio); assim, ~100 ms.
+  const aleatorio = sementeAleatoria(11)
+  const indices = new Int32Array(largura * altura)
+  const chaves = new Float32Array(largura * altura)
+  let opacos = 0
+  for (let indice = 0; indice < largura * altura; indice++) {
+    if (pixels[indice * 4 + 3] < 128) continue
+    const { luz, dourado } = lerPixel(indice)
+    indices[opacos] = indice
+    chaves[opacos] = Math.pow(aleatorio(), 1 / (dourado ? 0.5 : 0.15 + Math.min(1, 2 * luz)))
+    opacos++
+  }
+  const total = Math.min(quantidade, opacos)
+  const corte = chaves.slice(0, opacos).sort()[opacos - total]
+
+  const escala = ALTURA_EMBLEMA / altura
+  const alvos = new Float32Array(total * 3)
+  const soltas = new Float32Array(total * 3)
+  const coresBrasas = new Float32Array(total * 3)
+  const atrasos = new Float32Array(total)
+  const fases = new Float32Array(total)
+  const cor = new THREE.Color()
+  for (let k = 0, n = 0; k < opacos && n < total; k++) {
+    if (chaves[k] < corte) continue
+    const indice = indices[k]
+    const { r, g, b, luz, dourado } = lerPixel(indice)
+    const x = indice % largura
+    const y = Math.floor(indice / largura)
+
+    // Relevo: o X dourado fica um pouco atrás do dragão, e o brilho das escamas vem para a
+    // frente. É o que dá volume quando o emblema gira.
+    const z = (dourado ? -0.06 : 0.03 + 0.18 * luz) + (aleatorio() - 0.5) * 0.03
+    alvos.set([(x + aleatorio() - largura / 2) * escala, (altura / 2 - y - aleatorio()) * escala, z], n * 3)
+
+    cor.setRGB(r, g, b, THREE.SRGBColorSpace)
+    if (dourado) cor.multiplyScalar(0.85)
+    else cor.lerp(BRONZE, 0.35).multiplyScalar(Math.min(1.5, 2 * luz))
+    coresBrasas.set([cor.r, cor.g, cor.b], n * 3)
+
+    // Solta, a brasa fica perto do seu lugar, empurrada para fora do centro e para cima:
+    // o emblema "explodido" continua com a forma dele, em vez de virar um céu de estrelas.
+    const espalhamento = 0.25 + 0.7 * Math.pow(aleatorio(), 1.5)
+    const [ax, ay] = [alvos[n * 3], alvos[n * 3 + 1]]
+    const distancia = Math.hypot(ax, ay) || 1
+    soltas.set(
+      [
+        ax + (ax / distancia * 0.5 + aleatorio() - 0.5) * espalhamento,
+        ay + (ay / distancia * 0.5 + aleatorio() - 0.3) * espalhamento,
+        (aleatorio() - 0.5) * 2 * espalhamento,
+      ],
+      n * 3,
+    )
+
+    // O dragão chega primeiro e o X depois: no topo do hero a cabeça do dragão já está
+    // inteira, e o X, de forma grande e lisa, se lê mesmo ralo.
+    atrasos[n] = dourado ? 0.3 + 0.7 * aleatorio() : 0.6 * aleatorio()
+    fases[n] = aleatorio() * Math.PI * 2
+    n++
+  }
+
+  const areaOpaca = opacos * escala * escala
+  return { alvos, soltas, cores: coresBrasas, atrasos, fases, tamanho: 1.4 * Math.sqrt(areaOpaca / total) }
+}
+
+// A imagem é baixada e amostrada uma vez por quantidade (o StrictMode monta duas vezes).
+const amostras = new Map<number, Promise<AmostraEmblema>>()
+
+function carregarEmblema(quantidade: number) {
+  let amostra = amostras.get(quantidade)
+  if (!amostra) {
+    const imagem = new Image()
+    imagem.src = urlEmblema
+    amostra = imagem.decode().then(() => amostrarEmblema(imagem, quantidade))
+    amostras.set(quantidade, amostra)
+  }
+  return amostra
+}
+
+const verticeEmblema = /* glsl */ `
+  uniform float uTempo;
+  uniform float uEscalaPixel;
+  uniform float uTamanho;
+  uniform float uFormacao;
+  uniform float uDesfazer;
+  uniform float uImpulso;
+  uniform float uBrilho;
+  uniform vec3 uCorSolta;
+  attribute vec3 aSolta;
+  attribute vec3 aCor;
+  attribute float aAtraso;
+  attribute float aFase;
+  varying vec3 vCor;
+  varying float vAlfa;
+  void main() {
+    // 0 solta, 1 no lugar. Com uFormacao em 1, todas chegaram.
+    float chegada = smoothstep(0.0, 0.12, uFormacao * 1.12 - aAtraso);
+
+    // Solta, a brasa flutua devagar em volta do seu lugar.
+    vec3 deriva = vec3(sin(uTempo * 0.3 + aFase), 0.6 * sin(uTempo * 0.4 + aFase * 1.7), cos(uTempo * 0.35 + aFase));
+    vec3 solta = aSolta + deriva * 0.12;
+    vec3 tremor = vec3(sin(uTempo * 1.3 + aFase * 7.0), cos(uTempo * 1.1 + aFase * 5.0), sin(uTempo * 0.9 + aFase * 3.0));
+    vec3 p = mix(solta, position, chegada) + tremor * mix(0.04, 0.006, chegada);
+
+    // Golpe da troca de manchete: as brasas saltam para fora do centro e voltam.
+    p.xy += normalize(position.xy + 0.001) * uImpulso * (0.12 + 0.2 * fract(aFase));
+
+    // Fim do hero: o emblema queima de cima para baixo e as brasas sobem.
+    float ordem = clamp(0.5 + position.y / ${ALTURA_EMBLEMA.toFixed(2)}, 0.0, 1.0) * 0.8 + 0.2 * fract(aFase * 3.1);
+    float saida = clamp((uDesfazer * 1.5 - (1.0 - ordem)) / 0.5, 0.0, 1.0);
+    p.y += saida * saida * 1.8;
+    p.x += sin(uTempo * 0.8 + aFase * 9.0) * saida * 0.3;
+
+    vec4 vista = modelViewMatrix * vec4(p, 1.0);
+    gl_Position = projectionMatrix * vista;
+    gl_PointSize = uTamanho * (1.0 + 0.4 * (1.0 - chegada)) * uEscalaPixel / -vista.z;
+    float cintila = 0.8 + 0.2 * sin(uTempo * 2.1 + aFase * 11.0);
+    vCor = mix(aCor, uCorSolta, max(1.0 - chegada, saida)) * cintila * uBrilho;
+    vAlfa = (1.0 - saida) * mix(0.7, 1.0, chegada);
+  }
+`
+
+const fragmentoEmblema = /* glsl */ `
+  varying vec3 vCor;
+  varying float vAlfa;
+  void main() {
+    float alfa = smoothstep(0.5, 0.1, length(gl_PointCoord - 0.5)) * vAlfa;
+    gl_FragColor = vec4(vCor, alfa);
+    #include <colorspace_fragment>
+  }
+`
+
+type Movimento = { formacao: number; desfazer: number; impulso: number; brilho: number }
+
+type PropsEmblema = { quantidade: number; escala: number; movimento: { current: Movimento } }
+
+function Emblema({ quantidade, escala, movimento }: PropsEmblema) {
+  const amostra = use(carregarEmblema(quantidade))
+  const material = useRef<THREE.ShaderMaterial>(null!)
+  const uniformes = useMemo(
+    () => ({
+      uTempo: { value: 0 },
+      uEscalaPixel: { value: 400 },
+      uTamanho: { value: amostra.tamanho * escala },
+      uFormacao: { value: 0 },
+      uDesfazer: { value: 0 },
+      uImpulso: { value: 0 },
+      uBrilho: { value: 1 },
+      uCorSolta: { value: new THREE.Color(cores.ouroClaro) },
+    }),
+    [amostra, escala],
+  )
+
+  useFrame((state) => {
+    const u = material.current.uniforms
+    const m = movimento.current
+    u.uTempo.value = state.clock.elapsedTime
+    // Pixels por unidade a 1 de distância: a brasa tem o mesmo tamanho na tela em qualquer resolução.
+    const fov = THREE.MathUtils.degToRad((state.camera as THREE.PerspectiveCamera).fov)
+    u.uEscalaPixel.value = (state.size.height * state.viewport.dpr) / (2 * Math.tan(fov / 2))
+    u.uFormacao.value = m.formacao
+    u.uDesfazer.value = m.desfazer
+    u.uImpulso.value = m.impulso
+    u.uBrilho.value = m.brilho
+  })
+
+  return (
+    <points frustumCulled={false}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[amostra.alvos, 3]} />
+        <bufferAttribute attach="attributes-aSolta" args={[amostra.soltas, 3]} />
+        <bufferAttribute attach="attributes-aCor" args={[amostra.cores, 3]} />
+        <bufferAttribute attach="attributes-aAtraso" args={[amostra.atrasos, 1]} />
+        <bufferAttribute attach="attributes-aFase" args={[amostra.fases, 1]} />
+      </bufferGeometry>
+      <shaderMaterial
+        ref={material}
+        uniforms={uniformes}
+        vertexShader={verticeEmblema}
+        fragmentShader={fragmentoEmblema}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
+  )
+}
+
+// No topo do hero o dragão e ~60% do X já estão no lugar: quem não rola vê a marca, e o
+// pôster (que é esta cena parada no topo) também.
+const FORMACAO_INICIAL = 0.75
 
 function Conjunto({ estreito }: { estreito: boolean }) {
   const conjunto = useRef<THREE.Group>(null!)
-  const nucleo = useRef<THREE.Mesh>(null!)
-  const material = useRef<MaterialDistorcido>(null!)
+  const giro = useRef<THREE.Group>(null!)
   const energia = useRef(0)
+  const halo = useRef(0.16)
+  const movimento = useRef<Movimento>({ formacao: FORMACAO_INICIAL, desfazer: 0, impulso: 0, brilho: 1 })
   const golpe = useGolpe()
 
   useFrame((state, delta) => {
     const { progresso: p, indice } = lerEstado()
     const impulso = golpe(indice, state.clock.elapsedTime)
-    const arco = Math.sin(p * Math.PI) // 0 no começo e no fim, 1 no meio do hero
+    const m = movimento.current
+    const { smoothstep } = THREE.MathUtils
+
+    // Fecha durante a primeira manchete, brilha nas duas últimas e sobe como brasa
+    // nos últimos 10% do hero, quando os planos já vêm entrando.
+    easing.damp(m, 'formacao', FORMACAO_INICIAL + (1 - FORMACAO_INICIAL) * smoothstep(p, 0, 0.3), 0.25, delta)
+    easing.damp(m, 'desfazer', 0.85 * smoothstep(p, 0.9, 1), 0.2, delta)
+    easing.damp(m, 'brilho', 1 + 0.35 * smoothstep(p, 0.5, 0.8) + 0.6 * impulso, 0.15, delta)
+    m.impulso = impulso
+    halo.current = 0.12 + 0.12 * smoothstep(p, 0.5, 0.8) + 0.2 * impulso
 
     // Desktop: sempre à direita do título, sem invadir a coluna do texto.
-    // Celular: embaixo, atrás do texto, subindo um pouco ao longo do hero.
+    // Celular: no vão entre o texto e o rodapé do hero, subindo um pouco ao longo dele.
     const alvo: [number, number, number] = estreito
-      ? [0, -1.25 + 0.3 * p, 0]
-      : [2.05 - 0.3 * p, -0.05 - 0.1 * p, 0]
+      ? [0, -1.05 + 0.2 * p, 0]
+      : [1.95 - 0.25 * p, -0.05 - 0.1 * p, 0]
     easing.damp3(conjunto.current.position, alvo, 0.35, delta)
-
-    const escala = estreito ? 0.7 * (1 + 0.04 * arco + 0.08 * impulso) : 1 + 0.12 * arco + 0.1 * impulso
-    easing.damp3(nucleo.current.scale, [escala, escala, escala], 0.15, delta)
+    // Vira devagar de um lado para o outro ao longo do hero; o mouse inclina um pouco.
     easing.dampE(
-      nucleo.current.rotation,
-      [0.6 * p - 0.15 * state.pointer.y, 1.5 * Math.PI * p + 0.25 * state.pointer.x, 0],
-      0.45,
+      giro.current.rotation,
+      [0.05 - 0.08 * state.pointer.y, -0.16 + 0.32 * p + 0.14 * state.pointer.x, 0],
+      0.5,
       delta,
     )
-    easing.damp(material.current, 'distort', 0.3 + 0.15 * arco + 0.25 * impulso, 0.2, delta)
 
-    // As brasas sobem mais rápido no meio do hero e disparam a cada golpe.
-    energia.current = 0.6 * arco + 2.2 * impulso
+    // As brasas de fundo sobem mais rápido no meio do hero e disparam a cada golpe.
+    energia.current = 0.6 * Math.sin(p * Math.PI) + 2.2 * impulso
   })
 
-  const segmentos = estreito ? 72 : 112
+  const escala = estreito ? 0.66 : 0.94
   return (
-    <group ref={conjunto} position={estreito ? [0, -1.25, 0] : [2.05, -0.05, 0]}>
-      <Halo escala={estreito ? 4 : 5.2} />
-      <mesh ref={nucleo}>
-        <sphereGeometry args={[1.1, segmentos, segmentos]} />
-        <MeshDistortMaterial
-          ref={material}
-          color={COR_METAL}
-          metalness={1}
-          roughness={0.2}
-          distort={0.3}
-          speed={1.1}
-        />
-      </mesh>
+    <group ref={conjunto} position={estreito ? [0, -1.05, 0] : [1.95, -0.05, 0]}>
+      <Halo escala={estreito ? 3 : 4.6} opacidade={halo} />
+      <group ref={giro} scale={escala}>
+        <Emblema quantidade={estreito ? 18000 : 34000} escala={escala} movimento={movimento} />
+      </group>
       <Brasas
-        quantidade={estreito ? 160 : 380}
-        espalhamento={estreito ? 1.8 : 2.8}
+        quantidade={estreito ? 110 : 240}
+        espalhamento={estreito ? 1.6 : 2.4}
         semente={7}
         energia={energia}
       />
@@ -238,97 +468,12 @@ function Camera({ estreito }: { estreito: boolean }) {
   const foco = useMemo(() => new THREE.Vector3(estreito ? 0 : 0.55, estreito ? -0.5 : 0, 0), [estreito])
   useFrame((state, delta) => {
     const { progresso: p } = lerEstado()
-    // No celular a câmera quase não se aproxima: o núcleo já ocupa a metade de baixo.
+    // No celular a câmera quase não se aproxima: o emblema já ocupa a metade de baixo.
     const distancia = (estreito ? 7.4 - 0.25 * Math.sin(p * Math.PI) : 6.4 - 0.7 * Math.sin(p * Math.PI))
     easing.damp3(state.camera.position, [-0.6 * p, 0.2 - 0.4 * p, distancia], 0.4, delta)
     state.camera.lookAt(foco)
   })
   return null
-}
-
-// Céu do estúdio: um gradiente vertical (dourado claro em cima, preto embaixo) em
-// volta de tudo. É ele que faz o metal parecer ouro em toda a superfície, e não só
-// na borda; as placas por cima dão os brilhos nítidos.
-function criarCeuDoEstudio() {
-  const tela = document.createElement('canvas')
-  tela.width = 2
-  tela.height = 256
-  const contexto = tela.getContext('2d')!
-  const gradiente = contexto.createLinearGradient(0, 0, 0, 256)
-  gradiente.addColorStop(0, cores.ouroClaro)
-  gradiente.addColorStop(0.42, cores.ouro)
-  gradiente.addColorStop(0.7, cores.ouroEscuro)
-  gradiente.addColorStop(0.9, cores.preto)
-  contexto.fillStyle = gradiente
-  contexto.fillRect(0, 0, 2, 256)
-  const textura = new THREE.CanvasTexture(tela)
-  textura.colorSpace = THREE.SRGBColorSpace
-  return textura
-}
-
-// Placas de luz: [cor, intensidade, posição, largura × altura]. Poucas e assimétricas,
-// como numa foto de produto: luz principal no alto à esquerda, contraluz atrás.
-const PLACAS: [string, number, [number, number, number], [number, number]][] = [
-  [cores.branco, 3.2, [-3, 4.5, 3], [5, 1.4]], // luz principal, no alto à esquerda
-  [cores.ouroClaro, 1.8, [-6, 0, 1], [1.2, 7]], // faixa lateral esquerda
-  [cores.ouro, 2.8, [3, 1, -6], [6, 4]], // contraluz atrás, à direita: desenha a borda
-]
-
-// Estúdio de luz próprio, sem HDRI: o céu e as placas viram o mapa de reflexo (PMREM)
-// uma vez só. O <Environment preset> do drei baixaria um HDRI de um CDN, que a CSP do
-// site bloqueia, e o <Environment> com <Lightformer> custava 19 KB gzip a mais.
-function Estudio() {
-  const gl = useThree((estado) => estado.gl)
-  const cena = useThree((estado) => estado.scene)
-  useEffect(() => {
-    const estudio = new THREE.Scene()
-    const texturaCeu = criarCeuDoEstudio()
-    const geometriaCeu = new THREE.SphereGeometry(20, 32, 16)
-    const materialCeu = new THREE.MeshBasicMaterial({
-      map: texturaCeu,
-      side: THREE.BackSide,
-      color: new THREE.Color(cores.branco).multiplyScalar(0.9),
-    })
-    estudio.add(new THREE.Mesh(geometriaCeu, materialCeu))
-
-    const geometria = new THREE.PlaneGeometry(1, 1)
-    const materiais = PLACAS.map(([cor, intensidade, posicao, [largura, altura]]) => {
-      const material = new THREE.MeshBasicMaterial({
-        color: new THREE.Color(cor).multiplyScalar(intensidade),
-        side: THREE.DoubleSide,
-      })
-      const placa = new THREE.Mesh(geometria, material)
-      placa.position.set(...posicao)
-      placa.scale.set(largura, altura, 1)
-      placa.lookAt(0, 0, 0)
-      estudio.add(placa)
-      return material
-    })
-    const gerador = new THREE.PMREMGenerator(gl)
-    const reflexo = gerador.fromScene(estudio, 0.03)
-    cena.environment = reflexo.texture
-    return () => {
-      cena.environment = null
-      reflexo.dispose()
-      gerador.dispose()
-      geometria.dispose()
-      geometriaCeu.dispose()
-      materialCeu.dispose()
-      texturaCeu.dispose()
-      materiais.forEach((material) => material.dispose())
-    }
-  }, [gl, cena])
-  return null
-}
-
-function Luzes() {
-  return (
-    <>
-      <ambientLight intensity={0.15} />
-      <directionalLight position={[4, 5, 6]} intensity={1.6} color={cores.ouroClaro} />
-      <Estudio />
-    </>
-  )
 }
 
 // Avisa depois de alguns quadros, com os shaders já compilados: aí o pôster pode sair.
@@ -341,7 +486,7 @@ function AvisoPronta({ aoFicarPronta }: { aoFicarPronta: () => void }) {
   return null
 }
 
-function CenaDourada({ estreito, eventSource, aoFicarPronta, aoPerderContexto }: OpcoesCinema) {
+function CenaDoEmblema({ estreito, eventSource, aoFicarPronta, aoPerderContexto }: OpcoesCinema) {
   const [dpr, setDpr] = useState(estreito ? 1.5 : 1.75)
   // Fora da tela (a pessoa já rolou para os planos), a cena para de desenhar.
   const [visivel, setVisivel] = useState(true)
@@ -363,9 +508,11 @@ function CenaDourada({ estreito, eventSource, aoFicarPronta, aoPerderContexto }:
     >
       <PerformanceMonitor onDecline={() => setDpr(1)} />
       <Camera estreito={estreito} />
-      <Luzes />
-      <Conjunto estreito={estreito} />
-      <AvisoPronta aoFicarPronta={aoFicarPronta} />
+      {/* Até a imagem do emblema chegar não há o que mostrar: o pôster fica. */}
+      <Suspense fallback={null}>
+        <Conjunto estreito={estreito} />
+        <AvisoPronta aoFicarPronta={aoFicarPronta} />
+      </Suspense>
     </Canvas>
   )
 }
@@ -374,7 +521,7 @@ export function montar(alvo: HTMLElement, opcoes: OpcoesCinema) {
   const raiz = createRoot(alvo)
   raiz.render(
     <StrictMode>
-      <CenaDourada {...opcoes} />
+      <CenaDoEmblema {...opcoes} />
     </StrictMode>,
   )
   return () => raiz.unmount()
