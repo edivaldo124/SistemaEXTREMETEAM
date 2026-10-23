@@ -52,7 +52,8 @@ updates:
       time: "07:00"
       timezone: America/Sao_Paulo
 
-  # Ainda não há workflows em .github/workflows; fica pronto para quando houver.
+  # Actions do .github/workflows/ci.yml, fixadas pelo SHA: o PR troca o SHA e o
+  # comentário da versão juntos.
   - package-ecosystem: github-actions
     directory: /
     schedule:

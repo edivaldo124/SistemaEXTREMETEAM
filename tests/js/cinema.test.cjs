@@ -32,7 +32,7 @@ class Elemento {
 }
 
 // Seção de 3600px numa janela de 900px: o percurso da rolagem é de 2700px.
-function montar({ reduzir = false, webgl = false } = {}) {
+function montar({ reduzir = false, webgl = false, memoria } = {}) {
     const manchetes = [0, 1, 2, 3].map(() => new Elemento());
     const preenchimento = new Elemento();
     const valor = new Elemento();
@@ -79,7 +79,7 @@ function montar({ reduzir = false, webgl = false } = {}) {
         constructor(tipo, inicial) { this.type = tipo; this.detail = inicial.detail; }
     }
     vm.runInNewContext(CODIGO, {
-        window, document, CustomEvent, navigator: {},
+        window, document, CustomEvent, navigator: memoria === undefined ? {} : { deviceMemory: memoria },
         sessionStorage: { setItem: (chave, v) => armazenado.set(chave, v) },
         setTimeout: () => 0,
     });
@@ -152,6 +152,14 @@ test('com movimento reduzido nada de WebGL é testado e o loader sai', async () 
     assert.ok(hero.secao.classList.contains('cinema--pronto'));
     assert.ok(!hero.secao.classList.contains('cinema--cena-pronta'));
     assert.equal(hero.armazenado.get('et-cinema-visto'), '1');
+});
+
+test('com pouca memória o WebGL ainda é testado: a cena segue, mais leve, em vez do pôster', async () => {
+    const hero = montar({ webgl: true, memoria: 2 });
+    await esperarPromessas();
+    await esperarPromessas();
+    assert.equal(hero.contextosWebgl.length, 1);
+    assert.ok(hero.carregando.classList.contains('is-complete'));
 });
 
 test('sem WebGL a cena não é importada e o loader sai do mesmo jeito', async () => {

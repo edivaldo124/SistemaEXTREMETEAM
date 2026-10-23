@@ -49,6 +49,9 @@
     window.addEventListener('pagereveal', (evento) => {
         const transicao = evento.viewTransition;
         if (!transicao) return;
+        // Transição pulada rejeita o `ready`: sem este catch, cada recarga ou volta para a
+        // mesma tela deixava "Transition was skipped" como erro no console.
+        transicao.ready.catch(() => {});
         const ativacao = window.navigation && navigation.activation;
         const origem = ativacao && ativacao.from;
         if (!origem || !ativacao.entry || ativacao.navigationType === 'reload') {
@@ -73,7 +76,9 @@
             atualizar();
             return;
         }
-        marcar(document.startViewTransition(atualizar), sentido);
+        const transicao = document.startViewTransition(atualizar);
+        transicao.ready.catch(() => {});
+        marcar(transicao, sentido);
     };
 })();
 </script>

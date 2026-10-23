@@ -407,7 +407,7 @@ function Emblema({ quantidade, escala, movimento }: PropsEmblema) {
 // pôster (que é esta cena parada no topo) também.
 const FORMACAO_INICIAL = 0.75
 
-function Conjunto({ estreito }: { estreito: boolean }) {
+function Conjunto({ estreito, leve }: { estreito: boolean; leve: boolean }) {
   const conjunto = useRef<THREE.Group>(null!)
   const giro = useRef<THREE.Group>(null!)
   const energia = useRef(0)
@@ -455,7 +455,7 @@ function Conjunto({ estreito }: { estreito: boolean }) {
         <Emblema quantidade={estreito ? 18000 : 34000} escala={escala} movimento={movimento} />
       </group>
       <Brasas
-        quantidade={estreito ? 110 : 240}
+        quantidade={leve ? 60 : estreito ? 110 : 240}
         espalhamento={estreito ? 1.6 : 2.4}
         semente={7}
         energia={energia}
@@ -486,8 +486,8 @@ function AvisoPronta({ aoFicarPronta }: { aoFicarPronta: () => void }) {
   return null
 }
 
-function CenaDoEmblema({ estreito, eventSource, aoFicarPronta, aoPerderContexto }: OpcoesCinema) {
-  const [dpr, setDpr] = useState(estreito ? 1.5 : 1.75)
+function CenaDoEmblema({ estreito, leve, eventSource, aoFicarPronta, aoPerderContexto }: OpcoesCinema) {
+  const [dpr, setDpr] = useState(leve ? 1 : estreito ? 1.5 : 1.75)
   // Fora da tela (a pessoa já rolou para os planos), a cena para de desenhar.
   const [visivel, setVisivel] = useState(true)
   useEffect(() => {
@@ -510,7 +510,7 @@ function CenaDoEmblema({ estreito, eventSource, aoFicarPronta, aoPerderContexto 
       <Camera estreito={estreito} />
       {/* Até a imagem do emblema chegar não há o que mostrar: o pôster fica. */}
       <Suspense fallback={null}>
-        <Conjunto estreito={estreito} />
+        <Conjunto estreito={estreito} leve={leve} />
         <AvisoPronta aoFicarPronta={aoFicarPronta} />
       </Suspense>
     </Canvas>

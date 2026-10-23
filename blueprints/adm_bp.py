@@ -22,7 +22,10 @@ from servicos.autorizacao import sessao_administrativa_valida
 from servicos import convites
 from servicos import fila_email
 from servicos import planos as regras_plano
-from servicos.formatacao import formatar_competencia, formatar_cpf, formatar_telefone, somente_digitos, variantes_cpf
+from servicos.formatacao import (
+    data_iso, data_nascimento_valida, formatar_competencia, formatar_cpf, formatar_telefone,
+    somente_digitos, variantes_cpf,
+)
 from servicos.email import email_valido, enviar_email
 
 admin_bp = Blueprint('admin_blueprint', __name__)
@@ -559,10 +562,17 @@ def detalhes_usuario(cpf):
             flash('Este nome de usuário já está em uso por outro aluno.', 'erro')
             return redirect(f'/admin/usuario/{cpf}')
 
+        # A mesma regra da matrícula e do cadastro. Antes a ficha gravava qualquer texto
+        # ("ontem", 2999-01-01, dd/mm/aaaa), porque o campo era de texto livre.
+        nascimento = data_iso(request.form.get("datanascimento"))
+        if not data_nascimento_valida(nascimento):
+            flash('Informe uma data de nascimento válida, que não esteja no futuro.', 'erro')
+            return redirect(f'/admin/usuario/{cpf}')
+
         dados_atualizados = {
             'nome': request.form.get("nome"),
             'login': login,
-            'datanascimento': request.form.get("datanascimento"),
+            'datanascimento': nascimento,
             'email': email,
             'telefone': formatar_telefone(request.form.get("telefone")),
             'plano_id': request.form.get("plano_id"),

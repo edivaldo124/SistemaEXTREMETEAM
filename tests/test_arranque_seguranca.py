@@ -22,7 +22,8 @@ _HASH_ADMIN_TESTE = generate_password_hash('senha-de-teste-nao-usar-em-producao'
 _CHAVES_CONTROLADAS = (
     'COOKIE_SECURE', 'TRUSTED_HOSTS', 'APP_BASE_URL', 'SECRET_KEY', 'DATABASE_URL',
     'ADMIN_USER', 'ADMIN_PASSWORD_HASH', 'ADMIN_PASSWORD', 'TRUST_PROXY_COUNT',
-    'CRIAR_SCHEMA_NA_IMPORTACAO', 'RATELIMIT_STORAGE_URI',
+    'CRIAR_SCHEMA_NA_IMPORTACAO', 'RATELIMIT_STORAGE_URI', 'ADMIN_TOTP_SECRET',
+    'VERCEL', 'VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL',
 )
 
 
@@ -46,6 +47,8 @@ def _env_arranque(tmp_path, **overrides):
         'APP_BASE_URL': '',
         'RATELIMIT_STORAGE_URI': 'memory://',
         'CRIAR_SCHEMA_NA_IMPORTACAO': 'true',
+        'ADMIN_TOTP_SECRET': '',
+        'VERCEL': '',
     })
     base.update(overrides)
     return base
@@ -66,6 +69,57 @@ def test_arranque_falha_sem_trusted_hosts(tmp_path):
     resultado = _rodar(tmp_path, TRUSTED_HOSTS='')
     assert resultado.returncode != 0
     assert 'TRUSTED_HOSTS' in resultado.stderr
+
+
+def test_arranque_falha_com_segundo_fator_ilegivel(tmp_path):
+    # Subir com um segredo que nenhum app gera trancaria o admin do lado de fora em silêncio.
+    resultado = _rodar(tmp_path, ADMIN_TOTP_SECRET='nao-e-base32!')
+    assert resultado.returncode != 0
+    assert 'ADMIN_TOTP_SECRET' in resultado.stderr
+
+
+# Status de /health para cada host e, se houver, quantos proxies o ProxyFix aceita.
+_CODIGO_HOSTS_E_PROXY = (
+    'import servidor\n'
+    'cliente = servidor.app.test_client()\n'
+    'for host in ("sistema.vercel.app", "sistema-abc123.vercel.app", "sistema-git-main.vercel.app", "outro.example"):\n'
+    '    print("host", host, cliente.get("/health", headers={"Host": host}).status_code)\n'
+    'print("x_for", getattr(servidor.app.wsgi_app, "x_for", 0))\n'
+)
+_VARIAVEIS_DA_VERCEL = {
+    'VERCEL_PROJECT_PRODUCTION_URL': 'sistema.vercel.app',
+    'VERCEL_URL': 'sistema-abc123.vercel.app',
+    'VERCEL_BRANCH_URL': 'sistema-git-main.vercel.app',
+}
+
+
+def _hosts_e_proxy(resultado):
+    assert resultado.returncode == 0, resultado.stderr
+    linhas = [linha.split() for linha in resultado.stdout.splitlines()]
+    status = {partes[1]: int(partes[2]) for partes in linhas if partes[:1] == ['host']}
+    x_for = next(int(partes[1]) for partes in linhas if partes[:1] == ['x_for'])
+    return status, x_for
+
+
+def test_na_vercel_aceita_os_enderecos_do_projeto_e_um_proxy(tmp_path):
+    # O *.vercel.app respondia 400 com TRUSTED_HOSTS só com o domínio próprio, e com
+    # TRUST_PROXY_COUNT=0 todo limite por IP valia para todos de uma vez (SEC-27).
+    status, x_for = _hosts_e_proxy(_rodar(
+        tmp_path, _CODIGO_HOSTS_E_PROXY, VERCEL='1', TRUST_PROXY_COUNT='0', **_VARIAVEIS_DA_VERCEL,
+    ))
+
+    assert status == {
+        'sistema.vercel.app': 200, 'sistema-abc123.vercel.app': 200,
+        'sistema-git-main.vercel.app': 200, 'outro.example': 400,
+    }
+    assert x_for == 1
+
+
+def test_fora_da_vercel_os_hosts_e_o_proxy_seguem_o_ambiente(tmp_path):
+    status, x_for = _hosts_e_proxy(_rodar(tmp_path, _CODIGO_HOSTS_E_PROXY, **_VARIAVEIS_DA_VERCEL))
+
+    assert set(status.values()) == {400}
+    assert x_for == 0
 
 
 def test_arranque_falha_com_cookie_secure_invalido(tmp_path):

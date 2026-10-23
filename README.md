@@ -225,7 +225,7 @@ O nome de cada arquivo leva o hash do conteúdo, e `servicos/cinema.py` acha a e
 
 **Emblema.** As brasas são sorteadas da imagem `front/src/emblema.webp`, um recorte do emblema oficial (`static/imagens/marca/emblema-dragao.png`) com o fundo transparente; cada brasa leva a cor do seu pixel. Se o emblema mudar, rode `.venv/bin/python front/scripts/emblema.py` na raiz e depois o build.
 
-**Peso e quando carrega.** A cena tem cerca de 1,15 MB (317 KB com gzip), mais 19 KB da imagem do emblema, e só é baixada depois que a página terminou de carregar. Ela nunca é baixada com "reduzir movimento" ligado, economia de dados, conexão 2G, aparelho com menos de 4 GB de memória ou sem aceleração de vídeo (WebGL por software): nesses casos fica o pôster. Fora da tela, a cena para de desenhar.
+**Peso e quando carrega.** A cena tem cerca de 1,15 MB (317 KB com gzip), mais 19 KB da imagem do emblema, e só é baixada depois que a página terminou de carregar. Ela nunca é baixada com "reduzir movimento" ligado, economia de dados, conexão 2G ou sem aceleração de vídeo (WebGL por software): nesses casos fica o pôster. Aparelho com menos de 4 GB de memória recebe a cena leve (60 brasas em vez de 110 ou 240, e pixel de 1x). Fora da tela, a cena para de desenhar.
 
 **Vídeo no lugar da cena (opcional).** Um MP4 em `static/video/cinema.mp4` substitui a cena 3D e avança com a rolagem (scrolly-video, como no template Framerate). Converta com keyframe em todo quadro e sem áudio, de preferência abaixo de 15 MB:
 
@@ -279,8 +279,8 @@ conectar o Gmail de novo) e o access token é pedido na hora de cada envio, sem 
 ## Configuração de segurança
 
 - `APP_BASE_URL` define a origem usada em links de recuperação, confirmação de e-mail e retornos de pagamento. Ela não é derivada do cabeçalho `Host`.
-- `TRUSTED_HOSTS` é obrigatório e contém os hosts aceitos, separados por vírgula. Use `localhost,127.0.0.1` no desenvolvimento local ou o domínio público real em produção.
-- `TRUST_PROXY_COUNT` informa quantos proxies confiáveis existem à frente do Flask. O `compose.yaml` usa `1` por causa do Caddy; uma execução local direta usa `0`.
+- `TRUSTED_HOSTS` é obrigatório e contém os hosts aceitos, separados por vírgula. Use `localhost,127.0.0.1` no desenvolvimento local ou o domínio público real em produção. Na Vercel (`VERCEL=1`), os endereços do próprio projeto entram sozinhos: `VERCEL_PROJECT_PRODUCTION_URL`, `VERCEL_URL` e `VERCEL_BRANCH_URL`. Para isso, deixe ligada a opção "Automatically expose System Environment Variables" do projeto.
+- `TRUST_PROXY_COUNT` informa quantos proxies confiáveis existem à frente do Flask. O `compose.yaml` usa `1` por causa do Caddy; uma execução local direta usa `0`. Na Vercel o valor é sempre `1`, qualquer que seja a variável: a plataforma reescreve o `X-Forwarded-For` só com o IP de quem fez a requisição, e com `0` todo limite por IP valeria para todos de uma vez.
 - `RATELIMIT_STORAGE_URI` deve apontar para Redis em produção para compartilhar os limites de autenticação e pagamentos entre processos. O Docker Compose já inclui esse serviço; no Render, configure a URI do serviço Redis usado pela aplicação. `memory://` mantém contadores apenas dentro de cada processo.
 - Pagamentos têm limites por conta, preservados entre sessões: Pix e Checkout compartilham 10 tentativas de abertura por minuto; status, retorno do Checkout e sincronização administrativa compartilham 30 consultas por minuto. Ao atingir o limite, a aplicação responde `429` com `Retry-After: 60` antes de chamar o provedor.
 - Requisições acima de 10 MB são recusadas pelo Flask e pelo Caddy. PDFs enviados como comprovante são entregues como download.
@@ -302,11 +302,32 @@ python -m servicos.credenciais     # pede a senha sem eco e imprime só o hash
 ```
 
 No `.env` usado pelo Docker Compose, coloque o hash entre aspas simples, por exemplo
-`ADMIN_PASSWORD_HASH='…'`, para preservar os caracteres `$`. Em painéis como o Render,
+`ADMIN_PASSWORD_HASH='…'`, para preservar os caracteres `$`. Em painéis como o da Vercel,
 informe o valor sem aspas. A aplicação não aceita
 `ADMIN_PASSWORD` em texto puro.
 
 A aplicação recusa subir sem `ADMIN_USER` e `ADMIN_PASSWORD_HASH`.
+
+#### Segundo fator do administrador (opcional, recomendado)
+
+Com `ADMIN_TOTP_SECRET` definida, a senha passa a ser só o primeiro passo: o login do
+admin pede também o código de 6 dígitos de um app autenticador (Google Authenticator,
+Microsoft Authenticator, Authy, 1Password). Sem a variável, nada muda.
+
+```bash
+python -m servicos.credenciais totp   # gera a chave e explica o cadastro no app
+```
+
+1. Cadastre a chave no app ("inserir chave de configuração", tipo "baseada em tempo").
+2. Só depois que o app já mostrar os códigos, defina `ADMIN_TOTP_SECRET` no ambiente (na
+   Vercel: Settings → Environment Variables, Production e Preview) e publique.
+3. As sessões de admin abertas se encerram, e o próximo login pede o código.
+
+Cada código vale uma vez e por 30 segundos (aceita o anterior e o seguinte, para relógio
+fora). A tela do código tem 5 tentativas a cada 15 minutos por IP e 10 por hora no total,
+e quem acertou a senha tem 5 minutos para digitar o código. Se perder o celular, apague
+`ADMIN_TOTP_SECRET` no painel, entre só com a senha e cadastre uma chave nova. A
+aplicação recusa subir com uma chave que não seja base32 de pelo menos 128 bits.
 
 ### Publicar com um domínio próprio
 

@@ -271,7 +271,7 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1792592250.9480672,
+    "seen": 1792635397.1969693,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -553,7 +553,7 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1792592250.9480572,
+    "seen": 1792635397.1969576,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -1513,7 +1513,7 @@
   },
   "tools/redesign/figma/estado.json": {
     "mtime": 1790997728.0851638,
-    "seen": 1792592250.948512,
+    "seen": 1792635397.1975214,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -1620,9 +1620,9 @@
     "semantic_hash": ""
   },
   "front/vite.config.ts": {
-    "mtime": 1792544561.8585484,
-    "seen": 1792547023.29114,
-    "ast_hash": "9c35006243163844e22e835ac4247d50",
+    "mtime": 1792635073.3585215,
+    "seen": 1792635100.1192272,
+    "ast_hash": "c16d8dedebea864c7be676aa88a600d2",
     "semantic_hash": ""
   },
   "servicos/cinema.py": {
@@ -1644,9 +1644,9 @@
     "semantic_hash": ""
   },
   "tests/test_cinema.py": {
-    "mtime": 1792544702.7198148,
-    "seen": 1792547023.2965794,
-    "ast_hash": "d70a5a183b8202ef6ee344e2a4f6f2db",
+    "mtime": 1792635088.9457462,
+    "seen": 1792635100.124899,
+    "ast_hash": "9141de15fd13e05556d60c060412e384",
     "semantic_hash": ""
   },
   "static/imagens/cinema-poster-estreito.webp": {

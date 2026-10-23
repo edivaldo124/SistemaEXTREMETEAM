@@ -1,8 +1,9 @@
 // Hero cinematográfico da página inicial (padrão Framerate). A rolagem dentro de
 // .cinema é o "filme": o progresso de 0 a 1 troca as manchetes, enche o medidor e
 // move a cena 3D. A cena (front/, React Three Fiber) só é baixada depois que a
-// página carregou e nunca com movimento reduzido, economia de dados, aparelho com
-// pouca memória ou sem WebGL: nesses casos fica o pôster estático.
+// página carregou e nunca com movimento reduzido, economia de dados ou sem WebGL:
+// nesses casos fica o pôster estático. Aparelho com pouca memória recebe a mesma cena,
+// mais leve.
 
 (function () {
   'use strict';
@@ -82,7 +83,6 @@
     if (reduzir.matches) return false;
     const conexao = navigator.connection;
     if (conexao && (conexao.saveData || /(^|-)2g$/.test(conexao.effectiveType || ''))) return false;
-    if (navigator.deviceMemory && navigator.deviceMemory < 4) return false;
     try {
       const teste = document.createElement('canvas');
       // Sem aceleração de vídeo (renderização por software) a cena travaria a página.
@@ -105,6 +105,8 @@
     return new Promise(function (resolver) {
       const opcoes = {
         estreito: window.matchMedia('(max-width: 720px)').matches,
+        // Menos de 4 GB (o Chrome arredonda para baixo, então 3 GB também cai aqui).
+        leve: !!navigator.deviceMemory && navigator.deviceMemory < 4,
         eventSource: secao,
         aoFicarPronta: function () {
           secao.classList.add('cinema--cena-pronta');

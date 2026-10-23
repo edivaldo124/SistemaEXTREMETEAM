@@ -35,6 +35,46 @@ def test_landing_page(client):
     assert 'name="loginusuario"' in html
     assert 'name="senhausuario"' in html
     assert 'name="csrf_token"' in html
+    # O "lembrar usuário" do modal é o do auth.js, com a regra da tela de login (sem CPF).
+    assert 'js/auth.js' in html
+
+
+def _cabecalho(html):
+    return html.split('<header class="home-header">', 1)[1].split('</header>', 1)[0]
+
+
+def _entrar_fixo(html):
+    return re.search(r'<div class="entrar-fixo" data-entrar-fixo>(.*?)</div>', html, re.S).group(1)
+
+
+def test_visitante_tem_entrar_fixo_que_abre_o_mesmo_modal(client):
+    # O cabeçalho rola embora com o hero de 400svh; a pílula fixa assume o botão dele.
+    pilula = _entrar_fixo(client.get('/').get_data(as_text=True))
+
+    assert 'data-abrir-login' in pilula
+    assert 'Entrar' in pilula
+
+
+def test_aluno_logado_vai_da_home_direto_para_a_area_do_aluno(client, criar_aluno, logar_como_aluno):
+    # O botão abria o modal de login de novo para quem já tinha entrado.
+    logar_como_aluno(criar_aluno())
+
+    html = client.get('/').get_data(as_text=True)
+
+    for trecho in (_cabecalho(html), _entrar_fixo(html)):
+        assert 'href="/perfil"' in trecho
+        assert 'Área do aluno' in trecho
+        assert 'data-abrir-login' not in trecho
+
+
+def test_admin_logado_vai_da_home_para_o_painel(client, logar_como_admin):
+    logar_como_admin()
+
+    html = client.get('/').get_data(as_text=True)
+
+    for trecho in (_cabecalho(html), _entrar_fixo(html)):
+        assert 'href="/admin"' in trecho
+        assert 'data-abrir-login' not in trecho
 
 
 def test_login_page(client):

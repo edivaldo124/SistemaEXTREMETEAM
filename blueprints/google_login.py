@@ -58,7 +58,10 @@ def redirect_uri():
     return f'{base_url_publica()}{CALLBACK_ROUTE}'
 
 @google_auth_bp.route('/login/google')
-@limiter.limit('10 per 15 minutes')
+# Por IP, mas folgado como o cadastro (SEC-17): a academia inteira sai pelo mesmo Wi-Fi, e
+# 10 a cada 15 min travava o login de quem chegasse depois. Força bruta aqui não rende
+# nada: a volta só vale com o state e o PKCE desta sessão, e a senha é do Google.
+@limiter.limit('30 per 15 minutes')
 def login_google():
     client_id = os.environ.get('GMAIL_CLIENT_ID')
     if not client_id:
@@ -92,7 +95,7 @@ def login_google():
     return redirect(url)
 
 @google_auth_bp.route(CALLBACK_ROUTE)
-@limiter.limit('10 per 15 minutes')
+@limiter.limit('30 per 15 minutes')
 def callback():
     guardada = session.pop(CHAVE_SESSAO, None)
     if not _autorizacao_valida(guardada, request.args.get('state')):
@@ -145,6 +148,14 @@ def callback():
         flash('Não há conta com este e-mail do Google. Crie sua conta pelo cadastro e depois entre com o Google.', 'erro')
         return redirect(url_for('auth.pagina_login'))
 
+    # A mesma regra da senha (AlunoDAO.autenticar): sem senha não há conta de acesso. Quem a
+    # administração cadastrou só entra depois do convite, que é onde aceita o Termo de
+    # Responsabilidade e cria a senha. Sem esta checagem, o e-mail confirmado pelo Google abria
+    # a conta sem nenhum dos dois.
+    if not aluno.acesso_ativado:
+        flash('Sua conta ainda não tem senha. Use o link de ativação que enviamos ao seu e-mail ou peça um novo à administração.', 'erro')
+        return redirect(url_for('auth.pagina_login'))
+
     if aluno.status_cadastro == 'pendente':
         # Como autenticou no google, marcamos o email como verificado caso não esteja
         if not aluno.email_verificado:
@@ -163,6 +174,6 @@ def callback():
     session['usuario'] = aluno.login
     session['aluno_id'] = aluno.id
     session['tipo_usuario'] = "aluno"
-    registrar_credencial(aluno.senha_hash or 'google_oauth')
+    registrar_credencial(aluno.senha_hash)
     session.permanent = True
     return redirect('/perfil')

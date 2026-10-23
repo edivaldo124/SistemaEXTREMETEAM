@@ -4,6 +4,7 @@ import logging
 import os
 import secrets
 import threading
+import time
 from io import BytesIO
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta, timezone
@@ -74,7 +75,14 @@ from servicos.autorizacao import (
     registrar_credencial,
     sessao_administrativa_valida,
 )
-from servicos.credenciais import credencial_admin_confere, referencia_credencial_admin
+from servicos.credenciais import (
+    TOTP_PASSO_SEGUNDOS,
+    TOTP_TOLERANCIA_PASSOS,
+    credencial_admin_confere,
+    passo_do_codigo_admin,
+    referencia_credencial_admin,
+    segundo_fator_admin_ativo,
+)
 
 auth_bp = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
@@ -147,13 +155,12 @@ def pagina_login():
         if credencial_admin_confere(login, senha):
             # Remove qualquer sessao anterior para evitar fixacao de sessao.
             session.clear()
-            iniciar_sessao()
-            session['usuario'] = os.environ.get('ADMIN_USER')
-            session['tipo_usuario'] = "admin"
-            # Carimba a credencial administrativa em vigor: rotacionar
-            # ADMIN_PASSWORD_HASH encerra as sessões abertas com a senha anterior.
-            registrar_credencial(referencia_credencial_admin())
-            session.permanent = True
+            if segundo_fator_admin_ativo():
+                # A senha certa é só o primeiro fator: a sessão de admin abre depois do
+                # código do app autenticador (verificar_codigo_admin).
+                session[CHAVE_SEGUNDO_FATOR] = time.time()
+                return redirect(url_for('auth.verificar_codigo_admin'))
+            _abrir_sessao_admin()
             return redirect('/admin')
 
         professor = ProfessorDAO.autenticar(login, senha)
@@ -198,6 +205,63 @@ def pagina_login():
         return render_template('login.html', msg=MSG_ERRO)
 
     return render_template("login.html")
+
+
+# Marca de quem acertou a senha do admin e ainda deve o código do app autenticador.
+CHAVE_SEGUNDO_FATOR = 'admin_segundo_fator'
+VALIDADE_SEGUNDO_FATOR_SEGUNDOS = 5 * 60
+
+
+def _abrir_sessao_admin():
+    session.clear()
+    iniciar_sessao()
+    session['usuario'] = os.environ.get('ADMIN_USER')
+    session['tipo_usuario'] = "admin"
+    # Carimba a credencial administrativa em vigor: rotacionar ADMIN_PASSWORD_HASH (ou o
+    # segredo do segundo fator) encerra as sessões abertas com a anterior.
+    registrar_credencial(referencia_credencial_admin())
+    session.permanent = True
+
+
+def _primeiro_uso_do_codigo(passo):
+    """Cada código vale uma vez: quem o viu na tela de outra pessoa não entra com ele.
+
+    A marca fica no storage do limitador (Redis em produção, compartilhado entre as
+    instâncias). Se ele cair, o código segue valendo: senha e código já conferiram, e
+    trancar o admin do lado de fora seria pior que perder só a proteção contra reuso.
+    """
+    try:
+        janela = (2 * TOTP_TOLERANCIA_PASSOS + 1) * TOTP_PASSO_SEGUNDOS
+        return limiter.storage.incr(f'segundo-fator-admin:{passo}', janela) == 1
+    except Exception:
+        logger.warning('Storage do limitador indisponível; código do admin aceito sem checar reuso.', exc_info=True)
+        return True
+
+
+@auth_bp.route('/login/verificacao', methods=['GET', 'POST'])
+# Por IP e um teto da conta (só existe um admin): 10 por hora, de qualquer lugar, deixam
+# cerca de 1 chance em 33 mil por hora de acertar um código. O preço, como no SEC-11, é
+# que quem souber a senha consegue travar esta etapa por até 1 hora.
+@limiter.limit('5 per 15 minutes', methods=['POST'])
+@limiter.limit('10 per hour', methods=['POST'], key_func=lambda: 'segundo-fator-admin')
+def verificar_codigo_admin():
+    inicio = session.get(CHAVE_SEGUNDO_FATOR)
+    if not isinstance(inicio, (int, float)) or time.time() - inicio > VALIDADE_SEGUNDO_FATOR_SEGUNDOS:
+        session.pop(CHAVE_SEGUNDO_FATOR, None)
+        flash('Entre de novo com usuário e senha.', 'erro')
+        return redirect(url_for('auth.pagina_login'))
+
+    if request.method == 'POST':
+        passo = passo_do_codigo_admin(request.form.get('codigo'))
+        if passo is not None and _primeiro_uso_do_codigo(passo):
+            _abrir_sessao_admin()
+            return redirect('/admin')
+        logger.warning('Código do segundo fator do admin recusado: ip=%s', get_remote_address())
+        return render_template(
+            'login_verificacao.html', erro='Código inválido ou já usado. Confira o app e tente de novo.',
+        )
+
+    return render_template('login_verificacao.html')
 
 
 # CPF ou e-mail já cadastrados nunca devolvem o nome, o e-mail nem a situação de quem

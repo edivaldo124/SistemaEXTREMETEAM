@@ -1,0 +1,71 @@
+# CI de cada push na main e de cada pull request (SEC-29): testes de Python e de JS e a
+# auditoria de segurança das dependências e do código. Nada aqui publica nem faz deploy, e
+# o token do GitHub só lê o repositório.
+#
+# As actions vão fixadas pelo SHA do commit (uma tag pode ser movida para outro código);
+# o comentário diz a versão, e o Dependabot troca os dois juntos.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    name: Testes (Python e JS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # O mesmo Python da imagem Docker e do requirements.lock.
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.11'
+      - name: Dependências (só com hash conferido)
+        run: |
+          python -m pip install --require-hashes -r requirements.lock
+          python -m pip install pytest==9.1.1 pyyaml==6.0.3
+      - name: pytest
+        run: python -m pytest -q
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: Testes de JS
+        run: node --test tests/js/*.test.cjs
+
+  seguranca:
+    name: Auditoria de segurança
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.11'
+      - name: Ferramentas
+        run: python -m pip install pip-audit==2.10.1 bandit==1.9.4
+      - name: pip-audit (vulnerabilidades conhecidas no lock)
+        run: pip-audit -r requirements.lock --require-hashes --disable-pip --progress-spinner off
+      # Barra severidade média ou alta. Os 9 achados de severidade baixa de hoje são falsos
+      # positivos: URLs de token chamadas *_TOKEN_URL, tokens zerados com None, o prefixo
+      # 'TEST-' do Mercado Pago e o escape que escreve (não lê) o XML do sitemap.
+      - name: Bandit (código Python)
+        run: bandit -q -ll -r blueprints servicos dao modelos
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: npm audit (cena 3D da home)
+        working-directory: front
+        run: npm audit --omit=dev

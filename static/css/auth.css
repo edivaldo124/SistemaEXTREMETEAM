@@ -7,6 +7,15 @@
   navigation: auto;
 }
 
+/* Igual ao components/deslize.html: com movimento reduzido nenhuma ponta adere. Se só
+   esta pedisse a transição, o navegador a abortava ao entrar na área logada e deixava
+   "Transition was skipped" no console. */
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
 body.auth-page {
   display: grid;
   place-items: center;

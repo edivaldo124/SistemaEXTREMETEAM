@@ -64,7 +64,7 @@
                             </div>
                             <div class="field">
                                 <label for="dataNascimento">Data de nascimento</label>
-                                <input class="et-campo" id="dataNascimento" type="date" name="dataNascimento" value="{{ dados.datanascimento if dados else '' }}" required>
+                                <input class="et-campo" id="dataNascimento" type="date" name="dataNascimento" value="{{ dados.datanascimento if dados else '' }}" max="{{ hoje_iso() }}" required>
                             </div>
                             <div class="field">
                                 <label for="cpfusuario">CPF</label>

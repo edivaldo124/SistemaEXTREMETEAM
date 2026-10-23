@@ -567,6 +567,7 @@ Todos ficam em `static/css/componentes.css`, usam só tokens e têm a classe `.e
 
 ### Navegação
 - **Cabeçalho do aluno e do professor** (`.app-header`): faixa preta arredondada (28 px) flutuando afastada das bordas. Os links são claros e apagados e ficam dourados no hover; o item ativo é uma **pastilha dourada sólida com texto preto** e `aria-current="page"`. Sair, voltar e entrar são `.et-botao` pequenos em pílula.
+- **Entrar fixo da home** (`.entrar-fixo`): o cabeçalho público rola embora com o hero, então, quando ele sai da tela, uma pílula dourada fica presa no canto de cima (respeitando a área segura do iPhone) e abre o mesmo modal de login. Para quem já entrou, ela e o botão do cabeçalho levam direto à própria área (aluno, professor ou painel).
 - **Barra lateral do admin** (`.admin-header`): coluna preta de 236 px, fixa, com o emblema no topo e um selo dourado discreto no rodapé. Até 1023 px, vira barra de topo com as seções roláveis na horizontal, com degradê só do lado que ainda tem seção escondida.
 - **Navegação inferior** (`.bottom-nav`, área do aluno até 720 px): barra de vidro escuro flutuando a 12 px do fim, acima da área segura do iPhone. Os itens têm 52 px, ícone de 22 px e rótulo de 11 px; o ativo fica em dourado sólido.
 - **Abas** (`.et-tabs`): controle segmentado sobre um trilho `{colors.surface-2}`; a aba ativa é uma pastilha branca com sombra leve. Setas, Home e End funcionam pelo `componentes.js`.

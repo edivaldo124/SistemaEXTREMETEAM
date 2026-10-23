@@ -64,6 +64,37 @@
   color: var(--et-gold);
 }
 
+/* Entrar sempre ao alcance: o cabeçalho rola embora com o hero (cinema.css) e, quando
+   ele sai da tela, esta pílula assume o botão dele (index.js põe .is-visivel). Escondida,
+   o visibility a tira do leitor de tela e da ordem do Tab. A transição fica no invólucro
+   para não substituir a do botão (o brilho no hover). */
+.entrar-fixo {
+  position: fixed;
+  top: max(var(--sp-4), var(--safe-t));
+  right: max(var(--home-gutter), var(--safe-r));
+  z-index: 30;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity var(--dur-rapida) var(--ease-saida),
+    transform var(--dur-rapida) var(--ease-saida),
+    visibility 0s linear var(--dur-rapida);
+}
+
+.entrar-fixo.is-visivel {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--dur-media) var(--ease), transform var(--dur-media) var(--ease), visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entrar-fixo {
+    transform: none;
+  }
+}
+
 /* ------------------------------------------------------------- Planos --- */
 /* Logo abaixo do hero, na mesma coluna do texto dele. Os cartões e a grade vêm de
    componentes.css (.et-planos); aqui só o título e o respiro da seção. */

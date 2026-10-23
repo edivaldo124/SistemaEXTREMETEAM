@@ -10,6 +10,7 @@ export type EstadoCinema = {
 
 export type OpcoesCinema = {
   estreito: boolean // celular: emblema menor, centralizado abaixo do texto
+  leve: boolean // pouca memória: menos brasas e pixel de 1x
   eventSource: HTMLElement // o ponteiro é lido no hero inteiro, não só no canvas
   aoFicarPronta: () => void
   aoPerderContexto: () => void

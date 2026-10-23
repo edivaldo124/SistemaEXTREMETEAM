@@ -31,6 +31,27 @@ def data_nascimento_valida(valor):
     return nascimento <= date.today()
 
 
+def data_iso(valor):
+    """A data em AAAA-MM-DD, o formato do <input type="date">, ou '' se não for uma data.
+
+    A ficha do aluno no admin era texto livre: além do AAAA-MM-DD do cadastro, o banco pode
+    ter datas digitadas à mão como dd/mm/aaaa, que aqui também valem.
+    """
+    texto = (valor or '').strip()
+    try:
+        return date.fromisoformat(texto).isoformat()
+    except ValueError:
+        pass
+    partes = re.fullmatch(r'(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})', texto)
+    if not partes:
+        return ''
+    dia, mes, ano = (int(parte) for parte in partes.groups())
+    try:
+        return date(ano, mes, dia).isoformat()
+    except ValueError:
+        return ''
+
+
 def formatar_cpf(valor):
     digitos = somente_digitos(valor)[:11]
     if len(digitos) != 11:

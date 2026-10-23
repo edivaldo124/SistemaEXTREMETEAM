@@ -8,6 +8,8 @@
         document.documentElement.classList.add('cinema-js');
         try { if (sessionStorage.getItem('et-cinema-visto')) document.documentElement.classList.add('cinema-visto'); } catch (e) {}
     </script>
+    {#- Lembrar usuário do modal: a mesma regra da tela de login (o CPF não fica no aparelho). -#}
+    <script src="{{ url_for('static', filename='js/auth.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/cinema.js') }}" defer></script>
     {# `tojson` escapa <, > e &: um texto do painel não fecha a tag <script>. #}

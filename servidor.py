@@ -3,7 +3,7 @@ from config import csrf, db, limiter, migrate
 import os
 import secrets
 import ipaddress
-from datetime import timedelta
+from datetime import date, timedelta
 from dotenv import load_dotenv
 from flask_wtf.csrf import CSRFError
 from werkzeug.exceptions import TooManyRequests
@@ -97,6 +97,17 @@ if not hosts_confiaveis:
         'TRUSTED_HOSTS é obrigatória. Use localhost,127.0.0.1 em desenvolvimento ou '
         'o domínio real em produção.'
     )
+
+# Na Vercel, os endereços do próprio projeto vêm em variáveis de sistema, sem o https://:
+# o domínio de produção, o da implantação e o do branch. Sem eles, o *.vercel.app
+# respondia 400 enquanto TRUSTED_HOSTS listasse só o domínio próprio. A Vercel só entrega
+# a esta função requisições de hosts ligados ao projeto.
+na_vercel = os.environ.get('VERCEL') == '1'
+if na_vercel:
+    for variavel in ('VERCEL_PROJECT_PRODUCTION_URL', 'VERCEL_URL', 'VERCEL_BRANCH_URL'):
+        host = (os.environ.get(variavel) or '').strip()
+        if host and host not in hosts_confiaveis:
+            hosts_confiaveis.append(host)
 app.config['TRUSTED_HOSTS'] = hosts_confiaveis
 
 try:
@@ -105,6 +116,12 @@ except ValueError as exc:
     raise RuntimeError('TRUST_PROXY_COUNT deve ser um número inteiro.') from exc
 if quantidade_proxies < 0 or quantidade_proxies > 3:
     raise RuntimeError('TRUST_PROXY_COUNT deve estar entre 0 e 3.')
+# A Vercel reescreve o X-Forwarded-For só com o IP público de quem fez a requisição e não
+# repassa IPs de fora (documentação de request headers): é sempre um salto confiável.
+# Com 0, o Flask via o IP interno da plataforma e todo limite por IP virava um limite
+# único para todo mundo (SEC-27).
+if na_vercel:
+    quantidade_proxies = 1
 if quantidade_proxies:
     app.wsgi_app = ProxyFix(
         app.wsgi_app,
@@ -120,6 +137,11 @@ if not credenciais.admin_configurado():
         'Defina ADMIN_USER e ADMIN_PASSWORD_HASH (gere com '
         '"python -m servicos.credenciais").'
     )
+# Um segredo de segundo fator ilegível trancaria o admin do lado de fora em silêncio.
+try:
+    credenciais.validar_segundo_fator_admin()
+except ValueError as exc:
+    raise RuntimeError(str(exc)) from exc
 
 analytics.validar_configuracao()
 
@@ -149,10 +171,13 @@ csrf.init_app(app)
 limiter.init_app(app)
 
 # Filtros de exibição usados pelos templates (formatação, nunca regra de negócio).
-from servicos.formatacao import formatar_moeda, rotulo_forma_pagamento
+from servicos.formatacao import data_iso, formatar_moeda, rotulo_forma_pagamento
 
 app.jinja_env.filters['moeda'] = formatar_moeda
 app.jinja_env.filters['forma_pagamento'] = rotulo_forma_pagamento
+app.jinja_env.filters['data_iso'] = data_iso
+# Teto dos campos de data de nascimento: o seletor do navegador não oferece o futuro.
+app.jinja_env.globals['hoje_iso'] = lambda: date.today().isoformat()
 # URLs absolutas das meta tags (canonical, Open Graph) e do JSON-LD da home.
 app.jinja_env.globals.update(
     url_canonica=seo.url_canonica,

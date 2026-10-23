@@ -1,3 +1,18 @@
+{#- Quem já entrou vai direto para a própria área; o modal de login é só para visitante. -#}
+{%- set area = {'aluno': ('/perfil', 'Área do aluno'), 'professor': ('/professor', 'Área do professor'), 'admin': ('/admin', 'Painel')}.get(session.get('tipo_usuario')) %}
+{%- macro botao_entrar(area, rotulo_visitante) %}
+    {%- if area %}
+    <a class="et-botao et-botao--principal et-botao--pequeno et-botao--pilula" href="{{ area[0] }}">
+        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /></svg>
+        {{ area[1] }}
+    </a>
+    {%- else %}
+    <button type="button" class="et-botao et-botao--principal et-botao--pequeno et-botao--pilula" data-abrir-login>
+        <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /></svg>
+        {{ rotulo_visitante }}
+    </button>
+    {%- endif %}
+{%- endmacro %}
 <header class="home-header">
     <a class="site-brand" href="/" aria-label="Extreme Team, página inicial">
         <img src="{{ url_for('static', filename='imagens/logo-horizontal-400.png') }}"
@@ -15,9 +30,9 @@
             {% if professores_publicos %}<a href="#equipe">Professores</a>{% endif %}
             {% if academia and academia.tem_contato %}<a href="#contato">Contato</a>{% endif %}
         </div>
-        <button type="button" class="et-botao et-botao--principal et-botao--pequeno et-botao--pilula" data-abrir-login>
-            <svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /></svg>
-            Área do aluno
-        </button>
+        {{ botao_entrar(area, 'Área do aluno') }}
     </nav>
 </header>
+{#- O cabeçalho rola embora com o hero: quando ele sai da tela, esta pílula assume o lugar
+    do botão dele no canto de cima (index.js liga e desliga; estilo em index.css). -#}
+<div class="entrar-fixo" data-entrar-fixo>{{ botao_entrar(area, 'Entrar') }}</div>

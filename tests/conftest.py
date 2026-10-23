@@ -42,6 +42,8 @@ for _variavel in (
     'KEEP_ALIVE', 'KEEP_ALIVE_INTERVALO', 'ANALYTICS_ID', 'SENTRY_DSN',
     # Sem estas, os uploads da suíte vão para UPLOAD_DIR e nunca para o bucket real.
     'SUPABASE_URL', 'SUPABASE_SECRET_KEY',
+    # Segundo fator do admin e o modo Vercel (um `vercel env pull` traz VERCEL=1).
+    'ADMIN_TOTP_SECRET', 'VERCEL',
 ):
     os.environ[_variavel] = ''
 

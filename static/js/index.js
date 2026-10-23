@@ -11,19 +11,9 @@ function abrirmodal(evento) {
     ? evento.currentTarget
     : document.activeElement;
   if (!modal.open) modal.showModal();
+  // O usuário lembrado já veio do auth.js, com a mesma regra da tela de login.
   const inputNome = document.getElementById('inputnome');
-  if (inputNome) {
-    // Carrega usuário lembrado, se existir e campo vazio
-    try {
-      const salvo = localStorage.getItem('et_lembrar_usuario');
-      const checkLembrar = document.getElementById('modal_lembrar_usuario');
-      if (salvo && !inputNome.value) {
-        inputNome.value = salvo;
-        if (checkLembrar) checkLembrar.checked = true;
-      }
-    } catch (e) {}
-    inputNome.focus();
-  }
+  if (inputNome) inputNome.focus();
 }
 
 function fechar() {
@@ -68,20 +58,11 @@ if (icone_senha) {
   icone_senha.addEventListener('click', mostrarSenha);
 }
 
-// Lembrar usuário no envio do formulário do modal
-if (modal) {
-  const form = modal.querySelector('form');
-  if (form) {
-    form.addEventListener('submit', function () {
-      try {
-        const inputNome = document.getElementById('inputnome');
-        const checkLembrar = document.getElementById('modal_lembrar_usuario');
-        if (checkLembrar && checkLembrar.checked && inputNome && inputNome.value.trim()) {
-          localStorage.setItem('et_lembrar_usuario', inputNome.value.trim());
-        } else if (checkLembrar && !checkLembrar.checked) {
-          localStorage.removeItem('et_lembrar_usuario');
-        }
-      } catch (e) {}
-    });
-  }
+// O cabeçalho rola embora com o hero: fora da tela, a pílula fixa assume o botão dele.
+const cabecalho = document.querySelector('.home-header');
+const entrarFixo = document.querySelector('[data-entrar-fixo]');
+if (cabecalho && entrarFixo && 'IntersectionObserver' in window) {
+  new IntersectionObserver(function (entradas) {
+    entrarFixo.classList.toggle('is-visivel', !entradas[0].isIntersecting);
+  }).observe(cabecalho);
 }

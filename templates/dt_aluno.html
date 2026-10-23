@@ -99,9 +99,10 @@
                     <div class="grupo-input">
                         <label for="dt-nascimento">Data de nascimento</label>
                         <input class="et-campo" id="dt-nascimento"
-                               type="text"
+                               type="date"
                                name="datanascimento"
-                               value="{{ u.datanascimento }}"
+                               value="{{ u.datanascimento|data_iso }}"
+                               max="{{ hoje_iso() }}"
                                required>
                     </div>
                     <div class="grupo-input">

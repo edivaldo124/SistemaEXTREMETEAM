@@ -154,6 +154,19 @@ def test_email_nao_verificado_pelo_google_nao_entra_na_conta(client, google, cri
         assert 'aluno_id' not in sess
 
 
+def test_aluno_sem_senha_nao_entra_pelo_google(client, google, criar_aluno):
+    # Cadastro da administração sem acesso ativado: o e-mail confirmado pelo Google não pula
+    # o convite (senha e Termo de Responsabilidade), igual à senha, que exige senha_hash.
+    criar_aluno(senha=None, email='aluno1@example.com')
+
+    resposta = _voltar_do_google(client)
+
+    assert urlsplit(resposta.headers['Location']).path == '/login'
+    with client.session_transaction() as sess:
+        assert 'aluno_id' not in sess
+        assert 'tipo_usuario' not in sess
+
+
 def test_email_sem_conta_volta_ao_login_sem_cadastrar(client, google):
     resposta = _voltar_do_google(client)
 
@@ -202,3 +215,10 @@ def test_link_de_verificacao_invalido_volta_ao_login(client):
 
     assert resposta.status_code == 302
     assert urlsplit(resposta.headers['Location']).path == '/login'
+
+
+def test_login_com_google_aguenta_o_wifi_da_academia(client, cliente_google):
+    # Com 10 a cada 15 min por IP, o Wi-Fi da academia (um IP só) travava no 11º aluno.
+    for _ in range(30):
+        assert client.get('/login/google').status_code == 302
+    assert client.get('/login/google').status_code == 429

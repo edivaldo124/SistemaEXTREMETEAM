@@ -3,10 +3,21 @@
 // - Alternar visualização de senha
 // - Transição suave entre Login e Cadastro (melhoria progressiva)
 
+// O CPF também serve para entrar, mas não fica guardado no aparelho (LGPD): só o usuário
+// ou o e-mail são lembrados.
+function lembravel(valor) {
+  var digitos = valor.replace(/\D/g, '');
+  return !(digitos.length === 11 && /^[\d.\-\s]+$/.test(valor));
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   // 1. Recuperar usuário salvo no aparelho
   try {
     var usuarioSalvo = localStorage.getItem('et_lembrar_usuario');
+    if (usuarioSalvo && !lembravel(usuarioSalvo)) {
+      localStorage.removeItem('et_lembrar_usuario'); // CPF guardado antes desta regra
+      usuarioSalvo = null;
+    }
     if (usuarioSalvo) {
       var inputUser = document.getElementById('loginusuario') || document.getElementById('inputnome');
       var checkLembrar = document.getElementById('lembrar_usuario') || document.getElementById('modal_lembrar_usuario');
@@ -28,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var inputUser = form.querySelector('#loginusuario') || form.querySelector('#inputnome');
     if (checkLembrar && inputUser) {
       try {
-        if (checkLembrar.checked && inputUser.value.trim()) {
+        if (checkLembrar.checked && inputUser.value.trim() && lembravel(inputUser.value.trim())) {
           localStorage.setItem('et_lembrar_usuario', inputUser.value.trim());
         } else {
           localStorage.removeItem('et_lembrar_usuario');

@@ -61,6 +61,7 @@
                                type="date"
                                name="datanascimento"
                                value="{{ dados.datanascimento or '' }}"
+                               max="{{ hoje_iso() }}"
                                required>
                     </div>
                     <div class="grupo-input">
