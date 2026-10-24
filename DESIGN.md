@@ -482,7 +482,7 @@ Tudo funciona de 360 a 1440 px **sem rolagem horizontal**. Para cortar sobra lat
 | 1 — cartão | `0 1px 2px rgba(26,22,10,.05), 0 10px 26px -18px rgba(26,22,10,.35)` | Cartão de seção, cabeçalho flutuante. |
 | 2 — elevado | `0 2px 4px rgba(26,22,10,.06), 0 18px 40px -24px rgba(26,22,10,.45)` | Menu de ações, barra lateral do admin. |
 | 3 — diálogo | `0 30px 70px -20px rgba(0,0,0,.55)` + fundo `rgba(0,0,0,.7)` com `blur(4px)` | Diálogos. |
-| Escuro | `0 18px 40px -22px rgba(0,0,0,.8)` | Métrica, toast, tooltip, CTA fixo. |
+| Escuro | `0 18px 40px -22px rgba(0,0,0,.8)` | Métrica, toast, tooltip. |
 | Brilho dourado | `0 0 0 1px` dourado 22% + `0 22px 60px -30px rgba(245,185,20,.35)` | Só o plano em destaque. |
 
 As sombras do claro são curtas e com tom quente (`rgba(26,22,10,…)`), nunca cinza puro.
@@ -490,7 +490,7 @@ As sombras do claro são curtas e com tom quente (`rgba(26,22,10,…)`), nunca c
 ### Profundidade decorativa
 - **Formas do fundo:** quatro gradientes radiais fixos atrás do papel (ouro 20% no canto superior direito, floresta 13% no superior esquerdo, barro 11% no inferior esquerdo, preto 7% no inferior direito).
 - **Borda brilhante** (`.et-borda-brilho`): um arco dourado gira pela borda do plano em destaque a cada 6 s. Com `prefers-reduced-motion`, a borda fica dourada e parada.
-- **Vidro escuro:** navegação inferior e CTA fixo em `rgba(10,10,10,.94)` com `backdrop-filter: blur(10px)`.
+- **Vidro escuro:** navegação inferior em `rgba(10,10,10,.94)` com `backdrop-filter: blur(10px)`.
 - **Tilt** (`.et-tilt` + `data-tilt`, nível 1 de 3D, só CSS): cartões de plano, de métrica e do método inclinam até 5° seguindo o mouse, com um brilho dourado fraco sob o cursor. Só com mouse e sem `prefers-reduced-motion`; no toque o cartão não se mexe, e parado ele fica sem `transform`. As macros `cartao_plano()` e `metrica()` já trazem o atributo.
 
 ## Formas
@@ -502,7 +502,7 @@ As sombras do claro são curtas e com tom quente (`rgba(26,22,10,…)`), nunca c
 | `{rounded.selo}` | 6px | Selo, caixa de seleção. |
 | `{rounded.control}` | 10px | Item de menu, tooltip, área de foco do breadcrumb. |
 | `{rounded.btn}` | 12px | Botão, campo, aviso, trilho das abas, menu, toast. |
-| `{rounded.card}` | 18px | Métrica, plano, tabela, estado vazio, upload, CTA fixo. |
+| `{rounded.card}` | 18px | Métrica, plano, tabela, estado vazio, upload. |
 | `{rounded.card-mobile}` | 22px | Cartão de seção até 540 px. |
 | `{rounded.painel}` | 28px | Cartão de seção, diálogo, cabeçalho flutuante, barra lateral, navegação inferior. |
 | `{rounded.pill}` | 999px | Item ativo do cabeçalho, botões de sair/voltar/entrar (`.et-botao--pilula`), ícone do diálogo de alerta. |
@@ -568,6 +568,7 @@ Todos ficam em `static/css/componentes.css`, usam só tokens e têm a classe `.e
 ### Navegação
 - **Cabeçalho do aluno e do professor** (`.app-header`): faixa preta arredondada (28 px) flutuando afastada das bordas. Os links são claros e apagados e ficam dourados no hover; o item ativo é uma **pastilha dourada sólida com texto preto** e `aria-current="page"`. Sair, voltar e entrar são `.et-botao` pequenos em pílula.
 - **Entrar fixo da home** (`.entrar-fixo`): o cabeçalho público rola embora com o hero, então, quando ele sai da tela, uma pílula dourada fica presa no canto de cima (respeitando a área segura do iPhone) e abre o mesmo modal de login. Para quem já entrou, ela e o botão do cabeçalho levam direto à própria área (aluno, professor ou painel).
+- **Sem barra fixa no pé da home**: a pílula Entrar é o único elemento preso à tela. A barra de cadastro que ficava no pé do celular saiu em 23/10/2026, porque acompanhava a rolagem e cobria o conteúdo. O "Criar minha conta" fica no hero, em qualquer largura.
 - **Barra lateral do admin** (`.admin-header`): coluna preta de 236 px, fixa, com o emblema no topo e um selo dourado discreto no rodapé. Até 1023 px, vira barra de topo com as seções roláveis na horizontal, com degradê só do lado que ainda tem seção escondida.
 - **Navegação inferior** (`.bottom-nav`, área do aluno até 720 px): barra de vidro escuro flutuando a 12 px do fim, acima da área segura do iPhone. Os itens têm 52 px, ícone de 22 px e rótulo de 11 px; o ativo fica em dourado sólido.
 - **Abas** (`.et-tabs`): controle segmentado sobre um trilho `{colors.surface-2}`; a aba ativa é uma pastilha branca com sombra leve. Setas, Home e End funcionam pelo `componentes.js`.
@@ -582,7 +583,6 @@ Todos ficam em `static/css/componentes.css`, usam só tokens e têm a classe `.e
 ### Avisos flutuantes
 - **Toast** (`.et-toast`): escuro em qualquer tela, com ícone na cor do tom e fechar como botão fantasma. Fica no canto superior direito no desktop e embaixo no celular, acima da navegação inferior.
 - **Tooltip** (`.et-tooltip`): preto com texto claro de 13 px e entrada com zoom. É criado pelo JS e sempre acompanhado de `aria-label`.
-- **CTA fixo** (`.et-cta-fixo`): barra de conversão de vidro escuro no pé da página pública, até 768 px.
 - **Aviso de cookies** (`.et-consentimento`): cartão escuro no pé da tela em que "recusar" tem o mesmo peso de "aceitar".
 
 ### Foco

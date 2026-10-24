@@ -441,18 +441,6 @@ html:not(.cinema-js) .cinema-medidor {
 }
 
 /* ---------------------------------------------------------- responsivo --- */
-/* Com a barra fixa de conversão (visitante, até 768px), o cadastro já está nela:
-   o hero não repete o botão e deixa o pé livre para a barra. */
-@media (max-width: 768px) {
-  body.has-cta-fixo .cinema-cadastro {
-    display: none;
-  }
-
-  body.has-cta-fixo .cinema-sobreposicao {
-    padding-bottom: calc(92px + var(--sp-4) + var(--safe-b, 0px));
-  }
-}
-
 /* Celular: o texto sobe para o terço de cima e o emblema fica no vão de baixo. */
 @media (max-width: 720px) {
   .cinema-sobreposicao {
@@ -477,6 +465,16 @@ html:not(.cinema-js) .cinema-medidor {
 
   .cinema-rodape {
     margin-top: auto;
+  }
+
+  /* As ações ficam com a largura do cadastro (a seta desce para a linha de baixo): sem
+     isso elas tomavam a largura das duas lado a lado e espremiam o rótulo do medidor. */
+  .cinema-acoes {
+    width: min-content;
+  }
+
+  .cinema-cadastro {
+    white-space: nowrap;
   }
 
   .cinema-medidor {

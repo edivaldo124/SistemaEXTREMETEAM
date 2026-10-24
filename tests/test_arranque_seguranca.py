@@ -10,6 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 from werkzeug.security import generate_password_hash
 
 REPO_ROOT = str(Path(__file__).resolve().parent.parent)
@@ -76,6 +77,31 @@ def test_arranque_falha_com_segundo_fator_ilegivel(tmp_path):
     resultado = _rodar(tmp_path, ADMIN_TOTP_SECRET='nao-e-base32!')
     assert resultado.returncode != 0
     assert 'ADMIN_TOTP_SECRET' in resultado.stderr
+
+
+@pytest.mark.parametrize('endereco', [
+    'rediss://default:segredo-de-teste@.upstash.io:6379',
+    'rediss://default:segredo-de-teste@nome..upstash.io:6379',
+    'rediss://default:segredo-de-teste@' + 'a' * 64 + '.upstash.io:6379',
+    # A barra na senha corta o host, e o erro do redis-py repetiria "segredo-de" como porta.
+    'rediss://default:segredo-de/teste@nome.upstash.io:6379',
+])
+def test_arranque_falha_com_redis_de_host_malformado(tmp_path, endereco):
+    # Em 23/10 um host assim derrubou todas as páginas da produção com um erro do codec idna.
+    resultado = _rodar(tmp_path, RATELIMIT_STORAGE_URI=endereco)
+    assert resultado.returncode != 0
+    assert 'RATELIMIT_STORAGE_URI' in resultado.stderr
+    assert 'segredo-de' not in resultado.stderr
+
+
+def test_arranque_aceita_redis_do_upstash_com_espaco_em_volta(tmp_path):
+    resultado = _rodar(
+        tmp_path,
+        codigo='import servidor; print(servidor.app.config["RATELIMIT_STORAGE_URI"])',
+        RATELIMIT_STORAGE_URI=' rediss://default:Abc123@nome-12345.upstash.io:6379\n',
+    )
+    assert resultado.returncode == 0, resultado.stderr
+    assert resultado.stdout.strip() == 'rediss://default:Abc123@nome-12345.upstash.io:6379'
 
 
 # Status de /health para cada host e, se houver, quantos proxies o ProxyFix aceita.

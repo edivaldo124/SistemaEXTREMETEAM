@@ -16,9 +16,7 @@
     <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ dados_estruturados|tojson }}</script>
     <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ faq_estruturado|tojson }}</script>
 {% endblock %}
-{#- Visitante ganha a barra fixa de conversão no celular; quem já entrou, não. -#}
-{% set mostrar_cta_fixo = not session.get('tipo_usuario') %}
-{% block atributos_body %} class="pagina-cinema{% if mostrar_cta_fixo %} has-cta-fixo{% endif %}"{% endblock %}
+{% block atributos_body %} class="pagina-cinema"{% endblock %}
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cinema.css') }}">
@@ -207,7 +205,6 @@
         </section>
         {% include 'components/contatos_academia.html' %}
     </main>
-    {% if mostrar_cta_fixo %}{% include 'components/cta_fixo.html' %}{% endif %}
 {% endblock %}
 {% block fim_corpo %}
     <dialog id="meuModal"

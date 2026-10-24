@@ -119,7 +119,7 @@
    e realce dourado; a caixa marcada fica dourada com o sinal preto. */
 .home-header,.app-header,.admin-header,.detail-header,.account-header,
 .auth-shell,.home-footer,.app-footer,.aluno-hero,.erro-cartao,
-.et-plano--destaque,.et-cta-fixo,.et-consentimento,.et-toasts,.et-escuro,
+.et-plano--destaque,.et-consentimento,.et-toasts,.et-escuro,
 .mensalidade-card[data-status="pendente"],.mensalidade-card[data-status="atrasado"],
 .mensalidade-card[data-status="recusado"] {
   --botao-tinta:var(--et-text-on-dark);

@@ -1,13 +1,10 @@
-"""Conversão na home: perguntas frequentes, CTA fixo no celular e página de obrigado."""
+"""Conversão na home: perguntas frequentes, cadastro no hero e página de obrigado."""
 
 import json
 import re
 
-import pytest
-
 from config import db
 from modelos.academia import Academia
-from modelos.professor import Professor
 from servicos.conteudo_home import PERGUNTAS_FREQUENTES, TEMPO_RESPOSTA_WHATSAPP
 
 DADOS_CADASTRO = {
@@ -57,48 +54,26 @@ def test_tempo_de_resposta_so_aparece_com_whatsapp(client, contexto_app):
     assert f'respondemos {TEMPO_RESPOSTA_WHATSAPP}' in html
 
 
-# --- CTA fixo no celular -----------------------------------------------------------
+# --- Cadastro no hero ---------------------------------------------------------------
 
-def test_visitante_ve_o_cta_fixo_com_cadastro_e_whatsapp(client, contexto_app):
-    db.session.add(Academia(id=1, whatsapp='5511999998888'))
-    db.session.commit()
-    html = _html(client)
-    assert 'has-cta-fixo' in _body_tag(html)
-    barra = html.split('<nav class="et-cta-fixo"', 1)[1].split('</nav>', 1)[0]
-    assert 'href="/cadastrar"' in barra
-    assert 'href="https://wa.me/5511999998888"' in barra
-
-
-def test_cta_fixo_sem_whatsapp_so_tem_o_cadastro(client):
-    html = _html(client)
-    barra = html.split('<nav class="et-cta-fixo"', 1)[1].split('</nav>', 1)[0]
-    assert 'href="/cadastrar"' in barra
-    assert 'wa.me' not in barra
-
-
-def test_aluno_logado_nao_ve_o_cta_fixo(client, logar_como_aluno, criar_aluno):
-    logar_como_aluno(criar_aluno())
+# A barra fixa de cadastro no pé do celular saiu em 23/10/2026: ela acompanhava a rolagem e
+# cobria o conteúdo. O cadastro fica no próprio hero, para todo mundo e em qualquer largura.
+def test_home_nao_tem_barra_fixa_de_cadastro(client):
     html = _html(client)
     assert 'et-cta-fixo' not in html
     assert 'has-cta-fixo' not in _body_tag(html)
 
 
-def test_admin_logado_nao_ve_o_cta_fixo(client, logar_como_admin):
-    logar_como_admin()
-    assert 'et-cta-fixo' not in _html(client)
+def test_cadastro_fica_no_hero(client):
+    html = _html(client)
+    hero = html.split('class="cinema-rodape"', 1)[1].split('class="cinema-medidor"', 1)[0]
+    assert re.search(r'<a class="[^"]*cinema-cadastro[^"]*" href="/cadastrar">Criar minha conta</a>', hero)
 
 
-def test_professor_logado_nao_ve_o_cta_fixo(client, logar_como_professor, contexto_app):
-    professor = Professor(nome='Professor CTA', login='prof-cta', senha='senha123456')
-    db.session.add(professor)
+def test_whatsapp_da_academia_segue_na_home_sem_a_barra(client, contexto_app):
+    db.session.add(Academia(id=1, whatsapp='5511999998888'))
     db.session.commit()
-    logar_como_professor(professor)
-    assert 'et-cta-fixo' not in _html(client)
-
-
-@pytest.mark.parametrize('caminho', ['/cadastrar', '/login', '/termos-de-servico'])
-def test_cta_fixo_fica_so_na_home(client, caminho):
-    assert 'et-cta-fixo' not in _html(client, caminho)
+    assert 'href="https://wa.me/5511999998888"' in _html(client)
 
 
 # --- Página de obrigado (PRG) ------------------------------------------------------

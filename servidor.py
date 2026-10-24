@@ -61,6 +61,19 @@ if (url_base_publica.scheme.lower() == 'https'
         and rate_limit_storage.startswith('memory://')
         and os.environ.get('CRIAR_SCHEMA_NA_IMPORTACAO', '').lower() != 'true'):
     raise RuntimeError('RATELIMIT_STORAGE_URI deve usar armazenamento compartilhado em produção.')
+# Um host quebrado só estourava na primeira requisição, num erro do codec idna que derrubava
+# todas as páginas sem dizer qual variável olhar. O `from None` também esconde o erro original,
+# que repete pedaços da senha.
+if rate_limit_storage.startswith(('redis://', 'rediss://')):
+    try:
+        endereco_rate_limit = urlsplit(rate_limit_storage)
+        endereco_rate_limit.port
+        endereco_rate_limit.hostname.encode('idna')
+    except (AttributeError, ValueError):
+        raise RuntimeError(
+            'RATELIMIT_STORAGE_URI tem o host ou a porta malformados; o formato do Upstash é '
+            'rediss://default:<senha>@<nome>.upstash.io:6379.'
+        ) from None
 if not cookie_secure and url_base_publica.scheme.lower() == 'https':
     raise RuntimeError('COOKIE_SECURE=false não é permitido quando APP_BASE_URL usa HTTPS.')
 
@@ -86,7 +99,7 @@ app.config.update(
     MAX_CONTENT_LENGTH=10 * 1024 * 1024,
     MAX_FORM_MEMORY_SIZE=512 * 1024,
     MAX_FORM_PARTS=100,
-    RATELIMIT_STORAGE_URI=os.environ.get('RATELIMIT_STORAGE_URI', 'memory://'),
+    RATELIMIT_STORAGE_URI=rate_limit_storage,
 )
 
 hosts_confiaveis = [

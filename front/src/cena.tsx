@@ -490,6 +490,10 @@ function CenaDoEmblema({ estreito, leve, eventSource, aoFicarPronta, aoPerderCon
   const [dpr, setDpr] = useState(leve ? 1 : estreito ? 1.5 : 1.75)
   // Fora da tela (a pessoa já rolou para os planos), a cena para de desenhar.
   const [visivel, setVisivel] = useState(true)
+  // O iOS derruba o contexto WebGL quando o Safari vai para segundo plano ou falta memória.
+  // O three.js recria tudo sozinho quando ele volta, mas o pôster que cobriu a cena na perda
+  // ficava para sempre: a cada volta, o aviso conta de novo os quadros e tira o pôster.
+  const [restauracoes, setRestauracoes] = useState(0)
   useEffect(() => {
     const observador = new IntersectionObserver(([entrada]) => setVisivel(entrada.isIntersecting))
     observador.observe(eventSource)
@@ -504,14 +508,17 @@ function CenaDoEmblema({ estreito, leve, eventSource, aoFicarPronta, aoPerderCon
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       eventSource={eventSource}
       eventPrefix="client"
-      onCreated={({ gl }) => gl.domElement.addEventListener('webglcontextlost', aoPerderContexto)}
+      onCreated={({ gl }) => {
+        gl.domElement.addEventListener('webglcontextlost', aoPerderContexto)
+        gl.domElement.addEventListener('webglcontextrestored', () => setRestauracoes((n) => n + 1))
+      }}
     >
       <PerformanceMonitor onDecline={() => setDpr(1)} />
       <Camera estreito={estreito} />
       {/* Até a imagem do emblema chegar não há o que mostrar: o pôster fica. */}
       <Suspense fallback={null}>
         <Conjunto estreito={estreito} leve={leve} />
-        <AvisoPronta aoFicarPronta={aoFicarPronta} />
+        <AvisoPronta key={restauracoes} aoFicarPronta={aoFicarPronta} />
       </Suspense>
     </Canvas>
   )
