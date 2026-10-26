@@ -15,7 +15,7 @@ export default defineConfig({
     outDir: aqui('../static/dist/cinema'),
     emptyOutDir: true,
     manifest: 'manifest.json',
-    target: 'es2022',
+    target: ['es2022', 'safari15'],
     modulePreload: { polyfill: false },
     // A cena leva o three.js inteiro (o R3F importa o pacote todo): ~1,15 MB, 317 KB
     // gzip. É baixada só depois que a página carregou, então o aviso padrão de 500 KB
