@@ -49,6 +49,12 @@
       "skillPath": "skills/penetration-testing-with-strix/SKILL.md",
       "computedHash": "476406af8b4d3bf8d09873cf6445f66b428e3efa8b5f55e69f52b1d0685f7fe2"
     },
+    "security-audit": {
+      "source": "cloudflare/security-audit-skill",
+      "sourceType": "github",
+      "skillPath": "skills/security-audit/SKILL.md",
+      "computedHash": "98b97aad2873b3b9a8e064007c25e7827b493ba27fda8bfbdb41dab586767973"
+    },
     "web-app-penetration-testing": {
       "source": "usestrix/strix",
       "sourceType": "github",
