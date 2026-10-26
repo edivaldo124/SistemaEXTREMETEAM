@@ -1,0 +1,1506 @@
+[
+ {
+  "coverage_id": "blueprints%2Fadm_bp.py%20%2B%20turma_bp.py%20%2B%20academia_bp.py%20%2B%20planilha_bp.py%20%2B%20OAuth%20admin%20blueprints%23all%20routes::servicos%2Fautorizacao.py%23admin_requerido%2Fprofessor_ou_admin_requerido%20%2B%20blueprints%2Fadm_bp.py%23usuario_e_admin::profile%2Fquick%2Fall-in-scope-subsystems::ATTACK-CLASSES.md%23Access%20control",
+  "canonical_refs": {
+   "surface": "blueprints/adm_bp.py + turma_bp.py + academia_bp.py + planilha_bp.py + OAuth admin blueprints#all routes",
+   "boundary": "servicos/autorizacao.py#admin_requerido/professor_ou_admin_requerido + blueprints/adm_bp.py#usuario_e_admin",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "ATTACK-CLASSES.md#Access control"
+  },
+  "surface": "Rotas de admin e professor",
+  "boundary": "Autorização de admin e escopo do professor",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Access control",
+  "starting_paths": [
+   "blueprints/adm_bp.py",
+   "blueprints/turma_bp.py",
+   "blueprints/academia_bp.py",
+   "blueprints/planilha_bp.py",
+   "blueprints/mercado_pago_oauth_bp.py",
+   "blueprints/gmail_oauth_bp.py",
+   "servicos/autorizacao.py",
+   "config.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+  "selected_companion_blocks": [
+   "WEB-PROTOCOL-AND-AUTH.md#Ordinary CSRF",
+   "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+   "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+   "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "covered",
+  "agent_id": "h03-acesso",
+  "reviewed_paths": [
+   "blueprints/adm_bp.py",
+   "blueprints/turma_bp.py",
+   "blueprints/academia_bp.py",
+   "blueprints/planilha_bp.py",
+   "blueprints/mercado_pago_oauth_bp.py",
+   "blueprints/gmail_oauth_bp.py",
+   "servicos/autorizacao.py",
+   "config.py",
+   "servidor.py",
+   "blueprints/pix_bp.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h03-acesso",
+    "reviewed_paths": [
+     "blueprints/adm_bp.py",
+     "servicos/autorizacao.py"
+    ],
+    "invariant": "Every /admin route in adm_bp (29 routes) requires a revalidated admin session (sid not revoked + credential fingerprint of ADMIN_PASSWORD_HASH/TOTP reference) before any read or state change",
+    "method": "source",
+    "result": "Each handler's first statement is `if not usuario_e_admin(): return redirect('/login')`, delegating to sessao_administrativa_valida (servicos/autorizacao.py:163-184). Bulk operations (avisos, cobranca em lote) and destructive ones (remover aluno) also require an additional session-bound token. No unguarded route found; session['tipo_usuario']='admin' is set only in usuario_bp._abrir_sessao_admin.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h03-acesso",
+    "reviewed_paths": [
+     "blueprints/turma_bp.py",
+     "blueprints/academia_bp.py",
+     "blueprints/planilha_bp.py",
+     "blueprints/mercado_pago_oauth_bp.py",
+     "blueprints/gmail_oauth_bp.py",
+     "blueprints/pix_bp.py"
+    ],
+    "invariant": "Admin-only routes in turma/academia/planilha/OAuth/pix-sync blueprints use admin_requerido or sessao_administrativa_valida; professor routes bind turma.professor_id to the revalidated professor",
+    "method": "source",
+    "result": "All /admin/* routes in these blueprints carry @admin_requerido (or explicit sessao_administrativa_valida in pix_bp sincronizar). /turmas/<id> and /turmas/<id>/presenca apply professor_ou_admin_requerido plus _acesso_permitido (turma.professor_id == professor.id); matricular/desmatricular are admin-only; presence writes are limited to enrolled students of that turma. /professores/<id>/foto exposes unpublished photo only to admin or the professor himself.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h03-acesso",
+    "reviewed_paths": [
+     "servidor.py",
+     "config.py",
+     "blueprints/pix_bp.py"
+    ],
+    "invariant": "Cookie-authenticated mutations are covered by CSRF protection; no state-changing GET",
+    "method": "source",
+    "result": "CSRFProtect is initialized globally (servidor.py:183); the only exemption is the HMAC-signed MP webhook (pix_bp.py:479). Admin/professor mutations are POST. The GET /admin/*/conectar routes only write OAuth state into the caller's own session (OAuth callback binding is peer-owned).",
+    "artifact": null
+   },
+   {
+    "agent_id": "h03-acesso",
+    "reviewed_paths": [
+     "blueprints/turma_bp.py",
+     "blueprints/adm_bp.py",
+     "servicos/autorizacao.py"
+    ],
+    "invariant": "Lower-trust principals (aluno, professor of another turma) cannot reach admin routes or another professor's turma",
+    "method": "local",
+    "result": "Sandboxed pytest with dummy records: aluno on /admin and /admin/planilha -> 302 /login; professor prof1 on turma of prof2 -> GET 403, POST presenca 403; professor on /turmas/<id>/matricular -> 302 /login; professor on /admin -> 302 /login.",
+    "artifact": "agents/h03-acesso/artifacts/evidence/check-01.txt"
+   }
+  ],
+  "result_fingerprints": [],
+  "unresolved": [],
+  "unidade_curta": "u07",
+  "hardening_notes": [
+   "blueprints/usuario_bp.py:685 checks login uniqueness only against Aluno, not Professor/ADMIN_USER; login order is admin->professor->aluno, so a student renaming to a professor's login only shadows themself (no cross-principal effect found), but a global uniqueness check would remove the ambiguity.",
+   "blueprints/adm_bp.py uses an explicit per-handler `if not usuario_e_admin()` rather than a blueprint-level before_request; all 29 current routes have it, but a before_request guard on admin_bp would fail closed for future routes."
+  ]
+ },
+ {
+  "coverage_id": "blueprints%2Fgoogle_login.py%20%2B%20blueprints%2Fmercado_pago_oauth_bp.py%20%2B%20blueprints%2Fgmail_oauth_bp.py%23OAuth%20callbacks::state%2FPKCE%20validation%20%2B%20servicos%2Fmercado_pago_conta.py%23_fernet%20%2B%20servicos%2Fgmail_conta.py%23_fernet::profile%2Fquick%2Fall-in-scope-subsystems::WEB-PROTOCOL-AND-AUTH.md%23OAuth%2FOIDC%20request%20and%20callback%20binding",
+  "canonical_refs": {
+   "surface": "blueprints/google_login.py + blueprints/mercado_pago_oauth_bp.py + blueprints/gmail_oauth_bp.py#OAuth callbacks",
+   "boundary": "state/PKCE validation + servicos/mercado_pago_conta.py#_fernet + servicos/gmail_conta.py#_fernet",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "WEB-PROTOCOL-AND-AUTH.md#OAuth/OIDC request and callback binding"
+  },
+  "surface": "Callbacks OAuth",
+  "boundary": "Vínculo do callback à sessão e cifra de tokens",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "OAuth/OIDC request and callback binding",
+  "starting_paths": [
+   "blueprints/google_login.py",
+   "blueprints/mercado_pago_oauth_bp.py",
+   "blueprints/gmail_oauth_bp.py",
+   "servicos/gmail_conta.py",
+   "servicos/mercado_pago_conta.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Cryptography and secrets",
+  "selected_companion_blocks": [
+   "WEB-PROTOCOL-AND-AUTH.md#OAuth/OIDC request and callback binding",
+   "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+   "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+   "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "covered",
+  "agent_id": "h02-sessao-oauth",
+  "reviewed_paths": [
+   "blueprints/google_login.py",
+   "blueprints/mercado_pago_oauth_bp.py",
+   "blueprints/gmail_oauth_bp.py",
+   "servicos/gmail_conta.py",
+   "servicos/mercado_pago_conta.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h02-sessao-oauth",
+    "reviewed_paths": [
+     "blueprints/google_login.py"
+    ],
+    "invariant": "Google login callback accepts only the state issued to this session (one-time, 10-minute TTL), exchanges the code with the session's PKCE verifier and client secret, uses a fixed redirect_uri from APP_BASE_URL, requires email_verified is True, and rotates the session on success",
+    "method": "source",
+    "result": "Holds. The state is popped from the session before validation and compared with hmac.compare_digest after type and TTL checks (google_login.py:43-53, 97-101). The code is exchanged with code_verifier, client_secret and a redirect_uri that does not depend on the Host header (106-114). No ID token is consumed; identity comes from userinfo, called with the access token this server just obtained. email_verified must be exactly True (128). acesso_ativado, status and ativo are checked, then session.clear() + iniciar_sessao() + registrar_credencial run (151-174). Marking email_verificado on pending accounts (141-144) belongs to the peer account-linking unit and was not judged here.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h02-sessao-oauth",
+    "reviewed_paths": [
+     "blueprints/mercado_pago_oauth_bp.py",
+     "servicos/mercado_pago_conta.py"
+    ],
+    "invariant": "MP OAuth callback is admin-only, bound to a one-time session state with TTL plus a PKCE S256 verifier, and stores tokens encrypted",
+    "method": "source",
+    "result": "Holds. conectar/callback are @admin_requerido. The state and verifier are generated with secrets (mercado_pago_conta.py:160-164) and popped once in the callback (mercado_pago_oauth_bp.py:109). The provider's error param is handled before the state check, but that path only shows a flash message and changes no state. The code length is capped and _autorizacao_valida compares in constant time with a TTL. The token exchange sends the verifier and the fixed redirect_uri. Tokens are Fernet-encrypted (authenticated) with MERCADO_PAGO_TOKEN_KEY or an HKDF-derived subkey of SECRET_KEY (info-separated). A decrypt failure raises ConexaoIlegivel/MercadoPagoIndisponivel and never falls back to plaintext. access_token_vigente falls back to the env token only when no connection row exists.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h02-sessao-oauth",
+    "reviewed_paths": [
+     "blueprints/gmail_oauth_bp.py",
+     "servicos/gmail_conta.py"
+    ],
+    "invariant": "Gmail OAuth callback is admin-only and bound to a one-time session state with TTL; the refresh token is stored with authenticated encryption and never used if decryption fails",
+    "method": "source",
+    "result": "Holds. Both routes are @admin_requerido. The state is popped and compared with hmac.compare_digest under a 600 s TTL (gmail_oauth_bp.py:34-41). The redirect_uri comes from APP_BASE_URL. The refresh token is Fernet-encrypted with an HKDF(SECRET_KEY, info='extremeteam/gmail/tokens/v1') key, and _decifrar raises on InvalidToken. PKCE is absent (see hardening). With session-bound state and an admin-only callback, an injected code needs the admin's own session, so there is no cross-principal impact.",
+    "artifact": null
+   }
+  ],
+  "result_fingerprints": [],
+  "unresolved": [],
+  "unidade_curta": "u10",
+  "hardening_notes": [
+   "Gmail OAuth (servicos/gmail_conta.py nova_autorizacao/trocar_codigo) sends no PKCE, unlike the Google login and Mercado Pago flows. The state is session-bound and the callback is admin-only, so no cross-principal impact was found; adding S256 PKCE would make the three flows consistent.",
+   "The admin TOTP reuse block fails open when limiter storage (Redis) errors (blueprints/usuario_bp.py:226-238). This is a deliberate availability trade-off: password and code are still required, and only replay protection within about 90 s is lost.",
+   "The admin TOTP pending marker (admin_segundo_fator) stores only a timestamp, not the credential reference that passed the password step. A password rotation within the 5-minute window does not void the pending step; the TOTP code is still required.",
+   "Investigation note: in the test suite, the contexto_app fixture keeps an outer app context, so flask.g is shared across test-client requests and _sessao_ativa's g._sessao_conferida cache can mask revocation. Revocation tests should not hold an app context across requests."
+  ]
+ },
+ {
+  "coverage_id": "blueprints%2Fpix_bp.py%23%2Fapi%2Fmensalidades%2F%3Cid%3E%2Fpix%2C%2Fstatus%2C%2Fapi%2Fwebhooks%2Fmercado-pago%20%2B%20blueprints%2Fcheckout_bp.py::blueprints%2Fpix_bp.py%23_processar_status_mp%20%2B%20servicos%2Fmercado_pago.py%23validar_assinatura_webhook::profile%2Fquick%2Fall-in-scope-subsystems::ATTACK-CLASSES.md%23Business%20logic",
+  "canonical_refs": {
+   "surface": "blueprints/pix_bp.py#/api/mensalidades/<id>/pix,/status,/api/webhooks/mercado-pago + blueprints/checkout_bp.py",
+   "boundary": "blueprints/pix_bp.py#_processar_status_mp + servicos/mercado_pago.py#validar_assinatura_webhook",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "ATTACK-CLASSES.md#Business logic"
+  },
+  "surface": "Pagamentos Pix, Checkout Pro e webhook",
+  "boundary": "Conciliação com a API do Mercado Pago e assinatura do webhook",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Business logic",
+  "starting_paths": [
+   "blueprints/pix_bp.py",
+   "blueprints/checkout_bp.py",
+   "servicos/mercado_pago.py",
+   "servicos/mercado_pago_conta.py",
+   "dao/financeiroDAO.py",
+   "servicos/planos.py",
+   "servicos/limites_pagamento.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+  "selected_companion_blocks": [
+   "PROTOCOLS-RPC-AND-MESSAGING.md#Duplicate delivery and idempotency gaps",
+   "PROTOCOLS-RPC-AND-MESSAGING.md#Out-of-order and stale message acceptance",
+   "PROTOCOLS-RPC-AND-MESSAGING.md#Envelope and payload identity mismatch",
+   "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+   "PROTOCOLS-RPC-AND-MESSAGING.md#Universal moves",
+   "PROTOCOLS-RPC-AND-MESSAGING.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "covered",
+  "agent_id": "h04-pagamentos",
+  "reviewed_paths": [
+   "blueprints/pix_bp.py",
+   "blueprints/checkout_bp.py",
+   "servicos/mercado_pago.py",
+   "dao/financeiroDAO.py",
+   "servicos/limites_pagamento.py",
+   "modelos/pagamento.py",
+   "dao/matriculaDAO.py",
+   "modelos/matricula.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h04-pagamentos",
+    "reviewed_paths": [
+     "blueprints/pix_bp.py",
+     "servicos/mercado_pago.py"
+    ],
+    "invariant": "Webhook only acts on a provider-signed data.id (HMAC over id/request-id/ts, finite ts within 300 s, constant-time compare); body fields other than type are never trusted; status, reference, amount and currency are always re-fetched from the MP API with the academy credential",
+    "method": "source",
+    "result": "validar_assinatura_webhook (servicos/mercado_pago.py:432-471) rejects missing/NaN/stale ts and compares HMAC in constant time; secret absent -> 500 fail-closed (pix_bp.py:491-494); _tratar_webhook uses only data.id and buscar_pagamento result (pix_bp.py:515-557). Duplicate-delivery marker is set before mutation and released on 5xx/exception; it fails open on storage error but processing is idempotent (approval not reapplied when status already 'pago'; registrar_evento_unico dedups events).",
+    "artifact": null
+   },
+   {
+    "agent_id": "h04-pagamentos",
+    "reviewed_paths": [
+     "blueprints/pix_bp.py",
+     "dao/financeiroDAO.py"
+    ],
+    "invariant": "Envelope/payload identity: a provider payment can only settle the mensalidade whose server-generated reference it carries, with exact amount (±0.01) and BRL; stale rejected/in_process/refund notifications for non-settling payments cannot reopen or refund a paid mensalidade; approval cannot reopen cancelled/refunded mensalidades",
+    "method": "source",
+    "result": "_processar_status_mp (pix_bp.py:560-682) requires external_reference/amount/currency on approval, rejects references not stored on the row unless they fullmatch the server's own 'mensalidade-<id>-'/'checkout-<id>-' format for the same id; outro_pagamento guards duplicate refunds; marcar_em_processamento/marcar_recusado no-op on closed states (financeiroDAO.py:955-981); approvals on cancelado/reembolsado only log an event. Amounts always come from the DB (pix_bp.py:314-322, checkout_bp.py:142-151); checkout reuse requires checkout_valor == valor.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h04-pagamentos",
+    "reviewed_paths": [
+     "blueprints/pix_bp.py",
+     "dao/financeiroDAO.py"
+    ],
+    "invariant": "Bounded local check of reconciliation: cross-mensalidade reference, amount mismatch, incomplete approval, and out-of-order rejected/in_process/duplicate-refund/stale-approved messages do not produce an unauthorized paid/reopened state",
+    "method": "local",
+    "result": "4 tests passed: approval carrying another mensalidade's reference left target 'pendente'; amount 1.00 vs 150.00 left 'pendente'; approval without external_reference left 'pendente'; after approval by id 333, later rejected(334)/in_process(335)/refunded(336) kept 'pago' with provider_payment_id 333; refund of 333 -> 'reembolsado'; a stale approved(333) afterwards kept 'reembolsado'.",
+    "artifact": "agents/h04-pagamentos/artifacts/evidence/check-01.txt"
+   },
+   {
+    "agent_id": "h04-pagamentos",
+    "reviewed_paths": [
+     "blueprints/pix_bp.py",
+     "blueprints/checkout_bp.py",
+     "dao/financeiroDAO.py",
+     "dao/matriculaDAO.py",
+     "modelos/matricula.py",
+     "servicos/limites_pagamento.py",
+     "modelos/pagamento.py"
+    ],
+    "invariant": "State machine and concurrency: Pix/checkout creation is owner-or-admin, only for payable states, under row lock, and replaced charges cannot settle a different amount; checkout return/status polling ignore URL parameters",
+    "method": "source",
+    "result": "criar_pix/abrir_checkout lock the row (bloquear_para_atualizacao) and re-check status/provider id after the MP call; _acesso_permitido revalidates the session in DB; retorno_checkout uses only the stored checkout_external_reference. Polling/admin sync paths run _processar_status_mp without a row lock, but a concurrent double approval is idempotent (vigencia already set, Matricula unique constraint uq_matricula_aluno_turma). No lower-trust principal can reach an unpaid 'pago', a cross-row settlement or a second charge for a closed period.",
+    "artifact": null
+   }
+  ],
+  "result_fingerprints": [],
+  "unresolved": [],
+  "unidade_curta": "u05",
+  "hardening_notes": [
+   "Promotional price lock-in: _nova_cobranca stores preco(plano, hoje) and unpaid charges never expire or reprice. abrir_vigencia reopens the period on late payment, so a student can create a charge during a promotion and pay the promotional price at any later date (dao/financeiroDAO.py:287-309, 636-662). This is documented as intended. If policy requires it, reprice or expire unpaid charges after the promotion ends.",
+   "Refund/chargeback (marcar_reembolsado_via_webhook, dao/financeiroDAO.py:943-952) revokes vigencia but leaves the Matricula auto-created by efetivar_turma_da_cobranca. Each paid charge can add another turma, and enrollments are never removed. A charged-back student keeps a seat in a capacity-limited turma until an admin intervenes.",
+   "Interactive status polling, checkout return and admin sync call _processar_status_mp without bloquear_para_atualizacao (blueprints/pix_bp.py:354-383, checkout_bp.py:221-232, pix_bp.py:408-428). A refund webhook committed while a poller holds an older 'approved' API result could be overwritten back to 'pago'. The window is only the length of one API call (about 3 s) and is not attacker-driven. Locking the row before applying the result would close it.",
+   "_primeira_entrega_webhook fails open when the limiter storage errors (blueprints/pix_bp.py:463-467). This is acceptable only because processing is idempotent and always re-fetches the payment from the API.",
+   "A replan after the checkout preference expires (60 min) can leave a boleto/pending payment already issued at the old amount. If paid, it is refused by the amount check and logged only, so the student's money arrives without settlement and an admin must reconcile it (dao/financeiroDAO.py:273-280 does not consider checkout-originated pending payments)."
+  ]
+ },
+ {
+  "coverage_id": "blueprints%2Fusuario_bp.py%23%2Flogin%20and%20%2Flogin%2Fverificacao%20%2B%20servidor.py%23%2Flogout::servicos%2Fautorizacao.py%23sessao_administrativa_valida%2Faluno_autorizado%2Fprofessor_autorizado::profile%2Fquick%2Fall-in-scope-subsystems::WEB-PROTOCOL-AND-AUTH.md%23Session%20fixation%20and%20invalidation",
+  "canonical_refs": {
+   "surface": "blueprints/usuario_bp.py#/login and /login/verificacao + servidor.py#/logout",
+   "boundary": "servicos/autorizacao.py#sessao_administrativa_valida/aluno_autorizado/professor_autorizado",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "WEB-PROTOCOL-AND-AUTH.md#Session fixation and invalidation"
+  },
+  "surface": "Login, segundo fator do admin e logout",
+  "boundary": "Sessão revalidada (sid revogável + impressão da credencial)",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Session fixation and invalidation",
+  "starting_paths": [
+   "blueprints/usuario_bp.py",
+   "servicos/autorizacao.py",
+   "servicos/credenciais.py",
+   "servidor.py",
+   "dao/usuarioDAO.py",
+   "dao/professorDAO.py",
+   "modelos/sessao_revogada.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+  "selected_companion_blocks": [
+   "WEB-PROTOCOL-AND-AUTH.md#Session fixation and invalidation",
+   "WEB-PROTOCOL-AND-AUTH.md#Step-up binding and bypass",
+   "WEB-PROTOCOL-AND-AUTH.md#MFA enrollment and assurance downgrade",
+   "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+   "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+   "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "candidate",
+  "agent_id": "h02-sessao-oauth",
+  "reviewed_paths": [
+   "blueprints/usuario_bp.py",
+   "modelos/sessao_revogada.py",
+   "servicos/autorizacao.py",
+   "servicos/credenciais.py",
+   "servidor.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h02-sessao-oauth",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "servicos/autorizacao.py"
+    ],
+    "invariant": "Every login (admin, professor, aluno, and admin after TOTP) rotates the session: it clears the old contents, issues a new sid and stamps the current credential",
+    "method": "source",
+    "result": "Holds. pagina_login calls session.clear() before the admin TOTP marker or opening the admin session (usuario_bp.py:157,216-217) and session.clear()+iniciar_sessao() for professor and aluno (168-169, 188-189). Google login does the same. Credential fingerprints are re-checked on every protected request (autorizacao.py:105-118), so a password change, an admin hash or TOTP-secret rotation, and account deactivation all invalidate existing cookies.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h02-sessao-oauth",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "servicos/credenciais.py"
+    ],
+    "invariant": "The admin TOTP step can only be reached after a correct password in the same session, expires after 5 minutes, accepts each code once, and the partial state gives no admin privileges",
+    "method": "source",
+    "result": "Holds, with one documented trade-off. The marker admin_segundo_fator is set only after credencial_admin_confere and session.clear() (usuario_bp.py:156-162). The partial session has no tipo_usuario, so sessao_administrativa_valida is False. The code is checked in constant time across ±1 step and fails closed on an invalid secret (credenciais.py:157-177). The reuse block fails open when limiter storage errors (usuario_bp.py:226-238); this is intentional and noted in hardening.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h02-sessao-oauth",
+    "reviewed_paths": [
+     "servidor.py",
+     "servicos/autorizacao.py",
+     "modelos/sessao_revogada.py"
+    ],
+    "invariant": "After logout, a copied cookie carrying the revoked sid must never authorize a request again",
+    "method": "local",
+    "result": "Violated. Revocation is checked only inside the protected-route helpers. SESSION_REFRESH_EACH_REQUEST=True (servidor.py:98) re-signs a permanent cookie with a fresh timestamp on any public request, so a revoked cookie stays valid for as long as it is used. Its revocation row is purged at logout+35 min by the next logout (autorizacao.py:55,58), after which the sid passes _sessao_ativa again. Local run: the stolen cookie got 302 /login right after logout. A GET /login at T0+25 min re-issued it with the same sid. Another user's logout at T0+40 purged the row. At T0+55, GET /perfil returned 200 with the victim's profile.",
+    "artifact": "agents/h02-sessao-oauth/artifacts/evidence/check-01.txt"
+   },
+   {
+    "agent_id": "v01-sessao",
+    "reviewed_paths": [
+     "servicos/autorizacao.py",
+     "servidor.py"
+    ],
+    "invariant": "Independent verification of servicos/autorizacao.py:revogar_sessao_atual:revocation-row-purged-while-refreshable-cookie-lives",
+    "method": "local",
+    "result": "Verifier decision: confirmed; severity: medium",
+    "artifact": "agents/v01-sessao/artifacts/evidence/check-01.txt"
+   }
+  ],
+  "result_fingerprints": [
+   "servicos/autorizacao.py:revogar_sessao_atual:revocation-row-purged-while-refreshable-cookie-lives"
+  ],
+  "unresolved": [],
+  "unidade_curta": "u03",
+  "hardening_notes": [
+   "Gmail OAuth (servicos/gmail_conta.py nova_autorizacao/trocar_codigo) sends no PKCE, unlike the Google login and Mercado Pago flows. The state is session-bound and the callback is admin-only, so no cross-principal impact was found; adding S256 PKCE would make the three flows consistent.",
+   "The admin TOTP reuse block fails open when limiter storage (Redis) errors (blueprints/usuario_bp.py:226-238). This is a deliberate availability trade-off: password and code are still required, and only replay protection within about 90 s is lost.",
+   "The admin TOTP pending marker (admin_segundo_fator) stores only a timestamp, not the credential reference that passed the password step. A password rotation within the 5-minute window does not void the pending step; the TOTP code is still required.",
+   "Investigation note: in the test suite, the contexto_app fixture keeps an outer app context, so flask.g is shared across test-client requests and _sessao_ativa's g._sessao_conferida cache can mask revocation. Revocation tests should not hold an app context across requests."
+  ],
+  "decisions": {
+   "servicos/autorizacao.py:revogar_sessao_atual:revocation-row-purged-while-refreshable-cookie-lives": "confirmed"
+  }
+ },
+ {
+  "coverage_id": "blueprints%2Fusuario_bp.py%23%2Frecuperar_senha%20and%20%2Frecuperar_senha%2F%3Ctoken%3E::blueprints%2Fusuario_bp.py%23redefinir_senha%20token%20check::profile%2Fquick%2Fall-in-scope-subsystems::WEB-PROTOCOL-AND-AUTH.md%23Password%20reset%20and%20broader%20recovery",
+  "canonical_refs": {
+   "surface": "blueprints/usuario_bp.py#/recuperar_senha and /recuperar_senha/<token>",
+   "boundary": "blueprints/usuario_bp.py#redefinir_senha token check",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "WEB-PROTOCOL-AND-AUTH.md#Password reset and broader recovery"
+  },
+  "surface": "Recuperação de senha",
+  "boundary": "Token de recuperação de uso único",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Password reset and broader recovery",
+  "starting_paths": [
+   "blueprints/usuario_bp.py",
+   "modelos/usuario.py",
+   "servicos/senhas.py",
+   "servicos/convites.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Cryptography and secrets",
+  "selected_companion_blocks": [
+   "WEB-PROTOCOL-AND-AUTH.md#Password reset and broader recovery",
+   "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+   "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+   "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   },
+   {
+    "block": "WEB-PROTOCOL-AND-AUTH.md#Account linking and identity collision",
+    "reason": "Coberta por u01."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "covered",
+  "agent_id": "h01-contas",
+  "reviewed_paths": [
+   "blueprints/usuario_bp.py",
+   "modelos/usuario.py",
+   "servicos/autorizacao.py",
+   "servicos/convites.py",
+   "servicos/senhas.py",
+   "servicos/urls.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h01-contas",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "modelos/usuario.py",
+     "servicos/urls.py"
+    ],
+    "invariant": "Recovery token is CSPRNG, stored only as SHA-256, bound to the CPF+email-matched account with acesso_ativado, expires in 30 min, is single-use, supersedes earlier tokens, and its link origin comes from configuration rather than the Host header",
+    "method": "source",
+    "result": "secrets.token_urlsafe(32) (usuario_bp.py:979), only the sha256 is stored (986), expiry is 30 min (987, 961) and is checked with <= (1019). The token is looked up by an exact indexed hash, with no timing-sensitive compare on the secret. On success _revogar_tokens_de_conta clears the recovery, invite and email-change tokens (1031, 635-648). One column per account means a new request overwrites the earlier hash. url_publica uses APP_BASE_URL only (servicos/urls.py:11-34), not Host. The token email bypasses the cleartext emails_pendentes queue (_enviar_em_segundo_plano, 129-135, 990). Both routes are rate limited (963-968, 1007-1011). The response is identical for unknown and known CPF+email (998).",
+    "artifact": null
+   },
+   {
+    "agent_id": "h01-contas",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "servicos/autorizacao.py",
+     "servicos/senhas.py"
+    ],
+    "invariant": "A password reset invalidates existing sessions and pending account-redirect tokens",
+    "method": "source",
+    "result": "set_senha changes senha_hash, and aluno_autorizado revalidates the credential fingerprint on every request (autorizacao.py:121-137), so sessions opened before the reset die. Pending email-change and invite tokens are cleared. Existing regression tests cover session revocation and expiry (tests/test_regressao_auditoria.py:138,165,467).",
+    "artifact": null
+   },
+   {
+    "agent_id": "h01-contas",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py"
+    ],
+    "invariant": "Bounded local check: a superseded token is rejected, the latest token works once, and reuse is rejected",
+    "method": "local",
+    "result": "Sandboxed pytest: the old token after a new request gave 'Link inválido' (True), the new token was accepted ('Senha alterada', True), and reusing it was rejected ('Link inválido', True).",
+    "artifact": "agents/h01-contas/artifacts/evidence/check-03.txt"
+   },
+   {
+    "agent_id": "h01-contas",
+    "reviewed_paths": [
+     "servicos/convites.py"
+    ],
+    "invariant": "An invite token cannot be replayed into an already-activated account, and two concurrent activations cannot overwrite each other's credentials",
+    "method": "source",
+    "result": "aluno_do_token refuses activated accounts (convites.py:62-63). ativar_acesso writes conditionally (usuario_bp.py:926-933) on the token hash, expiry, senha_hash IS NULL and unchanged email, so it is atomic. The token is delivered only to the admin-registered aluno.email (convites.py:76-90).",
+    "artifact": null
+   }
+  ],
+  "result_fingerprints": [],
+  "unresolved": [],
+  "unidade_curta": "u02",
+  "hardening_notes": [
+   "The /cadastrar verification link (usuario_bp.py:420-431) goes through fila_email.enfileirar_transacional, so the token is stored in cleartext in emails_pendentes.link_url. The design comment at usuario_bp.py:129-135 says token emails must avoid the queue (peer-owned fila_email unit).",
+   "confirmar_email (usuario_bp.py:849) does not recheck that email_pendente is still unused. If another account claimed that address meanwhile, the unique constraint raises an IntegrityError (500) rather than a clean refusal. This is not a security bypass, because the DB constraint holds.",
+   "Signup collision checks and email-change uniqueness consider only Aluno.email, not other accounts' email_pendente. Two accounts can hold the same pending address, and the first to confirm wins. There is no cross-account impact, because confirmation needs the token sent to that address."
+  ]
+ },
+ {
+  "coverage_id": "blueprints%2Fusuario_bp.py%23POST%20%2Flogin%2C%20%2Flogin%2Fverificacao%2C%20%2Fcadastrar%2C%20%2Frecuperar_senha%20%28pre-auth%20credential%20and%20limiter-key%20handling%29::config.py%23limiter%2Fchave_da_conta%20%2B%20blueprints%2Fusuario_bp.py%23_resumo_identificador%2F_chave_ip_e_identificador%20limiter%20keys::profile%2Fquick%2Fall-in-scope-subsystems::RESOURCE-EXHAUSTION-AND-AVAILABILITY.md%23Quota-accounting%20scope%20and%20reset%20gaps",
+  "canonical_refs": {
+   "surface": "blueprints/usuario_bp.py#POST /login, /login/verificacao, /cadastrar, /recuperar_senha (pre-auth credential and limiter-key handling)",
+   "boundary": "config.py#limiter/chave_da_conta + blueprints/usuario_bp.py#_resumo_identificador/_chave_ip_e_identificador limiter keys",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota-accounting scope and reset gaps"
+  },
+  "surface": "Rotas pré-autenticação e chaves do limitador",
+  "boundary": "Escopo das cotas de login/2FA/cadastro/recuperação",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Quota-accounting scope and reset gaps",
+  "starting_paths": [
+   "blueprints/usuario_bp.py",
+   "config.py",
+   "servicos/credenciais.py",
+   "servicos/senhas.py",
+   "servidor.py"
+  ],
+  "ordinary_attack_class_block": null,
+  "selected_companion_blocks": [
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota-accounting scope and reset gaps",
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Pre-authentication work imbalance",
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules",
+   "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+   "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "deferred",
+  "agent_id": null,
+  "reviewed_paths": [],
+  "local_checks": [],
+  "result_fingerprints": [],
+  "unresolved": [
+   "quick_profile_final_critic: nenhuma unidade cobriu as chaves de limite pré-autenticação (login 10/h por hash do usuário sem IP em usuario_bp.py:144-147, chave global do TOTP em usuario_bp.py:246) nem o custo de hash por requisição anônima; o perfil quick não abre segunda onda."
+  ],
+  "unidade_curta": "u13",
+  "critic_reason": "Critic final: unidade ausente para quota/lockout de login e custo de hash pré-auth."
+ },
+ {
+  "coverage_id": "blueprints%2Fusuario_bp.py%23POST%20%2Fperfil%20%28contratar%2Frenovar%2Fagendar%20mudan%C3%A7a%29%20%2B%20dao%2FfinanceiroDAO.py%23contratar_plano::dao%2FfinanceiroDAO.py%23contratar_plano%20revalidation::profile%2Fquick%2Fall-in-scope-subsystems::ATTACK-CLASSES.md%23Business%20logic",
+  "canonical_refs": {
+   "surface": "blueprints/usuario_bp.py#POST /perfil (contratar/renovar/agendar mudança) + dao/financeiroDAO.py#contratar_plano",
+   "boundary": "dao/financeiroDAO.py#contratar_plano revalidation",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "ATTACK-CLASSES.md#Business logic"
+  },
+  "surface": "Contratação e mudança de plano pelo aluno",
+  "boundary": "Regras de cobrança e vigência revalidadas no banco",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Business logic",
+  "starting_paths": [
+   "blueprints/usuario_bp.py",
+   "dao/financeiroDAO.py",
+   "servicos/planos.py",
+   "dao/planoDAO.py",
+   "modelos/pagamento.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+  "selected_companion_blocks": [],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   },
+   {
+    "block": "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+    "reason": "Fluxo síncrono HTTP; webhook em u05."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "covered",
+  "agent_id": "h04-pagamentos",
+  "reviewed_paths": [
+   "blueprints/usuario_bp.py",
+   "dao/financeiroDAO.py",
+   "servicos/planos.py",
+   "dao/planoDAO.py",
+   "modelos/pagamento.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h04-pagamentos",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "dao/financeiroDAO.py",
+     "servicos/planos.py",
+     "dao/planoDAO.py",
+     "modelos/pagamento.py"
+    ],
+    "invariant": "Student plan contract/renew/change is revalidated in the DB: price from the persisted plan (archived plans refused), aluno row lock serializes requests, no second charge while a charge is open or in decision, renewal chained after the committed period, replanning blocked while an online Pix/checkout is valid, forged 'acao' falls back to 'contratar'",
+    "method": "source",
+    "result": "pagina_perfil (usuario_bp.py:508-551) accepts only plan id/turma id/acao; contratar_plano (financeiroDAO.py:381-510) locks Aluno FOR UPDATE, derives everything from situacao_plano and computes valor = regras_plano.preco(plano, hoje). _replanejar_cobranca rewrites plano and valor together, and any old charge at a different amount is refused by the amount reconciliation in _processar_status_mp. Access is granted only by status 'pago' vigencia (servicos/planos.py:88-100), not by Aluno.plano_id or Aluno.mensalidade.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h04-pagamentos",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "dao/financeiroDAO.py"
+    ],
+    "invariant": "Bounded local check: repeated/forged POST /perfil actions cannot create duplicate charges or overlapping periods",
+    "method": "local",
+    "result": "Four POSTs (contratar, contratar, renovar, forged 'xyz') with no active period created exactly 1 charge; after marking it paid, POSTs (contratar, renovar x3) created exactly one renewal charge at the same price, starting the day after the paid period ends (2026-11-25..2026-12-24).",
+    "artifact": "agents/h04-pagamentos/artifacts/evidence/check-02.txt"
+   }
+  ],
+  "result_fingerprints": [],
+  "unresolved": [],
+  "unidade_curta": "u06",
+  "hardening_notes": [
+   "Promotional price lock-in: _nova_cobranca stores preco(plano, hoje) and unpaid charges never expire or reprice. abrir_vigencia reopens the period on late payment, so a student can create a charge during a promotion and pay the promotional price at any later date (dao/financeiroDAO.py:287-309, 636-662). This is documented as intended. If policy requires it, reprice or expire unpaid charges after the promotion ends.",
+   "Refund/chargeback (marcar_reembolsado_via_webhook, dao/financeiroDAO.py:943-952) revokes vigencia but leaves the Matricula auto-created by efetivar_turma_da_cobranca. Each paid charge can add another turma, and enrollments are never removed. A charged-back student keeps a seat in a capacity-limited turma until an admin intervenes.",
+   "Interactive status polling, checkout return and admin sync call _processar_status_mp without bloquear_para_atualizacao (blueprints/pix_bp.py:354-383, checkout_bp.py:221-232, pix_bp.py:408-428). A refund webhook committed while a poller holds an older 'approved' API result could be overwritten back to 'pago'. The window is only the length of one API call (about 3 s) and is not attacker-driven. Locking the row before applying the result would close it.",
+   "_primeira_entrega_webhook fails open when the limiter storage errors (blueprints/pix_bp.py:463-467). This is acceptable only because processing is idempotent and always re-fetches the payment from the API.",
+   "A replan after the checkout preference expires (60 min) can leave a boleto/pending payment already issued at the old amount. If paid, it is refused by the amount check and logged only, so the student's money arrives without settlement and an admin must reconcile it (dao/financeiroDAO.py:273-280 does not consider checkout-originated pending payments)."
+  ]
+ },
+ {
+  "coverage_id": "blueprints%2Fusuario_bp.py%23account%20e-mail%20binding%20routes%20%28%2Fcadastrar%2C%20%2Fcadastro%2Fverificar%2C%20%2Fperfil%2Femail%2C%20%2Fperfil%2Fconfirmar_email%2C%20%2Fativar-acesso%29%20%2B%20blueprints%2Fgoogle_login.py%23%2Flogin%2Fgoogle%2Fcallback::servicos%2Fgmail_conta.py%23enviar%20%2B%20servicos%2Fconvites.py%23enviar::profile%2Fquick%2Fall-in-scope-subsystems::WEB-PROTOCOL-AND-AUTH.md%23Account%20linking%20and%20identity%20collision",
+  "canonical_refs": {
+   "surface": "blueprints/usuario_bp.py#account e-mail binding routes (/cadastrar, /cadastro/verificar, /perfil/email, /perfil/confirmar_email, /ativar-acesso) + blueprints/google_login.py#/login/google/callback",
+   "boundary": "servicos/gmail_conta.py#enviar + servicos/convites.py#enviar",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "WEB-PROTOCOL-AND-AUTH.md#Account linking and identity collision"
+  },
+  "surface": "Fluxos que ligam um e-mail a uma conta",
+  "boundary": "Prova de posse do e-mail por link com token",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Account linking and identity collision",
+  "starting_paths": [
+   "blueprints/usuario_bp.py",
+   "blueprints/google_login.py",
+   "servicos/gmail_conta.py",
+   "servicos/email.py",
+   "servicos/convites.py",
+   "servicos/fila_email.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+  "selected_companion_blocks": [
+   "WEB-PROTOCOL-AND-AUTH.md#Account linking and identity collision",
+   "WEB-PROTOCOL-AND-AUTH.md#OAuth/OIDC request and callback binding",
+   "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+   "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+   "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   },
+   {
+    "block": "WEB-PROTOCOL-AND-AUTH.md#Password reset and broader recovery",
+    "reason": "Coberta pela unidade de recuperação de senha (u02)."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "candidate",
+  "agent_id": "h01-contas",
+  "reviewed_paths": [
+   "blueprints/adm_bp.py",
+   "blueprints/google_login.py",
+   "blueprints/usuario_bp.py",
+   "dao/usuarioDAO.py",
+   "servicos/convites.py",
+   "servicos/email.py",
+   "servicos/gmail_conta.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h01-contas",
+    "reviewed_paths": [
+     "servicos/gmail_conta.py",
+     "servicos/email.py",
+     "blueprints/usuario_bp.py"
+    ],
+    "invariant": "A token link that proves ownership of an email address is delivered only to that address",
+    "method": "local",
+    "result": "gmail_conta.enviar builds To as f'{nome} <{destinatario}>' (gmail_conta.py:149), and the display name is not quoted. aluno.nome is student-controlled (/cadastrar 403, /perfil/dados 689). Sandboxed check: the name 'Eve <eve@evil.test>, Joao' produced the raw header 'To: Eve <eve@evil.test>, Joao <vitima@example.org>', which parses as two recipients. The token taken from that raw message confirmed vitima@example.org onto the attacker's account. Whether Gmail API delivers to every To recipient is a provider fact, not visible in source.",
+    "artifact": "agents/h01-contas/artifacts/evidence/check-01.txt"
+   },
+   {
+    "agent_id": "h01-contas",
+    "reviewed_paths": [
+     "blueprints/google_login.py",
+     "blueprints/usuario_bp.py",
+     "dao/usuarioDAO.py",
+     "blueprints/adm_bp.py"
+    ],
+    "invariant": "Google sign-in may open only an account whose email was proven by the party that set its password",
+    "method": "local",
+    "result": "The callback picks the Aluno purely by email (google_login.py:144). For a pending account it marks email_verificado=True (159-163) without checking who registered it. For an approved account it never checks email_verificado before opening the session (175). Sandboxed check: an attacker signed up with the victim's email and the attacker's own password. The victim's Google login marked the account verified, and the admin approved it. The victim's next Google login and the attacker's password login both got aluno_id=1.",
+    "artifact": "agents/h01-contas/artifacts/evidence/check-02.txt"
+   },
+   {
+    "agent_id": "h01-contas",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "servicos/convites.py"
+    ],
+    "invariant": "Email change requires an authenticated session plus the current password plus a link sent to the new address. Confirmation drops tokens tied to the old address. The invite goes only to the admin-recorded email.",
+    "method": "source",
+    "result": "solicitar_troca_email checks the password (usuario_bp.py:769), uniqueness against Aluno.email (787) and a 30-min token. confirmar_email applies email_pendente and calls _revogar_tokens_de_conta (849-852). The invite cannot take an ad-hoc recipient. The only gap found is the delivery-integrity issue in the first check.",
+    "artifact": null
+   },
+   {
+    "agent_id": "v03-to-header",
+    "reviewed_paths": [
+     "blueprints/google_login.py",
+     "blueprints/usuario_bp.py",
+     "servicos/email.py",
+     "servicos/gmail_conta.py"
+    ],
+    "invariant": "Independent verification of servicos/gmail_conta.py:enviar:to-header-unquoted-display-name",
+    "method": "local",
+    "result": "Verifier decision: needs_validation; severity: none (needs_validation)",
+    "artifact": "agents/v03-to-header/artifacts/evidence/check-01.txt"
+   },
+   {
+    "agent_id": "v02-google",
+    "reviewed_paths": [
+     "blueprints/adm_bp.py",
+     "blueprints/google_login.py",
+     "blueprints/usuario_bp.py",
+     "dao/usuarioDAO.py"
+    ],
+    "invariant": "Independent verification of blueprints/google_login.py:callback:login-binds-unverified-registrant-account",
+    "method": "local",
+    "result": "Verifier decision: confirmed; severity: low",
+    "artifact": "agents/v02-google/artifacts/evidence/check-01.txt"
+   }
+  ],
+  "result_fingerprints": [
+   "servicos/gmail_conta.py:enviar:to-header-unquoted-display-name",
+   "blueprints/google_login.py:callback:login-binds-unverified-registrant-account"
+  ],
+  "unresolved": [],
+  "unidade_curta": "u01",
+  "hardening_notes": [
+   "The /cadastrar verification link (usuario_bp.py:420-431) goes through fila_email.enfileirar_transacional, so the token is stored in cleartext in emails_pendentes.link_url. The design comment at usuario_bp.py:129-135 says token emails must avoid the queue (peer-owned fila_email unit).",
+   "confirmar_email (usuario_bp.py:849) does not recheck that email_pendente is still unused. If another account claimed that address meanwhile, the unique constraint raises an IntegrityError (500) rather than a clean refusal. This is not a security bypass, because the DB constraint holds.",
+   "Signup collision checks and email-change uniqueness consider only Aluno.email, not other accounts' email_pendente. Two accounts can hold the same pending address, and the first to confirm wins. There is no cross-account impact, because confirmation needs the token sent to that address."
+  ],
+  "decisions": {
+   "servicos/gmail_conta.py:enviar:to-header-unquoted-display-name": "needs_validation",
+   "blueprints/google_login.py:callback:login-binds-unverified-registrant-account": "confirmed"
+  }
+ },
+ {
+  "coverage_id": "blueprints%2Fusuario_bp.py%23student-area%20resource%20routes%20%28%2Fperfil%2A%2C%20%2Fperfil%2Ffoto%2F%3Cid%3E%2C%20%2Fperfil%2Fpagamento%2F%3Cid%3E%2C%20%2Fperfil%2Fmensalidade%2F%3Cid%3E%2F%2A%29::blueprints%2Fusuario_bp.py%23_pagamento_com_acesso_ou_404%2F_pode_ver_foto::profile%2Fquick%2Fall-in-scope-subsystems::DATA-ISOLATION-AND-LIFECYCLE.md%23Missing%20tenant%20or%20owner%20enforcement",
+  "canonical_refs": {
+   "surface": "blueprints/usuario_bp.py#student-area resource routes (/perfil*, /perfil/foto/<id>, /perfil/pagamento/<id>, /perfil/mensalidade/<id>/*)",
+   "boundary": "blueprints/usuario_bp.py#_pagamento_com_acesso_ou_404/_pode_ver_foto",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "DATA-ISOLATION-AND-LIFECYCLE.md#Missing tenant or owner enforcement"
+  },
+  "surface": "Rotas de recursos do aluno",
+  "boundary": "Checagem de dono (aluno) / admin / professor da turma",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Missing tenant or owner enforcement",
+  "starting_paths": [
+   "blueprints/usuario_bp.py",
+   "blueprints/turma_bp.py",
+   "dao/presencaDAO.py",
+   "dao/financeiroDAO.py",
+   "servicos/autorizacao.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+  "selected_companion_blocks": [
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Missing tenant or owner enforcement",
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Universal moves",
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "covered",
+  "agent_id": "h03-acesso",
+  "reviewed_paths": [
+   "blueprints/usuario_bp.py",
+   "blueprints/turma_bp.py",
+   "dao/presencaDAO.py",
+   "dao/financeiroDAO.py",
+   "dao/matriculaDAO.py",
+   "servicos/autorizacao.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h03-acesso",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "dao/financeiroDAO.py",
+     "servicos/autorizacao.py"
+    ],
+    "invariant": "Every /perfil/pagamento/<id> and /perfil/mensalidade/<id>/* read or write binds pagamento.aluno_id to the revalidated session aluno (or admin)",
+    "method": "source",
+    "result": "pagina_pagamento, comprovante_mensalidade, ver_comprovante_manual go through _pagamento_com_acesso_ou_404 -> _acesso_permitido_pagamento (aluno.id == pagamento.aluno_id or admin). enviar_comprovante_manual_aluno checks pagamento.aluno_id != aluno.id -> 404 before any write. /perfil?pix=<id> discards a pagamento of another aluno. cancelar_mudanca_plano checks solicitacao.aluno_id. No body field supplies the owner identity.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h03-acesso",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "dao/presencaDAO.py",
+     "dao/matriculaDAO.py"
+    ],
+    "invariant": "Photo reads and presence confirmations are owner/professor-scoped",
+    "method": "source",
+    "result": "_pode_ver_foto allows admin, the same aluno, or a professor with a Matricula in a turma he teaches (join on Turma.professor_id). PresencaDAO.confirmar_por_aluno filters by id AND aluno_id. Uploads/removals of a photo use only the session aluno.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h03-acesso",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "blueprints/turma_bp.py"
+    ],
+    "invariant": "Aluno A cannot read/modify aluno B's payment, receipt, photo or presence; professor cannot read photo of a student not enrolled in his turma",
+    "method": "local",
+    "result": "Sandboxed pytest with two dummy students: aluno1 on aluno2's pagamento/comprovante/comprovante-manual GET+POST -> 404; foto -> 403; pix status -> 403; presence confirm -> redirect with presence still confirmada_aluno=False; professor on unenrolled student's photo -> 403, on /perfil/pagamento -> 302 /login.",
+    "artifact": "agents/h03-acesso/artifacts/evidence/check-01.txt"
+   }
+  ],
+  "result_fingerprints": [],
+  "unresolved": [],
+  "unidade_curta": "u04",
+  "hardening_notes": [
+   "blueprints/usuario_bp.py:685 checks login uniqueness only against Aluno, not Professor/ADMIN_USER; login order is admin->professor->aluno, so a student renaming to a professor's login only shadows themself (no cross-principal effect found), but a global uniqueness check would remove the ambiguity.",
+   "blueprints/adm_bp.py uses an explicit per-handler `if not usuario_e_admin()` rather than a blueprint-level before_request; all 29 current routes have it, but a before_request guard on admin_bp would fail closed for future routes."
+  ]
+ },
+ {
+  "coverage_id": "servicos%2Farmazenamento.py%23salvar_foto_perfil%2Fsalvar_comprovante_manual%2Fler_arquivo::servicos%2Farmazenamento.py%23_detectar_tipo_imagem_real%2F_nome_valido::profile%2Fquick%2Fall-in-scope-subsystems::ATTACK-CLASSES.md%23Resource%20and%20file%20handling",
+  "canonical_refs": {
+   "surface": "servicos/armazenamento.py#salvar_foto_perfil/salvar_comprovante_manual/ler_arquivo",
+   "boundary": "servicos/armazenamento.py#_detectar_tipo_imagem_real/_nome_valido",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "ATTACK-CLASSES.md#Resource and file handling"
+  },
+  "surface": "Upload e leitura de arquivos",
+  "boundary": "Validação de conteúdo e confinamento de caminho",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Resource and file handling",
+  "starting_paths": [
+   "servicos/armazenamento.py",
+   "blueprints/usuario_bp.py",
+   "blueprints/adm_bp.py",
+   "blueprints/turma_bp.py",
+   "config.py",
+   "servidor.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Resource and file handling",
+  "selected_companion_blocks": [
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Decompression and representation amplification",
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Pre-authentication work imbalance",
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota-accounting scope and reset gaps",
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+   "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "covered",
+  "agent_id": "h05-saida-arquivos",
+  "reviewed_paths": [
+   "servicos/armazenamento.py",
+   "blueprints/usuario_bp.py",
+   "blueprints/turma_bp.py",
+   "blueprints/adm_bp.py",
+   "servidor.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h05-saida-arquivos",
+    "reviewed_paths": [
+     "servicos/armazenamento.py"
+    ],
+    "invariant": "Path confinement: stored and read file names are generated by the server, and the request never controls the path or the Supabase object key.",
+    "method": "source",
+    "result": "Names are always uuid4().hex plus an extension chosen by the server (armazenamento.py:254,413). ler_arquivo/remover_arquivo read the name from the DB column and reject '/', '\\\\' and '..' (_nome_valido, line 132). subpasta values are hard-coded literals in every caller. No traversal, symlink or SSRF path: the Supabase base comes only from env.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h05-saida-arquivos",
+    "reviewed_paths": [
+     "servicos/armazenamento.py",
+     "blueprints/usuario_bp.py",
+     "blueprints/turma_bp.py",
+     "blueprints/adm_bp.py"
+    ],
+    "invariant": "Decompression and representation amplification: image pixel decoding is bounded before any allocation, and only allowlisted decoders see uploads.",
+    "method": "source",
+    "result": "Image.open uses formats=('JPEG','PNG','WEBP'). _conferir_dimensoes rejects images by their header-declared pixels (80 MP for JPEG with draft(), 8 MP for PNG/WebP) before decoding in salvar_foto_perfil (lines 228, 234). Decoding is serialized by a semaphore. A 4 MB size cap applies after reading, under MAX_CONTENT_LENGTH of 10 MB (servidor.py:99). The receipt path never decodes pixels: verify() checks PNG chunk CRCs only, and the metadata strippers are linear byte walkers. MPO resolves to no MIME and is rejected. All upload routes require an authenticated student, professor or admin, and photo/receipt routes have per-account limits of 20/hour. No pre-auth upload surface exists.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h05-saida-arquivos",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "blueprints/turma_bp.py",
+     "servidor.py"
+    ],
+    "invariant": "Stored uploads cannot be served as active content.",
+    "method": "source",
+    "result": "Photos are re-encoded to JPEG and served as image/jpeg with nosniff (usuario_bp.py:1094-1096, turma_bp.py:146-148). Receipts are served with a Content-Type from a fixed extension map. PDFs are sent as_attachment (usuario_bp.py:1280-1286). A global nosniff header and a CSP without unsafe-inline apply (servidor.py:233-248).",
+    "artifact": null
+   }
+  ],
+  "result_fingerprints": [],
+  "unresolved": [],
+  "unidade_curta": "u09",
+  "hardening_notes": [
+   "templates/components/paginacao.html spreads request.args into url_for. Query keys _scheme/_external/_anchor/_method change the generated link (for example, an absolute http:// URL), and a key named 'endpoint' raises TypeError (HTTP 500). Werkzeug normalizes the scheme to http/https and keeps request.host, so there is no XSS or off-site navigation. Filter args to known filter keys before building the link.",
+   "servidor.py _voltar_para_origem returns partes.path from a same-host Referer without rejecting a leading '//'. A Referer like https://host//evil.example/x would render as a protocol-relative href on the CSRF error page. Reaching that state needs the victim to be on such a same-host URL when a CSRF failure happens, so it is not a practical finding. Requiring path.startswith('/') and not path.startswith('//') closes it.",
+   "servicos/armazenamento.py stores PDF receipts byte-for-byte after only a '%PDF-' magic check. They are served as attachments to the admin, so any risk sits in the admin's PDF reader, not the web origin."
+  ]
+ },
+ {
+  "coverage_id": "servicos%2Ffila_email.py%20%2B%20servicos%2Fobservabilidade.py%20%2B%20logging%20calls%20%2B%20dao%2FusuarioDAO.py%23remover%20%2B%20tools%2Fbackup%23derived%20copies::servicos%2Fobservabilidade.py%23before_send%20%2B%20servicos%2Ffila_email.py%23enfileirar_transacional::profile%2Fquick%2Fall-in-scope-subsystems::DATA-ISOLATION-AND-LIFECYCLE.md%23Analytics%2C%20logs%2C%20traces%2C%20and%20diagnostics%20as%20alternate%20readers",
+  "canonical_refs": {
+   "surface": "servicos/fila_email.py + servicos/observabilidade.py + logging calls + dao/usuarioDAO.py#remover + tools/backup#derived copies",
+   "boundary": "servicos/observabilidade.py#before_send + servicos/fila_email.py#enfileirar_transacional",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "DATA-ISOLATION-AND-LIFECYCLE.md#Analytics, logs, traces, and diagnostics as alternate readers"
+  },
+  "surface": "Cópias derivadas, logs e ciclo de vida dos dados",
+  "boundary": "Leitores alternativos de dados pessoais e tokens",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Analytics, logs, traces, and diagnostics as alternate readers",
+  "starting_paths": [
+   "servicos/fila_email.py",
+   "modelos/email_pendente.py",
+   "servicos/observabilidade.py",
+   "blueprints/usuario_bp.py",
+   "dao/usuarioDAO.py",
+   "tools/backup",
+   "servicos/email.py"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+  "selected_companion_blocks": [
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Analytics, logs, traces, and diagnostics as alternate readers",
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Stale authorization and derived copy use",
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Retention and queued-work overrun",
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Universal moves",
+   "DATA-ISOLATION-AND-LIFECYCLE.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "covered",
+  "agent_id": "h06-config-dados",
+  "reviewed_paths": [
+   "servicos/fila_email.py",
+   "modelos/email_pendente.py",
+   "servicos/observabilidade.py",
+   "blueprints/usuario_bp.py",
+   "dao/usuarioDAO.py",
+   "tools/backup/backup.sh",
+   "tools/backup/agendar.sh",
+   "servicos/email.py",
+   "servicos/convites.py"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h06-config-dados",
+    "reviewed_paths": [
+     "servicos/fila_email.py",
+     "modelos/email_pendente.py",
+     "blueprints/usuario_bp.py",
+     "servicos/convites.py"
+    ],
+    "invariant": "Account-takeover tokens (password recovery, e-mail change, invite) never persist in plaintext in the emails_pendentes queue; queue contents are not exposed to lower-trust readers",
+    "method": "source",
+    "result": "Recovery (usuario_bp.py:987-999), e-mail-change (usuario_bp.py:805-815) and invite (servicos/convites.py:111-121) links bypass the queue (direct enviar_email / _enviar_em_segundo_plano). Only the signup e-mail verification link (usuario_bp.py:421-432) is queued with its plaintext token, contrary to the enfileirar_transacional docstring; that token only sets email_verificado on a pending signup (admin approval still required). The queue is only surfaced to the admin as counts (contar_pendentes/contar_falhados); no UI/API renders link_url. Readers of the row are DB/backup operators who already hold all data. No lower-trust reader: hardening only.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h06-config-dados",
+    "reviewed_paths": [
+     "servicos/observabilidade.py"
+    ],
+    "invariant": "Sentry events never carry tokens, CPF, e-mail, cookies, bodies or SQL parameters",
+    "method": "local",
+    "result": "Sandboxed check: mascarar() scrubs /recuperar_senha/, /perfil/confirmar_email/, /ativar-acesso/ tokens but leaves /cadastro/verificar/<token> intact; signup run in fixture confirmed the plaintext verification token stored in emails_pendentes.link_url. Sentry is optional (SENTRY_DSN) and operator-only, token is a low-value e-mail-verification token: hardening, not a finding.",
+    "artifact": "agents/h06-config-dados/artifacts/evidence/check-01.txt"
+   },
+   {
+    "agent_id": "h06-config-dados",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "servicos/fila_email.py",
+     "servicos/email.py"
+    ],
+    "invariant": "Application logs do not emit tokens, passwords, CPF or full e-mail addresses",
+    "method": "source",
+    "result": "All logger calls in blueprints/servicos use ids, masked e-mail (_destinatario_log / mascarar_email) or exception type; no token, password or CPF is formatted into log messages. Exception text stored in emails_pendentes.ultimo_erro is provider error only.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h06-config-dados",
+    "reviewed_paths": [
+     "dao/usuarioDAO.py",
+     "tools/backup/backup.sh",
+     "tools/backup/agendar.sh"
+    ],
+    "invariant": "Deletion/revocation removes or invalidates derived copies within any promised boundary; backups are not readable by lower-trust principals",
+    "method": "source",
+    "result": "AlunoDAO.remover is not called by any route (no student hard-delete path exists), so no deletion contract is broken by retained queue rows/backups. backup.sh runs with umask 077 into a named volume not mounted into the app container; no application-reachable reader. E-mail change clears convite/recuperacao tokens (usuarioDAO.py atualizar_dados_completos).",
+    "artifact": null
+   }
+  ],
+  "result_fingerprints": [],
+  "unresolved": [],
+  "unidade_curta": "u12",
+  "hardening_notes": [
+   "blueprints/usuario_bp.py:421-432 queues the signup e-mail-verification link (plaintext token) through fila_email.enfileirar_transacional, contradicting the documented rule in servicos/fila_email.py:122-124 and usuario_bp.py:129-134; the token persists in emails_pendentes.link_url and in backups (observed in check-01). Send it via _enviar_em_segundo_plano like the other token links.",
+   "servicos/observabilidade.py:31 _TOKEN_NO_CAMINHO omits `cadastro/verificar`, so a Sentry event on /cadastro/verificar/<token> keeps the token in request.url (observed in check-01). Add the path to the regex.",
+   "emails_pendentes rows (recipient e-mail, name, bodies including student e-mail/phone in admin notices) are never purged after status enviado/desistiu; add a retention job.",
+   ".dockerignore pattern `security-review-*/` does not match the existing `security-review/` directory, so internal audit reports are copied into the image; add `security-review/`.",
+   "Render deployments rely on the operator setting TRUST_PROXY_COUNT; with the default 0 every client shares the proxy IP for per-IP rate limits. Document/force a value for Render as done for Vercel.",
+   "route_verificacao.py and update_model.py are dead developer scripts shipped in the image; remove them or add to .dockerignore."
+  ]
+ },
+ {
+  "coverage_id": "servidor.py%23app%20config%20%2B%20Dockerfile%20%2B%20compose.yaml%20%2B%20Caddyfile%20%2B%20vercel.json%20%2B%20.github%2Fworkflows%2Fci.yml::servidor.py%23ProxyFix%2FTRUSTED_HOSTS%2Fstartup%20checks::profile%2Fquick%2Fall-in-scope-subsystems::ATTACK-CLASSES.md%23Obvious%20things",
+  "canonical_refs": {
+   "surface": "servidor.py#app config + Dockerfile + compose.yaml + Caddyfile + vercel.json + .github/workflows/ci.yml",
+   "boundary": "servidor.py#ProxyFix/TRUSTED_HOSTS/startup checks",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "ATTACK-CLASSES.md#Obvious things"
+  },
+  "surface": "Configuração, deploy e CI",
+  "boundary": "Confiança em proxy, segredos e pipeline",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Obvious things",
+  "starting_paths": [
+   "servidor.py",
+   "config.py",
+   "Dockerfile",
+   ".dockerignore",
+   "compose.yaml",
+   "Caddyfile",
+   "vercel.json",
+   ".github/workflows/ci.yml",
+   "requirements.lock",
+   "route_verificacao.py",
+   "update_model.py",
+   ".gitignore"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Obvious things",
+  "selected_companion_blocks": [
+   "CLOUD-AND-DEPLOYMENT.md#Trusted-proxy and mesh identity bypass",
+   "CLOUD-AND-DEPLOYMENT.md#Security-control precedence drift",
+   "SUPPLY-CHAIN-AND-RELEASE.md#Build-context inclusion",
+   "SUPPLY-CHAIN-AND-RELEASE.md#Untrusted code in a privileged workflow",
+   "WEB-PROTOCOL-AND-AUTH.md#Host and forwarded-header trust",
+   "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+   "CLOUD-AND-DEPLOYMENT.md#Universal moves",
+   "CLOUD-AND-DEPLOYMENT.md#Validation rules",
+   "SUPPLY-CHAIN-AND-RELEASE.md#Core discipline",
+   "SUPPLY-CHAIN-AND-RELEASE.md#Universal moves",
+   "SUPPLY-CHAIN-AND-RELEASE.md#Validation rules",
+   "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+   "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+   "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "covered",
+  "agent_id": "h06-config-dados",
+  "reviewed_paths": [
+   ".dockerignore",
+   ".env.example",
+   ".github/workflows/ci.yml",
+   ".gitignore",
+   "Caddyfile",
+   "Dockerfile",
+   "app.py",
+   "compose.yaml",
+   "config.py",
+   "requirements.lock",
+   "route_verificacao.py",
+   "servicos/urls.py",
+   "servidor.py",
+   "update_model.py",
+   "vercel.json"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h06-config-dados",
+    "reviewed_paths": [
+     "servidor.py",
+     "config.py",
+     "servicos/urls.py",
+     "app.py"
+    ],
+    "invariant": "Startup fails closed on missing SECRET_KEY/admin hash/DATABASE_URL/TRUSTED_HOSTS; cookies HttpOnly/Secure/SameSite; no debug mode; absolute links built from APP_BASE_URL, not Host",
+    "method": "source",
+    "result": "SECRET_KEY>=32 enforced, COOKIE_SECURE defaults true and is refused false with https base, memory:// limiter refused in https prod, TRUSTED_HOSTS mandatory, TRUST_PROXY_COUNT bounded 0-3, admin hash + TOTP validated at boot. app.run only under __main__ without debug. url_publica uses APP_BASE_URL exclusively. Error handlers return generic pages (no stack traces). /health and /health/pronto expose only ok/falha. CSP/HSTS/nosniff/frame headers present. No CORS headers.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h06-config-dados",
+    "reviewed_paths": [
+     "compose.yaml",
+     "Caddyfile",
+     "servidor.py",
+     "vercel.json"
+    ],
+    "invariant": "Forwarded headers are trusted only from the real ingress hop; app port not reachable bypassing proxy",
+    "method": "source",
+    "result": "Compose: app only `expose`s 5000 on the internal network, Caddy is the sole published ingress with TRUST_PROXY_COUNT=1; Caddy 2.9 does not trust client X-Forwarded-* by default and sets its own, and serves only listed hosts. Vercel forces count 1 (platform rewrites XFF). HTTP :80 redirects to HTTPS. Render count depends on operator env (default 0 collapses per-IP limits into one bucket) - noted as hardening, not a trust bypass.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h06-config-dados",
+    "reviewed_paths": [
+     "Dockerfile",
+     ".dockerignore",
+     ".gitignore",
+     "requirements.lock",
+     ".env.example"
+    ],
+    "invariant": "No secrets, uploads, or local DBs enter the repo or image; dependencies pinned",
+    "method": "source",
+    "result": "git ls-files contains only .env.example (placeholders); no keys/pem/db committed; grep found no hardcoded credentials, eval/exec/subprocess. .dockerignore excludes .env*, uploads/, *.db, tests, .git. Install uses pip --require-hashes from requirements.lock; image runs as non-root user. `security-review/` (prose reports, no credentials) is not matched by the `security-review-*/` pattern and enters the image - hygiene only.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h06-config-dados",
+    "reviewed_paths": [
+     ".github/workflows/ci.yml"
+    ],
+    "invariant": "Untrusted PR code does not run with secrets or write tokens",
+    "method": "source",
+    "result": "CI triggers on push(main) and pull_request (not pull_request_target), permissions contents: read, persist-credentials: false, no secrets referenced, actions pinned by SHA, nothing published or deployed.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h06-config-dados",
+    "reviewed_paths": [
+     "route_verificacao.py",
+     "update_model.py"
+    ],
+    "invariant": "Dev/legacy scripts do not register reachable routes or alter production state at import",
+    "method": "source",
+    "result": "Neither file is imported by servidor.py/app.py/gunicorn config; route_verificacao.py is an orphan duplicate of verificar_email_cadastro and update_model.py is a one-off source-rewrite script; both are copied into the image but never executed.",
+    "artifact": null
+   }
+  ],
+  "result_fingerprints": [],
+  "unresolved": [],
+  "unidade_curta": "u11",
+  "hardening_notes": [
+   "blueprints/usuario_bp.py:421-432 queues the signup e-mail-verification link (plaintext token) through fila_email.enfileirar_transacional, contradicting the documented rule in servicos/fila_email.py:122-124 and usuario_bp.py:129-134; the token persists in emails_pendentes.link_url and in backups (observed in check-01). Send it via _enviar_em_segundo_plano like the other token links.",
+   "servicos/observabilidade.py:31 _TOKEN_NO_CAMINHO omits `cadastro/verificar`, so a Sentry event on /cadastro/verificar/<token> keeps the token in request.url (observed in check-01). Add the path to the regex.",
+   "emails_pendentes rows (recipient e-mail, name, bodies including student e-mail/phone in admin notices) are never purged after status enviado/desistiu; add a retention job.",
+   ".dockerignore pattern `security-review-*/` does not match the existing `security-review/` directory, so internal audit reports are copied into the image; add `security-review/`.",
+   "Render deployments rely on the operator setting TRUST_PROXY_COUNT; with the default 0 every client shares the proxy IP for per-IP rate limits. Document/force a value for Render as done for Vercel.",
+   "route_verificacao.py and update_model.py are dead developer scripts shipped in the image; remove them or add to .dockerignore."
+  ]
+ },
+ {
+  "coverage_id": "templates%2F%20%2B%20static%2Fjs%2F%20%2B%20servicos%2Fgmail_conta.py%20%2B%20servicos%2Fplanilha_excel.py%23rendering%20of%20stored%20user%20text::Jinja%20autoescape%20%2B%20CSP%20%28servidor.py%23adicionar_cabecalhos_de_seguranca%29%20%2B%20e-mail%20header%20construction::profile%2Fquick%2Fall-in-scope-subsystems::ATTACK-CLASSES.md%23Injection",
+  "canonical_refs": {
+   "surface": "templates/ + static/js/ + servicos/gmail_conta.py + servicos/planilha_excel.py#rendering of stored user text",
+   "boundary": "Jinja autoescape + CSP (servidor.py#adicionar_cabecalhos_de_seguranca) + e-mail header construction",
+   "subsystem": "profile/quick/all-in-scope-subsystems",
+   "attack_class": "ATTACK-CLASSES.md#Injection"
+  },
+  "surface": "Saída de texto controlado por usuário",
+  "boundary": "Codificação de saída por contexto",
+  "subsystem": "Todos os subsistemas em escopo (perfil quick)",
+  "attack_class": "Injection",
+  "starting_paths": [
+   "templates",
+   "static/js",
+   "servicos/gmail_conta.py",
+   "servicos/email.py",
+   "servicos/planilha_excel.py",
+   "servicos/seo.py",
+   "servidor.py",
+   "templates/components/paginacao.html"
+  ],
+  "ordinary_attack_class_block": "ATTACK-CLASSES.md#Injection",
+  "selected_companion_blocks": [
+   "CLIENT-SIDE.md#DOM-based XSS",
+   "CLIENT-SIDE.md#Client-side navigation confusion",
+   "WEB-PROTOCOL-AND-AUTH.md#Response-header injection",
+   "CLIENT-SIDE.md#Core discipline",
+   "CLIENT-SIDE.md#Universal moves",
+   "CLIENT-SIDE.md#Validation rules",
+   "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+   "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+   "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+  ],
+  "excluded_blocks": [
+   {
+    "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+    "reason": "Sem código nativo/binário em escopo (Python/Jinja/JS)."
+   },
+   {
+    "block": "AI-AND-LLM.md#Core discipline",
+    "reason": "Nenhuma superfície de modelo/LLM/ferramenta no código."
+   },
+   {
+    "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+    "reason": "Sem app nativo, deep link ou IPC local."
+   }
+  ],
+  "prior_status": "none",
+  "attempts": [],
+  "wave": 1,
+  "status": "candidate",
+  "agent_id": "h05-saida-arquivos",
+  "reviewed_paths": [
+   "blueprints/adm_bp.py",
+   "blueprints/google_login.py",
+   "blueprints/pix_bp.py",
+   "blueprints/planilha_bp.py",
+   "blueprints/usuario_bp.py",
+   "servicos/email.py",
+   "servicos/gmail_conta.py",
+   "servicos/planilha_excel.py",
+   "servidor.py",
+   "static/js/auth.js",
+   "static/js/checkout.js",
+   "static/js/componentes.js",
+   "static/js/comprovante_modal.js",
+   "static/js/modal.js",
+   "templates/components/paginacao.html",
+   "templates/components/ui.html",
+   "templates/erro.html",
+   "templates/index.html"
+  ],
+  "local_checks": [
+   {
+    "agent_id": "h05-saida-arquivos",
+    "reviewed_paths": [
+     "servicos/gmail_conta.py",
+     "servicos/email.py",
+     "blueprints/usuario_bp.py"
+    ],
+    "invariant": "The e-mail To header contains exactly one recipient (the intended address). A student-controlled display name must not add recipients.",
+    "method": "local",
+    "result": "gmail_conta.enviar builds To as f'{nome} <{destinatario}>'. With nome='Fulano <atacante@evil.test>, Outro', the raw message sent to the (mocked) Gmail API has To 'Fulano <atacante@evil.test>, Outro <vitima@example.com>', which parses to two addresses.",
+    "artifact": "agents/h05-saida-arquivos/artifacts/evidence/check-01.txt"
+   },
+   {
+    "agent_id": "h05-saida-arquivos",
+    "reviewed_paths": [
+     "blueprints/usuario_bp.py",
+     "servicos/gmail_conta.py"
+    ],
+    "invariant": "The e-mail-change confirmation token reaches only the new address being proven.",
+    "method": "local",
+    "result": "End to end: a student with nome 'Ze <atacante@evil.test>, Ze' POSTs /perfil/email with novo_email=vitima@example.com. The confirmation e-mail's To lists atacante@evil.test and vitima@example.com. Following the link from that message sets the account e-mail to vitima@example.com.",
+    "artifact": "agents/h05-saida-arquivos/artifacts/evidence/check-03.txt"
+   },
+   {
+    "agent_id": "h05-saida-arquivos",
+    "reviewed_paths": [
+     "templates/components/paginacao.html",
+     "blueprints/adm_bp.py"
+    ],
+    "invariant": "Pagination links built with url_for(request.endpoint, **request.args) cannot become executable or off-site URLs.",
+    "method": "local",
+    "result": "Reserved url_for kwargs come from the query string (_scheme, _external, _anchor). Werkzeug normalizes any _scheme to http or https and keeps request.host. With _scheme=javascript the link is http://localhost/admin?..., not a javascript: URL. No XSS and no host change.",
+    "artifact": "agents/h05-saida-arquivos/artifacts/evidence/check-02.txt"
+   },
+   {
+    "agent_id": "h05-saida-arquivos",
+    "reviewed_paths": [
+     "templates/index.html",
+     "templates/erro.html",
+     "templates/components/ui.html",
+     "servidor.py"
+    ],
+    "invariant": "Server-rendered stored text is context-encoded.",
+    "method": "source",
+    "result": "There is no |safe, Markup, render_template_string or autoescape override in templates/blueprints/services. JSON-LD uses |tojson, which escapes <, > and &. The CSP is script-src 'self' 'nonce-…' with script-src-attr 'none'. _voltar_para_origem only accepts a same-host Referer, and its result is rendered as an autoescaped href.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h05-saida-arquivos",
+    "reviewed_paths": [
+     "static/js/componentes.js",
+     "static/js/comprovante_modal.js",
+     "static/js/auth.js",
+     "static/js/checkout.js",
+     "static/js/modal.js"
+    ],
+    "invariant": "No DOM-XSS or unsafe navigation sinks fed by attacker data.",
+    "method": "source",
+    "result": "The only innerHTML writes are constant SVG markup, with the toast type allowlisted. User data goes through textContent. Navigation targets come from server-rendered hrefs. The checkout URL is checked for https, an allowlisted host and no credentials or port.",
+    "artifact": null
+   },
+   {
+    "agent_id": "h05-saida-arquivos",
+    "reviewed_paths": [
+     "servicos/planilha_excel.py",
+     "blueprints/planilha_bp.py",
+     "blueprints/pix_bp.py"
+    ],
+    "invariant": "Spreadsheet and response-header sinks do not interpret user text.",
+    "method": "source",
+    "result": "XLSX string cells are forced to data_type 's', so no formula injection. The Content-Disposition filename uses the integer year. _voltar_ao_painel requires a same-host Referer and an /admin/ path.",
+    "artifact": null
+   },
+   {
+    "agent_id": "v03-to-header",
+    "reviewed_paths": [
+     "blueprints/google_login.py",
+     "blueprints/usuario_bp.py",
+     "servicos/email.py",
+     "servicos/gmail_conta.py"
+    ],
+    "invariant": "Independent verification of servicos/gmail_conta.py:enviar:to-header-unquoted-display-name",
+    "method": "local",
+    "result": "Verifier decision: needs_validation; severity: none (needs_validation)",
+    "artifact": "agents/v03-to-header/artifacts/evidence/check-01.txt"
+   }
+  ],
+  "result_fingerprints": [
+   "servicos/gmail_conta.py:enviar:to-header-unquoted-display-name"
+  ],
+  "unresolved": [],
+  "unidade_curta": "u08",
+  "hardening_notes": [
+   "templates/components/paginacao.html spreads request.args into url_for. Query keys _scheme/_external/_anchor/_method change the generated link (for example, an absolute http:// URL), and a key named 'endpoint' raises TypeError (HTTP 500). Werkzeug normalizes the scheme to http/https and keeps request.host, so there is no XSS or off-site navigation. Filter args to known filter keys before building the link.",
+   "servidor.py _voltar_para_origem returns partes.path from a same-host Referer without rejecting a leading '//'. A Referer like https://host//evil.example/x would render as a protocol-relative href on the CSRF error page. Reaching that state needs the victim to be on such a same-host URL when a CSRF failure happens, so it is not a practical finding. Requiring path.startswith('/') and not path.startswith('//') closes it.",
+   "servicos/armazenamento.py stores PDF receipts byte-for-byte after only a '%PDF-' magic check. They are served as attachments to the admin, so any risk sits in the admin's PDF reader, not the web origin."
+  ],
+  "duplicate_fingerprints": [
+   "servicos/gmail_conta.py:enviar:to-header-display-name-address-injection"
+  ],
+  "decisions": {
+   "servicos/gmail_conta.py:enviar:to-header-unquoted-display-name": "needs_validation"
+  }
+ }
+]

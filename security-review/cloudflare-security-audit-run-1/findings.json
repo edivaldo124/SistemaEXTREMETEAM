@@ -1,0 +1,345 @@
+[
+ {
+  "verdict": "confirmed",
+  "fingerprint": "blueprints/google_login.py:callback:login-binds-unverified-registrant-account",
+  "title": "Pre-account hijack: Google login verifies and opens an account whose password was set by someone who never proved the email",
+  "description": "An anonymous attacker submits /cadastrar with the victim's email, a name and CPF the attacker supplies, and a password the attacker chooses. The row is created with email_verificado=False and status 'pendente'. If the victim later tries to sign up herself, her signup is answered as 'received' but no row is created, and she only gets a notice that someone used her email. When the real owner signs in with Google, the callback finds the row by email and, because it is pending, sets email_verificado=True. That puts the attacker-created row in the admin's pending-approval list. Once the admin approves it, every Google login by the victim opens a session for that aluno_id, and the attacker's own password logs into the same aluno_id. From then on the attacker can read the victim's profile and anything she adds later (payments, receipts, photo), and can act as her, for example by changing the email with the known password.",
+  "root_cause": "google_login.callback finds the Aluno only by email equality (google_login.py:144). In the pending branch it takes Google's email_verified as proof for the whole account and sets email_verificado=True (google_login.py:159-163), without considering that the existing password (acesso_ativado, line 155) was set by a party that never proved the email. For approved accounts it opens the session (lines 172-178) without checking email_verificado and without revoking credentials set before the email was proven.",
+  "intended_behavior": "Proving ownership of an email through Google must not validate or hand over an account whose credentials came from a party that never proved that email. Google login should open only accounts whose email the registrant already verified through the emailed link, and it should never set email_verificado itself. Alternatively, when Google is the first proof of the email, it should revoke the existing password and tokens and make the owner set a new password.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "blueprints/usuario_bp.py",
+    "line": 403,
+    "scope": "pagina_cadastro",
+    "description": "Anonymous POST /cadastrar creates an Aluno with any email not already on an Aluno row and an attacker-chosen password. email_verificado defaults to False and status_cadastro to 'pendente'."
+   },
+   {
+    "kind": "propagation",
+    "file": "blueprints/google_login.py",
+    "line": 144,
+    "scope": "callback",
+    "description": "After the state/PKCE and email_verified checks, the Google callback selects the Aluno only by email equality."
+   },
+   {
+    "kind": "propagation",
+    "file": "blueprints/google_login.py",
+    "line": 162,
+    "scope": "callback",
+    "description": "For a pending account with a password, the callback sets email_verificado=True and commits. The attacker-created row now meets the admin pending-list filter (dao/usuarioDAO.py:51)."
+   },
+   {
+    "kind": "propagation",
+    "file": "blueprints/adm_bp.py",
+    "line": 82,
+    "scope": "aprovar_aluno",
+    "description": "The admin approves what looks like a verified registration and sets status_cadastro='aprovado'."
+   },
+   {
+    "kind": "sink",
+    "file": "blueprints/google_login.py",
+    "line": 175,
+    "scope": "callback",
+    "description": "The callback opens a session for the attacker-created aluno_id. registrar_credencial binds the session to the attacker-set senha_hash, and the attacker's password still logs into the same row."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "blueprints/google_login.py",
+    "line": 159,
+    "description": "The pending branch auto-verifies the email without checking who registered the account or who set the password."
+   },
+   {
+    "file": "blueprints/google_login.py",
+    "line": 155,
+    "description": "The only account precondition is acesso_ativado (a password exists). Who set that password is never considered."
+   },
+   {
+    "file": "dao/usuarioDAO.py",
+    "line": 51,
+    "description": "listar_pendentes shows only rows with email_verificado=True, which is exactly the flag the Google callback supplies."
+   },
+   {
+    "file": "blueprints/usuario_bp.py",
+    "line": 385,
+    "description": "Signup checks email collision only against existing Aluno.email. A later signup by the real owner is silently answered as 'received' (line 401) and creates no row."
+   },
+   {
+    "file": "dao/usuarioDAO.py",
+    "line": 129,
+    "description": "Password login (autenticar) selects any row with a senha_hash matching the login, email or CPF. It does not consider how the email was verified, so the attacker's password keeps working after approval."
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "authentication_level",
+    "description": "The attacker is anonymous and needs only the public signup form."
+   },
+   {
+    "kind": "data_state",
+    "description": "The victim's email is not yet on any Aluno row. The attacker needs a valid, unregistered CPF; the victim's CPF makes the record look legitimate."
+   },
+   {
+    "kind": "user_interaction",
+    "description": "The victim signs in with Google while the attacker-created account is pending, and later uses Google login to access the account."
+   },
+   {
+    "kind": "authorization_role",
+    "description": "The admin approves the pending registration, which shows the attacker-entered name, CPF and phone."
+   },
+   {
+    "kind": "system_configuration",
+    "description": "Google login is configured (GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET)."
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "Anonymous visitor who registers first with the target's email address and a password of their choice.",
+   "payloads": [
+    "POST /cadastrar nomeusuario=Fulano Tal&loginusuario=atk_login&cpfusuario=111.444.777-35&emailusuario=dona@example.org&senhausuario=Atk!Senha12345&confirmarsenhausuario=Atk!Senha12345&dataNascimento=1991-02-03&telefoneusuario=11977776666&aceite_termos_responsabilidade=aceito",
+    "GET /login/google/callback?state=st2&code=xyz (session-bound state; Google token and userinfo mocked: email=dona@example.org, email_verified=true)",
+    "POST /admin/aluno/1/aprovar (admin session)",
+    "POST /login loginusuario=atk_login&senhausuario=Atk!Senha12345"
+   ],
+   "instructions": [
+    "In the sandboxed pytest with the project fixtures, the e-mail provider is mocked (sem_email) and separate test clients are used for the attacker, the victim and the admin.",
+    "The attacker submits the signup. Their password login is refused while the account is pending.",
+    "The victim's own signup with the same email creates no row. The victim then completes the Google callback, with the token and userinfo calls mocked to return her verified email.",
+    "The admin approves the account, which now appears in listar_pendentes. The victim completes the Google callback again.",
+    "From a fresh client, the attacker logs in with their password, compares aluno_id and fetches /perfil."
+   ],
+   "observed_result": "SIGNUP row=(1, False, 'pendente'); ATTACKER_LOGIN_WHILE_PENDING aluno_id=None; VICTIM_SIGNUP rows_with_email=1; VICTIM_GOOGLE_1 row=(1, True, 'pendente'); ADMIN_PENDING_LIST [1]; ADMIN_APPROVE row=(1, True, 'aprovado'); VICTIM_GOOGLE_2 aluno_id=1 loc=/perfil; ATTACKER_PASSWORD aluno_id=1 loc=/perfil; ATTACKER_GET_PERFIL status=200 contains victim email (agents/v02-google/artifacts/evidence/check-01.txt)"
+  },
+  "remediation": {
+   "strategy": "In the Google callback, refuse to open or change an account unless aluno.email_verificado is already True through the registrant's own emailed link, and remove the auto-verify. For unverified accounts, send the user to 'Esqueci minha senha', which resets the password through the emailed token and removes the attacker's credential. If verification through Google is kept, then when Google is the first proof of the email, clear senha_hash and all outstanding tokens so the owner must set a new password. Either way, the attacker's pre-verification password is never trusted.",
+   "code_changes": [
+    {
+     "file_name": "blueprints/google_login.py",
+     "fixed_code": "    if not aluno.acesso_ativado or not aluno.email_verificado:\n        flash('Confirme o e-mail pelo link do cadastro ou use \"Esqueci minha senha\" antes de entrar com o Google.', 'erro')\n        return redirect(url_for('auth.pagina_login'))\n\n    if aluno.status_cadastro == 'pendente':\n        return render_template('login.html', msg='Seu cadastro ainda está em análise pela administração.')"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "low",
+    "reason": "The chain needs a victim who is not yet registered, a Google login by the victim while the attacker's row is pending, admin approval of a record whose name, CPF and phone the attacker entered, and continued use of the account by the victim."
+   },
+   "impact": {
+    "score": "medium",
+    "reason": "The attacker keeps password access to the account the victim uses, so they can read her later PII, payments, receipts and photo, act as her, and change the email using the known password. The impact is limited to one student account and can be ended by a password reset once noticed."
+   },
+   "overall_severity": "low"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "Every trace line was re-read in current source, and an independent sandboxed reproduction with separate clients (only the Google HTTP calls and e-mail mocked) showed the victim's Google session and the attacker's password session on the same aluno_id."
+  }
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "servicos/autorizacao.py:revogar_sessao_atual:revocation-row-purged-while-refreshable-cookie-lives",
+  "title": "Copied session cookie survives logout and becomes valid again after its revocation row is purged",
+  "description": "On logout, the session's sid is written to sessoes_revogadas with expira_em = now + PERMANENT_SESSION_LIFETIME (30 min) + 5 min. The model docstring states the assumption behind this: the row only has to outlive any copy of the cookie, because the last refresh came before logout. That assumption does not hold. The revocation table is checked only inside _sessao_ativa, which runs only from the protected-route helpers (aluno_autorizado, professor_autorizado, sessao_administrativa_valida). On any other request, such as GET / or GET /login, Flask's SESSION_REFRESH_EACH_REQUEST=True re-signs the permanent cookie with a fresh itsdangerous timestamp and the same sid, tipo_usuario and credential stamp. Someone holding a cookie copied before logout can keep it alive indefinitely by visiting public pages. Any later logout by any user deletes revocation rows whose expira_em has passed, including the victim's. After that, the revoked sid passes _sessao_ativa again. If the password is unchanged, the credential fingerprint still matches and the copied cookie regains full access to the victim's account. Professor and admin sessions use the same _sessao_ativa path.",
+  "root_cause": "Revocation is enforced only in the per-route authorization helpers, never before Flask refreshes the session cookie. The revocation row is kept for a fixed window based on the cookie lifetime, but a refreshable cookie has no absolute lifetime, so the row can be deleted while a refreshed copy of the revoked cookie is still valid.",
+  "intended_behavior": "Once logout revokes a sid, no copy of that cookie should ever be accepted again or re-signed. Revoked sessions should be refused (cleared) before any refresh, or sessions should carry an absolute issue time that is enforced, so revocation rows can be purged once no copy can still be valid.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "servidor.py",
+    "line": 412,
+    "scope": "logout",
+    "description": "POST /logout calls revogar_sessao_atual() and then session.clear() (lines 417-418). Only the victim's browser copy is cleared; a copy taken earlier still carries the same signed sid."
+   },
+   {
+    "kind": "propagation",
+    "file": "servicos/autorizacao.py",
+    "line": 58,
+    "scope": "revogar_sessao_atual",
+    "description": "The revocation row is created with expira_em = logout time + permanent_session_lifetime (30 min) + _FOLGA_REVOGACAO (5 min). This assumes no copy of the cookie can be refreshed after logout."
+   },
+   {
+    "kind": "propagation",
+    "file": "servidor.py",
+    "line": 98,
+    "scope": "app.config.update",
+    "description": "SESSION_REFRESH_EACH_REQUEST=True with a 30-minute permanent lifetime (line 94). Any request, including the public home route at servidor.py:374, which never consults sessoes_revogadas, re-signs the permanent cookie with a new timestamp and unchanged contents (same sid)."
+   },
+   {
+    "kind": "propagation",
+    "file": "servicos/autorizacao.py",
+    "line": 55,
+    "scope": "revogar_sessao_atual",
+    "description": "The next logout by any user deletes every revocation row whose expira_em has passed, including the victim's row once logout + 35 min has elapsed."
+   },
+   {
+    "kind": "sink",
+    "file": "servicos/autorizacao.py",
+    "line": 82,
+    "scope": "_sessao_ativa",
+    "description": "With the row gone, db.session.get(SessaoRevogada, sid) returns None, so the revoked sid is accepted. aluno_autorizado (lines 129-137) then checks only esta_ativo and the credential fingerprint, both of which still match, and grants the session."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "servicos/autorizacao.py",
+    "line": 58,
+    "description": "expira_em = agora + current_app.permanent_session_lifetime + _FOLGA_REVOGACAO, a fixed retention of 35 minutes from logout."
+   },
+   {
+    "file": "servicos/autorizacao.py",
+    "line": 55,
+    "description": "Every logout opportunistically deletes revocation rows where SessaoRevogada.expira_em < agora."
+   },
+   {
+    "file": "servidor.py",
+    "line": 98,
+    "description": "SESSION_REFRESH_EACH_REQUEST=True, with PERMANENT_SESSION_LIFETIME=timedelta(minutes=30) at line 94; login sets session.permanent = True (blueprints/usuario_bp.py:196)."
+   },
+   {
+    "file": "servicos/autorizacao.py",
+    "line": 82,
+    "description": "The revocation lookup lives only in _sessao_ativa, which is called only from aluno_autorizado/professor_autorizado/sessao_administrativa_valida. No before_request hook in servidor.py (only preparar_nonce_csp at line 173) clears a revoked session."
+   },
+   {
+    "file": "servidor.py",
+    "line": 374,
+    "description": "Public home route: it reads session but never calls an authorization helper, so a revoked cookie is refreshed there without any revocation check."
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "authentication_level",
+    "description": "The attacker already holds a copy of a victim's session cookie taken before logout, for example from a shared-computer browser profile, a browser extension, or a TLS-inspecting proxy log. This is the threat the sessoes_revogadas table was added to stop."
+   },
+   {
+    "kind": "user_interaction",
+    "description": "The victim logs out to end the session and does not change their password afterwards. A password change alters the credential fingerprint and still invalidates the copy."
+   },
+   {
+    "kind": "timing_dependency",
+    "description": "The attacker sends a request to any public page at least once every 30 minutes until the victim's revocation row has been purged."
+   },
+   {
+    "kind": "data_state",
+    "description": "Some user logs out after the victim's row has expired (logout + 35 min), which triggers the purge. This is ordinary application traffic."
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "Holder of a copied session cookie whose owner has since logged out.",
+   "payloads": [
+    "Cookie: session=<value copied before the victim's logout>; GET / at T0+25 min and T0+50 min; another user's login and logout at T0+40 min; GET /perfil at T0+55 min"
+   ],
+   "instructions": [
+    "In the approved sandbox, using the project test configuration (SQLite, memory:// limiter), create two approved dummy students without an outer app context.",
+    "Log in as the victim with POST /login, save the session cookie value, and confirm that GET /perfil returns 200.",
+    "Victim POSTs /logout (T0). Confirm the sessoes_revogadas row for the sid exists.",
+    "Install the copied cookie on two new clients: an attacker client and a control client that is never refreshed.",
+    "Shift the itsdangerous and autorizacao clocks to T0+25 min. The attacker sends GET / and receives a re-signed cookie carrying the same sid and tipo_usuario=aluno.",
+    "At T0+40 min, the other student logs in and logs out. Confirm the victim's revocation row has been purged.",
+    "At T0+50 min, the attacker sends GET / again.",
+    "At T0+55 min, send GET /perfil from the control client and then from the attacker client."
+   ],
+   "observed_result": "T0: the revocation row exists. T0+25: attacker GET / returns 200 with a re-issued cookie carrying the same sid. T0+40: after another user's logout, the victim's revocation row no longer exists. T0+55: the control client with the unrefreshed copy gets 302 /login (expired by max age), while the attacker's refreshed copy gets GET /perfil 200 with the victim's name in the body. The revoked session regained full access to the victim's account (agents/v01-sessao/artifacts/evidence/check-01.txt)."
+  },
+  "remediation": {
+   "strategy": "Enforce revocation before Flask can refresh the cookie, and give sessions an absolute lifetime so revocation rows can be purged safely. (1) Add a before_request hook that calls session.clear() whenever a session that claims an identity (tipo_usuario present) fails _sessao_ativa(). A revoked cookie is then never re-signed. (2) Store an issue timestamp in iniciar_sessao and reject sessions older than an absolute maximum (for example 12 h) in _sessao_ativa. Keep revocation rows at least that maximum plus a margin, so a row can only be purged once no copy can still be valid. Regression test: log out, refresh the copied cookie through a public page, purge the expired rows, and assert that /perfil still redirects to /login.",
+   "code_changes": [
+    {
+     "file_name": "servicos/autorizacao.py",
+     "fixed_code": "import time\n\nVIDA_MAXIMA_SESSAO = timedelta(hours=12)\nCHAVE_EMISSAO = 'emitida_em'\n\ndef iniciar_sessao():\n    session[CHAVE_SESSAO] = secrets.token_urlsafe(16)\n    session[CHAVE_EMISSAO] = int(time.time())\n\ndef _sessao_ativa():\n    from config import db\n    from modelos.sessao_revogada import SessaoRevogada\n\n    sid = session.get(CHAVE_SESSAO)\n    emitida = session.get(CHAVE_EMISSAO)\n    if not sid or not isinstance(sid, str) or not isinstance(emitida, int):\n        return False\n    if time.time() - emitida > VIDA_MAXIMA_SESSAO.total_seconds():\n        return False\n    if g.get('_sessao_conferida') == sid:\n        return True\n    if db.session.get(SessaoRevogada, sid) is not None:\n        return False\n    g._sessao_conferida = sid\n    return True\n\n# in revogar_sessao_atual:\n#     expira_em=agora + VIDA_MAXIMA_SESSAO + _FOLGA_REVOGACAO"
+    },
+    {
+     "file_name": "servidor.py",
+     "fixed_code": "from servicos import autorizacao\n\n@app.before_request\ndef descartar_sessao_revogada():\n    if session.get('tipo_usuario') and not autorizacao._sessao_ativa():\n        session.clear()"
+    }
+   ]
+  },
+  "severity": {
+   "likelihood": {
+    "score": "low",
+    "reason": "The attacker must already hold a copied session cookie, keep refreshing it through public pages at least every 30 minutes, and the victim must not change their password. The purge itself happens through any other user's ordinary logout."
+   },
+   "impact": {
+    "score": "medium",
+    "reason": "Full use of the victim's account (student PII, payments, profile changes) after the victim believed logout had ended the session. Demonstrated for an aluno session; professor and admin sessions share the same _sessao_ativa path in source."
+   },
+   "overall_severity": "medium"
+  },
+  "confidence": {
+   "score": "high",
+   "reason": "Every trace line was re-read in current source, and the result was reproduced independently in the sandbox with the project's own app and test configuration. The refresh went through a different public route (GET /) than the hunter used, and a control client showed that the unrefreshed copy expires, which isolates the refresh-then-purge mechanism."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "servicos/gmail_conta.py:enviar:to-header-unquoted-display-name",
+  "title": "Unquoted student-controlled display name in the To header can add an attacker recipient to email-ownership token links",
+  "description": "gmail_conta.enviar builds the To header as f'{nome} <{destinatario}>' and never quotes or encodes the display name. The student controls nome at /cadastrar and at /perfil/dados, where the only check is length (at most 150). A name such as 'Ana <ana.atk@attacker.test>, Ana' therefore produces the raw header 'To: Ana <ana.atk@attacker.test>, Ana <victim@...>', which parses as two recipients. This happens on the /perfil/email confirmation message, which goes to an address the student only claims to own, and on the /cadastrar verification message. If the Gmail API delivers to every To address, the attacker receives the ownership-proof token for an address they do not control. The verifier reproduced this locally in a sandbox with the Gmail send call mocked. The token taken from the raw message confirmed dummy.victim@example.org onto the attacker's account. The signup verification message showed the same two-recipient To header. A follow-on effect is visible in source: Google login picks the Aluno only by email (google_login.py:144) and opens a session for an approved, active account (google_login.py:175-180). So if the victim later chooses 'Sign in with Google' with that address, they land in the attacker-controlled account. That step needs the victim to start a Google login. The address must also not already belong to another account, because solicitar_troca_email rejects duplicates at usuario_bp.py:787.",
+  "claimed_root_cause": "servicos/gmail_conta.py:149 interpolates the raw, untrusted display name into an address-list header. It should build a single email.headerregistry.Address(display_name=nome, addr_spec=destinatario), which quotes the name, or strip address-list syntax from the name. The verifier checked locally that using Address leaves exactly one recipient.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "blueprints/usuario_bp.py",
+    "line": 689,
+    "scope": "atualizar_dados_perfil",
+    "description": "An authenticated student sets aluno.nome to an arbitrary string. The name is only length-checked (at most 150), after a current-password check. /cadastrar (usuario_bp.py:317) takes the signup name the same way."
+   },
+   {
+    "kind": "propagation",
+    "file": "blueprints/usuario_bp.py",
+    "line": 805,
+    "scope": "solicitar_troca_email",
+    "description": "The confirmation link for novo_email is sent through _enviar_em_segundo_plano with nome_destinatario=aluno.nome."
+   },
+   {
+    "kind": "propagation",
+    "file": "servicos/email.py",
+    "line": 65,
+    "scope": "enviar_email",
+    "description": "The name is passed unchanged to gmail_conta.enviar."
+   },
+   {
+    "kind": "propagation",
+    "file": "servicos/gmail_conta.py",
+    "line": 149,
+    "scope": "enviar",
+    "description": "The To header is built by string interpolation, so address-list syntax in the name adds a second recipient."
+   },
+   {
+    "kind": "sink",
+    "file": "servicos/gmail_conta.py",
+    "line": 153,
+    "scope": "enviar",
+    "description": "The raw RFC 5322 message is POSTed to the Gmail users.messages.send endpoint (SEND_URL, gmail_conta.py:26), which takes recipients from the message headers."
+   }
+  ],
+  "evidence": [
+   {
+    "file": "servicos/gmail_conta.py",
+    "line": 149,
+    "description": "mensagem['To'] = f'{nome} <{destinatario}>'. Verifier run (agents/v03-to-header/artifacts/evidence/check-01.txt): raw header 'Ana <ana.atk@attacker.test>, Ana <dummy.victim@example.org>', and getaddresses returns ['ana.atk@attacker.test', 'dummy.victim@example.org']."
+   },
+   {
+    "file": "blueprints/usuario_bp.py",
+    "line": 849,
+    "description": "The token taken from that raw message was used on GET /perfil/confirmar_email/<token>, which set aluno.email = email_pendente. ACCOUNT_EMAIL_AFTER_CONFIRM: dummy.victim@example.org (check-01). The hunters' runs h01 check-01 and h05 check-03 match this."
+   },
+   {
+    "file": "blueprints/usuario_bp.py",
+    "line": 423,
+    "description": "The signup verification e-mail is queued through fila_email with nome_destinatario=nome, the raw signup name. Verifier run: the 'Verifique seu e-mail' message had To 'Bob <bob.atk@attacker.test>, Bob <dummy.victim2@example.org>', which is two recipients."
+   },
+   {
+    "file": "blueprints/google_login.py",
+    "line": 144,
+    "description": "Google login selects the account only by email. After the attacker binds the victim's address, a victim who signs in with Google using that address gets a session on the attacker's account at google_login.py:175-180, provided the account is approved and active. The victim has to start that Google login."
+   }
+  ],
+  "blockers": [
+   "Whether Gmail API users.messages.send actually delivers to every address in the raw To header, including the injected attacker address, is provider behavior. It is not visible in source and cannot be tested offline. Local evidence ends at the raw message, which has two parsed To recipients, and at the server accepting that message's token."
+  ],
+  "validation_plan": {
+   "local": "Run agents/v03-to-header/artifacts/evidence/check-01.txt (test_v03.py) in the sandbox with the Gmail send call mocked. Confirm EMAIL_CHANGE_RECIPIENTS and the signup RECIPIENTS each list two addresses. After the fix, which sets mensagem['To'] = Address(display_name=nome, addr_spec=destinatario), confirm that getaddresses returns only destinatario (FIXED_RECIPIENTS in the same file shows this).",
+   "deployment": "Use a test Gmail sender account connected to a non-production instance, plus two mailboxes the owner controls. Set a test student's name to 'Test <owner-mailbox-2@...>, X' and request an e-mail change to owner-mailbox-1. Check whether owner-mailbox-2 receives the 'Confirme seu novo e-mail' message containing the confirmation link. Do not use real student accounts or third-party addresses."
+  }
+ }
+]
