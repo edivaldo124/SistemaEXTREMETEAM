@@ -537,7 +537,7 @@ Todos ficam em `static/css/componentes.css`, usam só tokens e têm a classe `.e
 - **Carregando** (`.et-carregando`): ganha um anel girando antes do rótulo e para de responder a cliques.
 
 ### Formulários
-- **`.et-campo`** vai direto no `<input>`, `<select>` ou `<textarea>`. Tem 48 px, fundo branco, borda `{colors.line-strong}` e raio de 12 px. No foco, a borda fica ouro escuro com um halo dourado de 3 px; no foco por teclado, aparece o anel completo. Quando inválido (`aria-invalid="true"`), a borda e o halo ficam vermelhos. `--bloqueado` deixa o campo não editável e com fundo de faixa; `--pequeno` serve a barras de ferramentas. O select usa o chevron do Lucide.
+- **`.et-campo`** vai direto no `<input>`, `<select>` ou `<textarea>`. Tem 48 px, fundo branco, borda `{colors.line-strong}` e raio de 12 px. No foco, a borda fica ouro escuro com um halo dourado de 3 px; no foco por teclado, aparece o anel completo. Quando inválido (`aria-invalid="true"`), a borda e o halo ficam vermelhos. `--bloqueado` deixa o campo não editável e com fundo de faixa; `--pequeno` serve a barras de ferramentas. O select usa o chevron do Lucide. Data, hora e mês saem sem a aparência do sistema (`appearance: none`) e com o valor à esquerda: no Safari do iPhone o controle nativo ignora a largura e passava da coluna do formulário.
 - **Rótulo** (`.field label`): 14 px, peso 600, com 8 px até o campo. Notas como "Opcional" vão em `<small>` alinhado à direita, em `{colors.text-3}`.
 - **Ajuda** (`.field-hint`): 13 px em `{colors.text-2}`. **Erro** (`.field-erro`): 13 px, peso 600, em `{colors.red-ink}`, escrito ao lado do campo e não no topo do formulário.
 - **`.et-caixa`** (checkbox e radio): 20 px, raio de 6 px, marcada em preto com sinal branco. No escuro, fica dourada com sinal preto. O tamanho e a cor vêm de `--caixa-*`.
@@ -594,7 +594,7 @@ Todo elemento focável mostra um anel de dois tons: `outline` de 2 px em `--focu
 - **Uma entrada por tela** (`.entra`, subindo 10 px no bloco de abertura). O resto só se mexe quando a pessoa age.
 - **Deslize entre telas** por View Transitions: cabeçalho, navegação inferior e item ativo têm nome próprio e deslizam juntos.
 - `prefers-reduced-motion: reduce` desliga zoom, deslize e giro, deixando no máximo um esmaecimento curto.
-- **Exceção: hero cinematográfico da página inicial** (padrão Framerate; `cinema.css` e `static/js/cinema.js`). A seção tem 400svh e o palco fica preso enquanto a rolagem troca quatro manchetes (cada uma com o seu sobretítulo; as linhas do título sobem em 780 ms com `cubic-bezier(.16,1,.3,1)`), enche o medidor de 00 a 100 e move a cena 3D. Um loader preto aparece só na primeira visita da aba e sai em até 3 s (4,5 s se o JS falhar). Com `prefers-reduced-motion`: sem loader, sem transição e sem cena 3D, só o pôster estático.
+- **Exceção: hero cinematográfico da página inicial** (padrão Framerate; `cinema.css` e `static/js/cinema.js`). A seção tem 400svh (240svh no celular, para o medidor não exigir três telas de rolagem no toque) e o palco fica preso enquanto a rolagem troca quatro manchetes (cada uma com o seu sobretítulo; as linhas do título sobem em 780 ms com `cubic-bezier(.16,1,.3,1)`), enche o medidor de 00 a 100 e move a cena 3D. Um loader preto aparece só na primeira visita da aba e sai em até 3 s, 1,5 s no celular (4,5 s se o JS falhar). No iPhone/iPad o WebGL é pedido sem `failIfMajorPerformanceCaveat`, que o Safari do iOS pode recusar. Com `prefers-reduced-motion`: sem loader, sem transição e sem cena 3D, só o pôster estático.
 
 ## O que fazer e o que evitar
 

@@ -508,6 +508,9 @@ function CenaDoEmblema({ estreito, leve, eventSource, aoFicarPronta, aoPerderCon
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       eventSource={eventSource}
       eventPrefix="client"
+      // O palco é sticky: medir de novo a cada rolagem só faria o React renderizar a cena
+      // sem motivo enquanto a pessoa rola, o que pesa no celular. Basta medir no resize.
+      resize={{ scroll: false }}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener('webglcontextlost', aoPerderContexto)
         gl.domElement.addEventListener('webglcontextrestored', () => setRestauracoes((n) => n + 1))

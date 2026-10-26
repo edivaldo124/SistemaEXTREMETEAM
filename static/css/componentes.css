@@ -880,6 +880,22 @@ textarea.et-campo {
   line-height: 1.6;
   resize: vertical;
 }
+/* Data e hora nativas: no Safari do iPhone o controle tem largura mínima própria, ignora
+   o width: 100% e passa da coluna do formulário; vazio, ainda encolhe a altura. Sem a
+   aparência do sistema ele obedece à caixa, e o valor fica à esquerda como nos outros
+   campos (o iOS centraliza). O seletor do sistema continua abrindo ao tocar. */
+.et-campo:is([type="date"], [type="time"], [type="datetime-local"], [type="month"]) {
+  display: block;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+.et-campo::-webkit-date-and-time-value {
+  min-height: 1.5em;
+  margin: 0;
+  text-align: left;
+}
 /* Select nativo com o chevron do shadcn no lugar da seta de cada sistema. */
 select.et-campo {
   padding-right: calc(var(--sp-4) + 24px);
