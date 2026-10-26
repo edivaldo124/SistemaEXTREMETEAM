@@ -935,3 +935,167 @@ def test_mensalidade_paga_nao_oferece_checkout_na_tela(client, criar_pagamento, 
 
     assert f'/perfil/mensalidade/{pagamento.id}/checkout' not in corpo
     assert 'Ver comprovante' in corpo
+
+
+# ---------------------------------------------------------------------------
+# Cobrança substituída e pagamento em duplicidade
+# ---------------------------------------------------------------------------
+
+# Tamanhos dos tokens que o servidor gera: token_urlsafe(16) no checkout e (8) no Pix.
+def _ref_checkout(pagamento, token='A'):
+    return f'checkout-{pagamento.id}-{token * 22}'
+
+
+def _ref_pix(pagamento, token='A'):
+    return f'mensalidade-{pagamento.id}-{token * 11}'
+
+
+def _webhook(client, payment_id, monkeypatch, request_id=None, **dados_mp):
+    monkeypatch.setattr(
+        pix_bp, 'buscar_pagamento',
+        lambda pid, **kwargs: {'sucesso': True, **_pagamento_mp(payment_id=pid, **dados_mp)},
+    )
+    headers = _assinar(payment_id, os.environ['MERCADO_PAGO_WEBHOOK_SECRET'],
+                       request_id=request_id or f'req-{payment_id}')
+    return client.post(f'/api/webhooks/mercado-pago?data.id={payment_id}', headers=headers,
+                       json={'type': 'payment', 'data': {'id': payment_id}})
+
+
+def _paga_pelo_mercado_pago(criar_pagamento):
+    pagamento = criar_pagamento(valor=150.0, status='pago', provider='mercado_pago',
+                                provider_payment_id='mp-que-quitou', forma_pagamento='pix')
+    pagamento.provider_status = 'approved'
+    PagamentoDAO.salvar(pagamento)
+    return pagamento
+
+
+def test_boleto_de_um_checkout_ja_substituido_ainda_quita_a_mensalidade(client, criar_pagamento, monkeypatch):
+    # O aluno gerou o boleto ontem; hoje abriu o checkout de novo e a referência mudou.
+    pagamento = criar_pagamento(valor=150.0)
+    _preparar_retorno(pagamento, referencia=_ref_checkout(pagamento, 'N'))
+
+    resp = _webhook(client, 'mp-boleto-antigo', monkeypatch, status='approved', valor=150.0,
+                    external_reference=_ref_checkout(pagamento, 'O'),
+                    payment_type_id='ticket', payment_method_id='bolbradesco')
+
+    assert resp.status_code == 200
+    atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
+    assert atualizado.status == 'pago'
+    assert atualizado.provider_payment_id == 'mp-boleto-antigo'
+    assert atualizado.forma_pagamento == 'boleto'
+
+
+def test_pix_antigo_pago_depois_de_um_pix_novo_quita_a_mensalidade(client, criar_pagamento, monkeypatch):
+    pagamento = criar_pagamento(valor=150.0, provider='mercado_pago', provider_payment_id='mp-pix-novo')
+    pagamento.external_reference = _ref_pix(pagamento, 'N')
+    PagamentoDAO.salvar(pagamento)
+
+    resp = _webhook(client, 'mp-pix-antigo', monkeypatch, status='approved', valor=150.0,
+                    external_reference=_ref_pix(pagamento, 'O'),
+                    payment_type_id='bank_transfer', payment_method_id='pix')
+
+    assert resp.status_code == 200
+    atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
+    assert atualizado.status == 'pago'
+    assert atualizado.provider_payment_id == 'mp-pix-antigo'
+
+
+def test_referencia_antiga_ainda_confere_o_valor(client, criar_pagamento, monkeypatch):
+    pagamento = criar_pagamento(valor=150.0)
+    _preparar_retorno(pagamento, referencia=_ref_checkout(pagamento, 'N'))
+
+    _webhook(client, 'mp-valor-errado', monkeypatch, status='approved', valor=1.0,
+             external_reference=_ref_checkout(pagamento, 'O'))
+
+    assert PagamentoDAO.buscar_por_id(pagamento.id).status == 'pendente'
+
+
+def test_referencia_de_outro_sistema_com_padrao_parecido_e_ignorada(client, criar_pagamento, monkeypatch):
+    # Outra integração na mesma conta do Mercado Pago usando "checkout-<n>-<algo>".
+    pagamento = criar_pagamento(valor=150.0)
+    _preparar_retorno(pagamento, referencia=_ref_checkout(pagamento, 'N'))
+
+    _webhook(client, 'mp-loja', monkeypatch, status='approved', valor=150.0,
+             external_reference=f'checkout-{pagamento.id}-abc')
+
+    assert PagamentoDAO.buscar_por_id(pagamento.id).status == 'pendente'
+
+
+def test_referencia_de_outra_mensalidade_nao_quita_esta(criar_pagamento):
+    pagamento = criar_pagamento(valor=150.0)
+    outra = criar_pagamento(valor=150.0, provider='mercado_pago')
+    _preparar_retorno(pagamento, referencia=_ref_checkout(pagamento))
+
+    pix_bp._processar_status_mp(
+        pagamento, {'sucesso': True, **_pagamento_mp(external_reference=_ref_checkout(outra))},
+        provider_payment_id='mp-de-outra',
+    )
+
+    assert PagamentoDAO.buscar_por_id(pagamento.id).status == 'pendente'
+
+
+def test_boleto_antigo_nao_reabre_mensalidade_cancelada(client, criar_pagamento, monkeypatch):
+    pagamento = criar_pagamento(valor=150.0)
+    _preparar_retorno(pagamento, referencia=_ref_checkout(pagamento, 'N'))
+    pagamento.status = 'cancelado'
+    PagamentoDAO.salvar(pagamento)
+
+    _webhook(client, 'mp-boleto-tardio', monkeypatch, status='approved', valor=150.0,
+             external_reference=_ref_checkout(pagamento, 'O'))
+
+    atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
+    assert atualizado.status == 'cancelado'
+    assert atualizado.vigencia_inicio is None
+    assert [e.tipo for e in atualizado.eventos].count('pagamento_em_cobranca_fechada') == 1
+
+
+def test_devolver_o_pagamento_em_duplicidade_nao_reembolsa_a_mensalidade(client, criar_pagamento, monkeypatch):
+    pagamento = _paga_pelo_mercado_pago(criar_pagamento)
+    _preparar_retorno(pagamento, referencia=_ref_checkout(pagamento))
+
+    resp = _webhook(client, 'mp-duplicado', monkeypatch, status='refunded', valor=150.0,
+                    external_reference=_ref_checkout(pagamento))
+
+    assert resp.status_code == 200
+    atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
+    assert atualizado.status == 'pago'
+    assert atualizado.provider_payment_id == 'mp-que-quitou'
+    assert [e.tipo for e in atualizado.eventos].count('duplicado_reembolsado') == 1
+
+
+def test_reembolso_do_pagamento_que_quitou_continua_reembolsando(client, criar_pagamento, monkeypatch):
+    pagamento = _paga_pelo_mercado_pago(criar_pagamento)
+    _preparar_retorno(pagamento, referencia=_ref_checkout(pagamento))
+
+    _webhook(client, 'mp-que-quitou', monkeypatch, status='refunded', valor=150.0,
+             external_reference=_ref_checkout(pagamento))
+
+    assert PagamentoDAO.buscar_por_id(pagamento.id).status == 'reembolsado'
+
+
+def test_estorno_do_pix_nao_desfaz_mensalidade_paga_por_comprovante(client, criar_pagamento, monkeypatch):
+    # O aluno pagou por transferência (comprovante aprovado) e também pagou o Pix aberto;
+    # a academia devolve o Pix. A mensalidade continua paga.
+    pagamento = criar_pagamento(valor=150.0, provider='mercado_pago', provider_payment_id='mp-pix',
+                                external_reference='ref-pix')
+    PagamentoDAO.aprovar_comprovante_manual(pagamento, admin_login='admin')
+
+    _webhook(client, 'mp-pix', monkeypatch, status='refunded', valor=150.0, external_reference='ref-pix')
+
+    atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
+    assert atualizado.status == 'pago'
+    assert [e.tipo for e in atualizado.eventos].count('duplicado_reembolsado') == 1
+
+
+def test_pagamento_em_duplicidade_fica_no_historico_uma_vez(client, criar_pagamento, monkeypatch):
+    pagamento = _paga_pelo_mercado_pago(criar_pagamento)
+    _preparar_retorno(pagamento, referencia=_ref_checkout(pagamento))
+
+    for request_id in ('a', 'b'):
+        _webhook(client, 'mp-duplicado', monkeypatch, request_id=request_id, status='approved', valor=150.0,
+                 external_reference=_ref_checkout(pagamento))
+
+    atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
+    assert atualizado.status == 'pago'
+    assert atualizado.provider_payment_id == 'mp-que-quitou'
+    assert [e.tipo for e in atualizado.eventos].count('pagamento_duplicado') == 1
