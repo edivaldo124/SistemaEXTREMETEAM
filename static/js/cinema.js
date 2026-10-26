@@ -93,21 +93,59 @@
     return /iP(hone|od|ad)/.test(agente) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   }
 
+  // ---------------------------------------------------------- diagnóstico --
+  // Com #diagnostico no endereço, um quadro no canto diz por que a cena 3D ligou ou não.
+  // Serve para depurar no celular, onde não há console. Só texto (textContent).
+  const diagnostico = !!(window.location && window.location.hash === '#diagnostico');
+  const registro = [];
+  let quadro = null;
+  function anotar(texto) {
+    registro.push(texto);
+    if (!diagnostico) return;
+    if (!quadro) {
+      quadro = document.createElement('pre');
+      quadro.setAttribute('style', 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99;margin:0;' +
+        'padding:10px;max-height:45vh;overflow:auto;white-space:pre-wrap;font:12px/1.4 monospace;' +
+        'color:#fff;background:rgba(0,0,0,.88);border:1px solid #f5b914;border-radius:8px');
+      document.body.appendChild(quadro);
+    }
+    quadro.textContent = registro.join('\n');
+  }
+  if (diagnostico) {
+    anotar('navegador: ' + (navigator.userAgent || '?'));
+    anotar('tela estreita: ' + estreito + ' | movimento reduzido: ' + reduzir.matches);
+    window.addEventListener('error', function (evento) { anotar('erro: ' + (evento.message || evento.type)); });
+    window.addEventListener('unhandledrejection', function (evento) {
+      anotar('promessa recusada: ' + String((evento.reason && evento.reason.message) || evento.reason));
+    });
+  }
+
   function podeTer3D() {
-    if (reduzir.matches) return false;
+    if (reduzir.matches) {
+      anotar('sem 3D: o aparelho pede movimento reduzido (Ajustes > Acessibilidade > Movimento)');
+      return false;
+    }
     const conexao = navigator.connection;
-    if (conexao && (conexao.saveData || /(^|-)2g$/.test(conexao.effectiveType || ''))) return false;
+    if (conexao && (conexao.saveData || /(^|-)2g$/.test(conexao.effectiveType || ''))) {
+      anotar('sem 3D: economia de dados ou conexão 2G');
+      return false;
+    }
     try {
       const teste = document.createElement('canvas');
       // Sem aceleração de vídeo (renderização por software) a cena travaria a página.
       const opcoes = ehAppleMovel() ? {} : { failIfMajorPerformanceCaveat: true };
       const contexto = teste.getContext('webgl2', opcoes) || teste.getContext('webgl', opcoes);
-      if (!contexto) return false;
+      if (!contexto) {
+        anotar('sem 3D: o navegador não abriu WebGL (Modo de Bloqueio do iOS desliga o WebGL)');
+        return false;
+      }
+      anotar('WebGL ok');
       // O navegador limita os contextos WebGL abertos: devolve o do teste.
       const perder = contexto.getExtension('WEBGL_lose_context');
       if (perder) perder.loseContext();
       return true;
     } catch (e) {
+      anotar('sem 3D: falha ao testar WebGL: ' + (e && e.message));
       return false;
     }
   }
@@ -115,7 +153,12 @@
   function carregarCena() {
     const video = secao.getAttribute('data-video-src');
     const modulo = video ? secao.getAttribute('data-video-modulo') : secao.getAttribute('data-cena-src');
-    if (!alvoCena || !modulo || !podeTer3D()) return Promise.resolve(false);
+    if (!alvoCena || !modulo) {
+      anotar('sem 3D: a página não aponta para o build da cena');
+      return Promise.resolve(false);
+    }
+    if (!podeTer3D()) return Promise.resolve(false);
+    anotar('baixando a cena: ' + modulo);
     return new Promise(function (resolver) {
       const opcoes = {
         estreito: estreito,
@@ -123,11 +166,13 @@
         leve: !!navigator.deviceMemory && navigator.deviceMemory < 4,
         eventSource: secao,
         aoFicarPronta: function () {
+          anotar('cena 3D pronta');
           secao.classList.add('cinema--cena-pronta');
           resolver(true);
         },
         // Contexto WebGL perdido (aba em segundo plano no celular, driver): o pôster volta.
         aoPerderContexto: function () {
+          anotar('contexto WebGL perdido: volta o pôster');
           secao.classList.remove('cinema--cena-pronta');
         },
       };
@@ -135,7 +180,10 @@
         .then(function (m) {
           return video ? m.montar(alvoCena, video, opcoes) : m.montar(alvoCena, opcoes);
         })
-        .catch(function () { resolver(false); });
+        .catch(function (erro) {
+          anotar('falha ao carregar a cena: ' + ((erro && erro.message) || erro));
+          resolver(false);
+        });
     });
   }
 
