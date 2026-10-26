@@ -1,6 +1,6 @@
 /* =========================================================================
    Hero cinematográfico da página inicial (padrão Framerate "Coworking Space").
-   A seção .cinema tem 400svh e um palco preso (sticky) da altura da tela: a
+   A seção .cinema tem 400svh (240svh no celular) e um palco preso (sticky) da altura da tela: a
    rolagem dentro dela troca as manchetes, enche o medidor e move a cena 3D.
    static/js/cinema.js liga tudo; a classe .cinema-js, posta no <html> antes da
    primeira pintura, é que estica a pista. Sem JS, o hero é uma tela estática com a
@@ -443,6 +443,13 @@ html:not(.cinema-js) .cinema-medidor {
 /* ---------------------------------------------------------- responsivo --- */
 /* Celular: o texto sobe para o terço de cima e o emblema fica no vão de baixo. */
 @media (max-width: 720px) {
+  /* Pista curta: no toque, três telas presas para ver as quatro manchetes eram rolagem
+     demais. Com 240svh o medidor vai de 00 a 100 em pouco mais de uma tela. */
+  .cinema-js .cinema {
+    height: 240vh;
+    height: 240svh;
+  }
+
   .cinema-sobreposicao {
     justify-content: flex-start;
     gap: var(--sp-5);

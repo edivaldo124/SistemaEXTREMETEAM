@@ -32,7 +32,7 @@ class Elemento {
 }
 
 // Seção de 3600px numa janela de 900px: o percurso da rolagem é de 2700px.
-function montar({ reduzir = false, webgl = false, memoria } = {}) {
+function montar({ reduzir = false, webgl = false, memoria, agente } = {}) {
     const manchetes = [0, 1, 2, 3].map(() => new Elemento());
     const preenchimento = new Elemento();
     const valor = new Elemento();
@@ -67,9 +67,9 @@ function montar({ reduzir = false, webgl = false, memoria } = {}) {
         fonts: { ready: Promise.resolve() },
         querySelector: (seletor) => ({ '[data-cinema]': secao, '[data-cinema-carregando]': carregando })[seletor] || null,
         createElement: () => ({
-            getContext: () => {
+            getContext: (tipo, opcoes) => {
                 if (!webgl) return null;
-                const contexto = { perdido: false, getExtension: () => ({ loseContext() { contexto.perdido = true; } }) };
+                const contexto = { opcoes, perdido: false, getExtension: () => ({ loseContext() { contexto.perdido = true; } }) };
                 contextosWebgl.push(contexto);
                 return contexto;
             },
@@ -79,7 +79,7 @@ function montar({ reduzir = false, webgl = false, memoria } = {}) {
         constructor(tipo, inicial) { this.type = tipo; this.detail = inicial.detail; }
     }
     vm.runInNewContext(CODIGO, {
-        window, document, CustomEvent, navigator: memoria === undefined ? {} : { deviceMemory: memoria },
+        window, document, CustomEvent, navigator: { ...(memoria === undefined ? {} : { deviceMemory: memoria }), ...(agente ? { userAgent: agente } : {}) },
         sessionStorage: { setItem: (chave, v) => armazenado.set(chave, v) },
         setTimeout: () => 0,
     });
@@ -168,4 +168,13 @@ test('sem WebGL a cena não é importada e o loader sai do mesmo jeito', async (
     await esperarPromessas();
     assert.ok(hero.carregando.classList.contains('is-complete'));
     assert.ok(!hero.secao.classList.contains('cinema--cena-pronta'));
+});
+
+test('no iPhone o WebGL é pedido sem failIfMajorPerformanceCaveat; no desktop, com', async () => {
+    const iphone = montar({ webgl: true, agente: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15' });
+    const desktop = montar({ webgl: true, agente: 'Mozilla/5.0 (X11; Linux x86_64) Chrome/140.0' });
+    await esperarPromessas();
+    await esperarPromessas();
+    assert.equal(iphone.contextosWebgl[0].opcoes.failIfMajorPerformanceCaveat, undefined);
+    assert.equal(desktop.contextosWebgl[0].opcoes.failIfMajorPerformanceCaveat, true);
 });

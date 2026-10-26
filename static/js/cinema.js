@@ -58,12 +58,16 @@
   }
   window.addEventListener('scroll', pedirMedida, { passive: true });
   window.addEventListener('resize', pedirMedida);
+  // Voltar pelo histórico no Safari restaura a página do cache sem rolar de novo: o
+  // medidor e a manchete precisam bater com onde a tela parou.
+  window.addEventListener('pageshow', pedirMedida);
   medir();
 
   // -------------------------------------------------------------- loader --
   // Só na primeira visita da aba; o CSS o esconde sozinho depois de 4,5 s se este
   // arquivo falhar. Aqui ele sai quando a página, as fontes e a cena estão prontas,
-  // ou em 3 s, o que vier primeiro.
+  // ou em 3 s, o que vier primeiro. No celular o limite é 1,5 s: a cena (1,1 MB) demora
+  // a chegar pela rede móvel, e o pôster já mostra o emblema enquanto ela não vem.
   function concluirCarregamento() {
     secao.classList.add('cinema--pronto');
     if (!carregando || carregando.classList.contains('is-complete')) return;
@@ -79,6 +83,16 @@
   });
 
   // ---------------------------------------------------------------- cena --
+  const estreito = window.matchMedia('(max-width: 720px)').matches;
+
+  // iPhone e iPad (o iPadOS se apresenta como Mac, mas tem toque). Todo aparelho da Apple
+  // tem GPU, e o Safari do iOS pode recusar o contexto quando se pede
+  // failIfMajorPerformanceCaveat: aí a cena nunca aparecia no iPhone, só o pôster.
+  function ehAppleMovel() {
+    const agente = navigator.userAgent || '';
+    return /iP(hone|od|ad)/.test(agente) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
   function podeTer3D() {
     if (reduzir.matches) return false;
     const conexao = navigator.connection;
@@ -86,7 +100,7 @@
     try {
       const teste = document.createElement('canvas');
       // Sem aceleração de vídeo (renderização por software) a cena travaria a página.
-      const opcoes = { failIfMajorPerformanceCaveat: true };
+      const opcoes = ehAppleMovel() ? {} : { failIfMajorPerformanceCaveat: true };
       const contexto = teste.getContext('webgl2', opcoes) || teste.getContext('webgl', opcoes);
       if (!contexto) return false;
       // O navegador limita os contextos WebGL abertos: devolve o do teste.
@@ -104,7 +118,7 @@
     if (!alvoCena || !modulo || !podeTer3D()) return Promise.resolve(false);
     return new Promise(function (resolver) {
       const opcoes = {
-        estreito: window.matchMedia('(max-width: 720px)').matches,
+        estreito: estreito,
         // Menos de 4 GB (o Chrome arredonda para baixo, então 3 GB também cai aqui).
         leve: !!navigator.deviceMemory && navigator.deviceMemory < 4,
         eventSource: secao,
@@ -132,6 +146,6 @@
       ocioso(function () { carregarCena().then(resolver); }, { timeout: 1500 });
     });
   });
-  const vigia = new Promise(function (resolver) { setTimeout(resolver, 3000); });
+  const vigia = new Promise(function (resolver) { setTimeout(resolver, estreito ? 1500 : 3000); });
   Promise.all([paginaPronta, Promise.race([cenaPronta, vigia])]).then(concluirCarregamento);
 })();
