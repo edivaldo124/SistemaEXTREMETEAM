@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import os
+import re
 import secrets
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -122,6 +123,41 @@ def _referencias_conhecidas(pagamento):
     return {r for r in (pagamento.external_reference, pagamento.checkout_external_reference) if r}
 
 
+# Formato exato das referências que este servidor gera: "mensalidade-<id>-" mais
+# token_urlsafe(8) (11 caracteres) no Pix e "checkout-<id>-" mais token_urlsafe(16) (22)
+# no Checkout Pro. O tamanho fixo evita casar com a referência de outro sistema que use a
+# mesma conta do Mercado Pago com um padrão parecido.
+_REFERENCIA_GERADA = re.compile(r'mensalidade-(\d+)-[A-Za-z0-9_-]{11}|checkout-(\d+)-[A-Za-z0-9_-]{22}')
+
+
+def _mensalidade_da_referencia(referencia):
+    """Id da mensalidade embutido numa referência gerada aqui, ou None.
+
+    Um Pix ou checkout novo substitui a referência gravada na mensalidade, mas a cobrança
+    anterior continua pagável: um boleto do checkout de ontem, um Pix antigo cujo
+    cancelamento falhou. Sem isto, o pagamento dela chegava e não achava a mensalidade.
+    Só serve para referência lida da API do Mercado Pago (autenticada com a nossa
+    credencial, que é quem cria cobranças na conta), nunca de URL ou corpo de webhook;
+    valor e moeda continuam conferidos em _processar_status_mp.
+    """
+    casamento = _REFERENCIA_GERADA.fullmatch(referencia or '')
+    return int(casamento.group(1) or casamento.group(2)) if casamento else None
+
+
+def _referencia_antiga_desta(referencia, pagamento):
+    """A referência é de uma cobrança do Mercado Pago que este servidor gerou para ESTA
+    mensalidade e que depois foi substituída?"""
+    return pagamento.provider == 'mercado_pago' and _mensalidade_da_referencia(referencia) == pagamento.id
+
+
+def _quitada_por(pagamento):
+    """Id do pagamento do Mercado Pago que quitou a mensalidade, ou None se ela não foi
+    quitada pelo Mercado Pago (comprovante aprovado, baixa manual do admin)."""
+    if pagamento.status == 'pago' and pagamento.provider_status == 'approved':
+        return pagamento.provider_payment_id
+    return None
+
+
 def _forma_pagamento_confirmada(resultado_mp, pagamento):
     """Meio de pagamento realmente usado, sempre a partir da resposta da API."""
     if resultado_mp.get('payment_method_id') == 'pix':
@@ -131,7 +167,8 @@ def _forma_pagamento_confirmada(resultado_mp, pagamento):
         return FORMAS_PAGAMENTO_MP.get(tipo, tipo)
     # A API nao informou o meio: se a notificacao casou com a referencia do Checkout Pro
     # nao da para afirmar que foi Pix, entao fica o rotulo generico do provedor.
-    if resultado_mp.get('external_reference') and resultado_mp['external_reference'] == pagamento.checkout_external_reference:
+    referencia = resultado_mp.get('external_reference') or ''
+    if referencia and (referencia == pagamento.checkout_external_reference or referencia.startswith('checkout-')):
         return 'mercado_pago'
     return 'pix'
 
@@ -483,8 +520,9 @@ def _tratar_webhook(data_id):
 
     pagamento = PagamentoDAO.buscar_por_provider_payment_id(data_id)
 
-    if pagamento and pagamento.status == 'pago' and pagamento.provider_payment_id == data_id:
-        return '', 200  # notificacao repetida - ja processada, nem chama o MP de novo.
+    # Mensalidade já paga por este mesmo pagamento ainda consulta o MP: estorno e
+    # chargeback chegam com o mesmo data.id. A repetição da mesma entrega já parou antes
+    # (_primeira_entrega_webhook), e _processar_status_mp não reprocessa uma aprovação.
 
     # Nunca confia no corpo do webhook - o status real vem sempre desta consulta direta a
     # API. Orcamento curto e sem retry: o Mercado Pago desiste da entrega se a resposta
@@ -502,10 +540,18 @@ def _tratar_webhook(data_id):
 
     if not pagamento and resultado_mp.get('external_reference'):
         pagamento = PagamentoDAO.buscar_por_external_reference(resultado_mp['external_reference'])
+    if not pagamento:
+        pagamento_id = _mensalidade_da_referencia(resultado_mp.get('external_reference'))
+        if pagamento_id:
+            pagamento = PagamentoDAO.buscar_por_id(pagamento_id)
 
     if not pagamento:
         logger.info('Webhook Mercado Pago para pagamento %s nao corresponde a nenhuma mensalidade local.', data_id)
         return '', 200
+
+    # Trava a linha até o commit: duas notificações da mesma mensalidade (o Pix antigo e o
+    # cartão pagos quase juntos) não decidem as duas em cima do mesmo "pendente".
+    pagamento = PagamentoDAO.bloquear_para_atualizacao(pagamento.id)
 
     _processar_status_mp(pagamento, resultado_mp, provider_payment_id=data_id)
     return '', 200
@@ -545,7 +591,8 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
     # A referencia confirmada pela API tem de ser uma das que ESTE servidor gerou e
     # gravou para esta mensalidade (Pix direto ou Checkout Pro).
     referencias = _referencias_conhecidas(pagamento)
-    if referencia_mp and referencias and referencia_mp not in referencias:
+    if (referencia_mp and referencias and referencia_mp not in referencias
+            and not _referencia_antiga_desta(referencia_mp, pagamento)):
         logger.error(
             'Divergencia de external_reference no pagamento %s: recebida uma referencia que nao pertence a esta mensalidade.',
             pagamento.id,
@@ -565,7 +612,29 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
             )
             return
 
-    if provider_payment_id and pagamento.provider_payment_id != provider_payment_id:
+    # Polling e sincronização do admin consultam pelo id: ele vem na própria resposta.
+    provider_payment_id = provider_payment_id or resultado_mp.get('payment_id')
+
+    # Aprovação numa mensalidade cancelada ou reembolsada (um boleto antigo pago depois):
+    # o dinheiro entrou, mas reabrir a cobrança e a vigência é decisão do admin.
+    if status_mp == 'approved' and pagamento.status in ('cancelado', 'reembolsado'):
+        logger.warning('Pagamento aprovado na mensalidade %s, que esta %s.', pagamento.id, pagamento.status)
+        PagamentoDAO.registrar_evento_unico(
+            pagamento.id, 'pagamento_em_cobranca_fechada',
+            f'Pagamento aprovado (id provedor {provider_payment_id}) numa mensalidade '
+            f'{rotulo_status(pagamento.status).lower()}. Confira e devolva o valor ou reabra a cobrança.',
+            ator='webhook_mercado_pago',
+        )
+        return
+
+    # Notificação de um pagamento que não é o que quitou a mensalidade: o aluno pagou duas
+    # vezes (um Pix antigo e o cartão, ou o Pix depois do comprovante). Ela não pode mexer
+    # na mensalidade.
+    outro_pagamento = bool(
+        provider_payment_id and pagamento.status == 'pago' and provider_payment_id != _quitada_por(pagamento)
+    )
+
+    if provider_payment_id and pagamento.provider_payment_id != provider_payment_id and not outro_pagamento:
         # So sobrescreve o id do provedor quando ainda nao ha um, ou quando esta chegando
         # a aprovacao de fato - uma notificacao atrasada de tentativa recusada nao pode
         # apagar o id do pagamento que ja quitou a mensalidade.
@@ -574,6 +643,16 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
 
     if status_mp == 'approved':
         if pagamento.status == 'pago':
+            if outro_pagamento:
+                # O dinheiro entrou duas vezes: fica no histórico para o admin devolver.
+                logger.warning('Pagamento em duplicidade na mensalidade %s (id provedor %s).',
+                               pagamento.id, provider_payment_id)
+                PagamentoDAO.registrar_evento_unico(
+                    pagamento.id, 'pagamento_duplicado',
+                    f'Mais um pagamento aprovado para esta mensalidade já paga (id provedor '
+                    f'{provider_payment_id}). Confira e devolva o valor pelo Mercado Pago.',
+                    ator='webhook_mercado_pago',
+                )
             return
         data_pagamento = _data_da_aprovacao(resultado_mp.get('date_approved')) or date.today()
         PagamentoDAO.marcar_pago_via_webhook(
@@ -581,7 +660,15 @@ def _processar_status_mp(pagamento, resultado_mp, provider_payment_id=None):
             forma_pagamento=_forma_pagamento_confirmada(resultado_mp, pagamento),
         )
     elif status_mp in ('refunded', 'charged_back'):
-        if pagamento.status != 'reembolsado':
+        if outro_pagamento:
+            # Devolução da cobrança em duplicidade: o pagamento que quitou segue valendo.
+            PagamentoDAO.registrar_evento_unico(
+                pagamento.id, 'duplicado_reembolsado',
+                f'Pagamento em duplicidade devolvido (id provedor {provider_payment_id}); '
+                'a mensalidade continua paga.',
+                ator='webhook_mercado_pago',
+            )
+        elif pagamento.status != 'reembolsado':
             PagamentoDAO.marcar_reembolsado_via_webhook(pagamento)
     elif status_mp == 'in_process':
         PagamentoDAO.marcar_em_processamento_via_webhook(pagamento)

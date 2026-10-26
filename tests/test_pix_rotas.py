@@ -270,7 +270,11 @@ def test_webhook_repetido_e_idempotente(client, criar_pagamento, monkeypatch):
                         json={'type': 'payment', 'data': {'id': 'mp-1'}})
 
     assert resp.status_code == 200
-    assert len(chamadas) == 0  # ja estava pago com o mesmo provider_payment_id - nem consulta o MP de novo
+    # Consulta o MP (estorno e chargeback chegam com o mesmo id), mas não aprova de novo.
+    assert len(chamadas) == 1
+    atualizado = PagamentoDAO.buscar_por_id(pagamento.id)
+    assert atualizado.status == 'pago'
+    assert [e.tipo for e in atualizado.eventos].count('webhook_aprovado') == 0
 
 
 def test_webhook_processa_em_processamento(client, criar_pagamento, monkeypatch):

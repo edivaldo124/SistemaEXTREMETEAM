@@ -894,6 +894,15 @@ class PagamentoDAO:
         db.session.commit()
 
     @staticmethod
+    def registrar_evento_unico(pagamento_id, tipo, detalhe, ator=None):
+        """Como registrar_evento, mas não repete um evento idêntico: o Mercado Pago reenvia
+        a mesma notificação e o polling consulta de novo. O webhook chama com a mensalidade
+        travada (bloquear_para_atualizacao), o que serializa a checagem."""
+        if PagamentoEvento.query.filter_by(pagamento_id=pagamento_id, tipo=tipo, detalhe=detalhe).first():
+            return
+        PagamentoDAO.registrar_evento(pagamento_id, tipo, detalhe=detalhe, ator=ator)
+
+    @staticmethod
     def salvar_dados_pix(pagamento, *, provider_payment_id, external_reference, idempotency_key,
                           pix_copia_cola, ticket_url, data_expiracao):
         pagamento.provider = 'mercado_pago'
