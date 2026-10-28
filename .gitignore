@@ -24,3 +24,7 @@ skills_disponiveis.md
 PROMPT_CLAUDE_CODE.md
 
 instance/
+
+# Understand Anything (arquivos locais; o resto de .ua/ deve ser commitado)
+.ua/intermediate/
+.ua/diff-overlay.json
