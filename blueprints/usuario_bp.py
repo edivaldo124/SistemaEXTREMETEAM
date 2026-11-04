@@ -53,7 +53,7 @@ from servicos.armazenamento import (
     salvar_comprovante_manual,
     salvar_foto_perfil,
 )
-from servicos import analytics, conteudo_home, convites, fila_email
+from servicos import analytics, conteudo_home, convites, fila_email, turnstile
 from servicos import planos as regras_plano
 from servicos.formatacao import (
     cpf_valido,
@@ -333,6 +333,17 @@ def pagina_cadastro():
             "aceitou_termos": aceitou_termos,
         }
 
+        # Antes de validar, consultar o banco ou mandar e-mail: sem o Turnstile, este
+        # formulário manda e-mail para qualquer endereço, limitado só por IP (SEC-36).
+        if turnstile.configurado() and not turnstile.token_confere(
+            request.form.get('cf-turnstile-response'), get_remote_address(), turnstile.ACAO_CADASTRO,
+        ):
+            return render_template(
+                "cadastro.html",
+                erro="Erro: Conclua a verificação de segurança logo acima do botão e envie de novo.",
+                dados=dados_formulario,
+            ), 403
+
         if not all([nome, login, datanascimento, cpf, senha.strip(), email, telefone]):
             return render_template("cadastro.html", erro="Erro: Preencha todos os campos obrigatórios!", dados=dados_formulario)
 
@@ -418,17 +429,16 @@ def pagina_cadastro():
 
         try:
             link_verificacao = url_publica('auth.verificar_email_cadastro', token=token)
-            fila_email.enfileirar_transacional(
-                f'cadastro-recebido:{novo_aluno.id}',
-                destinatario=email, nome_destinatario=nome,
-                assunto='Verifique seu e-mail — Extreme Team', titulo='Falta pouco para finalizar!',
-                paragrafos=[
+            # Com token: fora da fila, que guardaria o link em claro (SEC-37).
+            _enviar_em_segundo_plano(
+                email, nome, 'Verifique seu e-mail — Extreme Team', 'Falta pouco para finalizar!',
+                [
                     f'Olá, {nome.split()[0]}!',
                     'Seu cadastro na Extreme Team foi recebido com sucesso.',
                     'Para enviá-lo para a análise da nossa administração, precisamos apenas que você verifique este e-mail clicando no link abaixo:',
                 ],
                 link_url=link_verificacao,
-                link_texto='Verificar Meu E-mail'
+                link_texto='Verificar Meu E-mail',
             )
         except URLPublicaInvalida:
             logger.error('APP_BASE_URL inválida; e-mail de verificação não enviado para %s.', mascarar_email(email))

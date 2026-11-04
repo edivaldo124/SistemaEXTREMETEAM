@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "servidor.py": {
-    "mtime": 1792778653.4603362,
-    "seen": 1792778720.9032333,
-    "ast_hash": "0b52e1a1ac6ef9b9f1b4651e835b70a3",
+    "mtime": 1792780487.6716514,
+    "seen": 1792780540.093655,
+    "ast_hash": "0680de49dd74a0d0baab087f17d32496",
     "semantic_hash": ""
   },
   "static/js/index.js": {
@@ -271,7 +271,7 @@
   },
   ".claude/settings.local.json": {
     "mtime": 1787667089.0645044,
-    "seen": 1792635575.3078182,
+    "seen": 1792779753.3059137,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -553,7 +553,7 @@
   },
   ".claude/settings.json": {
     "mtime": 1788571889.466089,
-    "seen": 1792635575.3078084,
+    "seen": 1792779753.3059087,
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -846,9 +846,9 @@
     "semantic_hash": "e4024af80abf5606149c966201dae218"
   },
   "tests/test_arranque_seguranca.py": {
-    "mtime": 1792778617.8354292,
-    "seen": 1792778620.57545,
-    "ast_hash": "a6f2884ef91aed51aa4dabc97d366bcc",
+    "mtime": 1792780455.8626332,
+    "seen": 1792780460.6802335,
+    "ast_hash": "26d858648b3558074d8d8becd0950223",
     "semantic_hash": ""
   },
   "tests/test_termos_responsabilidade.py": {
@@ -1098,9 +1098,9 @@
     "semantic_hash": "56438defaea61d466df3737a32dd1b38"
   },
   "security-review/RELATORIO.md": {
-    "mtime": 1792779261.4086235,
-    "seen": 1792779263.1070921,
-    "ast_hash": "cddbe4e0431b7b8be61225bf2d64286c",
+    "mtime": 1792780534.2189212,
+    "seen": 1792780540.0964446,
+    "ast_hash": "e6198624f79a3b8da8f3c4deef46ae93",
     "semantic_hash": ""
   },
   "skills_disponiveis.md": {
@@ -1513,7 +1513,7 @@
   },
   "tools/redesign/figma/estado.json": {
     "mtime": 1790997728.0851638,
-    "seen": 1792635575.3083045,
+    "seen": 1792779753.3102915,
     "ast_hash": "",
     "semantic_hash": ""
   },

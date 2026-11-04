@@ -35,7 +35,7 @@ from modelos.professor import Professor
 from dao.planoDAO import PlanoDAO
 from modelos.sessao_revogada import SessaoRevogada  # noqa: F401  (registra a tabela no metadata)
 from modelos.gmail_conexao import GmailConexao  # noqa: F401
-from servicos import analytics, cinema, conteudo_home, credenciais, fila_email, keep_alive, prontidao, seo
+from servicos import analytics, cinema, conteudo_home, credenciais, fila_email, keep_alive, prontidao, seo, turnstile
 from servicos.autorizacao import revogar_sessao_atual
 from servicos.planos import vitrine_planos
 
@@ -157,6 +157,11 @@ except ValueError as exc:
     raise RuntimeError(str(exc)) from exc
 
 analytics.validar_configuracao()
+# Produção é o critério do Redis acima, sem contar https://localhost: endereço público em
+# https, fora da suíte. Ali o cadastro público não sobe sem o Turnstile (SEC-36).
+turnstile.validar_configuracao(
+    exigir=enviar_hsts and os.environ.get('CRIAR_SCHEMA_NA_IMPORTACAO', '').lower() != 'true'
+)
 
 database_url = os.environ.get('DATABASE_URL')
 if not database_url:
@@ -198,6 +203,7 @@ app.jinja_env.globals.update(
     url_estatico_absoluta=seo.url_estatico,
     analytics_ativo=analytics.analytics_ativo,
     id_analytics=analytics.id_analytics,
+    turnstile_chave_site=turnstile.chave_site,
     # Hero da home: a cena 3D compilada em static/dist/cinema e o vídeo opcional.
     cinema_modulo=cinema.modulo,
     cinema_video=cinema.video,
@@ -230,6 +236,10 @@ def adicionar_cabecalhos_de_seguranca(resposta):
     script_ga = f' {analytics.CSP_SCRIPT}' if ga else ''
     img_ga = f' {analytics.CSP_IMG}' if ga else ''
     connect_ga = f' {analytics.CSP_CONNECT}' if ga else ''
+    # A Cloudflare só entra na resposta que mostra o widget do Turnstile (o cadastro).
+    ts = turnstile.ativo_nesta_resposta()
+    script_ts = f' {turnstile.CSP_ORIGEM}' if ts else ''
+    frame_ts = f'frame-src {turnstile.CSP_ORIGEM}; ' if ts else ''
     resposta.headers.setdefault('X-Content-Type-Options', 'nosniff')
     resposta.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
     resposta.headers.setdefault('Referrer-Policy', 'same-origin')
@@ -237,11 +247,12 @@ def adicionar_cabecalhos_de_seguranca(resposta):
     resposta.headers.setdefault(
         'Content-Security-Policy',
         "default-src 'self'; "
-        f"script-src 'self' 'nonce-{nonce}'{script_ga}; "
+        f"script-src 'self' 'nonce-{nonce}'{script_ga}{script_ts}; "
         "script-src-attr 'none'; "
         # As fontes são servidas daqui (static/fonts): nenhum visitante manda o IP ao Google.
         "style-src 'self' 'unsafe-inline'; "
         "font-src 'self'; "
+        f"{frame_ts}"
         f"img-src 'self' data:{img_ga}; connect-src 'self'{connect_ga}; object-src 'none'; "
         "base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
     )

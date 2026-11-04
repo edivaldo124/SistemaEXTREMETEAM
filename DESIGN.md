@@ -615,7 +615,7 @@ Todo elemento focável mostra um anel de dois tons: `outline` de 2 px em `--focu
 - Eyebrow em caixa alta sobre todo título, numeração 01/02/03 onde não há sequência, a mesma informação repetida em dois blocos e fade-in em toda seção. São vícios de página gerada.
 - Barro e floresta para indicar situação; cinza neutro do shadcn no lugar das cores da marca.
 - `overflow-x: hidden` em `html`/`body` (use `clip`) e `.a + .a { margin-top }` dentro de grade (use `gap`).
-- Handlers inline (`onclick=`) e `<script>` de CDN: a CSP proíbe. O JS vai em arquivo em `static/js/` ou inline com `nonce`.
+- Handlers inline (`onclick=`) e `<script>` de CDN: a CSP proíbe. O JS vai em arquivo em `static/js/` ou inline com `nonce`. A única exceção é o Turnstile da Cloudflare no cadastro (`api.js` com `nonce`, origem liberada só naquela tela por `servicos/turnstile.py`); o widget fica no tema escuro e na largura do formulário, logo acima do botão.
 
 ## Onde isso vive no código
 

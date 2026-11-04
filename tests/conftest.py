@@ -44,6 +44,8 @@ for _variavel in (
     'SUPABASE_URL', 'SUPABASE_SECRET_KEY',
     # Segundo fator do admin e o modo Vercel (um `vercel env pull` traz VERCEL=1).
     'ADMIN_TOTP_SECRET', 'VERCEL',
+    # Turnstile do cadastro: quem testa a checagem liga no próprio teste.
+    'TURNSTILE_SITEKEY', 'TURNSTILE_SECRET', 'TURNSTILE_HOSTNAMES',
 ):
     os.environ[_variavel] = ''
 
