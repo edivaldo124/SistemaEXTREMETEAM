@@ -329,6 +329,37 @@ e quem acertou a senha tem 5 minutos para digitar o código. Se perder o celular
 `ADMIN_TOTP_SECRET` no painel, entre só com a senha e cadastre uma chave nova. A
 aplicação recusa subir com uma chave que não seja base32 de pelo menos 128 bits.
 
+### Turnstile no cadastro público (obrigatório em produção)
+
+O formulário de cadastro manda e-mail para o endereço digitado, e o limite por IP é folgado
+porque a academia inteira sai pelo mesmo Wi-Fi. O [Turnstile](https://developers.cloudflare.com/turnstile/)
+da Cloudflare confere que quem envia é uma pessoa; o servidor valida o token junto da
+Cloudflare antes de qualquer outra coisa do cadastro e recusa se ela não responder.
+
+Sem as três variáveis nada é carregado (desenvolvimento e testes). **Em produção
+(`APP_BASE_URL` em https num domínio público) a aplicação recusa subir sem elas: defina-as
+antes de publicar a versão que trouxe o Turnstile.**
+
+1. No painel da Cloudflare, em Turnstile → Add widget, crie um widget no modo **Managed**
+   com o domínio de produção (por exemplo `sistema-extremeteam.vercel.app`). Para testar no
+   computador, acrescente `localhost` e `127.0.0.1` no mesmo widget. Um domínio cadastrado
+   vale também para os subdomínios dele.
+2. Defina no ambiente (na Vercel: Settings → Environment Variables):
+   - `TURNSTILE_SITEKEY`: a chave do site (pública, vai no HTML);
+   - `TURNSTILE_SECRET`: a chave secreta, marcada como sensível;
+   - `TURNSTILE_HOSTNAMES`: os endereços exatos em que o site abre, separados por vírgula
+     (por exemplo `sistema-extremeteam.vercel.app`). Em produção, `localhost` e `127.0.0.1`
+     são recusados.
+3. Publique e faça um cadastro de teste: o quadro da Cloudflare aparece acima do botão
+   "Criar minha conta".
+
+O backend confere o `hostname` exato que a Cloudflare devolve, não o domínio do widget:
+se o site também abrir em `www.` ou num domínio próprio, liste cada um. Deploys de Preview
+com `APP_BASE_URL` em https também precisam das três variáveis, e o cadastro só funciona
+neles se o host do preview estiver no widget e em `TURNSTILE_HOSTNAMES`. A CSP libera
+`https://challenges.cloudflare.com` só na tela de cadastro, e a política de privacidade
+descreve o que a Cloudflare recebe (seção 8).
+
 ### Publicar com um domínio próprio
 
 O `Caddyfile` do repositório atende por `localhost`, `127.0.0.1` e um IP de rede local,

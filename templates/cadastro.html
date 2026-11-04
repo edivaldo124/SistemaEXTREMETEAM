@@ -3,6 +3,12 @@
 {% block descricao %}Crie sua conta na Extreme Team para escolher seu plano e acompanhar turmas, presença e mensalidades em um só lugar.{% endblock %}
 {% block scripts %}
     <script src="{{ url_for('static', filename='js/auth.js') }}" defer></script>
+    {% if turnstile_chave_site() %}
+        {# Exceção à regra de não carregar script de fora: o Turnstile só funciona vindo da
+           Cloudflare, do endereço exato e sem SRI (o arquivo muda sem aviso). A CSP libera
+           a origem só nesta tela (servicos/turnstile.py). #}
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" nonce="{{ csp_nonce() }}" async defer></script>
+    {% endif %}
 {% endblock %}
 {% block estilos %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
@@ -171,6 +177,10 @@
                             <span>Li e aceito o <a href="{{ url_for('auth.pagina_termos_responsabilidade') }}" target="_blank" rel="noopener">Termo de Responsabilidade</a>, incluindo o compromisso de informar condições de saúde relevantes e seguir as orientações da equipe.</span>
                         </label>
                     </section>
+                    {% if turnstile_chave_site() %}
+                        <div class="cf-turnstile" data-sitekey="{{ turnstile_chave_site() }}" data-action="cadastro"
+                             data-theme="dark" data-size="flexible" data-language="pt-br"></div>
+                    {% endif %}
                     <button class="et-botao et-botao--principal et-botao--grande et-botao--largo auth-submit-btn" type="submit">Criar minha conta</button>
                 </form>
                 <p class="auth-footer-prompt">
