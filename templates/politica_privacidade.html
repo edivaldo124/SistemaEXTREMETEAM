@@ -20,7 +20,7 @@
     </header>
     <main class="termos-page-shell">
         <article id="politica" class="termos-documento" aria-labelledby="politica-titulo">
-            <p class="eyebrow">Atualizada em 20/10/2026</p>
+            <p class="eyebrow">Atualizada em 27/10/2026</p>
             <h1 id="politica-titulo" class="page-title">Política de Privacidade</h1>
             <p class="page-subtitle">Esta política explica como a Extreme Team trata os dados usados no sistema de gestão da academia.</p>
 
@@ -33,6 +33,7 @@
                     <li><a href="#secao-5">5. Segurança e retenção</a></li>
                     <li><a href="#secao-6">6. Direitos e contato</a></li>
                     <li><a href="#secao-7">7. Cookies e medição de audiência</a></li>
+                    <li><a href="#secao-8">8. Verificação contra robôs no cadastro</a></li>
                 </ol>
             </nav>
 
@@ -63,7 +64,7 @@
             <details class="et-acordeao" id="secao-4" open>
                 <summary><h2>4. Compartilhamento</h2></summary>
                 <div class="et-acordeao-corpo">
-                    <p>Não vendemos dados pessoais. Os dados podem ser enviados a prestadores necessários ao funcionamento do serviço, como provedores de hospedagem, banco de dados, pagamentos e envio de e-mails, sempre conforme a finalidade da operação. Com o seu consentimento, dados de navegação das páginas públicas também vão para o Google Analytics (ver seção 7).</p>
+                    <p>Não vendemos dados pessoais. Os dados podem ser enviados a prestadores necessários ao funcionamento do serviço, como provedores de hospedagem, banco de dados, pagamentos e envio de e-mails, sempre conforme a finalidade da operação. Com o seu consentimento, dados de navegação das páginas públicas também vão para o Google Analytics (ver seção 7). Na página de cadastro, a Cloudflare recebe dados técnicos da conexão para a verificação contra robôs (ver seção 8).</p>
                 </div>
             </details>
             <details class="et-acordeao" id="secao-5" open>
@@ -90,6 +91,15 @@
                     {% if analytics_ativo() %}
                         <p><button type="button" class="et-botao et-botao--contorno" data-consentimento-abrir>Rever minha escolha</button></p>
                     {% endif %}
+                </div>
+            </details>
+
+            <details class="et-acordeao" id="secao-8" open>
+                <summary><h2>8. Verificação contra robôs no cadastro</h2></summary>
+                <div class="et-acordeao-corpo">
+                    <p>A página de cadastro usa o Turnstile, da Cloudflare, para confirmar que quem envia o formulário é uma pessoa e não um programa automático. Sem isso, o formulário poderia ser usado para criar cadastros falsos e disparar e-mails em nome da academia. Nenhuma outra página carrega o Turnstile.</p>
+                    <p><strong>O que é coletado:</strong> o endereço IP, a identificação do navegador (User-Agent), dados técnicos da conexão segura e o endereço do site. Os dados do formulário (nome, CPF, e-mail, telefone e senha) nunca são enviados à Cloudflare.</p>
+                    <p><strong>Base legal e transferência:</strong> legítimo interesse da academia em proteger o cadastro e quem treina aqui (art. 7º, IX, da LGPD). A Cloudflare usa esses dados para barrar robôs e, por conta própria, para melhorar essa detecção, e pode armazená-los fora do Brasil, conforme a <a href="https://www.cloudflare.com/turnstile-privacy-policy/">política de privacidade do Turnstile</a>.</p>
                 </div>
             </details>
 

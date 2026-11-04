@@ -12,6 +12,7 @@ import blueprints.usuario_bp as usuario_bp
 from config import db, limiter
 from dao.financeiroDAO import PagamentoDAO
 from dao.usuarioDAO import AlunoDAO
+from modelos.email_pendente import EmailPendente
 from modelos.usuario import Aluno
 from servicos.urls import url_publica
 from servicos.senhas import SENHAS_COMUNS, erro_validacao_senha
@@ -354,6 +355,16 @@ def test_cadastro_com_email_existente_nao_cria_conta_e_avisa_o_dono(client, cria
 
     assert Aluno.query.count() == total
     assert [e['para'] for e in sem_email] == [existente.email]
+
+
+def test_link_de_verificacao_do_cadastro_nao_fica_gravado_na_fila(client, contexto_app, sem_email):
+    # A fila guarda o link em claro e nunca apaga a linha, que vai junto para os backups.
+    # E-mail com token sai por fora dela, como a troca de e-mail e a recuperação (SEC-37).
+    _cadastro_publico(client)
+
+    assert [e['assunto'] for e in sem_email] == ['Verifique seu e-mail — Extreme Team']
+    links = [link for (link,) in db.session.query(EmailPendente.link_url) if link]
+    assert not [link for link in links if '/cadastro/verificar/' in link]
 
 
 def test_cadastro_publico_continua_avisando_usuario_repetido(client, criar_aluno):

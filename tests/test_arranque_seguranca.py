@@ -25,6 +25,7 @@ _CHAVES_CONTROLADAS = (
     'ADMIN_USER', 'ADMIN_PASSWORD_HASH', 'ADMIN_PASSWORD', 'TRUST_PROXY_COUNT',
     'CRIAR_SCHEMA_NA_IMPORTACAO', 'RATELIMIT_STORAGE_URI', 'ADMIN_TOTP_SECRET',
     'VERCEL', 'VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL',
+    'TURNSTILE_SITEKEY', 'TURNSTILE_SECRET', 'TURNSTILE_HOSTNAMES',
 )
 
 
@@ -50,6 +51,9 @@ def _env_arranque(tmp_path, **overrides):
         'CRIAR_SCHEMA_NA_IMPORTACAO': 'true',
         'ADMIN_TOTP_SECRET': '',
         'VERCEL': '',
+        'TURNSTILE_SITEKEY': '',
+        'TURNSTILE_SECRET': '',
+        'TURNSTILE_HOSTNAMES': '',
     })
     base.update(overrides)
     return base
@@ -102,6 +106,52 @@ def test_arranque_aceita_redis_do_upstash_com_espaco_em_volta(tmp_path):
     )
     assert resultado.returncode == 0, resultado.stderr
     assert resultado.stdout.strip() == 'rediss://default:Abc123@nome-12345.upstash.io:6379'
+
+
+# Produção, pelo mesmo critério do Redis: endereço público em https, fora da suíte.
+_PRODUCAO = {
+    'APP_BASE_URL': 'https://academia.example.test',
+    'TRUSTED_HOSTS': 'academia.example.test',
+    'CRIAR_SCHEMA_NA_IMPORTACAO': '',
+    'RATELIMIT_STORAGE_URI': 'rediss://default:Abc123@nome-12345.upstash.io:6379',
+}
+_TURNSTILE = {
+    'TURNSTILE_SITEKEY': '0x4AAAAAAAchave-de-teste',
+    'TURNSTILE_SECRET': 'segredo-de-teste-turnstile',
+    'TURNSTILE_HOSTNAMES': 'academia.example.test',
+}
+
+
+def test_arranque_em_producao_exige_o_turnstile_do_cadastro(tmp_path):
+    # Sem ele, o cadastro público volta a mandar e-mail para qualquer endereço digitado,
+    # limitado só por IP (SEC-36).
+    resultado = _rodar(tmp_path, **_PRODUCAO)
+    assert resultado.returncode != 0
+    assert 'TURNSTILE_SITEKEY' in resultado.stderr
+
+
+def test_arranque_em_producao_sobe_com_o_turnstile(tmp_path):
+    resultado = _rodar(tmp_path, **_PRODUCAO, **_TURNSTILE)
+    assert resultado.returncode == 0, resultado.stderr
+
+
+@pytest.mark.parametrize('host', ['localhost', '127.0.0.1'])
+def test_arranque_em_producao_recusa_endereco_local_no_turnstile(tmp_path, host):
+    # O mesmo widget pode servir ao localhost, mas a produção não aceita token tirado nele.
+    resultado = _rodar(
+        tmp_path, **_PRODUCAO, **{**_TURNSTILE, 'TURNSTILE_HOSTNAMES': f'academia.example.test,{host}'},
+    )
+    assert resultado.returncode != 0
+    assert 'TURNSTILE_HOSTNAMES' in resultado.stderr
+
+
+@pytest.mark.parametrize('faltando', sorted(_TURNSTILE))
+def test_arranque_recusa_turnstile_pela_metade(tmp_path, faltando):
+    # Fora da produção também: metade das variáveis desligaria a checagem sem aviso.
+    resultado = _rodar(tmp_path, **{**_TURNSTILE, faltando: ''})
+    assert resultado.returncode != 0
+    assert 'TURNSTILE_' in resultado.stderr
+    assert 'segredo-de-teste-turnstile' not in resultado.stderr
 
 
 # Status de /health para cada host e, se houver, quantos proxies o ProxyFix aceita.
