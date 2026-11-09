@@ -1,6 +1,6 @@
 -r requirements.txt
 # O mesmo que a CI (.github/workflows/ci.yml) instala para rodar os testes e a auditoria.
-pytest==9.1.1
+pytest==9.2.0
 # tests/test_limites_requisicao.py lê o compose.yaml.
 pyyaml==6.0.3
 pip-audit==2.10.1
